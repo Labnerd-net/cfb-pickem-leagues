@@ -1,0 +1,30 @@
+{
+  "name": "cfb-pickem-api",
+  "type": "module",
+  "scripts": {
+    "dev": "tsx watch src/index.ts",
+    "build": "tsc",
+    "start": "node dist/src/index.js",
+    "lint": "eslint . --ext .js,.ts",
+    "lint:fix": "eslint . --ext .js,.ts --fix",
+    "format": "prettier --write ."
+  },
+  "dependencies": {
+    "@hono/node-server": "^1.19.9",
+    "@libsql/client": "^0.17.0",
+    "bcryptjs": "^3.0.3",
+    "cfbd": "^5.13.2",
+    "dotenv": "^17.2.3",
+    "drizzle-orm": "^0.45.1",
+    "hono": "^4.11.7",
+    "jsonwebtoken": "^9.0.3",
+    "pg": "^8.17.2",
+    "sportsdataverse": "^2.0.0"
+  },
+  "devDependencies": {
+    "@types/jsonwebtoken": "^9.0.10",
+    "@types/pg": "^8.16.0",
+    "drizzle-kit": "^0.31.8",
+    "tsx": "^4.21.0"
+  }
+}

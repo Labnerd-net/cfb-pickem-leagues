@@ -1,0 +1,81 @@
+https://ncaa-api.henrygd.me/game/6505936
+
+{
+  "contests": [
+    {
+      "__typename": "Contest",
+      "id": "6505936",
+      "sportCode": "MBB",
+      "sportUrl": "basketball-men",
+      "division": 1,
+      "clock": "",
+      "currentPeriod": "",
+      "finalMessage": "",
+      "gameState": "P",
+      "statusCodeDisplay": "pre",
+      "network": null,
+      "startTime": "21:00",
+      "startTimeEpoch": 1770084000,
+      "week": null,
+      "seasonYear": 2025,
+      "winner": null,
+      "hasStartTime": true,
+      "hasBoxscore": false,
+      "hasPbp": false,
+      "hasScoringSummary": false,
+      "hasPreview": false,
+      "hasRecap": false,
+      "hasTeamStats": false,
+      "linescores": [],
+      "teams": [
+        {
+          "__typename": "ContestTeam",
+          "teamId": "628",
+          "isHome": true,
+          "color": "#ED1F2A",
+          "seoname": "texas-tech",
+          "nameFull": "Texas Tech University",
+          "nameShort": "Texas Tech",
+          "name6Char": "TXTECH",
+          "teamRank": 11,
+          "gameRank": 11,
+          "score": null,
+          "seed": null,
+          "record": "(16-5)",
+          "divisionName": "d1",
+          "division": 1,
+          "isWinner": false
+        },
+        {
+          "__typename": "ContestTeam",
+          "teamId": "1824",
+          "isHome": false,
+          "color": "#1967B8",
+          "seoname": "kansas",
+          "nameFull": "University of Kansas",
+          "nameShort": "Kansas",
+          "name6Char": "KANSAS",
+          "teamRank": 14,
+          "gameRank": 14,
+          "score": null,
+          "seed": null,
+          "record": "(16-5)",
+          "divisionName": "d1",
+          "division": 1,
+          "isWinner": false
+        }
+      ],
+      "liveVideos": [],
+      "championship": null,
+      "championshipGame": null,
+      "links": [],
+      "location": {
+        "__typename": "Location",
+        "venue": "United Supermarkets Arena",
+        "city": "Lubbock",
+        "stateUsps": "TX"
+      },
+      "stats": null
+    }
+  ]
+}

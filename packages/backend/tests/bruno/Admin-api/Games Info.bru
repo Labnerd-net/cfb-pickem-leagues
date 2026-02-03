@@ -1,0 +1,31 @@
+meta {
+  name: Games Info
+  type: http
+  seq: 2
+}
+
+post {
+  url: http://{{host}}/api/admin/week
+  body: json
+  auth: inherit
+}
+
+body:json {
+  {
+    "year": "2025",
+    "week": "1",
+    "seasonType": "regular"
+  }
+}
+
+assert {
+  res.body.id: isNumber
+  res.body.email: eq brian@email.com
+  res.body.isAdmin: isBoolean
+  res.status: eq 200
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}

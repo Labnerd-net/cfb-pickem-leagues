@@ -1,0 +1,507 @@
+https://ncaa-api.henrygd.me/schedule-alt/basketball-men/d1/2025
+
+{
+  "data": {
+    "schedules": {
+      "games": [
+        {
+          "count": 169,
+          "contestDate": "11/03/2025"
+        },
+        {
+          "count": 36,
+          "contestDate": "11/04/2025"
+        },
+        {
+          "count": 35,
+          "contestDate": "11/05/2025"
+        },
+        {
+          "count": 44,
+          "contestDate": "11/06/2025"
+        },
+        {
+          "count": 76,
+          "contestDate": "11/07/2025"
+        },
+        {
+          "count": 68,
+          "contestDate": "11/08/2025"
+        },
+        {
+          "count": 33,
+          "contestDate": "11/09/2025"
+        },
+        {
+          "count": 41,
+          "contestDate": "11/10/2025"
+        },
+        {
+          "count": 82,
+          "contestDate": "11/11/2025"
+        },
+        {
+          "count": 53,
+          "contestDate": "11/12/2025"
+        },
+        {
+          "count": 27,
+          "contestDate": "11/13/2025"
+        },
+        {
+          "count": 49,
+          "contestDate": "11/14/2025"
+        },
+        {
+          "count": 82,
+          "contestDate": "11/15/2025"
+        },
+        {
+          "count": 35,
+          "contestDate": "11/16/2025"
+        },
+        {
+          "count": 34,
+          "contestDate": "11/17/2025"
+        },
+        {
+          "count": 68,
+          "contestDate": "11/18/2025"
+        },
+        {
+          "count": 50,
+          "contestDate": "11/19/2025"
+        },
+        {
+          "count": 37,
+          "contestDate": "11/20/2025"
+        },
+        {
+          "count": 74,
+          "contestDate": "11/21/2025"
+        },
+        {
+          "count": 45,
+          "contestDate": "11/22/2025"
+        },
+        {
+          "count": 43,
+          "contestDate": "11/23/2025"
+        },
+        {
+          "count": 60,
+          "contestDate": "11/24/2025"
+        },
+        {
+          "count": 78,
+          "contestDate": "11/25/2025"
+        },
+        {
+          "count": 72,
+          "contestDate": "11/26/2025"
+        },
+        {
+          "count": 22,
+          "contestDate": "11/27/2025"
+        },
+        {
+          "count": 57,
+          "contestDate": "11/28/2025"
+        },
+        {
+          "count": 69,
+          "contestDate": "11/29/2025"
+        },
+        {
+          "count": 33,
+          "contestDate": "11/30/2025"
+        },
+        {
+          "count": 18,
+          "contestDate": "12/01/2025"
+        },
+        {
+          "count": 58,
+          "contestDate": "12/02/2025"
+        },
+        {
+          "count": 78,
+          "contestDate": "12/03/2025"
+        },
+        {
+          "count": 10,
+          "contestDate": "12/04/2025"
+        },
+        {
+          "count": 22,
+          "contestDate": "12/05/2025"
+        },
+        {
+          "count": 115,
+          "contestDate": "12/06/2025"
+        },
+        {
+          "count": 49,
+          "contestDate": "12/07/2025"
+        },
+        {
+          "count": 7,
+          "contestDate": "12/08/2025"
+        },
+        {
+          "count": 35,
+          "contestDate": "12/09/2025"
+        },
+        {
+          "count": 37,
+          "contestDate": "12/10/2025"
+        },
+        {
+          "count": 14,
+          "contestDate": "12/11/2025"
+        },
+        {
+          "count": 13,
+          "contestDate": "12/12/2025"
+        },
+        {
+          "count": 100,
+          "contestDate": "12/13/2025"
+        },
+        {
+          "count": 34,
+          "contestDate": "12/14/2025"
+        },
+        {
+          "count": 14,
+          "contestDate": "12/15/2025"
+        },
+        {
+          "count": 45,
+          "contestDate": "12/16/2025"
+        },
+        {
+          "count": 59,
+          "contestDate": "12/17/2025"
+        },
+        {
+          "count": 32,
+          "contestDate": "12/18/2025"
+        },
+        {
+          "count": 28,
+          "contestDate": "12/19/2025"
+        },
+        {
+          "count": 75,
+          "contestDate": "12/20/2025"
+        },
+        {
+          "count": 61,
+          "contestDate": "12/21/2025"
+        },
+        {
+          "count": 61,
+          "contestDate": "12/22/2025"
+        },
+        {
+          "count": 12,
+          "contestDate": "12/23/2025"
+        },
+        {
+          "count": 3,
+          "contestDate": "12/27/2025"
+        },
+        {
+          "count": 41,
+          "contestDate": "12/28/2025"
+        },
+        {
+          "count": 68,
+          "contestDate": "12/29/2025"
+        },
+        {
+          "count": 39,
+          "contestDate": "12/30/2025"
+        },
+        {
+          "count": 49,
+          "contestDate": "12/31/2025"
+        },
+        {
+          "count": 39,
+          "contestDate": "01/01/2026"
+        },
+        {
+          "count": 33,
+          "contestDate": "01/02/2026"
+        },
+        {
+          "count": 120,
+          "contestDate": "01/03/2026"
+        },
+        {
+          "count": 40,
+          "contestDate": "01/04/2026"
+        },
+        {
+          "count": 19,
+          "contestDate": "01/05/2026"
+        },
+        {
+          "count": 29,
+          "contestDate": "01/06/2026"
+        },
+        {
+          "count": 54,
+          "contestDate": "01/07/2026"
+        },
+        {
+          "count": 57,
+          "contestDate": "01/08/2026"
+        },
+        {
+          "count": 15,
+          "contestDate": "01/09/2026"
+        },
+        {
+          "count": 148,
+          "contestDate": "01/10/2026"
+        },
+        {
+          "count": 21,
+          "contestDate": "01/11/2026"
+        },
+        {
+          "count": 17,
+          "contestDate": "01/12/2026"
+        },
+        {
+          "count": 35,
+          "contestDate": "01/13/2026"
+        },
+        {
+          "count": 61,
+          "contestDate": "01/14/2026"
+        },
+        {
+          "count": 49,
+          "contestDate": "01/15/2026"
+        },
+        {
+          "count": 7,
+          "contestDate": "01/16/2026"
+        },
+        {
+          "count": 145,
+          "contestDate": "01/17/2026"
+        },
+        {
+          "count": 13,
+          "contestDate": "01/18/2026"
+        },
+        {
+          "count": 41,
+          "contestDate": "01/19/2026"
+        },
+        {
+          "count": 36,
+          "contestDate": "01/20/2026"
+        },
+        {
+          "count": 54,
+          "contestDate": "01/21/2026"
+        },
+        {
+          "count": 48,
+          "contestDate": "01/22/2026"
+        },
+        {
+          "count": 26,
+          "contestDate": "01/23/2026"
+        },
+        {
+          "count": 133,
+          "contestDate": "01/24/2026"
+        },
+        {
+          "count": 7,
+          "contestDate": "01/25/2026"
+        },
+        {
+          "count": 12,
+          "contestDate": "01/26/2026"
+        },
+        {
+          "count": 35,
+          "contestDate": "01/27/2026"
+        },
+        {
+          "count": 53,
+          "contestDate": "01/28/2026"
+        },
+        {
+          "count": 54,
+          "contestDate": "01/29/2026"
+        },
+        {
+          "count": 23,
+          "contestDate": "01/30/2026"
+        },
+        {
+          "count": 138,
+          "contestDate": "01/31/2026"
+        },
+        {
+          "count": 25,
+          "contestDate": "02/01/2026"
+        },
+        {
+          "count": 19,
+          "contestDate": "02/02/2026"
+        },
+        {
+          "count": 31,
+          "contestDate": "02/03/2026"
+        },
+        {
+          "count": 62,
+          "contestDate": "02/04/2026"
+        },
+        {
+          "count": 51,
+          "contestDate": "02/05/2026"
+        },
+        {
+          "count": 9,
+          "contestDate": "02/06/2026"
+        },
+        {
+          "count": 154,
+          "contestDate": "02/07/2026"
+        },
+        {
+          "count": 12,
+          "contestDate": "02/08/2026"
+        },
+        {
+          "count": 28,
+          "contestDate": "02/09/2026"
+        },
+        {
+          "count": 22,
+          "contestDate": "02/10/2026"
+        },
+        {
+          "count": 52,
+          "contestDate": "02/11/2026"
+        },
+        {
+          "count": 59,
+          "contestDate": "02/12/2026"
+        },
+        {
+          "count": 14,
+          "contestDate": "02/13/2026"
+        },
+        {
+          "count": 136,
+          "contestDate": "02/14/2026"
+        },
+        {
+          "count": 29,
+          "contestDate": "02/15/2026"
+        },
+        {
+          "count": 23,
+          "contestDate": "02/16/2026"
+        },
+        {
+          "count": 29,
+          "contestDate": "02/17/2026"
+        },
+        {
+          "count": 58,
+          "contestDate": "02/18/2026"
+        },
+        {
+          "count": 52,
+          "contestDate": "02/19/2026"
+        },
+        {
+          "count": 13,
+          "contestDate": "02/20/2026"
+        },
+        {
+          "count": 151,
+          "contestDate": "02/21/2026"
+        },
+        {
+          "count": 18,
+          "contestDate": "02/22/2026"
+        },
+        {
+          "count": 9,
+          "contestDate": "02/23/2026"
+        },
+        {
+          "count": 37,
+          "contestDate": "02/24/2026"
+        },
+        {
+          "count": 53,
+          "contestDate": "02/25/2026"
+        },
+        {
+          "count": 54,
+          "contestDate": "02/26/2026"
+        },
+        {
+          "count": 19,
+          "contestDate": "02/27/2026"
+        },
+        {
+          "count": 146,
+          "contestDate": "02/28/2026"
+        },
+        {
+          "count": 21,
+          "contestDate": "03/01/2026"
+        },
+        {
+          "count": 17,
+          "contestDate": "03/02/2026"
+        },
+        {
+          "count": 47,
+          "contestDate": "03/03/2026"
+        },
+        {
+          "count": 23,
+          "contestDate": "03/04/2026"
+        },
+        {
+          "count": 28,
+          "contestDate": "03/05/2026"
+        },
+        {
+          "count": 12,
+          "contestDate": "03/06/2026"
+        },
+        {
+          "count": 61,
+          "contestDate": "03/07/2026"
+        },
+        {
+          "count": 10,
+          "contestDate": "03/08/2026"
+        }
+      ],
+      "today": {
+        "date": "02/01/2026",
+        "week": null,
+        "season": 2025
+      }
+    }
+  }
+}

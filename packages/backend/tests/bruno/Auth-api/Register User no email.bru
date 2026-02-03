@@ -1,0 +1,27 @@
+meta {
+  name: Register User no email
+  type: http
+  seq: 4
+}
+
+post {
+  url: http://{{host}}/api/auth/register
+  body: json
+  auth: inherit
+}
+
+body:json {
+  {
+    "password": "monkey"
+  }
+}
+
+assert {
+  res.body.error: eq 'Email and password required'
+  res.status: eq 400
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}

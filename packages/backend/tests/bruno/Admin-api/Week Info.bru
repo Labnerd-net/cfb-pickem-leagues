@@ -1,0 +1,30 @@
+meta {
+  name: Week Info
+  type: http
+  seq: 1
+}
+
+post {
+  url: http://{{host}}/api/admin/year/2025
+  body: none
+  auth: inherit
+}
+
+body:json {
+  {
+    "email": "brian@email.com",
+    "password": "monkey"
+  }
+}
+
+assert {
+  res.body.id: isNumber
+  res.body.email: eq brian@email.com
+  res.body.isAdmin: isBoolean
+  res.status: eq 200
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}

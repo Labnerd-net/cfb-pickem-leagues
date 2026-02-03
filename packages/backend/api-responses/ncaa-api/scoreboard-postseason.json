@@ -1,0 +1,656 @@
+{
+  "inputMD5Sum": "ecd451ceaf933db16bc022920c41e4bd",
+  "instanceId": "d41d8cd98f00b204e9800998ecf8427e",
+  "updated_at": "2026-02-02 20:44:08",
+  "games": [
+    {
+      "game": {
+        "gameID": "6534497",
+        "away": {
+          "score": "17",
+          "names": {
+            "char6": "JAX ST",
+            "short": "Jacksonville St.",
+            "seo": "jacksonville-st",
+            "full": ""
+          },
+          "winner": true,
+          "seed": "",
+          "description": "",
+          "rank": "",
+          "conferences": [
+            {
+              "conferenceName": "",
+              "conferenceSeo": "cusa"
+            }
+          ]
+        },
+        "finalMessage": "FINAL",
+        "bracketRound": "",
+        "title": "Jacksonville St. Troy",
+        "contestName": "",
+        "url": "/game/6534497",
+        "network": "",
+        "home": {
+          "score": "13",
+          "names": {
+            "char6": "TROY",
+            "short": "Troy",
+            "seo": "troy",
+            "full": ""
+          },
+          "winner": false,
+          "seed": "",
+          "description": "",
+          "rank": "",
+          "conferences": [
+            {
+              "conferenceName": "",
+              "conferenceSeo": "sun-belt"
+            }
+          ]
+        },
+        "liveVideoEnabled": false,
+        "startTime": "9:00 PM ET",
+        "startTimeEpoch": "1765936800",
+        "bracketId": "",
+        "gameState": "final",
+        "startDate": "12/16/2025",
+        "currentPeriod": "FINAL",
+        "videoState": "",
+        "bracketRegion": "",
+        "contestClock": "0:00"
+      }
+    },
+    {
+      "game": {
+        "gameID": "6534468",
+        "away": {
+          "score": "10",
+          "names": {
+            "char6": "USF",
+            "short": "South Fla.",
+            "seo": "south-fla",
+            "full": ""
+          },
+          "winner": false,
+          "seed": "",
+          "description": "",
+          "rank": "",
+          "conferences": [
+            {
+              "conferenceName": "",
+              "conferenceSeo": "american"
+            }
+          ]
+        },
+        "finalMessage": "FINAL",
+        "bracketRound": "",
+        "title": "South Fla. Old Dominion",
+        "contestName": "",
+        "url": "/game/6534468",
+        "network": "",
+        "home": {
+          "score": "24",
+          "names": {
+            "char6": "ODU",
+            "short": "Old Dominion",
+            "seo": "old-dominion",
+            "full": ""
+          },
+          "winner": true,
+          "seed": "",
+          "description": "",
+          "rank": "",
+          "conferences": [
+            {
+              "conferenceName": "",
+              "conferenceSeo": "sun-belt"
+            }
+          ]
+        },
+        "liveVideoEnabled": false,
+        "startTime": "5:00 PM ET",
+        "startTimeEpoch": "1766008800",
+        "bracketId": "",
+        "gameState": "final",
+        "startDate": "12/17/2025",
+        "currentPeriod": "FINAL",
+        "videoState": "",
+        "bracketRegion": "",
+        "contestClock": "0:00"
+      }
+    },
+    {
+      "game": {
+        "gameID": "6534498",
+        "away": {
+          "score": "20",
+          "names": {
+            "char6": "DEL",
+            "short": "Delaware",
+            "seo": "delaware",
+            "full": ""
+          },
+          "winner": true,
+          "seed": "",
+          "description": "",
+          "rank": "",
+          "conferences": [
+            {
+              "conferenceName": "",
+              "conferenceSeo": "cusa"
+            }
+          ]
+        },
+        "finalMessage": "FINAL",
+        "bracketRound": "",
+        "title": "Delaware Louisiana",
+        "contestName": "",
+        "url": "/game/6534498",
+        "network": "",
+        "home": {
+          "score": "13",
+          "names": {
+            "char6": "LA",
+            "short": "Louisiana",
+            "seo": "la-lafayette",
+            "full": ""
+          },
+          "winner": false,
+          "seed": "",
+          "description": "",
+          "rank": "",
+          "conferences": [
+            {
+              "conferenceName": "",
+              "conferenceSeo": "sun-belt"
+            }
+          ]
+        },
+        "liveVideoEnabled": false,
+        "startTime": "8:30 PM ET",
+        "startTimeEpoch": "1766021400",
+        "bracketId": "",
+        "gameState": "final",
+        "startDate": "12/17/2025",
+        "currentPeriod": "FINAL",
+        "videoState": "",
+        "bracketRegion": "",
+        "contestClock": "0:00"
+      }
+    },
+    {
+      "game": {
+        "gameID": "6534469",
+        "away": {
+          "score": "34",
+          "names": {
+            "char6": "ARK ST",
+            "short": "Arkansas St.",
+            "seo": "arkansas-st",
+            "full": ""
+          },
+          "winner": true,
+          "seed": "",
+          "description": "",
+          "rank": "",
+          "conferences": [
+            {
+              "conferenceName": "",
+              "conferenceSeo": "sun-belt"
+            }
+          ]
+        },
+        "finalMessage": "FINAL",
+        "bracketRound": "",
+        "title": "Arkansas St. Missouri St.",
+        "contestName": "",
+        "url": "/game/6534469",
+        "network": "",
+        "home": {
+          "score": "28",
+          "names": {
+            "char6": "MO ST",
+            "short": "Missouri St.",
+            "seo": "missouri-st",
+            "full": ""
+          },
+          "winner": false,
+          "seed": "",
+          "description": "",
+          "rank": "",
+          "conferences": [
+            {
+              "conferenceName": "",
+              "conferenceSeo": "cusa"
+            }
+          ]
+        },
+        "liveVideoEnabled": false,
+        "startTime": "9:00 PM ET",
+        "startTimeEpoch": "1766109600",
+        "bracketId": "",
+        "gameState": "final",
+        "startDate": "12/18/2025",
+        "currentPeriod": "FINAL",
+        "videoState": "",
+        "bracketRegion": "",
+        "contestClock": "0:00"
+      }
+    },
+    {
+      "game": {
+        "gameID": "6534499",
+        "away": {
+          "score": "41",
+          "names": {
+            "char6": "W MICH",
+            "short": "Western Mich.",
+            "seo": "western-mich",
+            "full": ""
+          },
+          "winner": true,
+          "seed": "",
+          "description": "",
+          "rank": "",
+          "conferences": [
+            {
+              "conferenceName": "",
+              "conferenceSeo": "mac"
+            }
+          ]
+        },
+        "finalMessage": "FINAL",
+        "bracketRound": "",
+        "title": "Western Mich. Kennesaw St.",
+        "contestName": "",
+        "url": "/game/6534499",
+        "network": "",
+        "home": {
+          "score": "6",
+          "names": {
+            "char6": "KENSAW",
+            "short": "Kennesaw St.",
+            "seo": "kennesaw-st",
+            "full": ""
+          },
+          "winner": false,
+          "seed": "",
+          "description": "",
+          "rank": "",
+          "conferences": [
+            {
+              "conferenceName": "",
+              "conferenceSeo": "cusa"
+            }
+          ]
+        },
+        "liveVideoEnabled": false,
+        "startTime": "11:00 AM ET",
+        "startTimeEpoch": "1766160000",
+        "bracketId": "",
+        "gameState": "final",
+        "startDate": "12/19/2025",
+        "currentPeriod": "FINAL",
+        "videoState": "",
+        "bracketRegion": "",
+        "contestClock": "0:00"
+      }
+    },
+    {
+      "game": {
+        "gameID": "6534500",
+        "away": {
+          "score": "31",
+          "names": {
+            "char6": "NC ST",
+            "short": "NC State",
+            "seo": "north-carolina-st",
+            "full": ""
+          },
+          "winner": true,
+          "seed": "",
+          "description": "",
+          "rank": "",
+          "conferences": [
+            {
+              "conferenceName": "",
+              "conferenceSeo": "acc"
+            }
+          ]
+        },
+        "finalMessage": "FINAL",
+        "bracketRound": "",
+        "title": "NC State Memphis",
+        "contestName": "",
+        "url": "/game/6534500",
+        "network": "",
+        "home": {
+          "score": "7",
+          "names": {
+            "char6": "MEM",
+            "short": "Memphis",
+            "seo": "memphis",
+            "full": ""
+          },
+          "winner": false,
+          "seed": "",
+          "description": "",
+          "rank": "",
+          "conferences": [
+            {
+              "conferenceName": "",
+              "conferenceSeo": "american"
+            }
+          ]
+        },
+        "liveVideoEnabled": false,
+        "startTime": "2:30 PM ET",
+        "startTimeEpoch": "1766172600",
+        "bracketId": "",
+        "gameState": "final",
+        "startDate": "12/19/2025",
+        "currentPeriod": "FINAL",
+        "videoState": "",
+        "bracketRegion": "",
+        "contestClock": "0:00"
+      }
+    },
+    {
+      "game": {
+        "gameID": "6531844",
+        "away": {
+          "score": "34",
+          "names": {
+            "char6": "ALA",
+            "short": "Alabama",
+            "seo": "alabama",
+            "full": ""
+          },
+          "winner": true,
+          "seed": "9",
+          "description": "",
+          "rank": "",
+          "conferences": [
+            {
+              "conferenceName": "",
+              "conferenceSeo": "sec"
+            }
+          ]
+        },
+        "finalMessage": "FINAL",
+        "bracketRound": "",
+        "title": "Alabama Oklahoma",
+        "contestName": "",
+        "url": "/game/6531844",
+        "network": "ABC",
+        "home": {
+          "score": "24",
+          "names": {
+            "char6": "OKLA",
+            "short": "Oklahoma",
+            "seo": "oklahoma",
+            "full": ""
+          },
+          "winner": false,
+          "seed": "8",
+          "description": "",
+          "rank": "",
+          "conferences": [
+            {
+              "conferenceName": "",
+              "conferenceSeo": "sec"
+            }
+          ]
+        },
+        "liveVideoEnabled": true,
+        "startTime": "8:00 PM ET",
+        "startTimeEpoch": "1766192400",
+        "bracketId": "",
+        "gameState": "final",
+        "startDate": "12/19/2025",
+        "currentPeriod": "FINAL",
+        "videoState": "",
+        "bracketRegion": "",
+        "contestClock": "0:00"
+      }
+    },
+    {
+      "game": {
+        "gameID": "6531848",
+        "away": {
+          "score": "10",
+          "names": {
+            "char6": "MIAMI",
+            "short": "Miami (FL)",
+            "seo": "miami-fl",
+            "full": ""
+          },
+          "winner": true,
+          "seed": "10",
+          "description": "",
+          "rank": "",
+          "conferences": [
+            {
+              "conferenceName": "",
+              "conferenceSeo": "acc"
+            }
+          ]
+        },
+        "finalMessage": "FINAL",
+        "bracketRound": "",
+        "title": "Miami (FL) Texas A&M",
+        "contestName": "",
+        "url": "/game/6531848",
+        "network": "ABC",
+        "home": {
+          "score": "3",
+          "names": {
+            "char6": "TX A&M",
+            "short": "Texas A&M",
+            "seo": "texas-am",
+            "full": ""
+          },
+          "winner": false,
+          "seed": "7",
+          "description": "",
+          "rank": "",
+          "conferences": [
+            {
+              "conferenceName": "",
+              "conferenceSeo": "sec"
+            }
+          ]
+        },
+        "liveVideoEnabled": true,
+        "startTime": "12:00 PM ET",
+        "startTimeEpoch": "1766250000",
+        "bracketId": "",
+        "gameState": "final",
+        "startDate": "12/20/2025",
+        "currentPeriod": "FINAL",
+        "videoState": "",
+        "bracketRegion": "",
+        "contestClock": "0:00"
+      }
+    },
+    {
+      "game": {
+        "gameID": "6531845",
+        "away": {
+          "score": "10",
+          "names": {
+            "char6": "TULANE",
+            "short": "Tulane",
+            "seo": "tulane",
+            "full": ""
+          },
+          "winner": false,
+          "seed": "11",
+          "description": "",
+          "rank": "",
+          "conferences": [
+            {
+              "conferenceName": "",
+              "conferenceSeo": "american"
+            }
+          ]
+        },
+        "finalMessage": "FINAL",
+        "bracketRound": "",
+        "title": "Tulane Ole Miss",
+        "contestName": "",
+        "url": "/game/6531845",
+        "network": "TNT",
+        "home": {
+          "score": "41",
+          "names": {
+            "char6": "MISS",
+            "short": "Ole Miss",
+            "seo": "ole-miss",
+            "full": ""
+          },
+          "winner": true,
+          "seed": "6",
+          "description": "",
+          "rank": "",
+          "conferences": [
+            {
+              "conferenceName": "",
+              "conferenceSeo": "sec"
+            }
+          ]
+        },
+        "liveVideoEnabled": true,
+        "startTime": "3:30 PM ET",
+        "startTimeEpoch": "1766262600",
+        "bracketId": "",
+        "gameState": "final",
+        "startDate": "12/20/2025",
+        "currentPeriod": "FINAL",
+        "videoState": "",
+        "bracketRegion": "",
+        "contestClock": "0:00"
+      }
+    },
+    {
+      "game": {
+        "gameID": "6531841",
+        "away": {
+          "score": "34",
+          "names": {
+            "char6": "JMU",
+            "short": "James Madison",
+            "seo": "james-madison",
+            "full": ""
+          },
+          "winner": false,
+          "seed": "12",
+          "description": "",
+          "rank": "",
+          "conferences": [
+            {
+              "conferenceName": "",
+              "conferenceSeo": "sun-belt"
+            }
+          ]
+        },
+        "finalMessage": "FINAL",
+        "bracketRound": "",
+        "title": "James Madison Oregon",
+        "contestName": "",
+        "url": "/game/6531841",
+        "network": "TNT",
+        "home": {
+          "score": "51",
+          "names": {
+            "char6": "OREGN",
+            "short": "Oregon",
+            "seo": "oregon",
+            "full": ""
+          },
+          "winner": true,
+          "seed": "5",
+          "description": "",
+          "rank": "",
+          "conferences": [
+            {
+              "conferenceName": "",
+              "conferenceSeo": "big-ten"
+            }
+          ]
+        },
+        "liveVideoEnabled": true,
+        "startTime": "7:30 PM ET",
+        "startTimeEpoch": "1766277000",
+        "bracketId": "",
+        "gameState": "final",
+        "startDate": "12/20/2025",
+        "currentPeriod": "FINAL",
+        "videoState": "",
+        "bracketRegion": "",
+        "contestClock": "0:00"
+      }
+    },
+    {
+      "game": {
+        "gameID": "6534501",
+        "away": {
+          "score": "21",
+          "names": {
+            "char6": "UT ST",
+            "short": "Utah St.",
+            "seo": "utah-st",
+            "full": ""
+          },
+          "winner": false,
+          "seed": "",
+          "description": "",
+          "rank": "",
+          "conferences": [
+            {
+              "conferenceName": "",
+              "conferenceSeo": "mountain-west"
+            }
+          ]
+        },
+        "finalMessage": "FINAL",
+        "bracketRound": "",
+        "title": "Utah St. Washington St.",
+        "contestName": "",
+        "url": "/game/6534501",
+        "network": "",
+        "home": {
+          "score": "34",
+          "names": {
+            "char6": "WASHST",
+            "short": "Washington St.",
+            "seo": "washington-st",
+            "full": ""
+          },
+          "winner": true,
+          "seed": "",
+          "description": "",
+          "rank": "",
+          "conferences": [
+            {
+              "conferenceName": "",
+              "conferenceSeo": "pac-12"
+            }
+          ]
+        },
+        "liveVideoEnabled": false,
+        "startTime": "2:00 PM ET",
+        "startTimeEpoch": "1766430000",
+        "bracketId": "",
+        "gameState": "final",
+        "startDate": "12/22/2025",
+        "currentPeriod": "FINAL",
+        "videoState": "",
+        "bracketRegion": "",
+        "contestClock": "0:00"
+      }
+    }
+  ]
+}

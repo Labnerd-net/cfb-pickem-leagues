@@ -1,0 +1,16 @@
+meta {
+  name: Schedule
+  type: http
+  seq: 3
+}
+
+get {
+  url: https://ncaa-api.henrygd.me/schedule/football/fbs/2025
+  body: none
+  auth: inherit
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}

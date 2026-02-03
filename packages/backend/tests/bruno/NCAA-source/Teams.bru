@@ -1,0 +1,16 @@
+meta {
+  name: Teams
+  type: http
+  seq: 1
+}
+
+get {
+  url: https://ncaa-api.henrygd.me/schools-index
+  body: none
+  auth: inherit
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}

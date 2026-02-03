@@ -1,0 +1,40 @@
+meta {
+  name: Set Pick Games
+  type: http
+  seq: 3
+}
+
+post {
+  url: http://{{host}}/api/admin/setpicks
+  body: json
+  auth: inherit
+}
+
+body:json {
+  {
+    "year": "2025",
+    "week": "1",
+    "seasonType": "regular",
+    "games": [ 194,193,198,205 ]
+  }
+}
+
+vars:pre-request {
+  adder: 193
+  game1: 1+{{adder}}
+  game2: 2+{{adder}}
+  game3: 3+{{adder}}
+  game4: 70+{{adder}}
+}
+
+assert {
+  res.body.id: isNumber
+  res.body.email: eq brian@email.com
+  res.body.isAdmin: isBoolean
+  res.status: eq 200
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}

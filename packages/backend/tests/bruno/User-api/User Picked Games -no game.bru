@@ -1,0 +1,34 @@
+meta {
+  name: User Picked Games -no game
+  type: http
+  seq: 7
+}
+
+post {
+  url: http://{{host}}/api/userPicks
+  body: json
+  auth: inherit
+}
+
+headers {
+  Authorization: Bearer {{token}}
+}
+
+body:json {
+  {
+    "year": "2025",
+    "week": "1",
+    "seasonType": "regular",
+    "games": [
+      {
+        "game": 100,
+        "pick": "home_team"
+      }
+    ]
+  }
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}

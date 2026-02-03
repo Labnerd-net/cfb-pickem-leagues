@@ -1,0 +1,70 @@
+{
+  "division": "fbs",
+  "inputMD5Sum": "8e2fd67ba7966eb0f9e91990657439cc",
+  "conference_name": "all-conf",
+  "gameWeeks": [
+    {
+      "week": "01",
+      "games": 96
+    },
+    {
+      "week": "02",
+      "games": 83
+    },
+    {
+      "week": "03",
+      "games": 70
+    },
+    {
+      "week": "04",
+      "games": 62
+    },
+    {
+      "week": "05",
+      "games": 53
+    },
+    {
+      "week": "06",
+      "games": 51
+    },
+    {
+      "week": "07",
+      "games": 56
+    },
+    {
+      "week": "08",
+      "games": 60
+    },
+    {
+      "week": "09",
+      "games": 53
+    },
+    {
+      "week": "10",
+      "games": 52
+    },
+    {
+      "week": "11",
+      "games": 52
+    },
+    {
+      "week": "12",
+      "games": 59
+    },
+    {
+      "week": "13",
+      "games": 64
+    },
+    {
+      "week": "14",
+      "games": 66
+    },
+    {
+      "week": "16",
+      "games": 1
+    }
+  ],
+  "created_at": "08-29-2025 19:03:07",
+  "season": "2025",
+  "sport": "MFB"
+}

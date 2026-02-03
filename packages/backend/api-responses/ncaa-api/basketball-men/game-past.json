@@ -1,0 +1,94 @@
+https://ncaa-api.henrygd.me/game/6505738
+
+{
+  "contests": [
+    {
+      "__typename": "Contest",
+      "id": "6505738",
+      "sportCode": "MBB",
+      "sportUrl": "basketball-men",
+      "division": 1,
+      "clock": "",
+      "currentPeriod": "FINAL",
+      "finalMessage": "FINAL",
+      "gameState": "F",
+      "statusCodeDisplay": "final",
+      "network": null,
+      "startTime": "16:00",
+      "startTimeEpoch": 1769979600,
+      "week": null,
+      "seasonYear": 2025,
+      "winner": 757,
+      "hasStartTime": true,
+      "hasBoxscore": true,
+      "hasPbp": true,
+      "hasScoringSummary": false,
+      "hasPreview": false,
+      "hasRecap": false,
+      "hasTeamStats": true,
+      "linescores": [
+        {
+          "__typename": "Linescore",
+          "period": "1",
+          "home": "39",
+          "visit": "33"
+        },
+        {
+          "__typename": "Linescore",
+          "period": "2",
+          "home": "30",
+          "visit": "45"
+        }
+      ],
+      "teams": [
+        {
+          "__typename": "ContestTeam",
+          "teamId": "2272",
+          "isHome": true,
+          "color": "#C8102E",
+          "seoname": "nebraska",
+          "nameFull": "University of Nebraska-Lincoln",
+          "nameShort": "Nebraska",
+          "name6Char": "NEB",
+          "teamRank": 5,
+          "gameRank": 5,
+          "score": 69,
+          "seed": null,
+          "record": "(20-1)",
+          "divisionName": "d1",
+          "division": 1,
+          "isWinner": false
+        },
+        {
+          "__typename": "ContestTeam",
+          "teamId": "757",
+          "isHome": false,
+          "color": "#F15A22",
+          "seoname": "illinois",
+          "nameFull": "University of Illinois Urbana-Champaign",
+          "nameShort": "Illinois",
+          "name6Char": "ILL",
+          "teamRank": 9,
+          "gameRank": 9,
+          "score": 78,
+          "seed": null,
+          "record": "(18-3)",
+          "divisionName": "d1",
+          "division": 1,
+          "isWinner": true
+        }
+      ],
+      "liveVideos": [],
+      "championship": null,
+      "championshipGame": null,
+      "links": [],
+      "location": {
+        "__typename": "Location",
+        "venue": "Pinnacle Bank Arena",
+        "city": "Lincoln",
+        "stateUsps": "NE"
+      },
+      "stats": null
+    }
+  ]
+}

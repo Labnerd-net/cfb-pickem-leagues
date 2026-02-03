@@ -1,0 +1,73 @@
+export type Team = 'home_team' | 'away_team' | 'pending';
+export type SeasonType = 'regular' | 'postseason' | 'both' | 'allstar' | 'spring_regular' | 'spring_postseason';
+export type Classification = 'fbs' | 'fcs' | 'd1' | 'd2' | 'd3';
+export type DataSource = 'ncaa' | 'cfbd' | 'sdv';
+
+export interface UserFormData {
+  email: string;
+  password: string;
+}
+
+export interface UserData {
+  id: number;
+  email: string;
+  passwordHash: number;
+  isAdmin: boolean;
+  games: UserGameData[] | 'pending';
+}
+
+export interface UserGameData {
+  id: number;
+  weekNumber: number;
+  homeTeam: string;
+  awayTeam: string;
+  completed: boolean;
+  homePoints: number;
+  awayPoints: number;
+  winningTeam: Team;
+  pickedTeam: Team;
+  pickedCorrectly: true | false | 'pending';
+}
+
+export interface AdminWeekData {
+  weekId: number;
+  weekNumber: number;
+  year: number;
+  seasonType: SeasonType;
+  weekStart: string;
+  weekEnd: string;
+  allGames: AdminGameData[];
+}
+
+export interface AdminGameData {
+  weekId: number;
+  picked: boolean;
+  weekNumber: number;
+  year: number;
+  seasonType: SeasonType;
+  completed: boolean;
+  homeTeam: string;
+  awayTeam: string;
+  homePoints: number;
+  awayPoints: number;
+  winningTeam: Team;
+}
+
+export interface WeekIdData {
+  year: number;
+  week: number;
+  seasonType: SeasonType;
+}
+
+export interface PickedGamesData extends WeekIdData {
+  games: number[];
+}
+
+export interface UserGamePicks {
+  game: number;
+  pick: 'home_team' | 'away_team';
+}
+
+export interface AllUserGamePicks extends WeekIdData {
+  games: UserGamePicks[];
+}

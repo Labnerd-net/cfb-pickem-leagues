@@ -1,0 +1,20 @@
+meta {
+  name: Team Logo
+  type: http
+  seq: 2
+}
+
+get {
+  url: https://ncaa-api.henrygd.me/logo/lsu.svg?dark=true
+  body: none
+  auth: inherit
+}
+
+params:query {
+  dark: true
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}

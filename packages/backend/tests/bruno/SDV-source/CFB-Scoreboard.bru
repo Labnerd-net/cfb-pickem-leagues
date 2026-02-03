@@ -1,0 +1,16 @@
+meta {
+  name: CFB-Scoreboard
+  type: http
+  seq: 2
+}
+
+get {
+  url: http://{{host}}/api/sdv/scoreboard/2025/09/13
+  body: none
+  auth: inherit
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}

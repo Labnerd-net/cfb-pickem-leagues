@@ -1,0 +1,34 @@
+meta {
+  name: User Info
+  type: http
+  seq: 3
+}
+
+get {
+  url: http://{{host}}/api/auth/{{id}}
+  body: none
+  auth: inherit
+}
+
+headers {
+  Authorization: Bearer {{token}}
+}
+
+body:json {
+  {
+    "email": "brian@email.com",
+    "password": "monkey"
+  }
+}
+
+assert {
+  res.body.id: isNumber
+  res.body.email: eq brian@email.com
+  res.body.isAdmin: isBoolean
+  res.status: eq 200
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}

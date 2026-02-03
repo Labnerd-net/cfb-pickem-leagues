@@ -1,0 +1,32 @@
+meta {
+  name: Delete User duplicate
+  type: http
+  seq: 10
+}
+
+delete {
+  url: http://{{host}}/api/auth/{{id}}
+  body: none
+  auth: inherit
+}
+
+headers {
+  Authorization: Bearer {{token}}
+}
+
+body:json {
+  {
+    "email": "brian@email.com",
+    "password": "monkey"
+  }
+}
+
+assert {
+  res.status: eq 404
+  res.body.error: eq "User not found"
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}

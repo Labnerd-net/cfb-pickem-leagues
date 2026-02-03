@@ -1,0 +1,28 @@
+meta {
+  name: Login User wrong email
+  type: http
+  seq: 7
+}
+
+post {
+  url: http://{{host}}/api/auth/login
+  body: json
+  auth: inherit
+}
+
+body:json {
+  {
+    "email": "ladner@email.com",
+    "password": "monkey"
+  }
+}
+
+assert {
+  res.body.error: eq "Invalid credentials"
+  res.status: eq 401
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}

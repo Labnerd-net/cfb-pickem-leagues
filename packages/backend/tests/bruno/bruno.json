@@ -1,0 +1,12 @@
+{
+  "version": "1",
+  "name": "CFB-pickem",
+  "type": "collection",
+  "ignore": ["node_modules", ".git"],
+  "size": 0.004487037658691406,
+  "filesCount": 13,
+  "presets": {
+    "requestType": "http",
+    "requestUrl": "http://{{host}}/"
+  }
+}
