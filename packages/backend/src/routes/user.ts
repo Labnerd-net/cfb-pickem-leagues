@@ -14,7 +14,7 @@ user.get('/:userId', authMiddleware, async c => {
     if (!user || user.length !== 1) {
       return c.json(err('User not found', 404));
     }
-    return c.json(ok({ id: user[0].user_id, email: user[0].email, isAdmin: user[0].is_admin }));
+    return c.json(ok({ id: user[0].userId, email: user[0].email, isAdmin: user[0].isAdmin }));
   } catch (e: unknown) {
     if (e instanceof Error) {
       return c.json(err(e.message, 500));

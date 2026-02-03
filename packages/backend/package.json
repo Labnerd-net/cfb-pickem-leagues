@@ -12,6 +12,7 @@
   "dependencies": {
     "@hono/node-server": "^1.19.9",
     "@libsql/client": "^0.17.0",
+    "axios": "^1.13.4",
     "bcryptjs": "^3.0.3",
     "cfbd": "^5.13.2",
     "dotenv": "^17.2.3",

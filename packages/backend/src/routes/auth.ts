@@ -43,12 +43,12 @@ auth.post('/login', async c => {
     if (!user || user.length === 0) {
       return c.json(err('Invalid credentials', 401));
     }
-    const isValid = await verifyPassword(password, user[0].password_hash);
+    const isValid = await verifyPassword(password, user[0].passwordHash);
     if (!isValid) {
       return c.json(err('Invalid credentials', 401));
     }
-    const token = signJwt(user[0].user_id);
-    return c.json(ok({ id: user[0].user_id, isAdmin: user[0].is_admin, token }));
+    const token = signJwt(user[0].userId);
+    return c.json(ok({ id: user[0].userId, isAdmin: user[0].isAdmin, token }));
   } catch (e: unknown) {
     if (e instanceof Error) {
       return c.json(err(e.message, 500));
