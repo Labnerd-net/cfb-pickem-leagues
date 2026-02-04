@@ -1,6 +1,7 @@
 import 'dotenv/config';
 import { boolean, date, integer, pgSchema, serial, text, timestamp } from 'drizzle-orm/pg-core';
 import { relations } from 'drizzle-orm';
+import { columnSeason, columnTeam } from '../index.js';
 
 const adminSchema = pgSchema('admin');
 
@@ -11,10 +12,10 @@ export const adminWeeks = adminSchema.table('weeks', {
   weekId: integer('week_id').notNull().primaryKey(),
   weekNumber: integer('week_number').notNull(),
   year: integer('year').notNull(),
-  seasonType: text('season_type').notNull(),
+  seasonType: columnSeason('season_type').notNull(),
   weekStart: date('week_start').notNull(),
   weekEnd: date('week_end').notNull(),
-  createdAt: timestamp('created_at').defaultNow(),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
 });
 
 // ------------------------------------------------------------------
@@ -28,14 +29,14 @@ export const adminGames = adminSchema.table('games', {
   picked: boolean('picked').notNull(),
   weekNumber: integer('week_number').notNull(),
   year: integer('year').notNull(),
-  seasonType: text('season_type').notNull(),
+  seasonType: columnSeason('season_type').notNull(),
   completed: boolean('completed').notNull(),
   homeTeam: text('home_team').notNull(),
   awayTeam: text('away_team').notNull(),
-  homePoints: integer('home_points'),
-  awayPoints: integer('away_points'),
-  winningTeam: text('winning_team', { enum: ['home_team', 'away_team', 'pending'] }),
-  createdAt: timestamp('created_at').defaultNow(),
+  homePoints: integer('home_points').notNull().default(-1),
+  awayPoints: integer('away_points').notNull().default(-1),
+  winningTeam: columnTeam('winning_team').notNull().default('pending'),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
 });
 
 // ------------------------------------------------------------------

@@ -1,6 +1,6 @@
 import axios from 'axios';
 import type { NcaaScheduleOutput, NcaaScoreboardOutput } from '../types/ncaa-api.js';
-import type { Classification, WeekIdData } from '../types/data.js';
+import type { Classification, WeekIdData } from '@shared/types/cfb-pickem-api.js';
 
 const ncaaAPI = 'https://ncaa-api.henrygd.me';
 

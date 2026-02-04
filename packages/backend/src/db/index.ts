@@ -1,5 +1,19 @@
 import 'dotenv/config';
+import { customType } from 'drizzle-orm/pg-core';
 import { drizzle } from 'drizzle-orm/node-postgres';
+import type { SeasonType, Team } from '@shared/types/cfb-pickem-api.js';
+
+export const columnSeason = customType<{data: SeasonType}>({
+  dataType() {
+    return 'text';
+  },
+});
+
+export const columnTeam = customType<{data: Team}>({
+  dataType() {
+    return 'text';
+  },
+});
 
 // ------------------------------------------------------------------
 // DB instance

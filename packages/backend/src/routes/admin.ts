@@ -1,8 +1,8 @@
 import { Hono } from 'hono';
 import * as dbAdminFunctions from '../db/dbAdminFunctions.js';
 import { getWeekData, getGameData } from '../api/index.js';
-import type { PickedGamesData, WeekIdData } from '../types/data.js';
 import { ok, err } from '../utils/response.js';
+import type { AdminDbGameData, PickedGamesData, WeekIdData } from '@shared/types/cfb-pickem-api.js'
 
 const admin = new Hono();
 
@@ -62,7 +62,7 @@ admin.post('/getgames', async c => {
 admin.post('/getpicked', async c => {
   try {
     const pickedData: WeekIdData = await c.req.json();
-    const pickedGames = await dbAdminFunctions.returnPickedGames(pickedData);
+    const pickedGames: AdminDbGameData[] = await dbAdminFunctions.returnPickedGames(pickedData);
     if (!pickedGames || pickedGames.length === 0) {
       return c.json(err('No picked games found for this week', 404));
     }

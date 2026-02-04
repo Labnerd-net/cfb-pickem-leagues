@@ -1,7 +1,7 @@
 import { client, getGames, getCalendar } from 'cfbd';
 import type { DivisionClassification } from 'cfbd';
 import { cfbdApiKey } from '../utils/envVars.js';
-import type { WeekIdData, Classification } from '../types/data.js';
+import type { Classification, WeekIdData } from '@shared/types/cfb-pickem-api.js';
 
 // Set up the client with your API key
 client.setConfig({

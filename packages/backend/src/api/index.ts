@@ -1,5 +1,5 @@
+import type { AdminGameData, AdminWeekData, Classification, Team, WeekIdData } from '@shared/types/cfb-pickem-api.js';
 import { dataSource } from '../utils/envVars.js';
-import type { AdminGameData, AdminWeekData, Classification, Team, WeekIdData } from '../types/data.js';
 import { getCfbdGameData, getCfbdWeekData } from './cfbd.js';
 import { getNcaaSchedule, getNcaaScoreboard } from './ncaa-api.js';
 // import { getSdvWeekData, getSdvGameData } from './sdv.js';

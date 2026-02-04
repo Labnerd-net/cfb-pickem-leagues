@@ -1,13 +1,13 @@
 import { eq, and, inArray, notInArray } from 'drizzle-orm';
 import { adminWeeks, adminGames } from './schema/admin.js';
 import { db } from './index.js';
-import type { AdminGameData, AdminWeekData, Team, WeekIdData } from '../types/data.js';
 import { returnID } from '../api/index.js';
+import type { AdminDbGameData, AdminGameData, AdminWeekData, Team, WeekIdData } from '@shared/types/cfb-pickem-api.js';
 
 // ------------------------------------------------------------------
 // Return week
 // ------------------------------------------------------------------
-export async function returnWeek(week: number) {
+export async function returnWeek(week: number): Promise<AdminWeekData[]> {
   console.log(`Inside returnWeek dbAdminFunction: week=${week}`);
   try {
     return await db.select().from(adminWeeks).where(eq(adminWeeks.weekNumber, week));
@@ -20,7 +20,7 @@ export async function returnWeek(week: number) {
 // ------------------------------------------------------------------
 // Return games for a given week
 // ------------------------------------------------------------------
-export async function returnGamesForWeek(idData: WeekIdData) {
+export async function returnGamesForWeek(idData: WeekIdData): Promise<AdminDbGameData[]> {
   const id = returnID(idData);
   console.log(`Inside returnGamesForWeek dbAdminFunction: week_id = ${id}`);
   try {
@@ -34,7 +34,7 @@ export async function returnGamesForWeek(idData: WeekIdData) {
 // ------------------------------------------------------------------
 // Add a week
 // ------------------------------------------------------------------
-export async function addWeek(week: AdminWeekData) {
+export async function addWeek(week: AdminWeekData): Promise<void> {
   console.log(`Inside addWeek dbAdminFunction: week_id=${week.weekId}`);
   try {
     await db.insert(adminWeeks).values({
@@ -54,15 +54,15 @@ export async function addWeek(week: AdminWeekData) {
 // ------------------------------------------------------------------
 // Add single game to a week
 // ------------------------------------------------------------------
-export async function addGameToWeek(game: AdminGameData) {
+export async function addGameToWeek(game: AdminGameData): Promise<void> {
   console.log(`Inside addGameToWeek dbAdminFunction: week_id=${game.weekId}`);
   try {
-    let winning_team: Team = 'pending';
+    let winningTeam: Team = 'pending';
     if (game.completed && game.homePoints !== null && game.awayPoints !== null) {
       if (game.homePoints > game.awayPoints) {
-        winning_team = 'home_team';
+        winningTeam = 'home_team';
       } else if (game.awayPoints > game.homePoints) {
-        winning_team = 'away_team';
+        winningTeam = 'away_team';
       }
     }
     await db.insert(adminGames).values({
@@ -76,7 +76,7 @@ export async function addGameToWeek(game: AdminGameData) {
       awayTeam: game.awayTeam,
       homePoints: game.completed ? game.homePoints : -1,
       awayPoints: game.completed ? game.awayPoints : -1,
-      winningTeam: winning_team,
+      winningTeam: winningTeam,
     });
   } catch (e) {
     console.log(e);
@@ -87,7 +87,7 @@ export async function addGameToWeek(game: AdminGameData) {
 // ------------------------------------------------------------------
 // Return game
 // ------------------------------------------------------------------
-export async function returnGame(game: number) {
+export async function returnGame(game: number): Promise<AdminDbGameData[]> {
   console.log(`Inside returnGame dbAdminFunction: game=${game}`);
   try {
     return await db.select().from(adminGames).where(eq(adminGames.gameId, game));
@@ -100,7 +100,7 @@ export async function returnGame(game: number) {
 // ------------------------------------------------------------------
 // Invert picked game
 // ------------------------------------------------------------------
-export async function invertPickedGame(game: number) {
+export async function invertPickedGame(game: number): Promise<void> {
   console.log(`Inside updatePickedGame dbAdminFunction: game=${game}`);
   try {
     await db
@@ -117,7 +117,7 @@ export async function invertPickedGame(game: number) {
 // ------------------------------------------------------------------
 // Set all picked games from number array
 // ------------------------------------------------------------------
-export async function setPickedGame(games: number[]) {
+export async function setPickedGame(games: number[]): Promise<void> {
   console.log(`Inside updatePickedGame dbAdminFunction: games=${games}`);
   try {
     await db
@@ -137,7 +137,7 @@ export async function setPickedGame(games: number[]) {
 // ------------------------------------------------------------------
 // Return all picked games
 // ------------------------------------------------------------------
-export async function returnPickedGames(idData: WeekIdData) {
+export async function returnPickedGames(idData: WeekIdData): Promise<AdminDbGameData[]> {
   const id = returnID(idData);
   console.log(`Inside returnPickedGames dbAdminFunction: week_id=${id}`);
   try {

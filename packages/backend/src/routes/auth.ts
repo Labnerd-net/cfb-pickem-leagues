@@ -1,8 +1,8 @@
 import { Hono } from 'hono';
 import * as dbUserFunctions from '../db/dbUserFunctions.js';
 import { hashPassword, verifyPassword, signJwt } from '../utils/auth.js';
-import type { UserFormData } from '../types/data.js';
 import { ok, err } from '../utils/response.js';
+import type { UserFormData } from '@shared/types/cfb-pickem-api.js';
 
 const auth = new Hono();
 

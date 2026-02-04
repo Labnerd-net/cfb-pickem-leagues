@@ -1,8 +1,8 @@
 import { Hono } from 'hono';
 import * as dbUserFunctions from '../db/dbUserFunctions.js';
 import { authMiddleware } from '../utils/auth.js';
-import type { AllUserGamePicks } from '../types/data.js';
 import { ok, err } from '../utils/response.js';
+import type { AllUserGamePicks } from '@shared/types/cfb-pickem-api.js';
 
 const user = new Hono();
 

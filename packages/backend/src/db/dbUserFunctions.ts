@@ -1,13 +1,13 @@
 import { eq } from 'drizzle-orm';
 import { users, games } from './schema/users.js';
 import { db } from './index.js';
-import type { UserGamePicks } from '../types/data.js';
 import * as dbAdminFunctions from './dbAdminFunctions.js';
+import type { UserDbData, UserGamePicks } from '@shared/types/cfb-pickem-api.js';
 
 // ------------------------------------------------------------------
 // Return user by Email
 // ------------------------------------------------------------------
-export async function returnUserByEmail(email: string) {
+export async function returnUserByEmail(email: string): Promise<UserDbData[]> {
   console.log(`Inside returnUserByEmail dbUserFunction: email=${email}`);
   try {
     return await db.select().from(users).where(eq(users.email, email));
@@ -20,7 +20,7 @@ export async function returnUserByEmail(email: string) {
 // ------------------------------------------------------------------
 // Return user by Id
 // ------------------------------------------------------------------
-export async function returnUserById(userId: string) {
+export async function returnUserById(userId: string): Promise<UserDbData[]> {
   console.log(`Inside returnUserById dbUserFunction: id=${userId}`);
   try {
     const id = Number(userId);
@@ -67,7 +67,7 @@ export async function deleteUserById(userId: string) {
 // ------------------------------------------------------------------
 // Add Game Picks to user
 // ------------------------------------------------------------------
-export async function addPickedGame(pick: UserGamePicks) {
+export async function addPickedGame(pick: UserGamePicks): Promise<void> {
   console.log(`Inside addPickedGames dbUserFunction: game = ${pick.game}`);
   try {
     const gameInfo = await dbAdminFunctions.returnGame(pick.game);

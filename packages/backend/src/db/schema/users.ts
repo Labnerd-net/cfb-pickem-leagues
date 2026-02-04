@@ -1,6 +1,7 @@
 import 'dotenv/config';
 import { boolean, integer, pgSchema, serial, text, timestamp } from 'drizzle-orm/pg-core';
 import { relations } from 'drizzle-orm';
+import { columnSeason, columnTeam } from '../index.js';
 
 const userSchema = pgSchema('user');
 
@@ -11,8 +12,8 @@ export const users = userSchema.table('users', {
   userId: serial('user_id').primaryKey(),
   email: text('email').notNull().unique(),
   passwordHash: text('password_hash').notNull(),
-  isAdmin: boolean('is_admin').default(false),
-  createdAt: timestamp('created_at').defaultNow(),
+  isAdmin: boolean('is_admin').notNull().default(false),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
 });
 
 // ------------------------------------------------------------------
@@ -26,15 +27,15 @@ export const games = userSchema.table('games', {
   weekId: integer('week_id').notNull(),
   weekNumber: integer('week_number').notNull(),
   year: integer('year').notNull(),
-  seasonType: text('season_type').notNull(),
+  seasonType: columnSeason('season_type').notNull(),
   completed: boolean('completed').notNull(),
   homeTeam: text('home_team').notNull(),
   awayTeam: text('away_team').notNull(),
   homePoints: integer('home_points'),
   awayPoints: integer('away_points'),
-  winningTeam: text('winning_team', { enum: ['home_team', 'away_team', 'pending'] }),
-  teamChosen: text('team_chosen', { enum: ['home_team', 'away_team', 'pending'] }),
-  createdAt: timestamp('created_at').defaultNow(),
+  winningTeam: columnTeam('winning_team').notNull().default('pending'),
+  teamChosen: columnTeam('team_chosen').notNull().default('pending'),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
 });
 
 // ------------------------------------------------------------------

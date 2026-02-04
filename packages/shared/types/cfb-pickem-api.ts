@@ -9,24 +9,34 @@ export interface UserFormData {
 }
 
 export interface UserData {
-  id: number;
+  userId: number;
   email: string;
-  passwordHash: number;
+  passwordHash: string;
   isAdmin: boolean;
-  games: UserGameData[] | 'pending';
+}
+
+export interface UserDbData extends UserData {
+  createdAt: Date;
 }
 
 export interface UserGameData {
-  id: number;
+  gameId: number;
+  userId: number;
+  weekId: number;
   weekNumber: number;
+  year: number;
+  seasonType: SeasonType;
+  completed: boolean;
   homeTeam: string;
   awayTeam: string;
-  completed: boolean;
   homePoints: number;
   awayPoints: number;
   winningTeam: Team;
-  pickedTeam: Team;
-  pickedCorrectly: true | false | 'pending';
+  teamChosen: Team;
+}
+
+export interface UserDbGameData extends UserGameData {
+  createdAt: Date;
 }
 
 export interface AdminWeekData {
@@ -36,11 +46,15 @@ export interface AdminWeekData {
   seasonType: SeasonType;
   weekStart: string;
   weekEnd: string;
-  allGames: AdminGameData[];
+}
+
+export interface AdminDbWeekData extends AdminWeekData {
+  createdAt: Date;
 }
 
 export interface AdminGameData {
   weekId: number;
+  gameId: number;
   picked: boolean;
   weekNumber: number;
   year: number;
@@ -51,6 +65,10 @@ export interface AdminGameData {
   homePoints: number;
   awayPoints: number;
   winningTeam: Team;
+}
+
+export interface AdminDbGameData extends AdminGameData {
+  createdAt: Date;
 }
 
 export interface WeekIdData {
