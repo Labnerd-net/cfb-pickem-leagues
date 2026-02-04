@@ -113,8 +113,6 @@ export async function getGameData(idData: WeekIdData, classification: Classifica
 // Returns a unique id based on year, week, and season type
 // ------------------------------------------------------------------
 export function returnID(idData: WeekIdData): number {
-  console.log('idData:')
-  console.log(idData);
   const { seasonType, year, week } = idData;
   let adjustment: number = 0;
   switch (seasonType) {
@@ -128,6 +126,5 @@ export function returnID(idData: WeekIdData): number {
       adjustment = 900;
   }
   const id = Number(year) * 1000 + adjustment + Number(week);
-  console.log(`result = ${id}`)
   return id;
 }

@@ -10,10 +10,10 @@ CREATE TABLE "admin"."games" (
 	"completed" boolean NOT NULL,
 	"home_team" text NOT NULL,
 	"away_team" text NOT NULL,
-	"home_points" integer,
-	"away_points" integer,
-	"winning_team" text,
-	"created_at" timestamp DEFAULT now()
+	"home_points" integer DEFAULT -1 NOT NULL,
+	"away_points" integer DEFAULT -1 NOT NULL,
+	"winning_team" text DEFAULT 'pending' NOT NULL,
+	"created_at" timestamp DEFAULT now() NOT NULL
 );
 --> statement-breakpoint
 CREATE TABLE "admin"."weeks" (
@@ -23,7 +23,7 @@ CREATE TABLE "admin"."weeks" (
 	"season_type" text NOT NULL,
 	"week_start" date NOT NULL,
 	"week_end" date NOT NULL,
-	"created_at" timestamp DEFAULT now()
+	"created_at" timestamp DEFAULT now() NOT NULL
 );
 --> statement-breakpoint
 CREATE TABLE "user"."games" (
@@ -38,17 +38,17 @@ CREATE TABLE "user"."games" (
 	"away_team" text NOT NULL,
 	"home_points" integer,
 	"away_points" integer,
-	"winning_team" text,
-	"team_chosen" text,
-	"created_at" timestamp DEFAULT now()
+	"winning_team" text DEFAULT 'pending' NOT NULL,
+	"team_chosen" text DEFAULT 'pending' NOT NULL,
+	"created_at" timestamp DEFAULT now() NOT NULL
 );
 --> statement-breakpoint
 CREATE TABLE "user"."users" (
 	"user_id" serial PRIMARY KEY NOT NULL,
 	"email" text NOT NULL,
 	"password_hash" text NOT NULL,
-	"is_admin" boolean DEFAULT false,
-	"created_at" timestamp DEFAULT now(),
+	"is_admin" boolean DEFAULT false NOT NULL,
+	"created_at" timestamp DEFAULT now() NOT NULL,
 	CONSTRAINT "users_email_unique" UNIQUE("email")
 );
 --> statement-breakpoint

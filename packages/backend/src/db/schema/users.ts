@@ -1,7 +1,20 @@
 import 'dotenv/config';
-import { boolean, integer, pgSchema, serial, text, timestamp } from 'drizzle-orm/pg-core';
+import { boolean, customType, integer, pgSchema, serial, text, timestamp } from 'drizzle-orm/pg-core';
 import { relations } from 'drizzle-orm';
-import { columnSeason, columnTeam } from '../index.js';
+// import { columnSeason, columnTeam } from '../index.js';
+import type { SeasonType, Team } from '@shared/types/cfb-pickem-api.js';
+
+export const columnSeason = customType<{data: SeasonType}>({
+  dataType() {
+    return 'text';
+  },
+});
+
+export const columnTeam = customType<{data: Team}>({
+  dataType() {
+    return 'text';
+  },
+});
 
 const userSchema = pgSchema('user');
 
