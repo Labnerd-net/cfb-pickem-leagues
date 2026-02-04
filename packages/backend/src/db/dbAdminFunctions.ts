@@ -2,7 +2,13 @@ import { eq, and, inArray, notInArray } from 'drizzle-orm';
 import { adminWeeks, adminGames } from './schema/admin.js';
 import { db } from './index.js';
 import { returnID } from '../api/index.js';
-import type { AdminDbGameData, AdminGameData, AdminWeekData, Team, WeekIdData } from '@shared/types/cfb-pickem-api.js';
+import type {
+  AdminDbGameData,
+  AdminGameData,
+  AdminWeekData,
+  Team,
+  WeekIdData,
+} from '@shared/types/cfb-pickem-api.js';
 
 // ------------------------------------------------------------------
 // Return week
@@ -113,21 +119,14 @@ export async function invertPickedGame(game: number): Promise<void> {
   }
 }
 
-
 // ------------------------------------------------------------------
 // Set all picked games from number array
 // ------------------------------------------------------------------
 export async function setPickedGame(games: number[]): Promise<void> {
   console.log(`Inside updatePickedGame dbAdminFunction: games=${games}`);
   try {
-    await db
-      .update(adminGames)
-      .set({ picked: true })
-      .where(inArray(adminGames.gameId, games));
-    await db
-      .update(adminGames)
-      .set({ picked: false })
-      .where(notInArray(adminGames.gameId, games));
+    await db.update(adminGames).set({ picked: true }).where(inArray(adminGames.gameId, games));
+    await db.update(adminGames).set({ picked: false }).where(notInArray(adminGames.gameId, games));
   } catch (e) {
     console.log(e);
     throw e;

@@ -21,10 +21,7 @@ export async function getCfbdWeekData(year: number) {
 // ------------------------------------------------------------------
 // Returns Game data from CFBD
 // ------------------------------------------------------------------
-export async function getCfbdGameData(
-  idData: WeekIdData,
-  classification: Classification = 'fbs'
-) {
+export async function getCfbdGameData(idData: WeekIdData, classification: Classification = 'fbs') {
   const cfbdClassification = returnCfbdClassification(classification);
   const cfbdGameData = await getGames({
     query: {

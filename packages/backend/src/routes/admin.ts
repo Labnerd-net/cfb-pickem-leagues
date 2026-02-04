@@ -2,7 +2,7 @@ import { Hono } from 'hono';
 import * as dbAdminFunctions from '../db/dbAdminFunctions.js';
 import { getWeekData, getGameData } from '../api/index.js';
 import { ok, err } from '../utils/response.js';
-import type { AdminDbGameData, PickedGamesData, WeekIdData } from '@shared/types/cfb-pickem-api.js'
+import type { AdminDbGameData, PickedGamesData, WeekIdData } from '@shared/types/cfb-pickem-api.js';
 
 const admin = new Hono();
 

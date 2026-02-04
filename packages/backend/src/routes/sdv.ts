@@ -1,12 +1,12 @@
 import { Hono } from 'hono';
 import { ok, err } from '../utils/response.js';
-import { 
-  getSdvCfbSchedule, 
-  getSdvCfbScoreboard, 
-  getSdvCfbTeamList, 
+import {
+  getSdvCfbSchedule,
+  getSdvCfbScoreboard,
+  getSdvCfbTeamList,
   getSdvCfbTeamInfo,
   getSdvCfbSummary,
-  getSdvCfbBoxScore
+  getSdvCfbBoxScore,
 } from '../api/sdv.js';
 
 const sdv = new Hono();

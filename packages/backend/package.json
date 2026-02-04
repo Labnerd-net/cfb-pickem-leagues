@@ -7,7 +7,7 @@
     "start": "node dist/src/index.js",
     "lint": "eslint . --ext .js,.ts",
     "lint:fix": "eslint . --ext .js,.ts --fix",
-    "format": "prettier --write .",
+    "format": "prettier --write ./src",
     "generate": "npx drizzle-kit generate",
     "migrate": "npx drizzle-kit migrate",
     "studio": "npx drizzle-kit studio"

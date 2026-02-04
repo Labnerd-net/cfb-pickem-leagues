@@ -7,13 +7,19 @@ const ncaaAPI = 'https://ncaa-api.henrygd.me';
 // ------------------------------------------------------------------
 // Returns Scoreboard data from NCAA-API
 // ------------------------------------------------------------------
-export async function getNcaaScoreboard(idData: WeekIdData, classification: Classification = 'fbs', sport: string = 'football') {
+export async function getNcaaScoreboard(
+  idData: WeekIdData,
+  classification: Classification = 'fbs',
+  sport: string = 'football'
+) {
   try {
     // path = fbs/2025/01/all-conf
     const weekTwoDigits = String(idData.week).padStart(2, '0');
     const path = `${classification}/${idData.year}/${weekTwoDigits}/all‑conf`;
     console.log(`${ncaaAPI}/scoreboard/${sport}/${path}`);
-    const response = await axios.get<NcaaScoreboardOutput>(`${ncaaAPI}/scoreboard/${sport}/${path}`);
+    const response = await axios.get<NcaaScoreboardOutput>(
+      `${ncaaAPI}/scoreboard/${sport}/${path}`
+    );
     return response.data;
   } catch (error) {
     console.error(error);
@@ -36,11 +42,17 @@ export async function getNcaaGame(id: number, type: string = '') {
 // ------------------------------------------------------------------
 // Returns Schedule data from NCAA-API
 // ------------------------------------------------------------------
-export async function getNcaaSchedule(year: number, classification: Classification = 'fbs', sport: string = 'football') {
+export async function getNcaaSchedule(
+  year: number,
+  classification: Classification = 'fbs',
+  sport: string = 'football'
+) {
   try {
     // path = 2025 // year only for football
     const endpoint = 'schedule-alt'; // or 'schedule'
-    const response = await axios.get<NcaaScheduleOutput>(`${ncaaAPI}/${endpoint}/${sport}/${classification}/${year}`);
+    const response = await axios.get<NcaaScheduleOutput>(
+      `${ncaaAPI}/${endpoint}/${sport}/${classification}/${year}`
+    );
     return response.data;
   } catch (error) {
     console.error(error);
@@ -68,8 +80,8 @@ export async function getNcaaTeamLogo(school: string) {
     const dark = false;
     const response = await axios.get(`${ncaaAPI}/logo/${school}.svg`, {
       params: {
-        dark: dark
-      }
+        dark: dark,
+      },
     });
     return response.data;
   } catch (error) {
@@ -80,7 +92,12 @@ export async function getNcaaTeamLogo(school: string) {
 // ------------------------------------------------------------------
 // Returns Stat data from NCAA-API
 // ------------------------------------------------------------------
-export async function getNcaaStats(year: number, path: string, classification: Classification = 'fbs', sport: string = 'football') {
+export async function getNcaaStats(
+  year: number,
+  path: string,
+  classification: Classification = 'fbs',
+  sport: string = 'football'
+) {
   try {
     // path = team/28 or individual/20
     const response = await axios.get(`${ncaaAPI}/stats/${sport}/${classification}/${year}/${path}`);

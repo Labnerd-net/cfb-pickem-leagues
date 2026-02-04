@@ -14,8 +14,8 @@ export interface NcaaScheduleOutput {
     schedules: {
       games: NcaaScheduleGames[];
       today: NcaaScheduleToday;
-    }
-  }
+    };
+  };
 }
 
 interface NcaaConference {
@@ -59,7 +59,7 @@ interface NcaaScoreboardGame {
     videoState: string;
     bracketRegion: string;
     contestClock: string;
-  }
+  };
 }
 
 export interface NcaaScoreboardOutput {

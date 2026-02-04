@@ -5,12 +5,30 @@ declare module 'sportsdataverse' {
     getBoxScore(id: number): Promise<BoxScoreData>;
     getSummary(id: number): Promise<GameSummary>;
     getPicks(id: number): Promise<PickCenterData>;
-    getPlayerRankings(args: { year: number; page?: number; group?: "HighSchool" | "JuniorCollege" | "PrepSchool"; state?: string }): Promise<PlayerRankings>;
+    getPlayerRankings(args: {
+      year: number;
+      page?: number;
+      group?: 'HighSchool' | 'JuniorCollege' | 'PrepSchool';
+      state?: string;
+    }): Promise<PlayerRankings>;
     getSchoolRankings(args: { year: number; page?: number }): Promise<SchoolRankings>;
     getSchoolCommits(args: { year: number; school: string }): Promise<SchoolCommits>;
     getRankings(args: { year: number; week: number }): Promise<CFBRankings>;
-    getSchedule(args: { year: number; month: number; day: number; group: number; seasontype?: number }): Promise<ScheduleData[]>;
-    getScoreboard(args: { year: number; month: number; day: number; group: number; seasontype?: number; limit?: number }): Promise<Game[]>;
+    getSchedule(args: {
+      year: number;
+      month: number;
+      day: number;
+      group: number;
+      seasontype?: number;
+    }): Promise<ScheduleData[]>;
+    getScoreboard(args: {
+      year: number;
+      month: number;
+      day: number;
+      group: number;
+      seasontype?: number;
+      limit?: number;
+    }): Promise<Game[]>;
     getConferences(args: { year: number; group: number }): Promise<ConferenceData[]>;
     getStandings(args: { year: number; group: number }): Promise<TeamStandings[]>;
     getTeamList(args: { group: number }): Promise<TeamInfo[]>;
@@ -60,7 +78,7 @@ interface Game {
       score: string;
       linescores: Array<{ value: number }>;
       winner: boolean;
-    }
+    },
   ];
   venue: { id: string; name: string; fullName: string };
 }
@@ -104,7 +122,7 @@ interface BoxScoreData {
         athlete: { id: string; displayName: string; position: string };
         statistics: Array<{ name: string; description: string; displayValue: string }>;
       }>;
-    }
+    },
   ];
 }
 
@@ -230,4 +248,4 @@ interface TeamRoster {
     year: string;
     hometown: string;
   }>;
-}   
+}
