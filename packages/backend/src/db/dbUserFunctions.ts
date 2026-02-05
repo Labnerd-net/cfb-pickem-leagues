@@ -2,7 +2,7 @@ import { eq } from 'drizzle-orm';
 import { users, games } from './schema/users.js';
 import { db } from './index.js';
 import * as dbAdminFunctions from './dbAdminFunctions.js';
-import type { UserDbData, UserGamePicks } from '@shared/types/cfb-pickem-api.js';
+import type { UserData, UserDbData, UserGamePicks } from '@shared/types/cfb-pickem-api.js';
 
 // ------------------------------------------------------------------
 // Return user by Email
@@ -23,8 +23,8 @@ export async function returnUserByEmail(email: string): Promise<UserDbData[]> {
 export async function returnUserById(userId: string): Promise<UserDbData[]> {
   console.log(`Inside returnUserById dbUserFunction: id=${userId}`);
   try {
-    const id = Number(userId);
-    return await db.select().from(users).where(eq(users.userId, id));
+    const userIdNumber = Number(userId);
+    return await db.select().from(users).where(eq(users.userId, userIdNumber));
   } catch (e) {
     console.log(e);
     throw e;
@@ -34,16 +34,17 @@ export async function returnUserById(userId: string): Promise<UserDbData[]> {
 // ------------------------------------------------------------------
 // Add user
 // ------------------------------------------------------------------
-export async function addUser(email: string, passwordHash: string) {
-  console.log(`Inside addUser dbUserFunction: adding ${email}`);
+export async function addUser(user: UserData) {
+  console.log(`Inside addUser dbUserFunction: adding ${user.email}`);
   try {
     return await db
       .insert(users)
       .values({
-        email,
-        passwordHash: passwordHash,
+        email: user.email,
+        passwordHash: user.passwordHash,
+        roles: user.roles,
       })
-      .returning({ id: users.userId });
+      .returning({ id: users.userId, email: users.email, roles: users.roles });
   } catch (e) {
     console.log(e);
     throw e;
@@ -56,8 +57,8 @@ export async function addUser(email: string, passwordHash: string) {
 export async function deleteUserById(userId: string) {
   console.log(`Inside deleteUserById dbUserFunction: deleting id=${userId}`);
   try {
-    const id = Number(userId);
-    return await db.delete(users).where(eq(users.userId, id));
+    const userIdNumber = Number(userId);
+    return await db.delete(users).where(eq(users.userId, userIdNumber));
   } catch (e) {
     console.log(e);
     throw e;
@@ -67,9 +68,10 @@ export async function deleteUserById(userId: string) {
 // ------------------------------------------------------------------
 // Add Game Picks to user
 // ------------------------------------------------------------------
-export async function addPickedGame(pick: UserGamePicks): Promise<void> {
+export async function addPickedGame(pick: UserGamePicks, userId: string): Promise<void> {
   console.log(`Inside addPickedGames dbUserFunction: game = ${pick.game}`);
   try {
+    const userIdNumber = Number(userId);
     const gameInfo = await dbAdminFunctions.returnGame(pick.game);
     if (!gameInfo || gameInfo.length === 0) {
       throw new Error("Game Doesn't Exist");
@@ -77,9 +79,12 @@ export async function addPickedGame(pick: UserGamePicks): Promise<void> {
     if (gameInfo.length > 1) {
       throw new Error('Too many games matched');
     }
+    const userGameId = uniqueGameId(userIdNumber, pick.game);
     await db.insert(games).values({
-      gameId: pick.game,
-      userId: 2,
+      userGameId: userGameId,
+      cfbdGameId: gameInfo[0].cfbdGameId,
+      ncaaGameId: gameInfo[0].ncaaGameId,
+      userId: userIdNumber,
       weekId: gameInfo[0].weekId,
       weekNumber: gameInfo[0].weekNumber,
       year: gameInfo[0].year,
@@ -96,4 +101,8 @@ export async function addPickedGame(pick: UserGamePicks): Promise<void> {
     console.log(e);
     throw e;
   }
+}
+
+function uniqueGameId(userId: number, gameId: number) {
+  return (gameId * 1000) + userId;
 }

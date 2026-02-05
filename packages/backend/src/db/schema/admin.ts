@@ -1,7 +1,6 @@
 import 'dotenv/config';
 import {
   boolean,
-  customType,
   date,
   integer,
   pgSchema,
@@ -10,19 +9,8 @@ import {
   timestamp,
 } from 'drizzle-orm/pg-core';
 import { relations } from 'drizzle-orm';
-import type { SeasonType, Team } from '@shared/types/cfb-pickem-api.js';
-
-export const columnSeason = customType<{ data: SeasonType }>({
-  dataType() {
-    return 'text';
-  },
-});
-
-export const columnTeam = customType<{ data: Team }>({
-  dataType() {
-    return 'text';
-  },
-});
+import { columnSeason, columnTeam } from '../index.js';
+// import { columnSeason, columnTeam } from '../index'; // for drizzle-kit generate
 
 const adminSchema = pgSchema('admin');
 
@@ -44,9 +32,11 @@ export const adminWeeks = adminSchema.table('weeks', {
 // ------------------------------------------------------------------
 export const adminGames = adminSchema.table('games', {
   gameId: serial('game_id').primaryKey(),
+  cfbdGameId: integer('cfbd_game_id'),
+  ncaaGameId: text('ncaa_game_id'),
   weekId: integer('week_id')
     .notNull()
-    .references(() => adminWeeks.weekId),
+    .references(() => adminWeeks.weekId, { onDelete: 'cascade' }),
   picked: boolean('picked').notNull(),
   weekNumber: integer('week_number').notNull(),
   year: integer('year').notNull(),

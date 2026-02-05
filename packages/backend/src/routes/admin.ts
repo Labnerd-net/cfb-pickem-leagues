@@ -1,14 +1,25 @@
 import { Hono } from 'hono';
+// import { except } from 'hono/combine';
 import * as dbAdminFunctions from '../db/dbAdminFunctions.js';
+// import * as dbUserFunctions from '../db/dbUserFunctions.js';
 import { getWeekData, getGameData } from '../api/index.js';
 import { ok, err } from '../utils/response.js';
-import type { AdminDbGameData, PickedGamesData, WeekIdData } from '@shared/types/cfb-pickem-api.js';
+import type { AdminDbGameData, JwtData, PickedGamesData, WeekIdData } from '@shared/types/cfb-pickem-api.js';
+import { authMiddleware, requireRole } from '../utils/middleware.js';
 
-const admin = new Hono();
+type Variables = {
+  jwtPayload: JwtData;
+};
+
+const admin = new Hono<{ Variables: Variables }>();
+admin.use(authMiddleware)
+// admin.use(except('/getpicked', requireRole('admin')));
 
 // Add Weeks to Year
-admin.post('/year/:year', async c => {
+admin.post('/year/:year', requireRole('admin'), async c => {
   try {
+    // const payload = c.get('jwtPayload')
+    // const user = await dbUserFunctions.returnUserById(payload.sub);
     const yearNumber = Number(c.req.param('year'));
     const weekData = await getWeekData(yearNumber);
     console.log(weekData);
@@ -25,7 +36,7 @@ admin.post('/year/:year', async c => {
 });
 
 // Add Games to Week
-admin.post('/week', async c => {
+admin.post('/week', requireRole('admin'), async c => {
   try {
     const pickedData: WeekIdData = await c.req.json();
     const gameData = await getGameData(pickedData);
@@ -42,7 +53,7 @@ admin.post('/week', async c => {
 });
 
 // Get Games for Week
-admin.post('/getgames', async c => {
+admin.post('/getgames', requireRole('admin'), async c => {
   try {
     const pickedData: WeekIdData = await c.req.json();
     const weekGames = await dbAdminFunctions.returnGamesForWeek(pickedData);
@@ -76,7 +87,7 @@ admin.post('/getpicked', async c => {
 });
 
 // Set picked games
-admin.post('/setpicks', async c => {
+admin.post('/setpicks', requireRole('admin'), async c => {
   try {
     const pickedData: PickedGamesData = await c.req.json();
     console.log(JSON.stringify(pickedData));

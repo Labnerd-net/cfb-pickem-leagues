@@ -1,20 +1,25 @@
 import { Hono } from 'hono';
 import * as dbUserFunctions from '../db/dbUserFunctions.js';
-import { authMiddleware } from '../utils/auth.js';
 import { ok, err } from '../utils/response.js';
-import type { AllUserGamePicks } from '@shared/types/cfb-pickem-api.js';
+import type { AllUserGamePicks, JwtData } from '@shared/types/cfb-pickem-api.js';
+import { authMiddleware } from '../utils/middleware.js';
 
-const user = new Hono();
+type Variables = {
+  jwtPayload: JwtData;
+};
+
+const user = new Hono<{ Variables: Variables }>();
+user.use(authMiddleware)
 
 // Show user info
-user.get('/:userId', authMiddleware, async c => {
+user.get('/profile', async c => {
   try {
-    const userId = c.req.param('userId');
-    const user = await dbUserFunctions.returnUserById(userId);
+    const payload = c.get('jwtPayload')
+    const user = await dbUserFunctions.returnUserById(payload.sub);
     if (!user || user.length !== 1) {
       return c.json(err('User not found', 404));
     }
-    return c.json(ok({ id: user[0].userId, email: user[0].email, isAdmin: user[0].isAdmin }));
+    return c.json(ok({ id: user[0].userId, email: user[0].email, roles: user[0].roles }));
   } catch (e: unknown) {
     if (e instanceof Error) {
       return c.json(err(e.message, 500));
@@ -24,11 +29,12 @@ user.get('/:userId', authMiddleware, async c => {
 });
 
 // Set user game picks
-user.post('/picks', authMiddleware, async c => {
+user.post('/picks', async c => {
   try {
+    const payload = c.get('jwtPayload')
     const userPicks: AllUserGamePicks = await c.req.json();
     for (const pick of userPicks.games) {
-      await dbUserFunctions.addPickedGame(pick);
+      await dbUserFunctions.addPickedGame(pick, payload.sub);
     }
     return c.json(ok({ status: 'updated picked games' }));
   } catch (e: unknown) {

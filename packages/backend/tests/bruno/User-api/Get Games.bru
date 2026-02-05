@@ -1,7 +1,7 @@
 meta {
   name: Get Games
   type: http
-  seq: 5
+  seq: 6
 }
 
 post {
@@ -23,10 +23,8 @@ body:json {
 }
 
 assert {
-  res.body.id: isNumber
-  res.body.email: eq brian@email.com
-  res.body.isAdmin: isBoolean
-  res.status: eq 200
+  res.body.error: eq Forbidden
+  res.status: eq 403
 }
 
 settings {

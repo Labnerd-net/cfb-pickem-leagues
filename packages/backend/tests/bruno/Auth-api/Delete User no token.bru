@@ -1,17 +1,13 @@
 meta {
-  name: User Info wrong token
+  name: Delete User no token
   type: http
-  seq: 5
+  seq: 10
 }
 
-get {
-  url: http://{{host}}/api/user/profile
+delete {
+  url: http://{{host}}/api/auth/deleteUser
   body: none
   auth: inherit
-}
-
-headers {
-  Authorization: Bearer 1
 }
 
 body:json {
@@ -23,7 +19,7 @@ body:json {
 
 assert {
   res.status: eq 401
-  res.body: eq Unauthorized
+  res.body: eq "Unauthorized"
 }
 
 settings {

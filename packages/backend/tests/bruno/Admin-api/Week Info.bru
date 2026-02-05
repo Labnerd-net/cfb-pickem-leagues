@@ -1,13 +1,17 @@
 meta {
   name: Week Info
   type: http
-  seq: 1
+  seq: 3
 }
 
 post {
   url: http://{{host}}/api/admin/year/2025
   body: none
   auth: inherit
+}
+
+headers {
+  Authorization: Bearer {{token}}
 }
 
 body:json {

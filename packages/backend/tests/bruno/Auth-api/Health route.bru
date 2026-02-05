@@ -1,17 +1,13 @@
 meta {
-  name: User Info wrong token
+  name: Health route
   type: http
-  seq: 5
+  seq: 2
 }
 
 get {
-  url: http://{{host}}/api/user/profile
+  url: http://{{host}}/health
   body: none
   auth: inherit
-}
-
-headers {
-  Authorization: Bearer 1
 }
 
 body:json {
@@ -22,8 +18,8 @@ body:json {
 }
 
 assert {
-  res.status: eq 401
-  res.body: eq Unauthorized
+  res.status: eq 200
+  res.body.status: eq UP
 }
 
 settings {

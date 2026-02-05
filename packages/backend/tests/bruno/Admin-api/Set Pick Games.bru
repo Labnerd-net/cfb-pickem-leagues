@@ -1,7 +1,7 @@
 meta {
   name: Set Pick Games
   type: http
-  seq: 4
+  seq: 6
 }
 
 post {
@@ -10,21 +10,17 @@ post {
   auth: inherit
 }
 
+headers {
+  Authorization: Bearer {{token}}
+}
+
 body:json {
   {
     "year": "2025",
     "week": "1",
     "seasonType": "regular",
-    "games": [ 19,13,22,5,80 ]
+    "games": [ {{game1}},{{game2}},{{game3}},{{game4}},{{game5}} ]
   }
-}
-
-vars:pre-request {
-  adder: 193
-  game1: 1+{{adder}}
-  game2: 2+{{adder}}
-  game3: 3+{{adder}}
-  game4: 70+{{adder}}
 }
 
 assert {

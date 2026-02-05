@@ -1,11 +1,11 @@
 meta {
   name: Delete User duplicate
   type: http
-  seq: 10
+  seq: 12
 }
 
 delete {
-  url: http://{{host}}/api/auth/{{id}}
+  url: http://{{host}}/api/auth/deleteUser
   body: none
   auth: inherit
 }

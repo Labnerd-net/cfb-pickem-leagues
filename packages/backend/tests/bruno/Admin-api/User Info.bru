@@ -1,7 +1,7 @@
 meta {
-  name: User Info wrong token
+  name: User Info
   type: http
-  seq: 5
+  seq: 9
 }
 
 get {
@@ -11,7 +11,7 @@ get {
 }
 
 headers {
-  Authorization: Bearer 1
+  Authorization: Bearer {{token}}
 }
 
 body:json {
@@ -22,8 +22,9 @@ body:json {
 }
 
 assert {
-  res.status: eq 401
-  res.body: eq Unauthorized
+  res.body.data.id: isNumber
+  res.body.data.email: eq brian@email.com
+  res.status: eq 200
 }
 
 settings {

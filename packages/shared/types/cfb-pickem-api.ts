@@ -1,18 +1,26 @@
+export type Role = 'user' | 'admin';
 export type Team = 'home_team' | 'away_team' | 'pending';
 export type SeasonType = 'regular' | 'postseason' | 'both' | 'allstar' | 'spring_regular' | 'spring_postseason';
 export type Classification = 'fbs' | 'fcs' | 'd1' | 'd2' | 'd3';
 export type DataSource = 'ncaa' | 'cfbd' | 'sdv';
 
-export interface UserFormData {
+export interface Credentials {
   email: string;
   password: string;
+}
+
+export interface JwtData {
+  sub: string;
+  email: string;
+  roles: Role[];
+  exp: number;
 }
 
 export interface UserData {
   userId: number;
   email: string;
   passwordHash: string;
-  isAdmin: boolean;
+  roles: Role[];
 }
 
 export interface UserDbData extends UserData {
@@ -20,7 +28,9 @@ export interface UserDbData extends UserData {
 }
 
 export interface UserGameData {
-  gameId: number;
+  userGameId: number;
+  cfbdGameId: number | null;
+  ncaaGameId: string | null;
   userId: number;
   weekId: number;
   weekNumber: number;
@@ -55,6 +65,8 @@ export interface AdminDbWeekData extends AdminWeekData {
 export interface AdminGameData {
   weekId: number;
   gameId: number;
+  cfbdGameId: number | null;
+  ncaaGameId: string | null;
   picked: boolean;
   weekNumber: number;
   year: number;

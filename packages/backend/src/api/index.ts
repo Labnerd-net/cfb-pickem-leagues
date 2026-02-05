@@ -8,7 +8,6 @@ import type {
 import { dataSource } from '../utils/envVars.js';
 import { getCfbdGameData, getCfbdWeekData } from './cfbd.js';
 import { getNcaaSchedule, getNcaaScoreboard } from './ncaa-api.js';
-// import { getSdvWeekData, getSdvGameData } from './sdv.js';
 
 // ------------------------------------------------------------------
 // Converts schedules from different data sources to database type
@@ -82,6 +81,8 @@ export async function getGameData(
       }
       const data = {} as AdminGameData;
       data.weekId = id;
+      data.cfbdGameId = game.id;
+      data.ncaaGameId = null;
       data.picked = false;
       data.weekNumber = idData.week;
       data.year = idData.year;
@@ -108,6 +109,8 @@ export async function getGameData(
       const awayPoints = game.game.away.score === '' ? -1 : Number(game.game.away.score);
       const data = {} as AdminGameData;
       data.weekId = id;
+      data.cfbdGameId = null;
+      data.ncaaGameId = game.game.gameID;
       data.picked = false;
       data.weekNumber = idData.week;
       data.year = idData.year;

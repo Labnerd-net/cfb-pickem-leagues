@@ -1,7 +1,6 @@
 import 'dotenv/config';
 import {
   boolean,
-  customType,
   integer,
   pgSchema,
   serial,
@@ -9,19 +8,8 @@ import {
   timestamp,
 } from 'drizzle-orm/pg-core';
 import { relations } from 'drizzle-orm';
-import type { SeasonType, Team } from '@shared/types/cfb-pickem-api.js';
-
-export const columnSeason = customType<{ data: SeasonType }>({
-  dataType() {
-    return 'text';
-  },
-});
-
-export const columnTeam = customType<{ data: Team }>({
-  dataType() {
-    return 'text';
-  },
-});
+import { columnRole, columnSeason, columnTeam } from '../index.js';
+// import { columnRole, columnSeason, columnTeam } from '../index'; // for drizzle-kit generate
 
 const userSchema = pgSchema('user');
 
@@ -32,7 +20,7 @@ export const users = userSchema.table('users', {
   userId: serial('user_id').primaryKey(),
   email: text('email').notNull().unique(),
   passwordHash: text('password_hash').notNull(),
-  isAdmin: boolean('is_admin').notNull().default(false),
+  roles: columnRole('roles').array().notNull(),
   createdAt: timestamp('created_at').defaultNow().notNull(),
 });
 
@@ -40,10 +28,12 @@ export const users = userSchema.table('users', {
 // Games – each game belongs to a user
 // ------------------------------------------------------------------
 export const games = userSchema.table('games', {
-  gameId: integer('game_id').notNull().primaryKey(),
+  userGameId: integer('game_id').notNull().primaryKey(),
+  cfbdGameId: integer('cfbd_game_id'),
+  ncaaGameId: text('ncaa_game_id'),
   userId: integer('user_id')
     .notNull()
-    .references(() => users.userId),
+    .references(() => users.userId, { onDelete: 'cascade' }),
   weekId: integer('week_id').notNull(),
   weekNumber: integer('week_number').notNull(),
   year: integer('year').notNull(),

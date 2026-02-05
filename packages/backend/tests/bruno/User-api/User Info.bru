@@ -5,7 +5,7 @@ meta {
 }
 
 get {
-  url: http://{{host}}/api/auth/{{id}}
+  url: http://{{host}}/api/user/profile
   body: none
   auth: inherit
 }
@@ -22,9 +22,8 @@ body:json {
 }
 
 assert {
-  res.body.id: isNumber
-  res.body.email: eq brian@email.com
-  res.body.isAdmin: isBoolean
+  res.body.data.id: isNumber
+  res.body.data.email: eq brian@email.com
   res.status: eq 200
 }
 

@@ -1,11 +1,11 @@
 meta {
   name: Delete User
   type: http
-  seq: 8
+  seq: 10
 }
 
 delete {
-  url: http://{{host}}/api/auth/{{id}}
+  url: http://{{host}}/api/auth/deleteUser
   body: none
   auth: inherit
 }
@@ -23,7 +23,7 @@ body:json {
 
 assert {
   res.status: eq 200
-  res.body.status: eq "deleted"
+  res.body.data.status: eq "deleted"
 }
 
 settings {

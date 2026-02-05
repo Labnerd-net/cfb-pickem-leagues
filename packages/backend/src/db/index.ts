@@ -1,5 +1,7 @@
 import 'dotenv/config';
 import { drizzle } from 'drizzle-orm/node-postgres';
+import { customType } from 'drizzle-orm/pg-core';
+import type { Role, SeasonType, Team } from '@shared/types/cfb-pickem-api.js';
 
 // ------------------------------------------------------------------
 // DB instance
@@ -12,3 +14,21 @@ const pgName = process.env.DB_NAME || 'cfb-pickem';
 const dbUrl = `postgres://${pgUser}:${pgPassword}@${pgHost}:${pgPort}/${pgName}`;
 
 export const db = drizzle(dbUrl);
+
+export const columnSeason = customType<{ data: SeasonType }>({
+  dataType() {
+    return 'text';
+  },
+});
+
+export const columnTeam = customType<{ data: Team }>({
+  dataType() {
+    return 'text';
+  },
+});
+
+export const columnRole = customType<{ data: Role }>({
+  dataType() {
+    return 'text';
+  },
+});

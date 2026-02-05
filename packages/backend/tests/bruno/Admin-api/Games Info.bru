@@ -1,13 +1,17 @@
 meta {
   name: Games Info
   type: http
-  seq: 2
+  seq: 4
 }
 
 post {
   url: http://{{host}}/api/admin/week
   body: json
   auth: inherit
+}
+
+headers {
+  Authorization: Bearer {{token}}
 }
 
 body:json {

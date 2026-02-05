@@ -1,5 +1,5 @@
 {
-  "id": "1f4c752e-5cd5-49b1-98f6-b206aea6fa2b",
+  "id": "48ee6034-34cc-4555-a28b-75f086c2b6a2",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "version": "7",
   "dialect": "postgresql",
@@ -13,6 +13,18 @@
           "type": "serial",
           "primaryKey": true,
           "notNull": true
+        },
+        "cfbd_game_id": {
+          "name": "cfbd_game_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "ncaa_game_id": {
+          "name": "ncaa_game_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
         },
         "week_id": {
           "name": "week_id",
@@ -104,7 +116,7 @@
           "columnsTo": [
             "week_id"
           ],
-          "onDelete": "no action",
+          "onDelete": "cascade",
           "onUpdate": "no action"
         }
       },
@@ -179,6 +191,18 @@
           "type": "integer",
           "primaryKey": true,
           "notNull": true
+        },
+        "cfbd_game_id": {
+          "name": "cfbd_game_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "ncaa_game_id": {
+          "name": "ncaa_game_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
         },
         "user_id": {
           "name": "user_id",
@@ -275,7 +299,7 @@
           "columnsTo": [
             "user_id"
           ],
-          "onDelete": "no action",
+          "onDelete": "cascade",
           "onUpdate": "no action"
         }
       },
@@ -307,12 +331,11 @@
           "primaryKey": false,
           "notNull": true
         },
-        "is_admin": {
-          "name": "is_admin",
-          "type": "boolean",
+        "roles": {
+          "name": "roles",
+          "type": "text[]",
           "primaryKey": false,
-          "notNull": true,
-          "default": false
+          "notNull": true
         },
         "created_at": {
           "name": "created_at",

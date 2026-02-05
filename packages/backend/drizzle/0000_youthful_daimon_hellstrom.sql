@@ -2,6 +2,8 @@ CREATE SCHEMA IF NOT EXISTS "admin";
 CREATE SCHEMA IF NOT EXISTS "user";
 CREATE TABLE "admin"."games" (
 	"game_id" serial PRIMARY KEY NOT NULL,
+	"cfbd_game_id" integer,
+	"ncaa_game_id" text,
 	"week_id" integer NOT NULL,
 	"picked" boolean NOT NULL,
 	"week_number" integer NOT NULL,
@@ -28,6 +30,8 @@ CREATE TABLE "admin"."weeks" (
 --> statement-breakpoint
 CREATE TABLE "user"."games" (
 	"game_id" integer PRIMARY KEY NOT NULL,
+	"cfbd_game_id" integer,
+	"ncaa_game_id" text,
 	"user_id" integer NOT NULL,
 	"week_id" integer NOT NULL,
 	"week_number" integer NOT NULL,
@@ -47,10 +51,10 @@ CREATE TABLE "user"."users" (
 	"user_id" serial PRIMARY KEY NOT NULL,
 	"email" text NOT NULL,
 	"password_hash" text NOT NULL,
-	"is_admin" boolean DEFAULT false NOT NULL,
+	"roles" text[] NOT NULL,
 	"created_at" timestamp DEFAULT now() NOT NULL,
 	CONSTRAINT "users_email_unique" UNIQUE("email")
 );
 --> statement-breakpoint
-ALTER TABLE "admin"."games" ADD CONSTRAINT "games_week_id_weeks_week_id_fk" FOREIGN KEY ("week_id") REFERENCES "admin"."weeks"("week_id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
-ALTER TABLE "user"."games" ADD CONSTRAINT "games_user_id_users_user_id_fk" FOREIGN KEY ("user_id") REFERENCES "user"."users"("user_id") ON DELETE no action ON UPDATE no action;
+ALTER TABLE "admin"."games" ADD CONSTRAINT "games_week_id_weeks_week_id_fk" FOREIGN KEY ("week_id") REFERENCES "admin"."weeks"("week_id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "user"."games" ADD CONSTRAINT "games_user_id_users_user_id_fk" FOREIGN KEY ("user_id") REFERENCES "user"."users"("user_id") ON DELETE cascade ON UPDATE no action;

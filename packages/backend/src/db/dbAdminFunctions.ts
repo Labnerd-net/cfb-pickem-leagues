@@ -73,6 +73,8 @@ export async function addGameToWeek(game: AdminGameData): Promise<void> {
     }
     await db.insert(adminGames).values({
       weekId: game.weekId,
+      cfbdGameId: game.cfbdGameId,
+      ncaaGameId: game.ncaaGameId,
       picked: false,
       weekNumber: game.weekNumber,
       year: game.year,

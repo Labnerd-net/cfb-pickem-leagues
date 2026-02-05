@@ -6,11 +6,11 @@ import { clientURLs, serverPort } from './utils/envVars.js';
 import authRoutes from './routes/auth.js';
 import adminRoutes from './routes/admin.js';
 import userRoutes from './routes/user.js';
+import { logger } from './utils/middleware.js';
 
 const app = new Hono();
 
-app.use(
-  '*',
+app.use('*',
   cors({
     origin: clientURLs,
     allowHeaders: ['Content-Type', 'Authorization'],
@@ -21,6 +21,7 @@ app.use(
   })
 );
 app.use(prettyJSON());
+app.use(logger);
 
 app.get('/', c => c.text('Welcome to the CFB Pickem!'));
 app.notFound(c => c.json({ message: 'Not Found', ok: false }, 404));
