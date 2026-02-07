@@ -1,10 +1,15 @@
 import { Hono } from 'hono';
-import { sign } from 'hono/jwt'
-import * as bcrypt from 'bcryptjs'
+import { sign } from 'hono/jwt';
+import * as bcrypt from 'bcryptjs';
 import * as dbUserFunctions from '../db/dbUserFunctions.js';
 import { ok, err } from '../utils/response.js';
 import type { Credentials, JwtData, UserData } from '@shared/types/cfb-pickem-api.js';
-import { bcryptSaltRounds, jwtAlgorithm, jwtExpirationSeconds, jwtSecret } from '../utils/envVars.js';
+import {
+  bcryptSaltRounds,
+  jwtAlgorithm,
+  jwtExpirationSeconds,
+  jwtSecret,
+} from '../utils/envVars.js';
 import { authMiddleware } from '../utils/middleware.js';
 
 type Variables = {
@@ -25,8 +30,8 @@ auth.post('/register', async c => {
       return c.json(err('User already exists'), 409);
     }
     const passwordHash = await bcrypt.hash(password, bcryptSaltRounds);
-    const roles = ['user']
-    const user = { email, passwordHash, roles } as UserData
+    const roles = ['user'];
+    const user = { email, passwordHash, roles } as UserData;
     const result = await dbUserFunctions.addUser(user);
     if (!result || !(result.length > 0)) {
       throw new Error(`Could not add new user with email=${email}`);
@@ -36,8 +41,8 @@ auth.post('/register', async c => {
       email: result[0].email,
       roles: result[0].roles,
       exp: jwtExpirationSeconds,
-    }
-    const token = await sign(payload, jwtSecret, jwtAlgorithm)
+    };
+    const token = await sign(payload, jwtSecret, jwtAlgorithm);
     return c.json(ok({ token }));
   } catch (e: unknown) {
     if (e instanceof Error) {
@@ -58,15 +63,15 @@ auth.post('/login', async c => {
     if (!user || user.length === 0) {
       return c.json(err('Invalid credentials'), 401);
     }
-    const isValid = await bcrypt.compare(password, user[0].passwordHash)
+    const isValid = await bcrypt.compare(password, user[0].passwordHash);
     if (!isValid) return c.json(err('Invalid credentials'), 401);
     const payload = {
       sub: user[0].userId,
       email: user[0].email,
       roles: user[0].roles,
       exp: jwtExpirationSeconds,
-    }
-    const token = await sign(payload, jwtSecret, jwtAlgorithm)
+    };
+    const token = await sign(payload, jwtSecret, jwtAlgorithm);
     return c.json(ok({ id: user[0].userId, token }));
     // return c.json(ok({ id: user[0].userId, roles: user[0].roles, token }));
   } catch (e: unknown) {
@@ -80,7 +85,7 @@ auth.post('/login', async c => {
 // Delete a user by ID
 auth.delete('/deleteUser', authMiddleware, async c => {
   try {
-    const payload = c.get('jwtPayload')
+    const payload = c.get('jwtPayload');
     const user = await dbUserFunctions.returnUserById(payload.sub);
     if (!user || user.length === 0) {
       return c.json(err('User not found'), 404);

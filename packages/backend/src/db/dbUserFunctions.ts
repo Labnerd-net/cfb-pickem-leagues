@@ -1,8 +1,9 @@
-import { eq } from 'drizzle-orm';
+import { eq, and } from 'drizzle-orm';
 import { users, games } from './schema/users.js';
 import { db } from './index.js';
+import { returnID } from '../api/index.js';
 import * as dbAdminFunctions from './dbAdminFunctions.js';
-import type { UserData, UserDbData, UserGamePicks } from '@shared/types/cfb-pickem-api.js';
+import type { UserData, UserDbData, UserDbGameData, UserGamePicks, WeekIdData } from '@shared/types/cfb-pickem-api.js';
 
 // ------------------------------------------------------------------
 // Return user by Email
@@ -97,6 +98,24 @@ export async function addPickedGame(pick: UserGamePicks, userId: string): Promis
       winningTeam: gameInfo[0].winningTeam,
       teamChosen: pick.pick,
     });
+  } catch (e) {
+    console.log(e);
+    throw e;
+  }
+}
+
+// ------------------------------------------------------------------
+// Return User Games
+// ------------------------------------------------------------------
+export async function returnUserGames(idData: WeekIdData, userId: string): Promise<UserDbGameData[]> {
+  const id = returnID(idData);
+  const userIdNumber = Number(userId);
+  console.log(`Inside returnUserGames dbUserFunction: week_id=${id}`);
+  try {
+    return await db
+      .select()
+      .from(games)
+      .where(and(eq(games.weekId, id), eq(games.userId, userIdNumber)));
   } catch (e) {
     console.log(e);
     throw e;

@@ -1,12 +1,5 @@
 import 'dotenv/config';
-import {
-  boolean,
-  integer,
-  pgSchema,
-  serial,
-  text,
-  timestamp,
-} from 'drizzle-orm/pg-core';
+import { boolean, integer, pgSchema, serial, text, timestamp } from 'drizzle-orm/pg-core';
 import { relations } from 'drizzle-orm';
 import { columnRole, columnSeason, columnTeam } from '../index.js';
 // import { columnRole, columnSeason, columnTeam } from '../index'; // for drizzle-kit generate
@@ -41,8 +34,8 @@ export const games = userSchema.table('games', {
   completed: boolean('completed').notNull(),
   homeTeam: text('home_team').notNull(),
   awayTeam: text('away_team').notNull(),
-  homePoints: integer('home_points'),
-  awayPoints: integer('away_points'),
+  homePoints: integer('home_points').notNull(),
+  awayPoints: integer('away_points').notNull(),
   winningTeam: columnTeam('winning_team').notNull().default('pending'),
   teamChosen: columnTeam('team_chosen').notNull().default('pending'),
   createdAt: timestamp('created_at').defaultNow().notNull(),

@@ -1,10 +1,14 @@
 import { Hono } from 'hono';
-// import { except } from 'hono/combine';
 import * as dbAdminFunctions from '../db/dbAdminFunctions.js';
 // import * as dbUserFunctions from '../db/dbUserFunctions.js';
 import { getWeekData, getGameData } from '../api/index.js';
 import { ok, err } from '../utils/response.js';
-import type { AdminDbGameData, JwtData, PickedGamesData, WeekIdData } from '@shared/types/cfb-pickem-api.js';
+import type {
+  AdminDbGameData,
+  JwtData,
+  PickedGamesData,
+  WeekIdData,
+} from '@shared/types/cfb-pickem-api.js';
 import { authMiddleware, requireRole } from '../utils/middleware.js';
 
 type Variables = {
@@ -12,8 +16,7 @@ type Variables = {
 };
 
 const admin = new Hono<{ Variables: Variables }>();
-admin.use(authMiddleware)
-// admin.use(except('/getpicked', requireRole('admin')));
+admin.use(authMiddleware);
 
 // Add Weeks to Year
 admin.post('/year/:year', requireRole('admin'), async c => {
@@ -22,7 +25,6 @@ admin.post('/year/:year', requireRole('admin'), async c => {
     // const user = await dbUserFunctions.returnUserById(payload.sub);
     const yearNumber = Number(c.req.param('year'));
     const weekData = await getWeekData(yearNumber);
-    console.log(weekData);
     if (weekData?.length) {
       await Promise.all(weekData.map(week => dbAdminFunctions.addWeek(week)));
     }
@@ -55,8 +57,8 @@ admin.post('/week', requireRole('admin'), async c => {
 // Get Games for Week
 admin.post('/getgames', requireRole('admin'), async c => {
   try {
-    const pickedData: WeekIdData = await c.req.json();
-    const weekGames = await dbAdminFunctions.returnGamesForWeek(pickedData);
+    const weekData: WeekIdData = await c.req.json();
+    const weekGames = await dbAdminFunctions.returnGamesForWeek(weekData);
     if (!weekGames || weekGames.length === 0) {
       return c.json(err('No games found for this week', 404));
     }
@@ -90,7 +92,6 @@ admin.post('/getpicked', async c => {
 admin.post('/setpicks', requireRole('admin'), async c => {
   try {
     const pickedData: PickedGamesData = await c.req.json();
-    console.log(JSON.stringify(pickedData));
     await dbAdminFunctions.setPickedGame(pickedData.games);
     return c.json(ok({ status: 'updated picked games' }));
   } catch (e: unknown) {

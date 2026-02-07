@@ -1,8 +1,14 @@
-export type Role = 'user' | 'admin';
-export type Team = 'home_team' | 'away_team' | 'pending';
-export type SeasonType = 'regular' | 'postseason' | 'both' | 'allstar' | 'spring_regular' | 'spring_postseason';
-export type Classification = 'fbs' | 'fcs' | 'd1' | 'd2' | 'd3';
-export type DataSource = 'ncaa' | 'cfbd' | 'sdv';
+export type Role = "user" | "admin";
+export type Team = "home_team" | "away_team" | "pending";
+export type Classification = "fbs" | "fcs" | "d1" | "d2" | "d3";
+export type DataSource = "ncaa" | "cfbd" | "sdv";
+export type SeasonType =
+  | "regular"
+  | "postseason"
+  | "both"
+  | "allstar"
+  | "spring_regular"
+  | "spring_postseason";
 
 export interface Credentials {
   email: string;
@@ -16,11 +22,14 @@ export interface JwtData {
   exp: number;
 }
 
-export interface UserData {
+export interface ProfileData {
   userId: number;
   email: string;
-  passwordHash: string;
   roles: Role[];
+}
+
+export interface UserData extends ProfileData {
+  passwordHash: string;
 }
 
 export interface UserDbData extends UserData {
@@ -95,7 +104,7 @@ export interface PickedGamesData extends WeekIdData {
 
 export interface UserGamePicks {
   game: number;
-  pick: 'home_team' | 'away_team';
+  pick: "home_team" | "away_team";
 }
 
 export interface AllUserGamePicks extends WeekIdData {
