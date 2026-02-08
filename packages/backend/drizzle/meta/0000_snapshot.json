@@ -1,5 +1,5 @@
 {
-  "id": "48ee6034-34cc-4555-a28b-75f086c2b6a2",
+  "id": "175f0468-4e13-424f-889f-803662ca91dd",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "version": "7",
   "dialect": "postgresql",
@@ -256,13 +256,13 @@
           "name": "home_points",
           "type": "integer",
           "primaryKey": false,
-          "notNull": false
+          "notNull": true
         },
         "away_points": {
           "name": "away_points",
           "type": "integer",
           "primaryKey": false,
-          "notNull": false
+          "notNull": true
         },
         "winning_team": {
           "name": "winning_team",

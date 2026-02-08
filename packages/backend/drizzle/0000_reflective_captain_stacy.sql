@@ -40,8 +40,8 @@ CREATE TABLE "user"."games" (
 	"completed" boolean NOT NULL,
 	"home_team" text NOT NULL,
 	"away_team" text NOT NULL,
-	"home_points" integer,
-	"away_points" integer,
+	"home_points" integer NOT NULL,
+	"away_points" integer NOT NULL,
 	"winning_team" text DEFAULT 'pending' NOT NULL,
 	"team_chosen" text DEFAULT 'pending' NOT NULL,
 	"created_at" timestamp DEFAULT now() NOT NULL

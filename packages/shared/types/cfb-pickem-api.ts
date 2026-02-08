@@ -15,6 +15,10 @@ export interface Credentials {
   password: string;
 }
 
+export interface RegistrationData extends Credentials {
+  confirmPassword: string;
+}
+
 export interface JwtData {
   sub: string;
   email: string;
