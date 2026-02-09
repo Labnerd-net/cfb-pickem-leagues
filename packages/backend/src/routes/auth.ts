@@ -30,7 +30,8 @@ auth.post('/register', async c => {
       return c.json(err('User already exists'), 409);
     }
     const passwordHash = await bcrypt.hash(password, bcryptSaltRounds);
-    const roles = ['user'];
+    const totalUsers = await dbUserFunctions.returnUsers();
+    const roles = totalUsers.length === 0 ? ['user', 'admin'] : ['user'];
     const user = { email, passwordHash, roles } as UserData;
     const result = await dbUserFunctions.addUser(user);
     if (!result || !(result.length > 0)) {

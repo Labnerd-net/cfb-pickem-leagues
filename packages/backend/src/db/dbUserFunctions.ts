@@ -3,7 +3,26 @@ import { users, games } from './schema/users.js';
 import { db } from './index.js';
 import { returnID } from '../api/index.js';
 import * as dbAdminFunctions from './dbAdminFunctions.js';
-import type { UserData, UserDbData, UserDbGameData, UserGamePicks, WeekIdData } from '@shared/types/cfb-pickem-api.js';
+import type {
+  UserData,
+  UserDbData,
+  UserDbGameData,
+  UserGamePicks,
+  WeekIdData,
+} from '@shared/types/cfb-pickem-api.js';
+
+// ------------------------------------------------------------------
+// Return all users
+// ------------------------------------------------------------------
+export async function returnUsers(): Promise<UserDbData[]> {
+  console.log(`Inside returnUsers dbUserFunction`);
+  try {
+    return await db.select().from(users);
+  } catch (e) {
+    console.log(e);
+    throw e;
+  }
+}
 
 // ------------------------------------------------------------------
 // Return user by Email
@@ -107,7 +126,10 @@ export async function addPickedGame(pick: UserGamePicks, userId: string): Promis
 // ------------------------------------------------------------------
 // Return User Games
 // ------------------------------------------------------------------
-export async function returnUserGames(idData: WeekIdData, userId: string): Promise<UserDbGameData[]> {
+export async function returnUserGames(
+  idData: WeekIdData,
+  userId: string
+): Promise<UserDbGameData[]> {
   const id = returnID(idData);
   const userIdNumber = Number(userId);
   console.log(`Inside returnUserGames dbUserFunction: week_id=${id}`);
@@ -123,5 +145,5 @@ export async function returnUserGames(idData: WeekIdData, userId: string): Promi
 }
 
 function uniqueGameId(userId: number, gameId: number) {
-  return (gameId * 1000) + userId;
+  return gameId * 1000 + userId;
 }

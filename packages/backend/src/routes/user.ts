@@ -24,11 +24,7 @@ user.get('/profile', async c => {
     if (!user || user.length !== 1) {
       return c.json(err('User not found', 404));
     }
-    const profile: ProfileData = {
-      userId: user[0].userId,
-      email: user[0].email,
-      roles: user[0].roles,
-    };
+    const profile: ProfileData = user[0];
     return c.json(ok(profile));
   } catch (e: unknown) {
     if (e instanceof Error) {

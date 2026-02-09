@@ -1,12 +1,13 @@
 import { Hono } from 'hono';
 import * as dbAdminFunctions from '../db/dbAdminFunctions.js';
-// import * as dbUserFunctions from '../db/dbUserFunctions.js';
+import { returnUsers } from '../db/dbUserFunctions.js';
 import { getWeekData, getGameData } from '../api/index.js';
 import { ok, err } from '../utils/response.js';
 import type {
   AdminDbGameData,
   JwtData,
   PickedGamesData,
+  ProfileData,
   WeekIdData,
 } from '@shared/types/cfb-pickem-api.js';
 import { authMiddleware, requireRole } from '../utils/middleware.js';
@@ -17,6 +18,20 @@ type Variables = {
 
 const admin = new Hono<{ Variables: Variables }>();
 admin.use(authMiddleware);
+
+// Return all users' details
+admin.post('/users', requireRole('admin'), async c => {
+  try {
+    const allUsers = await returnUsers();
+    const allUserProfiles: ProfileData[] = allUsers;
+    return c.json(ok({ allUserProfiles }));
+  } catch (e: unknown) {
+    if (e instanceof Error) {
+      return c.json(err(e.message, 500));
+    }
+    console.error('An unexpected error occurred:', e);
+  }
+});
 
 // Add Weeks to Year
 admin.post('/year/:year', requireRole('admin'), async c => {
