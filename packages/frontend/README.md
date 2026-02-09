@@ -1,73 +1,68 @@
-# React + TypeScript + Vite
+# CFB Pickem UI
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+React single-page application for the CFB Pickem game. Provides user registration, login, and interfaces for viewing games and submitting weekly picks.
 
-Currently, two official plugins are available:
+## Tech Stack
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) (or [oxc](https://oxc.rs) when used in [rolldown-vite](https://vite.dev/guide/rolldown)) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+- **React 19** — UI framework
+- **React Router 7** — Client-side routing
+- **Material-UI 7** — Component library (with system dark mode support)
+- **React Hook Form + Zod** — Form handling and validation
+- **Axios** — HTTP client
+- **Vite 7** — Build tool with HMR
+- **TypeScript** — Strict mode enabled
 
-## React Compiler
+## Getting Started
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
-
-## Expanding the ESLint configuration
-
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
-
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
-
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+```bash
+cd packages/frontend
+pnpm install
+pnpm dev
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+The app starts at `http://localhost:5173`. Make sure the backend is running at `http://localhost:3000` (or set `VITE_API_URL`).
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
+## Scripts
 
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+| Command | Description |
+|---------|-------------|
+| `pnpm dev` | Start dev server with hot module replacement |
+| `pnpm build` | Type-check and build for production |
+| `pnpm preview` | Preview the production build locally |
+| `pnpm lint` | Run ESLint |
+| `pnpm prettier` | Format code with Prettier |
+
+## Environment Variables
+
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `VITE_API_URL` | `http://localhost:3000` | Backend API base URL |
+
+## Project Structure
+
 ```
+src/
+  apis/           # HTTP client functions organized by domain
+    userRequests.ts     # User-accessible endpoints (profile, picks, games)
+    adminRequests.ts    # Admin-only endpoints (manage weeks, games, users)
+    authRequests.ts     # Authentication (register, login)
+  components/     # React components
+    registration.tsx    # User registration form
+    login.tsx           # Login form
+  App.tsx          # Root component — theme provider, router setup
+  main.tsx         # Entry point
+```
+
+## Key Patterns
+
+- **Authentication**: JWT tokens are stored in `localStorage` and sent as `Authorization: Bearer` headers on API requests.
+- **Theming**: Material-UI configured with system color mode preference (light/dark) via `CssBaseline` and `ThemeProvider`.
+- **API Layer**: All backend calls go through typed functions in `src/apis/`. GET requests pass data as query parameters; POST requests use JSON bodies.
+- **Shared Types**: TypeScript interfaces are imported from `@shared/types/cfb-pickem-api` (the `packages/shared` workspace package) to keep frontend and backend in sync.
+
+## Routes
+
+| Path | Component | Description |
+|------|-----------|-------------|
+| `/login` | `LoginForm` | User login |
+| `/register` | `RegistrationForm` | New user registration |
