@@ -12,6 +12,7 @@ import {
 } from '../utils/envVars.js';
 import { authMiddleware } from '../utils/middleware.js';
 import { validatePassword } from '../utils/passwordValidation.js';
+import { validateEmail } from '../utils/emailValidation.js';
 import { authRateLimit } from '../utils/rateLimiter.js';
 
 type Variables = {
@@ -26,6 +27,12 @@ auth.post('/register', authRateLimit, async c => {
     const { email, password }: Credentials = await c.req.json();
     if (!email || !password) {
       return c.json(err('Email and password required'), 400);
+    }
+
+    // Validate email format
+    const emailValidation = validateEmail(email);
+    if (!emailValidation.valid) {
+      return c.json(err(emailValidation.error!), 400);
     }
 
     // Validate password strength
