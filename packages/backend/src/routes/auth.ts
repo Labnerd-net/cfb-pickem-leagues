@@ -11,6 +11,7 @@ import {
   jwtSecret,
 } from '../utils/envVars.js';
 import { authMiddleware } from '../utils/middleware.js';
+import { validatePassword } from '../utils/passwordValidation.js';
 
 type Variables = {
   jwtPayload: JwtData;
@@ -25,6 +26,13 @@ auth.post('/register', async c => {
     if (!email || !password) {
       return c.json(err('Email and password required'), 400);
     }
+
+    // Validate password strength
+    const passwordValidation = validatePassword(password);
+    if (!passwordValidation.valid) {
+      return c.json(err(passwordValidation.error!), 400);
+    }
+
     const existing = await dbUserFunctions.returnUserByEmail(email);
     if (existing?.length) {
       return c.json(err('User already exists'), 409);
