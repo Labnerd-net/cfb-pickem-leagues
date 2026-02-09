@@ -54,26 +54,3 @@ export async function getAllGames() {
   }
 }
 
-export async function getPickedGames() {
-  try {
-    const token = localStorage.getItem('jwt'); // or read from a cookie
-    const weekData: WeekIdData = {
-      year: 2025,
-      week: 1,
-      seasonType: 'regular',
-    };
-    const response = await axios.post<AdminDbGameData[]>(
-      `${databaseAPI}/${path}/getpicked`,
-      weekData,
-      {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      }
-    );
-    console.log(response.data);
-    return response.data; // Admin DB game data
-  } catch (error) {
-    console.error(error);
-  }
-}

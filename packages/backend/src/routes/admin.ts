@@ -4,7 +4,6 @@ import { returnUsers } from '../db/dbUserFunctions.js';
 import { getWeekData, getGameData } from '../api/index.js';
 import { ok, err } from '../utils/response.js';
 import type {
-  AdminDbGameData,
   JwtData,
   PickedGamesData,
   ProfileData,
@@ -78,23 +77,6 @@ admin.post('/getgames', requireRole('admin'), async c => {
       return c.json(err('No games found for this week', 404));
     }
     return c.json(ok({ weekGames }));
-  } catch (e: unknown) {
-    if (e instanceof Error) {
-      return c.json(err(e.message, 500));
-    }
-    console.error('An unexpected error occurred:', e);
-  }
-});
-
-// Get all picked games
-admin.post('/getpicked', async c => {
-  try {
-    const pickedData: WeekIdData = await c.req.json();
-    const pickedGames: AdminDbGameData[] = await dbAdminFunctions.returnPickedGames(pickedData);
-    if (!pickedGames || pickedGames.length === 0) {
-      return c.json(err('No picked games found for this week', 404));
-    }
-    return c.json(ok({ pickedGames }));
   } catch (e: unknown) {
     if (e instanceof Error) {
       return c.json(err(e.message, 500));

@@ -1,10 +1,13 @@
 import { Hono } from 'hono';
 import * as dbUserFunctions from '../db/dbUserFunctions.js';
+import { returnPickedGames } from '../db/dbAdminFunctions.js';
 import { ok, err } from '../utils/response.js';
 import type {
+  AdminDbGameData,
   AllUserGamePicks,
   JwtData,
   ProfileData,
+  SeasonType,
   WeekIdData,
 } from '@shared/types/cfb-pickem-api.js';
 import { authMiddleware } from '../utils/middleware.js';
@@ -38,9 +41,34 @@ user.get('/profile', async c => {
 user.get('/picks', async c => {
   try {
     const payload = c.get('jwtPayload');
-    const weekData: WeekIdData = await c.req.json();
+    const weekData: WeekIdData = {
+      year: Number(c.req.query('year')),
+      week: Number(c.req.query('week')),
+      seasonType: (c.req.query('seasonType') || 'regular') as SeasonType,
+    };
     const picks = await dbUserFunctions.returnUserGames(weekData, payload.sub);
     return c.json(ok({ picks }));
+  } catch (e: unknown) {
+    if (e instanceof Error) {
+      return c.json(err(e.message, 500));
+    }
+    console.error('An unexpected error occurred:', e);
+  }
+});
+
+// Get admin-picked games for a week
+user.get('/games', async c => {
+  try {
+    const weekData: WeekIdData = {
+      year: Number(c.req.query('year')),
+      week: Number(c.req.query('week')),
+      seasonType: (c.req.query('seasonType') || 'regular') as SeasonType,
+    };
+    const pickedGames: AdminDbGameData[] = await returnPickedGames(weekData);
+    if (!pickedGames || pickedGames.length === 0) {
+      return c.json(err('No picked games found for this week', 404));
+    }
+    return c.json(ok({ pickedGames }));
   } catch (e: unknown) {
     if (e instanceof Error) {
       return c.json(err(e.message, 500));
