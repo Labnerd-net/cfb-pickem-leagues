@@ -8,7 +8,7 @@ export async function loginUser(credentials: Credentials) {
   try {
     const response = await axios.post(`${databaseAPI}/${path}/login`, credentials);
     console.log(response.data);
-    localStorage.setItem('jwt', response.data.token);
+    localStorage.setItem('jwt', response.data.data.token);
     return response.data; // {userId, jwt token}
   } catch (error) {
     console.error(error);
@@ -19,7 +19,7 @@ export async function registerUser(credentials: Credentials) {
   try {
     const response = await axios.post(`${databaseAPI}/${path}/register`, credentials);
     console.log(response.data);
-    localStorage.setItem('jwt', response.data.token);
+    localStorage.setItem('jwt', response.data.data.token);
     return response.data; // {jwt token}
   } catch (error) {
     console.error(error);
@@ -35,7 +35,7 @@ export async function deleteUser() {
       },
     });
     console.log(response.data); // ok or err
-    return response.data;
+    return response.data.data;
   } catch (error) {
     console.error(error);
   }
