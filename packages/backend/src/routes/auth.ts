@@ -7,7 +7,7 @@ import type { Credentials, JwtData, UserData } from '@shared/types/cfb-pickem-ap
 import {
   bcryptSaltRounds,
   jwtAlgorithm,
-  jwtExpirationSeconds,
+  getJwtExpirationSeconds,
   jwtSecret,
 } from '../utils/envVars.js';
 import { authMiddleware } from '../utils/middleware.js';
@@ -41,7 +41,7 @@ auth.post('/register', async c => {
       sub: result[0].id,
       email: result[0].email,
       roles: result[0].roles,
-      exp: jwtExpirationSeconds,
+      exp: getJwtExpirationSeconds(),
     };
     const token = await sign(payload, jwtSecret, jwtAlgorithm);
     return c.json(ok({ token }));
@@ -70,7 +70,7 @@ auth.post('/login', async c => {
       sub: user[0].userId,
       email: user[0].email,
       roles: user[0].roles,
-      exp: jwtExpirationSeconds,
+      exp: getJwtExpirationSeconds(),
     };
     const token = await sign(payload, jwtSecret, jwtAlgorithm);
     return c.json(ok({ id: user[0].userId, token }));

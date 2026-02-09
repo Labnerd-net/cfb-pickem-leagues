@@ -13,17 +13,33 @@ export const clientURLs = envClientURLs || localClientURLs;
 
 export const serverPort = Number(process.env.SERVER_PORT) || 3000;
 
-const jwtExpirationDays = Number(process.env.JWT_EXPIRATION_DAYS) || 7;
-export const jwtExpirationSeconds =
-  Math.floor(Date.now() / 1000) + jwtExpirationDays * 24 * 60 * 60;
+// JWT Configuration
+if (!process.env.JWT_SECRET) {
+  throw new Error('FATAL: JWT_SECRET environment variable is required. Set it in your .env file.');
+}
+
+export const jwtSecret = process.env.JWT_SECRET;
 export const jwtAlgorithm = (process.env.JWT_ALGORITHM || 'HS256') as AlgorithmTypes;
-export const jwtSecret = process.env.JWT_SECRET || 'super‑secret‑change‑me';
+export const jwtExpirationDays = Number(process.env.JWT_EXPIRATION_DAYS) || 7;
+
+// Helper function to calculate JWT expiration (call this when creating tokens)
+export function getJwtExpirationSeconds(): number {
+  return Math.floor(Date.now() / 1000) + jwtExpirationDays * 24 * 60 * 60;
+}
+
 export const bcryptSaltRounds = Number(process.env.JWT_SALT_ROUNDS) || 10;
 
 // cfbd = college football data = https://collegefootballdata.com/
 // ncaa = ncaa-api = https://ncaa-api.henrygd.me/openapi
 // sdv = sportsdataverse = https://js.sportsdataverse.org/docs/intro
+// External Data Source Configuration
 export const dataSource = process.env.DATA_SOURCE || 'ncaa';
 
-export const cfbdApiKey =
-  process.env.CFBD_API_KEY || 'wBt3EIZFsPwmr2GFAQZZcRiXrWgW+zQWQCSkeWe8mPAtpnVx0yN3VnPWYxnCqoOl';
+// Validate CFBD API key if using CFBD as data source
+if (dataSource === 'cfbd' && !process.env.CFBD_API_KEY) {
+  throw new Error(
+    'FATAL: CFBD_API_KEY environment variable is required when DATA_SOURCE=cfbd. Get your key at https://collegefootballdata.com/'
+  );
+}
+
+export const cfbdApiKey = process.env.CFBD_API_KEY || '';

@@ -39,6 +39,14 @@ The server starts at `http://localhost:3000`. A health check is available at `GE
 
 ## Environment Variables
 
+**⚠️ Security:** Copy `.env.example` to `.env` and set `JWT_SECRET` before running the server. The server will refuse to start without a valid `JWT_SECRET`.
+
+```bash
+cp .env.example .env
+# Edit .env and set JWT_SECRET to a secure random string
+# Generate one with: openssl rand -base64 32
+```
+
 | Variable | Default | Description |
 |----------|---------|-------------|
 | `DB_USER` | `postgres` | PostgreSQL username |
@@ -48,11 +56,12 @@ The server starts at `http://localhost:3000`. A health check is available at `GE
 | `DB_NAME` | `cfb-pickem` | Database name |
 | `SERVER_PORT` | `3000` | API server port |
 | `CLIENT_URL` | `http://localhost:5173,...` | Allowed CORS origins (comma-separated) |
-| `JWT_SECRET` | — | Secret key for signing tokens |
+| `JWT_SECRET` | **REQUIRED** | **Secret key for signing tokens (must be set!)** |
 | `JWT_ALGORITHM` | `HS256` | JWT signing algorithm |
 | `JWT_EXPIRATION_DAYS` | `7` | Token expiration in days |
+| `JWT_SALT_ROUNDS` | `10` | Bcrypt salt rounds for password hashing |
 | `DATA_SOURCE` | `ncaa` | External data source (`ncaa`, `cfbd`, or `sdv`) |
-| `CFBD_API_KEY` | — | API key (required if `DATA_SOURCE=cfbd`) |
+| `CFBD_API_KEY` | **Required if using CFBD** | API key (get from https://collegefootballdata.com/) |
 
 ## API Endpoints
 
