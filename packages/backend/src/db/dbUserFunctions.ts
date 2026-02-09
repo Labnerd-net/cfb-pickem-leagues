@@ -99,24 +99,35 @@ export async function addPickedGame(pick: UserGamePicks, userId: string): Promis
     if (gameInfo.length > 1) {
       throw new Error('Too many games matched');
     }
-    const userGameId = uniqueGameId(userIdNumber, pick.game);
-    await db.insert(games).values({
-      userGameId: userGameId,
-      cfbdGameId: gameInfo[0].cfbdGameId,
-      ncaaGameId: gameInfo[0].ncaaGameId,
-      userId: userIdNumber,
-      weekId: gameInfo[0].weekId,
-      weekNumber: gameInfo[0].weekNumber,
-      year: gameInfo[0].year,
-      seasonType: gameInfo[0].seasonType,
-      completed: gameInfo[0].completed,
-      homeTeam: gameInfo[0].homeTeam,
-      awayTeam: gameInfo[0].awayTeam,
-      homePoints: gameInfo[0].completed ? gameInfo[0].homePoints : -1,
-      awayPoints: gameInfo[0].completed ? gameInfo[0].awayPoints : -1,
-      winningTeam: gameInfo[0].winningTeam,
-      teamChosen: pick.pick,
-    });
+    await db
+      .insert(games)
+      .values({
+        userId: userIdNumber,
+        gameId: pick.game,
+        cfbdGameId: gameInfo[0].cfbdGameId,
+        ncaaGameId: gameInfo[0].ncaaGameId,
+        weekId: gameInfo[0].weekId,
+        weekNumber: gameInfo[0].weekNumber,
+        year: gameInfo[0].year,
+        seasonType: gameInfo[0].seasonType,
+        completed: gameInfo[0].completed,
+        homeTeam: gameInfo[0].homeTeam,
+        awayTeam: gameInfo[0].awayTeam,
+        homePoints: gameInfo[0].completed ? gameInfo[0].homePoints : -1,
+        awayPoints: gameInfo[0].completed ? gameInfo[0].awayPoints : -1,
+        winningTeam: gameInfo[0].winningTeam,
+        teamChosen: pick.pick,
+      })
+      .onConflictDoUpdate({
+        target: [games.userId, games.gameId],
+        set: {
+          teamChosen: pick.pick,
+          completed: gameInfo[0].completed,
+          homePoints: gameInfo[0].completed ? gameInfo[0].homePoints : -1,
+          awayPoints: gameInfo[0].completed ? gameInfo[0].awayPoints : -1,
+          winningTeam: gameInfo[0].winningTeam,
+        },
+      });
   } catch (e) {
     console.log(e);
     throw e;
@@ -142,8 +153,4 @@ export async function returnUserGames(
     console.log(e);
     throw e;
   }
-}
-
-function uniqueGameId(userId: number, gameId: number) {
-  return gameId * 1000 + userId;
 }

@@ -41,10 +41,10 @@ export interface UserDbData extends UserData {
 }
 
 export interface UserGameData {
-  userGameId: number;
+  userId: number;
+  gameId: number;
   cfbdGameId: number | null;
   ncaaGameId: string | null;
-  userId: number;
   weekId: number;
   weekNumber: number;
   year: number;
