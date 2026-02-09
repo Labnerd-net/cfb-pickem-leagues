@@ -13,7 +13,7 @@ export const clientURLs = envClientURLs || localClientURLs;
 
 export const serverPort = Number(process.env.SERVER_PORT) || 3000;
 
-const jwtExpirationDays = Number(process.env.JWT_EXPIRATION_DAYS) | 7;
+const jwtExpirationDays = Number(process.env.JWT_EXPIRATION_DAYS) || 7;
 export const jwtExpirationSeconds =
   Math.floor(Date.now() / 1000) + jwtExpirationDays * 24 * 60 * 60;
 export const jwtAlgorithm = (process.env.JWT_ALGORITHM || 'HS256') as AlgorithmTypes;
