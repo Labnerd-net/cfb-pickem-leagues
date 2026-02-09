@@ -59,6 +59,7 @@ auth.post('/register', authRateLimit, async c => {
       return c.json(err(e.message), 500);
     }
     console.error('An unexpected error occurred:', e);
+    return c.json(err('An unexpected error occurred'), 500);
   }
 });
 
@@ -89,6 +90,7 @@ auth.post('/login', authRateLimit, async c => {
       return c.json(err(e.message), 500);
     }
     console.error('An unexpected error occurred:', e);
+    return c.json(err('An unexpected error occurred'), 500);
   }
 });
 
@@ -110,6 +112,7 @@ auth.delete('/deleteUser', authMiddleware, async c => {
       return c.json(err(e.message), 500);
     }
     console.error('An unexpected error occurred:', e);
+    return c.json(err('An unexpected error occurred'), 500);
   }
 });
 

@@ -29,6 +29,7 @@ admin.post('/users', requireRole('admin'), async c => {
       return c.json(err(e.message, 500));
     }
     console.error('An unexpected error occurred:', e);
+    return c.json(err('An unexpected error occurred', 500));
   }
 });
 
@@ -48,6 +49,7 @@ admin.post('/year/:year', requireRole('admin'), async c => {
       return c.json(err(e.message, 500));
     }
     console.error('An unexpected error occurred:', e);
+    return c.json(err('An unexpected error occurred', 500));
   }
 });
 
@@ -65,6 +67,7 @@ admin.post('/week', requireRole('admin'), async c => {
       return c.json(err(e.message, 500));
     }
     console.error('An unexpected error occurred:', e);
+    return c.json(err('An unexpected error occurred', 500));
   }
 });
 
@@ -82,6 +85,7 @@ admin.post('/getgames', requireRole('admin'), async c => {
       return c.json(err(e.message, 500));
     }
     console.error('An unexpected error occurred:', e);
+    return c.json(err('An unexpected error occurred', 500));
   }
 });
 
@@ -96,6 +100,7 @@ admin.post('/setpicks', requireRole('admin'), async c => {
       return c.json(err(e.message, 500));
     }
     console.error('An unexpected error occurred:', e);
+    return c.json(err('An unexpected error occurred', 500));
   }
 });
 

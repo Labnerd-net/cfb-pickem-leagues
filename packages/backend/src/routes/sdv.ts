@@ -23,6 +23,7 @@ sdv.get('/schedule/:year/:month/:day', async c => {
       return c.json(err(e.message, 500));
     }
     console.error('An unexpected error occurred:', e);
+    return c.json(err('An unexpected error occurred', 500));
   }
 });
 
@@ -36,6 +37,7 @@ sdv.get('/summary/:id', async c => {
       return c.json(err(e.message, 500));
     }
     console.error('An unexpected error occurred:', e);
+    return c.json(err('An unexpected error occurred', 500));
   }
 });
 
@@ -49,6 +51,7 @@ sdv.get('/boxscore/:id', async c => {
       return c.json(err(e.message, 500));
     }
     console.error('An unexpected error occurred:', e);
+    return c.json(err('An unexpected error occurred', 500));
   }
 });
 
@@ -64,6 +67,7 @@ sdv.get('/scoreboard/:year/:month/:day', async c => {
       return c.json(err(e.message, 500));
     }
     console.error('An unexpected error occurred:', e);
+    return c.json(err('An unexpected error occurred', 500));
   }
 });
 
@@ -76,6 +80,7 @@ sdv.get('/teamlist', async c => {
       return c.json(err(e.message, 500));
     }
     console.error('An unexpected error occurred:', e);
+    return c.json(err('An unexpected error occurred', 500));
   }
 });
 
@@ -89,6 +94,7 @@ sdv.get('/teaminfo/:id', async c => {
       return c.json(err(e.message, 500));
     }
     console.error('An unexpected error occurred:', e);
+    return c.json(err('An unexpected error occurred', 500));
   }
 });
 

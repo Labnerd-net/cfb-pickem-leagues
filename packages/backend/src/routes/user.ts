@@ -34,6 +34,7 @@ user.get('/profile', async c => {
       return c.json(err(e.message, 500));
     }
     console.error('An unexpected error occurred:', e);
+    return c.json(err('An unexpected error occurred', 500));
   }
 });
 
@@ -53,6 +54,7 @@ user.get('/picks', async c => {
       return c.json(err(e.message, 500));
     }
     console.error('An unexpected error occurred:', e);
+    return c.json(err('An unexpected error occurred', 500));
   }
 });
 
@@ -74,6 +76,7 @@ user.get('/games', async c => {
       return c.json(err(e.message, 500));
     }
     console.error('An unexpected error occurred:', e);
+    return c.json(err('An unexpected error occurred', 500));
   }
 });
 
@@ -91,6 +94,7 @@ user.post('/picks', async c => {
       return c.json(err(e.message, 500));
     }
     console.error('An unexpected error occurred:', e);
+    return c.json(err('An unexpected error occurred', 500));
   }
 });
 
