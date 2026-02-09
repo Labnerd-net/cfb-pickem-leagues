@@ -67,10 +67,12 @@ cp .env.example .env
 
 ### Authentication (`/api/auth`)
 
+**Rate Limiting:** `/register` and `/login` endpoints are rate-limited to 5 attempts per 15 minutes per IP address to prevent brute force attacks.
+
 | Method | Path | Auth | Description |
 |--------|------|------|-------------|
-| POST | `/register` | No | Create a new account (first user gets admin role) |
-| POST | `/login` | No | Login, returns JWT token |
+| POST | `/register` | No | Create a new account (first user gets admin role). Rate-limited. |
+| POST | `/login` | No | Login, returns JWT token. Rate-limited. |
 | DELETE | `/deleteUser` | JWT | Delete the authenticated user's account |
 
 ### User (`/api/user`)

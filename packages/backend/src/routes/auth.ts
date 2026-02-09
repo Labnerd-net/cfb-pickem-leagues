@@ -12,6 +12,7 @@ import {
 } from '../utils/envVars.js';
 import { authMiddleware } from '../utils/middleware.js';
 import { validatePassword } from '../utils/passwordValidation.js';
+import { authRateLimit } from '../utils/rateLimiter.js';
 
 type Variables = {
   jwtPayload: JwtData;
@@ -20,7 +21,7 @@ type Variables = {
 const auth = new Hono<{ Variables: Variables }>();
 
 // Register a new user
-auth.post('/register', async c => {
+auth.post('/register', authRateLimit, async c => {
   try {
     const { email, password }: Credentials = await c.req.json();
     if (!email || !password) {
@@ -62,7 +63,7 @@ auth.post('/register', async c => {
 });
 
 // Log in an existing user
-auth.post('/login', async c => {
+auth.post('/login', authRateLimit, async c => {
   try {
     const { email, password }: Credentials = await c.req.json();
     if (!email || !password) {
