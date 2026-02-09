@@ -1,5 +1,5 @@
 import 'dotenv/config';
-import { boolean, date, integer, pgSchema, serial, text, timestamp } from 'drizzle-orm/pg-core';
+import { boolean, date, index, integer, pgSchema, serial, text, timestamp } from 'drizzle-orm/pg-core';
 import { relations } from 'drizzle-orm';
 import { columnSeason, columnTeam } from '../index.js';
 // import { columnSeason, columnTeam } from '../index'; // for drizzle-kit generate
@@ -17,7 +17,10 @@ export const adminWeeks = adminSchema.table('weeks', {
   weekStart: date('week_start').notNull(),
   weekEnd: date('week_end').notNull(),
   createdAt: timestamp('created_at').defaultNow().notNull(),
-});
+}, (table) => ({
+  weekNumberIdx: index('weeks_week_number_idx').on(table.weekNumber),
+  yearSeasonIdx: index('weeks_year_season_idx').on(table.year, table.seasonType),
+}));
 
 // ------------------------------------------------------------------
 // AdminGames – each game belongs to a week
@@ -40,7 +43,11 @@ export const adminGames = adminSchema.table('games', {
   awayPoints: integer('away_points').notNull().default(-1),
   winningTeam: columnTeam('winning_team').notNull().default('pending'),
   createdAt: timestamp('created_at').defaultNow().notNull(),
-});
+}, (table) => ({
+  weekIdIdx: index('games_week_id_idx').on(table.weekId),
+  pickedIdx: index('games_picked_idx').on(table.picked),
+  weekIdPickedIdx: index('games_week_id_picked_idx').on(table.weekId, table.picked),
+}));
 
 // ------------------------------------------------------------------
 // Relation helpers

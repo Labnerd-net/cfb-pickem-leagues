@@ -1,5 +1,5 @@
 import 'dotenv/config';
-import { boolean, integer, pgSchema, primaryKey, serial, text, timestamp } from 'drizzle-orm/pg-core';
+import { boolean, index, integer, pgSchema, primaryKey, serial, text, timestamp } from 'drizzle-orm/pg-core';
 import { relations } from 'drizzle-orm';
 import { columnRole, columnSeason, columnTeam } from '../index.js';
 // import { columnRole, columnSeason, columnTeam } from '../index'; // for drizzle-kit generate
@@ -41,6 +41,8 @@ export const games = userSchema.table('games', {
   createdAt: timestamp('created_at').defaultNow().notNull(),
 }, (table) => ({
   pk: primaryKey({ columns: [table.userId, table.gameId] }),
+  weekIdIdx: index('user_games_week_id_idx').on(table.weekId),
+  userIdWeekIdIdx: index('user_games_user_id_week_id_idx').on(table.userId, table.weekId),
 }));
 
 // ------------------------------------------------------------------
