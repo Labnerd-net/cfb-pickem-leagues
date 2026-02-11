@@ -88,7 +88,7 @@ export default function Home() {
           <Typography variant="h5" gutterBottom>
             Ready to get started?
           </Typography>
-          <Typography color="text.secondary" paragraph>
+          <Typography color="text.secondary">
             Create your account today and start making picks!
           </Typography>
           <Button
