@@ -23,8 +23,8 @@ export default function Home() {
           <Typography variant="h2" component="h1" gutterBottom>
             College Football Pick'em
           </Typography>
-          <Typography variant="h5" color="text.secondary" paragraph>
-            Test your college football knowledge and compete with friends
+          <Typography variant="h5" color="text.secondary">
+            Test your college football picking ability and compete with friends
           </Typography>
           <Stack direction="row" spacing={2} justifyContent="center" sx={{ mt: 4 }}>
             <Button
