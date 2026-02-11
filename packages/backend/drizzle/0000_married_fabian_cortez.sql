@@ -29,10 +29,10 @@ CREATE TABLE "admin"."weeks" (
 );
 --> statement-breakpoint
 CREATE TABLE "user"."games" (
-	"game_id" integer PRIMARY KEY NOT NULL,
+	"user_id" integer NOT NULL,
+	"game_id" integer NOT NULL,
 	"cfbd_game_id" integer,
 	"ncaa_game_id" text,
-	"user_id" integer NOT NULL,
 	"week_id" integer NOT NULL,
 	"week_number" integer NOT NULL,
 	"year" integer NOT NULL,
@@ -44,12 +44,14 @@ CREATE TABLE "user"."games" (
 	"away_points" integer NOT NULL,
 	"winning_team" text DEFAULT 'pending' NOT NULL,
 	"team_chosen" text DEFAULT 'pending' NOT NULL,
-	"created_at" timestamp DEFAULT now() NOT NULL
+	"created_at" timestamp DEFAULT now() NOT NULL,
+	CONSTRAINT "games_user_id_game_id_pk" PRIMARY KEY("user_id","game_id")
 );
 --> statement-breakpoint
 CREATE TABLE "user"."users" (
 	"user_id" serial PRIMARY KEY NOT NULL,
 	"email" text NOT NULL,
+	"display_name" text DEFAULT '' NOT NULL,
 	"password_hash" text NOT NULL,
 	"roles" text[] NOT NULL,
 	"created_at" timestamp DEFAULT now() NOT NULL,
@@ -57,4 +59,11 @@ CREATE TABLE "user"."users" (
 );
 --> statement-breakpoint
 ALTER TABLE "admin"."games" ADD CONSTRAINT "games_week_id_weeks_week_id_fk" FOREIGN KEY ("week_id") REFERENCES "admin"."weeks"("week_id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
-ALTER TABLE "user"."games" ADD CONSTRAINT "games_user_id_users_user_id_fk" FOREIGN KEY ("user_id") REFERENCES "user"."users"("user_id") ON DELETE cascade ON UPDATE no action;
+ALTER TABLE "user"."games" ADD CONSTRAINT "games_user_id_users_user_id_fk" FOREIGN KEY ("user_id") REFERENCES "user"."users"("user_id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
+CREATE INDEX "games_week_id_idx" ON "admin"."games" USING btree ("week_id");--> statement-breakpoint
+CREATE INDEX "games_picked_idx" ON "admin"."games" USING btree ("picked");--> statement-breakpoint
+CREATE INDEX "games_week_id_picked_idx" ON "admin"."games" USING btree ("week_id","picked");--> statement-breakpoint
+CREATE INDEX "weeks_week_number_idx" ON "admin"."weeks" USING btree ("week_number");--> statement-breakpoint
+CREATE INDEX "weeks_year_season_idx" ON "admin"."weeks" USING btree ("year","season_type");--> statement-breakpoint
+CREATE INDEX "user_games_week_id_idx" ON "user"."games" USING btree ("week_id");--> statement-breakpoint
+CREATE INDEX "user_games_user_id_week_id_idx" ON "user"."games" USING btree ("user_id","week_id");
