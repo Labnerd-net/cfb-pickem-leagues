@@ -79,3 +79,7 @@ CFBD_API_KEY=<required if DATA_SOURCE=cfbd>
 ```
 
 Frontend: `VITE_API_URL=http://localhost:3000`
+
+## Checking Documentation
+
+- **important:** when implementing any lib/framework-specific features, ALWAYS check the appropriate lib/framework documentation useing the Context7 MCP server before writing any code.
