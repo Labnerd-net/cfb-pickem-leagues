@@ -1,19 +1,16 @@
 import { BrowserRouter, Route, Routes } from 'react-router';
-import { createTheme, ThemeProvider } from '@mui/material/styles';
-import CssBaseline from '@mui/material/CssBaseline';
+import { Box } from '@mui/material';
 import RegistrationForm from './components/registration';
 import LoginForm from './components/login';
+import { ThemeProvider } from './contexts/ThemeProvider';
+import ThemeToggle from './components/ThemeToggle';
 
 function App() {
-  const theme = createTheme({
-    palette: {
-      mode: 'dark', // or 'light'
-    },
-  });
-
   return (
-    <ThemeProvider theme={theme} defaultMode="system">
-      <CssBaseline />
+    <ThemeProvider>
+      <Box sx={{ position: 'fixed', top: 16, right: 16, zIndex: 1000 }}>
+        <ThemeToggle />
+      </Box>
       <h1>College Football Pickem</h1>
       <BrowserRouter>
         <Routes>
