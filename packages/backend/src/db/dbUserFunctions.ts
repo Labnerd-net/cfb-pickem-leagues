@@ -61,10 +61,11 @@ export async function addUser(user: UserData) {
       .insert(users)
       .values({
         email: user.email,
+        displayName: user.displayName,
         passwordHash: user.passwordHash,
         roles: user.roles,
       })
-      .returning({ id: users.userId, email: users.email, roles: users.roles });
+      .returning({ id: users.userId, email: users.email, displayName: users.displayName, roles: users.roles });
   } catch (e) {
     console.log(e);
     throw e;

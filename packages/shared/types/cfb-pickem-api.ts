@@ -17,6 +17,7 @@ export interface Credentials {
 
 export interface RegistrationData extends Credentials {
   confirmPassword: string;
+  displayName: string;
 }
 
 export interface JwtData {
@@ -29,6 +30,7 @@ export interface JwtData {
 export interface ProfileData {
   userId: number;
   email: string;
+  displayName: string;
   roles: Role[];
 }
 
