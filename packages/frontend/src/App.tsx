@@ -1,8 +1,8 @@
 import { BrowserRouter, Route, Routes, Navigate } from 'react-router';
 import { AppBar, Toolbar, Typography, Box } from '@mui/material';
 import SportsFootballIcon from '@mui/icons-material/SportsFootball';
-import RegistrationForm from './components/registration';
-import LoginForm from './components/login';
+import RegistrationForm from './pages/Registration';
+import LoginForm from './pages/Login';
 import Home from './components/Home';
 import { ThemeProvider } from './contexts/ThemeProvider';
 import ThemeToggle from './components/ThemeToggle';

@@ -19,7 +19,7 @@ import {
 } from '@mui/material';
 import type { Credentials } from '@shared/types/cfb-pickem-api';
 import { loginUser } from '../apis/authRequests';
-import PasswordField from './auth/PasswordField';
+import PasswordField from '../components/auth/PasswordField';
 
 const LoginSchema = z.object({
   email: z.email('Please enter a valid email address'),

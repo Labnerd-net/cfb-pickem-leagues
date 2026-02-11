@@ -17,7 +17,7 @@ import {
 } from '@mui/material';
 import type { RegistrationData } from '@shared/types/cfb-pickem-api';
 import { registerUser } from '../apis/authRequests';
-import PasswordField from './auth/PasswordField';
+import PasswordField from '../components/auth/PasswordField';
 
 const RegistrationSchema = z
   .object({
