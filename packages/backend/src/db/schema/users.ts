@@ -12,6 +12,7 @@ const userSchema = pgSchema('user');
 export const users = userSchema.table('users', {
   userId: serial('user_id').primaryKey(),
   email: text('email').notNull().unique(),
+  displayName: text('display_name').notNull().default(''),
   passwordHash: text('password_hash').notNull(),
   roles: columnRole('roles').array().notNull(),
   createdAt: timestamp('created_at').defaultNow().notNull(),

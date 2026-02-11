@@ -24,9 +24,17 @@ const auth = new Hono<{ Variables: Variables }>();
 // Register a new user
 auth.post('/register', authRateLimit, async c => {
   try {
-    const { email, password }: Credentials = await c.req.json();
+    const { email, password, displayName } = await c.req.json();
     if (!email || !password) {
       return c.json(err('Email and password required'), 400);
+    }
+
+    // Validate display name
+    if (!displayName || typeof displayName !== 'string' || displayName.trim().length === 0) {
+      return c.json(err('Display name is required'), 400);
+    }
+    if (displayName.length > 50) {
+      return c.json(err('Display name must be less than 50 characters'), 400);
     }
 
     // Validate email format
@@ -48,7 +56,7 @@ auth.post('/register', authRateLimit, async c => {
     const passwordHash = await bcrypt.hash(password, bcryptSaltRounds);
     const totalUsers = await dbUserFunctions.returnUsers();
     const roles = totalUsers.length === 0 ? ['user', 'admin'] : ['user'];
-    const user = { email, passwordHash, roles } as UserData;
+    const user = { email, passwordHash, roles, displayName: displayName.trim() } as UserData;
     const result = await dbUserFunctions.addUser(user);
     if (!result || !(result.length > 0)) {
       throw new Error(`Could not add new user with email=${email}`);
