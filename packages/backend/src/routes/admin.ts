@@ -7,6 +7,7 @@ import type {
   JwtData,
   PickedGamesData,
   ProfileData,
+  SeasonType,
   WeekIdData,
 } from '@shared/types/cfb-pickem-api.js';
 import { authMiddleware, requireRole } from '../utils/middleware.js';
@@ -72,9 +73,13 @@ admin.post('/week', requireRole('admin'), async c => {
 });
 
 // Get Games for Week
-admin.post('/getgames', requireRole('admin'), async c => {
+admin.get('/getgames', requireRole('admin'), async c => {
   try {
-    const weekData: WeekIdData = await c.req.json();
+    const weekData: WeekIdData = {
+      year: Number(c.req.query('year')),
+      week: Number(c.req.query('week')),
+      seasonType: (c.req.query('seasonType') || 'regular') as SeasonType,
+    };
     const weekGames = await dbAdminFunctions.returnGamesForWeek(weekData);
     if (!weekGames || weekGames.length === 0) {
       return c.json(err('No games found for this week', 404));

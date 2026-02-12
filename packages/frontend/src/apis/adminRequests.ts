@@ -65,13 +65,19 @@ export async function addGamesToWeek(weekData: WeekIdData): Promise<AddGamesResp
 export async function getGamesForWeek(weekData: WeekIdData): Promise<GetGamesResponse> {
   try {
     const token = localStorage.getItem('jwt');
-    const response = await axios.post(
+    const response = await axios.get(
       `${databaseAPI}/${path}/getgames`,
-      weekData,
-      { headers: { Authorization: `Bearer ${token}` } }
+      {
+        params: {
+          year: weekData.year,
+          week: weekData.week,
+          seasonType: weekData.seasonType,
+        },
+        headers: { Authorization: `Bearer ${token}` },
+      }
     );
     if (response.data.ok) {
-      return { success: true, data: response.data.data };
+      return { success: true, data: response.data.data.weekGames };
     }
     return { success: false, error: response.data.error };
   } catch (error) {
