@@ -3,9 +3,9 @@ import { AppBar, Toolbar, Typography, Box } from '@mui/material';
 import SportsFootballIcon from '@mui/icons-material/SportsFootball';
 import RegistrationForm from './pages/Registration';
 import LoginForm from './pages/Login';
-import Home from './components/Home';
+import Home from './pages/Home';
 import { ThemeProvider } from './contexts/ThemeProvider';
-import ThemeToggle from './components/ThemeToggle';
+import ThemeToggle from './components/theme/ThemeToggle';
 
 function App() {
   return (
