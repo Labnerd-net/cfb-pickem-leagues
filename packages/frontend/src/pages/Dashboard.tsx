@@ -1,5 +1,10 @@
-import { Container, Box, Paper, Typography } from '@mui/material';
+import { Container, Box, Typography } from '@mui/material';
 import { useAuth } from '../contexts/auth/AuthContext';
+import SportsFootballIcon from '@mui/icons-material/SportsFootball';
+import LeaderboardIcon from '@mui/icons-material/Leaderboard';
+import CalendarMonthIcon from '@mui/icons-material/CalendarMonth';
+import WelcomeBanner from '../components/dashboard/WelcomeBanner';
+import DashboardCard from '../components/dashboard/DashboardCard';
 
 export default function Dashboard() {
   const { user } = useAuth();
@@ -7,17 +12,8 @@ export default function Dashboard() {
   return (
     <Container maxWidth="lg">
       <Box sx={{ mt: 4, mb: 4 }}>
-        {/* Welcome Section */}
-        <Paper elevation={3} sx={{ p: 4, mb: 3 }}>
-          <Typography variant="h4" gutterBottom>
-            Welcome, {user?.displayName}!
-          </Typography>
-          <Typography color="text.secondary">
-            Ready to make your picks for this week?
-          </Typography>
-        </Paper>
+        <WelcomeBanner displayName={user?.displayName || 'User'} />
 
-        {/* Placeholder Sections */}
         <Box
           sx={{
             display: 'grid',
@@ -25,26 +21,54 @@ export default function Dashboard() {
             gap: 3,
           }}
         >
-          <Paper elevation={2} sx={{ p: 3 }}>
-            <Typography variant="h6" gutterBottom>
-              Your Picks
+          <DashboardCard
+            icon={<SportsFootballIcon sx={{ fontSize: 32, color: 'primary.main', mr: 2 }} />}
+            title="Your Picks"
+            accentColor="primary"
+          >
+            <Typography
+              sx={{
+                fontFamily: '"Work Sans", sans-serif',
+                color: 'text.secondary',
+                fontStyle: 'italic',
+              }}
+            >
+              Coming soon...
             </Typography>
-            <Typography color="text.secondary">Coming soon...</Typography>
-          </Paper>
+          </DashboardCard>
 
-          <Paper elevation={2} sx={{ p: 3 }}>
-            <Typography variant="h6" gutterBottom>
-              Leaderboard
+          <DashboardCard
+            icon={<LeaderboardIcon sx={{ fontSize: 32, color: 'secondary.main', mr: 2 }} />}
+            title="Leaderboard"
+            accentColor="secondary"
+          >
+            <Typography
+              sx={{
+                fontFamily: '"Work Sans", sans-serif',
+                color: 'text.secondary',
+                fontStyle: 'italic',
+              }}
+            >
+              Coming soon...
             </Typography>
-            <Typography color="text.secondary">Coming soon...</Typography>
-          </Paper>
+          </DashboardCard>
 
-          <Paper elevation={2} sx={{ p: 3, gridColumn: { xs: '1', md: 'span 2' } }}>
-            <Typography variant="h6" gutterBottom>
-              This Week's Games
+          <DashboardCard
+            icon={<CalendarMonthIcon sx={{ fontSize: 32, color: 'primary.main', mr: 2 }} />}
+            title="This Week's Games"
+            accentColor="primary"
+            gridColumn={{ xs: '1', md: 'span 2' }}
+          >
+            <Typography
+              sx={{
+                fontFamily: '"Work Sans", sans-serif',
+                color: 'text.secondary',
+                fontStyle: 'italic',
+              }}
+            >
+              Coming soon...
             </Typography>
-            <Typography color="text.secondary">Coming soon...</Typography>
-          </Paper>
+          </DashboardCard>
         </Box>
       </Box>
     </Container>

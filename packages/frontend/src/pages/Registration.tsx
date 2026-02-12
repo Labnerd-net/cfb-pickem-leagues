@@ -6,18 +6,19 @@ import { z } from 'zod';
 import {
   Container,
   Box,
-  Paper,
   TextField,
-  Button,
   Typography,
   Link,
   Alert,
-  CircularProgress,
   Stack,
 } from '@mui/material';
+import EmojiEventsIcon from '@mui/icons-material/EmojiEvents';
 import type { RegistrationFormData } from '@shared/types/cfb-pickem-api';
 import { registerUser } from '../apis/authRequests';
 import PasswordField from '../components/auth/PasswordField';
+import AuthFormCard from '../components/auth/AuthFormCard';
+import AuthHeader from '../components/auth/AuthHeader';
+import SubmitButton from '../components/auth/SubmitButton';
 import { useAuth } from '../contexts/auth/AuthContext';
 
 const RegistrationSchema = z
@@ -73,13 +74,23 @@ const RegistrationForm: React.FC = () => {
   return (
     <Container maxWidth="sm">
       <Box sx={{ mt: 8, mb: 4 }}>
-        <Paper elevation={3} sx={{ p: 4 }}>
-          <Typography variant="h4" align="center" gutterBottom>
-            Sign Up
-          </Typography>
+        <AuthFormCard accentColor="secondary">
+          <AuthHeader
+            icon={<EmojiEventsIcon sx={{ fontSize: 40, color: 'secondary.main' }} />}
+            title="Join the Game"
+            subtitle="Create your account and start making picks"
+            iconColor="secondary"
+          />
 
           {error && (
-            <Alert severity="error" sx={{ mb: 2 }}>
+            <Alert
+              severity="error"
+              sx={{
+                mb: 3,
+                fontFamily: '"Work Sans", sans-serif',
+                borderLeft: (theme) => `4px solid ${theme.palette.error.main}`,
+              }}
+            >
               {error}
             </Alert>
           )}
@@ -94,6 +105,12 @@ const RegistrationForm: React.FC = () => {
                 error={!!errors.email}
                 helperText={errors.email?.message}
                 autoComplete="email"
+                sx={{
+                  '& label': {
+                    fontFamily: '"Work Sans", sans-serif',
+                    fontWeight: 600,
+                  },
+                }}
               />
 
               <TextField
@@ -103,6 +120,12 @@ const RegistrationForm: React.FC = () => {
                 error={!!errors.displayName}
                 helperText={errors.displayName?.message}
                 autoComplete="name"
+                sx={{
+                  '& label': {
+                    fontFamily: '"Work Sans", sans-serif',
+                    fontWeight: 600,
+                  },
+                }}
               />
 
               <PasswordField
@@ -121,25 +144,38 @@ const RegistrationForm: React.FC = () => {
                 autoComplete="new-password"
               />
 
-              <Button
-                type="submit"
-                variant="contained"
-                fullWidth
-                size="large"
-                disabled={loading || !isValid}
-              >
-                {loading ? <CircularProgress size={24} /> : 'Sign Up'}
-              </Button>
+              <SubmitButton loading={loading} disabled={loading || !isValid}>
+                Sign Up
+              </SubmitButton>
             </Stack>
           </form>
 
-          <Typography align="center" sx={{ mt: 2 }}>
+          <Typography
+            align="center"
+            sx={{
+              mt: 3,
+              fontFamily: '"Work Sans", sans-serif',
+              fontWeight: 500,
+            }}
+          >
             Already have an account?{' '}
-            <Link component={RouterLink} to="/login">
+            <Link
+              component={RouterLink}
+              to="/login"
+              sx={{
+                color: 'primary.main',
+                fontWeight: 700,
+                textDecoration: 'none',
+                '&:hover': {
+                  color: 'secondary.main',
+                  textDecoration: 'underline',
+                },
+              }}
+            >
               Log in
             </Link>
           </Typography>
-        </Paper>
+        </AuthFormCard>
       </Box>
     </Container>
   );

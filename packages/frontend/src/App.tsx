@@ -6,7 +6,7 @@ import Home from './pages/Home';
 import Dashboard from './pages/Dashboard';
 import { ThemeProvider } from './contexts/theme/ThemeProvider';
 import { AuthProvider } from './contexts/auth/AuthProvider';
-import Navbar from './components/Navbar';
+import Navbar from './components/navbar/Navbar';
 import PrivateRoute from './components/PrivateRoute';
 
 function App() {

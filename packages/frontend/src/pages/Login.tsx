@@ -6,20 +6,21 @@ import { z } from 'zod';
 import {
   Container,
   Box,
-  Paper,
   TextField,
-  Button,
   Typography,
   Link,
   FormControlLabel,
   Checkbox,
   Alert,
-  CircularProgress,
   Stack,
 } from '@mui/material';
+import SportsFootballIcon from '@mui/icons-material/SportsFootball';
 import type { Credentials } from '@shared/types/cfb-pickem-api';
 import { loginUser } from '../apis/authRequests';
 import PasswordField from '../components/auth/PasswordField';
+import AuthFormCard from '../components/auth/AuthFormCard';
+import AuthHeader from '../components/auth/AuthHeader';
+import SubmitButton from '../components/auth/SubmitButton';
 import { useAuth } from '../contexts/auth/AuthContext';
 
 const LoginSchema = z.object({
@@ -69,13 +70,22 @@ const LoginForm: React.FC = () => {
   return (
     <Container maxWidth="sm">
       <Box sx={{ mt: 8, mb: 4 }}>
-        <Paper elevation={3} sx={{ p: 4 }}>
-          <Typography variant="h4" align="center" gutterBottom>
-            Login
-          </Typography>
+        <AuthFormCard>
+          <AuthHeader
+            icon={<SportsFootballIcon sx={{ fontSize: 40, color: 'primary.main' }} />}
+            title="Welcome Back"
+            iconColor="primary"
+          />
 
           {error && (
-            <Alert severity="error" sx={{ mb: 2 }}>
+            <Alert
+              severity="error"
+              sx={{
+                mb: 3,
+                fontFamily: '"Work Sans", sans-serif',
+                borderLeft: (theme) => `4px solid ${theme.palette.error.main}`,
+              }}
+            >
               {error}
             </Alert>
           )}
@@ -90,6 +100,12 @@ const LoginForm: React.FC = () => {
                 error={!!errors.email}
                 helperText={errors.email?.message}
                 autoComplete="email"
+                sx={{
+                  '& label': {
+                    fontFamily: '"Work Sans", sans-serif',
+                    fontWeight: 600,
+                  },
+                }}
               />
 
               <PasswordField
@@ -105,30 +121,57 @@ const LoginForm: React.FC = () => {
                   <Checkbox
                     checked={rememberMe}
                     onChange={(e) => setRememberMe(e.target.checked)}
+                    sx={{
+                      '&.Mui-checked': {
+                        color: 'primary.main',
+                      },
+                    }}
                   />
                 }
-                label="Remember me"
+                label={
+                  <Typography
+                    sx={{
+                      fontFamily: '"Work Sans", sans-serif',
+                      fontWeight: 500,
+                    }}
+                  >
+                    Remember me
+                  </Typography>
+                }
               />
 
-              <Button
-                type="submit"
-                variant="contained"
-                fullWidth
-                size="large"
-                disabled={loading || !isValid}
-              >
-                {loading ? <CircularProgress size={24} /> : 'Login'}
-              </Button>
+              <SubmitButton loading={loading} disabled={loading || !isValid}>
+                Login
+              </SubmitButton>
             </Stack>
           </form>
 
-          <Typography align="center" sx={{ mt: 2 }}>
+          <Typography
+            align="center"
+            sx={{
+              mt: 3,
+              fontFamily: '"Work Sans", sans-serif',
+              fontWeight: 500,
+            }}
+          >
             Don't have an account?{' '}
-            <Link component={RouterLink} to="/register">
+            <Link
+              component={RouterLink}
+              to="/register"
+              sx={{
+                color: 'primary.main',
+                fontWeight: 700,
+                textDecoration: 'none',
+                '&:hover': {
+                  color: 'secondary.main',
+                  textDecoration: 'underline',
+                },
+              }}
+            >
               Sign up
             </Link>
           </Typography>
-        </Paper>
+        </AuthFormCard>
       </Box>
     </Container>
   );

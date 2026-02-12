@@ -29,6 +29,12 @@ export default function PasswordField<T extends FieldValues = FieldValues>({
       error={!!error}
       helperText={error?.message}
       autoComplete={autoComplete}
+      sx={{
+        '& label': {
+          fontFamily: '"Work Sans", sans-serif',
+          fontWeight: 600,
+        },
+      }}
       slotProps={{
         input: {
           endAdornment: (
