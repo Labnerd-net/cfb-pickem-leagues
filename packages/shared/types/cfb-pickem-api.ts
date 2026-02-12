@@ -16,13 +16,17 @@ export interface Credentials {
 }
 
 export interface RegistrationData extends Credentials {
-  confirmPassword: string;
   displayName: string;
 }
 
+export interface RegistrationFormData extends RegistrationData {
+  confirmPassword: string;
+}
+
 export interface JwtData {
-  sub: string;
+  sub: number;
   email: string;
+  displayName: string;
   roles: Role[];
   exp: number;
 }

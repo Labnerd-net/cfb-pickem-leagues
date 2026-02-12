@@ -23,7 +23,8 @@ user.use(authMiddleware);
 user.get('/profile', async c => {
   try {
     const payload = c.get('jwtPayload');
-    const user = await dbUserFunctions.returnUserById(payload.sub);
+    const userIdString = String(payload.sub);
+    const user = await dbUserFunctions.returnUserById(userIdString);
     if (!user || user.length !== 1) {
       return c.json(err('User not found', 404));
     }
@@ -42,12 +43,13 @@ user.get('/profile', async c => {
 user.get('/picks', async c => {
   try {
     const payload = c.get('jwtPayload');
+    const userIdString = String(payload.sub);
     const weekData: WeekIdData = {
       year: Number(c.req.query('year')),
       week: Number(c.req.query('week')),
       seasonType: (c.req.query('seasonType') || 'regular') as SeasonType,
     };
-    const picks = await dbUserFunctions.returnUserGames(weekData, payload.sub);
+    const picks = await dbUserFunctions.returnUserGames(weekData, userIdString);
     return c.json(ok({ picks }));
   } catch (e: unknown) {
     if (e instanceof Error) {
@@ -84,9 +86,10 @@ user.get('/games', async c => {
 user.post('/picks', async c => {
   try {
     const payload = c.get('jwtPayload');
+    const userIdString = String(payload.sub);
     const userPicks: AllUserGamePicks = await c.req.json();
     for (const pick of userPicks.games) {
-      await dbUserFunctions.addPickedGame(pick, payload.sub);
+      await dbUserFunctions.addPickedGame(pick, userIdString);
     }
     return c.json(ok({ status: 'updated picked games' }));
   } catch (e: unknown) {

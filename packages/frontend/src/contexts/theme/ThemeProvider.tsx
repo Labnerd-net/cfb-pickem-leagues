@@ -1,7 +1,7 @@
 import { type ReactNode, useState } from 'react';
 import { ThemeProvider as MuiThemeProvider } from '@mui/material/styles';
 import CssBaseline from '@mui/material/CssBaseline';
-import { theme, lightTheme, lsuTheme } from '../theme';
+import { theme, lightTheme, lsuTheme } from '../../theme';
 import { ThemeContext } from './ThemeContext';
 import type { ThemeMode } from './ThemeContext';
 

@@ -15,9 +15,10 @@ import {
   CircularProgress,
   Stack,
 } from '@mui/material';
-import type { RegistrationData } from '@shared/types/cfb-pickem-api';
+import type { RegistrationFormData } from '@shared/types/cfb-pickem-api';
 import { registerUser } from '../apis/authRequests';
 import PasswordField from '../components/auth/PasswordField';
+import { useAuth } from '../contexts/auth/AuthContext';
 
 const RegistrationSchema = z
   .object({
@@ -38,24 +39,30 @@ const RegistrationForm: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const navigate = useNavigate();
+  const { login } = useAuth();
 
   const {
     register,
     handleSubmit,
     formState: { errors, isValid },
-  } = useForm<RegistrationData>({
+  } = useForm<RegistrationFormData>({
     resolver: zodResolver(RegistrationSchema),
     mode: 'onBlur',
   });
 
-  const onSubmit: SubmitHandler<RegistrationData> = async (data) => {
+  const onSubmit: SubmitHandler<RegistrationFormData> = async (data) => {
     setLoading(true);
     setError(null);
 
     const result = await registerUser(data);
 
-    if (result.success) {
-      navigate('/');
+    if (result.success && result.data?.token) {
+      try {
+        await login(result.data.token);
+        navigate('/dashboard');
+      } catch {
+        setError('Failed to load user profile');
+      }
     } else {
       setError(result.error || 'Registration failed');
     }
