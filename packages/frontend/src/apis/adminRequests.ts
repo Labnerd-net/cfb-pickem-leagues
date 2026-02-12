@@ -1,4 +1,4 @@
-import type { AdminDbGameData, WeekIdData } from '@shared/types/cfb-pickem-api';
+import type { AdminDbGameData, WeekIdData, PickedGamesData } from '@shared/types/cfb-pickem-api';
 import axios from 'axios';
 
 const databaseAPI = import.meta.env.VITE_API_URL || 'http://localhost:3000';
@@ -24,10 +24,12 @@ export interface GetGamesResponse {
 
 export async function addWeekstoYear(year: number): Promise<AddWeeksResponse> {
   try {
-    const token = localStorage.getItem('jwt'); // or read from a cookie
-    const response = await axios.post(`${databaseAPI}/${path}/year/${year}`, {
-      headers: { Authorization: `Bearer ${token}` },
-    });
+    const token = localStorage.getItem('jwt');
+    const response = await axios.post(
+      `${databaseAPI}/${path}/year/${year}`,
+      {}, // empty body
+      { headers: { Authorization: `Bearer ${token}` } }
+    );
     if (response.data.ok) {
       return { success: true, data: response.data.data };
     }
@@ -40,12 +42,14 @@ export async function addWeekstoYear(year: number): Promise<AddWeeksResponse> {
   }
 }
 
-export async function addGamesToWeek(): Promise<AddGamesResponse> {
+export async function addGamesToWeek(weekData: WeekIdData): Promise<AddGamesResponse> {
   try {
-    const token = localStorage.getItem('jwt'); // or read from a cookie
-    const response = await axios.post(`${databaseAPI}/${path}/week`, {
-      headers: { Authorization: `Bearer ${token}` },
-    });
+    const token = localStorage.getItem('jwt');
+    const response = await axios.post(
+      `${databaseAPI}/${path}/week`,
+      weekData,
+      { headers: { Authorization: `Bearer ${token}` } }
+    );
     if (response.data.ok) {
       return { success: true, data: response.data.data };
     }
@@ -58,15 +62,38 @@ export async function addGamesToWeek(): Promise<AddGamesResponse> {
   }
 }
 
-export async function getAllGames(): Promise<GetGamesResponse> {
+export async function getGamesForWeek(weekData: WeekIdData): Promise<GetGamesResponse> {
   try {
-    const token = localStorage.getItem('jwt'); // or read from a cookie
-    const weekData: WeekIdData = {
-      year: 2025,
-      week: 1,
-      seasonType: 'regular',
-    };
-    const response = await axios.post(`${databaseAPI}/${path}/getgames`,  weekData,
+    const token = localStorage.getItem('jwt');
+    const response = await axios.post(
+      `${databaseAPI}/${path}/getgames`,
+      weekData,
+      { headers: { Authorization: `Bearer ${token}` } }
+    );
+    if (response.data.ok) {
+      return { success: true, data: response.data.data };
+    }
+    return { success: false, error: response.data.error };
+  } catch (error) {
+    if (axios.isAxiosError(error) && error.response?.data?.error) {
+      return { success: false, error: error.response.data.error };
+    }
+    return { success: false, error: 'An unexpected error occurred' };
+  }
+}
+
+export interface SetPicksResponse {
+  success: boolean;
+  data?: { status: string };
+  error?: string;
+}
+
+export async function setPickedGames(pickedData: PickedGamesData): Promise<SetPicksResponse> {
+  try {
+    const token = localStorage.getItem('jwt');
+    const response = await axios.post(
+      `${databaseAPI}/${path}/setpicks`,
+      pickedData,
       { headers: { Authorization: `Bearer ${token}` } }
     );
     if (response.data.ok) {
