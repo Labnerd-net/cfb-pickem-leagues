@@ -12,3 +12,6 @@ create a spec for creating a user home page that welcome's the user by their dis
 
 ## add tests
 create a spec for adding tests to the backend and the frontend using vitest. The focus should be on testing critical features and high-risk logic.  But any logic that makes sense to test should be tested too.
+
+## Add admin functions
+create a spec to add specific admin functions to the dashboard if the user is a member of the admin group.  The admin should be able to view or populate the adminWeeks for any of the weeks for the current football season.  The admin should also have the ability to pick games out of the chosen week to set as picked games that all users will eventually view and pick a winning team.
