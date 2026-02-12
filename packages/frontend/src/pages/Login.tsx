@@ -20,6 +20,7 @@ import {
 import type { Credentials } from '@shared/types/cfb-pickem-api';
 import { loginUser } from '../apis/authRequests';
 import PasswordField from '../components/auth/PasswordField';
+import { useAuth } from '../contexts/auth/AuthContext';
 
 const LoginSchema = z.object({
   email: z.email('Please enter a valid email address'),
@@ -31,6 +32,7 @@ const LoginForm: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [rememberMe, setRememberMe] = useState(false);
   const navigate = useNavigate();
+  const { login } = useAuth();
 
   const {
     register,
@@ -47,11 +49,16 @@ const LoginForm: React.FC = () => {
 
     const result = await loginUser(credentials);
 
-    if (result.success) {
-      if (rememberMe) {
-        localStorage.setItem('rememberMe', 'true');
+    if (result.success && result.data?.token) {
+      try {
+        await login(result.data.token);
+        if (rememberMe) {
+          localStorage.setItem('rememberMe', 'true');
+        }
+        navigate('/dashboard');
+      } catch {
+        setError('Failed to load user profile');
       }
-      navigate('/');
     } else {
       setError(result.error || 'Login failed');
     }

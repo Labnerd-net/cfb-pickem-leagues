@@ -2,7 +2,7 @@ import { IconButton, Tooltip } from '@mui/material';
 import Brightness4Icon from '@mui/icons-material/Brightness4';
 import Brightness7Icon from '@mui/icons-material/Brightness7';
 import SportsFootballIcon from '@mui/icons-material/SportsFootball';
-import { useTheme } from '../contexts/ThemeContext';
+import { useTheme } from '../../contexts/theme/ThemeContext';
 
 export default function ThemeToggle() {
   const { mode, toggleTheme } = useTheme();

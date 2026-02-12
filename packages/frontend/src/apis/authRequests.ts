@@ -14,7 +14,6 @@ export async function loginUser(credentials: Credentials): Promise<AuthResponse>
   try {
     const response = await axios.post(`${databaseAPI}/${path}/login`, credentials);
     if (response.data.ok) {
-      localStorage.setItem('jwt', response.data.data.token);
       return { success: true, data: response.data.data };
     }
     return { success: false, error: response.data.error };
@@ -27,15 +26,9 @@ export async function loginUser(credentials: Credentials): Promise<AuthResponse>
 }
 
 export async function registerUser(data: RegistrationData): Promise<AuthResponse> {
-  const { email, password, displayName } = data;
   try {
-    const response = await axios.post(`${databaseAPI}/${path}/register`, {
-      email,
-      password,
-      displayName,
-    });
+    const response = await axios.post(`${databaseAPI}/${path}/register`, data);
     if (response.data.ok) {
-      localStorage.setItem('jwt', response.data.data.token);
       return { success: true, data: response.data.data };
     }
     return { success: false, error: response.data.error };
@@ -47,7 +40,7 @@ export async function registerUser(data: RegistrationData): Promise<AuthResponse
   }
 }
 
-export async function deleteUser() {
+export async function deleteUser(): Promise<AuthResponse> {
   try {
     const token = localStorage.getItem('jwt');
     const response = await axios.delete(`${databaseAPI}/${path}/deleteUser`, {
@@ -55,8 +48,14 @@ export async function deleteUser() {
         Authorization: `Bearer ${token}`,
       },
     });
-    return response.data.data;
+    if (response.data.ok) {
+      return { success: true, data: response.data.data };
+    }
+    return { success: false, error: response.data.error };
   } catch (error) {
-    console.error(error);
+    if (axios.isAxiosError(error) && error.response?.data?.error) {
+      return { success: false, error: error.response.data.error };
+    }
+    return { success: false, error: 'An unexpected error occurred' };
   }
 }

@@ -4,55 +4,94 @@ import type { AdminDbGameData, ProfileData, UserDbGameData, WeekIdData } from '@
 const databaseAPI = import.meta.env.VITE_API_URL || 'http://localhost:3000';
 const path = 'api/user';
 
-export async function getUserProfile() {
+export interface ProfileResponse {
+  success: boolean;
+  data?: ProfileData;
+  error?: string;
+}
+
+export interface UserGameResponse {
+  success: boolean;
+  data?: UserDbGameData[];
+  error?: string;
+}
+
+export interface AdminGameResponse {
+  success: boolean;
+  data?: AdminDbGameData[];
+  error?: string;
+}
+
+export interface PicksResponse {
+  success: boolean;
+  data?: { status: string };
+  error?: string;
+}
+
+export async function getUserProfile(): Promise<ProfileResponse> {
   try {
-    const token = localStorage.getItem('jwt'); // or read from a cookie
-    const response = await axios.get<ProfileData>(`${databaseAPI}/${path}/profile`, {
+    const token = localStorage.getItem('jwt');
+    const response = await axios.get(`${databaseAPI}/${path}/profile`, {
       headers: {
         Authorization: `Bearer ${token}`,
       },
     });
-    console.log(response.data);
-    return response.data; // {userId, email, roles}
+    if (response.data.ok) {
+      return { success: true, data: response.data.data };
+    }
+    return { success: false, error: response.data.error };
   } catch (error) {
-    console.error(error);
+    if (axios.isAxiosError(error) && error.response?.data?.error) {
+      return { success: false, error: error.response.data.error };
+    }
+    return { success: false, error: 'An unexpected error occurred' };
   }
 }
 
-export async function getUserPicks(weekData: WeekIdData) {
+export async function getUserPicks(weekData: WeekIdData): Promise<UserGameResponse> {
   try {
     const token = localStorage.getItem('jwt'); // or read from a cookie
-    const response = await axios.get<UserDbGameData[]>(`${databaseAPI}/${path}/picks`, {
+    const response = await axios.get(`${databaseAPI}/${path}/picks`, {
       params: weekData,
       headers: {
         Authorization: `Bearer ${token}`,
       },
     });
-    console.log(response.data);
-    return response.data;
+    if (response.data.ok) {
+      return { success: true, data: response.data.data };
+    }
+    return { success: false, error: response.data.error };
   } catch (error) {
-    console.error(error);
+    if (axios.isAxiosError(error) && error.response?.data?.error) {
+      return { success: false, error: error.response.data.error };
+    }
+    return { success: false, error: 'An unexpected error occurred' };
   }
 }
 
-export async function getPickedGames(weekData: WeekIdData) {
+export async function getPickedGames(weekData: WeekIdData): Promise<AdminGameResponse> {
   try {
     const token = localStorage.getItem('jwt');
-    const response = await axios.get<AdminDbGameData[]>(
+    const response = await axios.get(
       `${databaseAPI}/${path}/games`,
       {
         params: weekData,
         headers: { Authorization: `Bearer ${token}` },
       }
     );
-    console.log(response.data);
-    return response.data;
+    if (response.data.ok) {
+      return { success: true, data: response.data.data };
+    }
+    return { success: false, error: response.data.error };
   } catch (error) {
-    console.error(error);
+    if (axios.isAxiosError(error) && error.response?.data?.error) {
+      return { success: false, error: error.response.data.error };
+    }
+    return { success: false, error: 'An unexpected error occurred' };
   }
 }
 
-export async function postUserPicks() {
+export async function postUserPicks(): Promise<PicksResponse> {
   try {
     const token = localStorage.getItem('jwt'); // or read from a cookie
     const response = await axios.post(`${databaseAPI}/${path}/picks`, {
@@ -60,9 +99,14 @@ export async function postUserPicks() {
         Authorization: `Bearer ${token}`,
       },
     });
-    console.log(response.data);
-    return response.data; // ok or err
+    if (response.data.ok) {
+      return { success: true, data: response.data.data };
+    }
+    return { success: false, error: response.data.error };
   } catch (error) {
-    console.error(error);
+    if (axios.isAxiosError(error) && error.response?.data?.error) {
+      return { success: false, error: error.response.data.error };
+    }
+    return { success: false, error: 'An unexpected error occurred' };
   }
 }

@@ -1,37 +1,40 @@
 import { BrowserRouter, Route, Routes, Navigate } from 'react-router';
-import { AppBar, Toolbar, Typography, Box } from '@mui/material';
-import SportsFootballIcon from '@mui/icons-material/SportsFootball';
+import { Box } from '@mui/material';
 import RegistrationForm from './pages/Registration';
 import LoginForm from './pages/Login';
 import Home from './pages/Home';
-import { ThemeProvider } from './contexts/ThemeProvider';
-import ThemeToggle from './components/theme/ThemeToggle';
+import Dashboard from './pages/Dashboard';
+import { ThemeProvider } from './contexts/theme/ThemeProvider';
+import { AuthProvider } from './contexts/auth/AuthProvider';
+import Navbar from './components/Navbar';
+import PrivateRoute from './components/PrivateRoute';
 
 function App() {
   return (
     <ThemeProvider>
-      <BrowserRouter>
-        <Box sx={{ flexGrow: 1 }}>
-          {/* App Bar */}
-          <AppBar position="static" elevation={2}>
-            <Toolbar>
-              <SportsFootballIcon sx={{ mr: 2 }} />
-              <Typography variant="h6" component="div" sx={{ flexGrow: 1 }}>
-                College Football Pick'em
-              </Typography>
-              <ThemeToggle />
-            </Toolbar>
-          </AppBar>
+      <AuthProvider>
+        <BrowserRouter>
+          <Box sx={{ flexGrow: 1 }}>
+            <Navbar />
 
-          {/* Main Content */}
-          <Routes>
-            <Route index element={<Home />} />
-            <Route path="login" element={<LoginForm />} />
-            <Route path="register" element={<RegistrationForm />} />
-            <Route path="*" element={<Navigate to="/" replace />} />
-          </Routes>
-        </Box>
-      </BrowserRouter>
+            {/* Main Content */}
+            <Routes>
+              <Route index element={<Home />} />
+              <Route path="login" element={<LoginForm />} />
+              <Route path="register" element={<RegistrationForm />} />
+              <Route
+                path="dashboard"
+                element={
+                  <PrivateRoute>
+                    <Dashboard />
+                  </PrivateRoute>
+                }
+              />
+              <Route path="*" element={<Navigate to="/" replace />} />
+            </Routes>
+          </Box>
+        </BrowserRouter>
+      </AuthProvider>
     </ThemeProvider>
   );
 }

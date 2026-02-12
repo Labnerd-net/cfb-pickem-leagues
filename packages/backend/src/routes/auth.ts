@@ -64,6 +64,7 @@ auth.post('/register', authRateLimit, async c => {
     const payload = {
       sub: result[0].id,
       email: result[0].email,
+      displayName: result[0].displayName,
       roles: result[0].roles,
       exp: getJwtExpirationSeconds(),
     };
@@ -94,12 +95,12 @@ auth.post('/login', authRateLimit, async c => {
     const payload = {
       sub: user[0].userId,
       email: user[0].email,
+      displayName: user[0].displayName,
       roles: user[0].roles,
       exp: getJwtExpirationSeconds(),
     };
     const token = await sign(payload, jwtSecret, jwtAlgorithm);
-    return c.json(ok({ id: user[0].userId, token }));
-    // return c.json(ok({ id: user[0].userId, roles: user[0].roles, token }));
+    return c.json(ok({ token }));
   } catch (e: unknown) {
     if (e instanceof Error) {
       return c.json(err(e.message), 500);
@@ -113,11 +114,12 @@ auth.post('/login', authRateLimit, async c => {
 auth.delete('/deleteUser', authMiddleware, async c => {
   try {
     const payload = c.get('jwtPayload');
-    const user = await dbUserFunctions.returnUserById(payload.sub);
+    const userIdNumber = String(payload.sub);
+    const user = await dbUserFunctions.returnUserById(userIdNumber);
     if (!user || user.length === 0) {
       return c.json(err('User not found'), 404);
     }
-    const returnValue = await dbUserFunctions.deleteUserById(payload.sub);
+    const returnValue = await dbUserFunctions.deleteUserById(userIdNumber);
     if (!returnValue) {
       return c.json(err('User not found'), 404);
     }
