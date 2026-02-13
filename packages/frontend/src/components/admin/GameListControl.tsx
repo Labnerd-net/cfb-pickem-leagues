@@ -22,19 +22,19 @@ export default function GameListControl({
 }: GamesListControlProps) {
   return (
     <Stack
-      direction="row"
-      spacing={2}
       sx={{
         mb: 3,
         pb: 2,
         borderBottom: 1,
         borderColor: 'divider',
+        display: 'grid',
+        gridTemplateColumns: '1fr 1fr 1fr',
         alignItems: 'center',
-        justifyContent: 'space-between',
-        flexWrap: 'wrap',
+        gap: 2,
       }}
     >
-      <Stack direction="row" spacing={1}>
+      {/* Left: Selection Controls */}
+      <Stack direction="row" spacing={1} sx={{ justifyContent: 'flex-start' }}>
         <Button
           variant="outlined"
           size="small"
@@ -55,33 +55,39 @@ export default function GameListControl({
         </Button>
       </Stack>
 
-      <Button
-        variant="contained"
-        size="large"
-        startIcon={loading ? <CircularProgress size={20} color="inherit" /> : <SaveIcon />}
-        onClick={onSaveSelection}
-        disabled={loading || selectedGameIds.length === 0}
-        sx={{
-          px: 4,
-          py: 1.5,
-          fontFamily: '"Bebas Neue", sans-serif',
-          fontSize: '1.25rem',
-          letterSpacing: '1px',
-        }}
-      >
-        {loading ? 'Saving...' : 'Save Picked Games'}
-      </Button>
+      {/* Center: Save Button */}
+      <Stack sx={{ justifyContent: 'center', alignItems: 'center' }}>
+        <Button
+          variant="contained"
+          size="large"
+          startIcon={loading ? <CircularProgress size={20} color="inherit" /> : <SaveIcon />}
+          onClick={onSaveSelection}
+          disabled={loading || selectedGameIds.length === 0}
+          sx={{
+            px: 4,
+            py: 1.5,
+            fontFamily: '"Bebas Neue", sans-serif',
+            fontSize: '1.25rem',
+            letterSpacing: '1px',
+          }}
+        >
+          {loading ? 'Saving...' : 'Save Picked Games'}
+        </Button>
+      </Stack>
 
-      <Typography
-        variant="body2"
-        sx={{
-          fontFamily: '"Work Sans", sans-serif',
-          fontWeight: 600,
-          color: 'text.secondary',
-        }}
-      >
-        {selectedGameIds.length} of {numOfGames} games selected
-      </Typography>
+      {/* Right: Count Typography */}
+      <Stack sx={{ justifyContent: 'flex-end', alignItems: 'flex-end' }}>
+        <Typography
+          variant="body2"
+          sx={{
+            fontFamily: '"Work Sans", sans-serif',
+            fontWeight: 600,
+            color: 'text.secondary',
+          }}
+        >
+          {selectedGameIds.length} of {numOfGames} games selected
+        </Typography>
+      </Stack>
     </Stack>
   );
 }
