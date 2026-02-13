@@ -17,10 +17,10 @@ export const adminWeeks = adminSchema.table('weeks', {
   weekStart: date('week_start').notNull(),
   weekEnd: date('week_end').notNull(),
   createdAt: timestamp('created_at').defaultNow().notNull(),
-}, (table) => ({
-  weekNumberIdx: index('weeks_week_number_idx').on(table.weekNumber),
-  yearSeasonIdx: index('weeks_year_season_idx').on(table.year, table.seasonType),
-}));
+}, (table) => ([
+  index('weeks_week_number_idx').on(table.weekNumber),
+  index('weeks_year_season_idx').on(table.year, table.seasonType),
+]));
 
 // ------------------------------------------------------------------
 // AdminGames – each game belongs to a week
@@ -43,11 +43,11 @@ export const adminGames = adminSchema.table('games', {
   awayPoints: integer('away_points').notNull().default(-1),
   winningTeam: columnTeam('winning_team').notNull().default('pending'),
   createdAt: timestamp('created_at').defaultNow().notNull(),
-}, (table) => ({
-  weekIdIdx: index('games_week_id_idx').on(table.weekId),
-  pickedIdx: index('games_picked_idx').on(table.picked),
-  weekIdPickedIdx: index('games_week_id_picked_idx').on(table.weekId, table.picked),
-}));
+}, (table) => ([
+  index('games_week_id_idx').on(table.weekId),
+  index('games_picked_idx').on(table.picked),
+  index('games_week_id_picked_idx').on(table.weekId, table.picked),
+]));
 
 // ------------------------------------------------------------------
 // Relation helpers

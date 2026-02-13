@@ -40,11 +40,11 @@ export const games = userSchema.table('games', {
   winningTeam: columnTeam('winning_team').notNull().default('pending'),
   teamChosen: columnTeam('team_chosen').notNull().default('pending'),
   createdAt: timestamp('created_at').defaultNow().notNull(),
-}, (table) => ({
-  pk: primaryKey({ columns: [table.userId, table.gameId] }),
-  weekIdIdx: index('user_games_week_id_idx').on(table.weekId),
-  userIdWeekIdIdx: index('user_games_user_id_week_id_idx').on(table.userId, table.weekId),
-}));
+}, (table) => ([
+  primaryKey({ columns: [table.userId, table.gameId] }),
+  index('user_games_week_id_idx').on(table.weekId),
+  index('user_games_user_id_week_id_idx').on(table.userId, table.weekId),
+]));
 
 // ------------------------------------------------------------------
 // Relation helpers
