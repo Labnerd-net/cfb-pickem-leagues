@@ -24,6 +24,20 @@ export async function returnWeek(week: number): Promise<AdminWeekData[]> {
 }
 
 // ------------------------------------------------------------------
+// Return week by WeekIdData
+// ------------------------------------------------------------------
+export async function returnWeekByIdData(idData: WeekIdData): Promise<AdminWeekData[]> {
+  const id = returnID(idData);
+  console.log(`Inside returnWeekByIdData dbAdminFunction: week_id = ${id}`);
+  try {
+    return await db.select().from(adminWeeks).where(eq(adminWeeks.weekId, id));
+  } catch (e) {
+    console.log(e);
+    throw e;
+  }
+}
+
+// ------------------------------------------------------------------
 // Return games for a given week
 // ------------------------------------------------------------------
 export async function returnGamesForWeek(idData: WeekIdData): Promise<AdminDbGameData[]> {
