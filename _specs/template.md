@@ -22,5 +22,5 @@ Create a test file(s) in the ./tests folder for the new feature, and create mean
 - ...
 
 ## Personal Opinion
-Tell me if you think this change is a good or bad idea, and if the change is too complex or is too simple
+Tell me if you think this change is a good or bad idea. Also if the change is too complex or is too simple.  List any concerns you have.
 - ...
