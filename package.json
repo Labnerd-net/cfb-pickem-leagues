@@ -5,7 +5,11 @@
     "lint:fix": "pnpm -r run lint:fix",
     "format": "pnpm -r run prettier",
     "dev:backend": "pnpm --filter backend dev",
-    "dev:frontend": "pnpm --filter frontend dev"
+    "dev:frontend": "pnpm --filter frontend dev",
+    "test": "pnpm -r run test",
+    "test:backend": "pnpm --filter cfb-pickem-api test",
+    "test:frontend": "pnpm --filter cfb-pickem-ui test",
+    "test:coverage": "pnpm -r run test:coverage"
   },
   "dependencies": {
     "axios": "^1.13.4"

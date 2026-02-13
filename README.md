@@ -91,6 +91,68 @@ pnpm dev:frontend    # Frontend on http://localhost:5173
 | `pnpm lint` | Lint all packages |
 | `pnpm lint:fix` | Lint with auto-fix |
 | `pnpm format` | Format code with Prettier |
+| `pnpm test` | Run all tests (backend + frontend) |
+| `pnpm test:backend` | Run backend tests only |
+| `pnpm test:frontend` | Run frontend tests only |
+| `pnpm test:coverage` | Run tests with coverage reports |
+
+## Testing
+
+The project uses [Vitest](https://vitest.dev/) for testing both backend and frontend packages.
+
+### Running Tests
+
+```bash
+# Run all tests
+pnpm test
+
+# Run backend tests only
+pnpm test:backend
+
+# Run frontend tests only
+pnpm test:frontend
+
+# Run with coverage reports
+pnpm test:coverage
+
+# Run in watch mode (for development)
+cd packages/backend  # or frontend
+pnpm test:watch
+```
+
+### Test Coverage
+
+After running `pnpm test:coverage`, view the detailed coverage reports in your browser:
+
+- Backend: `packages/backend/coverage/index.html`
+- Frontend: `packages/frontend/coverage/index.html`
+
+### Test Database Setup
+
+The backend tests use a separate PostgreSQL database (`cfb-pickem-test`) to avoid affecting development data:
+
+```bash
+# Create the test database (one-time setup)
+psql -U postgres -h localhost -c "CREATE DATABASE \"cfb-pickem-test\";"
+
+# Run migrations against test database
+cd packages/backend
+NODE_ENV=test pnpm migrate
+```
+
+The test database is automatically seeded and cleaned between tests.
+
+### Test Structure
+
+**Backend Tests** (`packages/backend/tests/`):
+- Unit tests for utilities, API converters, middleware
+- Database function tests with real PostgreSQL
+- Validation tests for email/password rules
+
+**Frontend Tests** (`packages/frontend/tests/`):
+- Form validation tests (Zod schemas)
+- API request tests with MSW mocks
+- Component tests with React Testing Library (coming soon)
 
 ## How It Works
 

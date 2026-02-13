@@ -9,7 +9,11 @@
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
     "format": "prettier --write ./src",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:ui": "vitest --ui",
+    "test:coverage": "vitest run --coverage"
   },
   "dependencies": {
     "@emotion/react": "^11.14.0",
@@ -25,11 +29,19 @@
     "zod": "^4.3.6"
   },
   "devDependencies": {
+    "@testing-library/jest-dom": "^6.9.1",
+    "@testing-library/react": "^16.3.2",
+    "@testing-library/user-event": "^14.6.1",
     "@types/react": "^19.2.5",
     "@types/react-dom": "^19.2.3",
     "@vitejs/plugin-react": "^5.1.1",
+    "@vitest/coverage-v8": "^4.0.18",
+    "@vitest/ui": "^4.0.18",
     "eslint-plugin-react-hooks": "^7.0.1",
     "eslint-plugin-react-refresh": "^0.4.24",
-    "vite": "^7.2.4"
+    "jsdom": "^28.0.0",
+    "msw": "^2.12.10",
+    "vite": "^7.2.4",
+    "vitest": "^4.0.18"
   }
 }
