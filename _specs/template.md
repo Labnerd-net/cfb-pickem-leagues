@@ -20,3 +20,7 @@ branch: claude/feature/<feature-name>
 ## Testing Guidelines
 Create a test file(s) in the ./tests folder for the new feature, and create meaningful tests for the following cases, without going too heavy:
 - ...
+
+## Personal Opinion
+Tell me if you think this change is a good or bad idea, and if the change is too complex or is too simple
+- ...
