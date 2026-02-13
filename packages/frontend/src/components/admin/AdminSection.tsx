@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Box, Alert, Snackbar } from '@mui/material';
 import type { AdminDbGameData, SeasonType, WeekIdData } from '@shared/types/cfb-pickem-api';
-import DashboardCard from '../DashboardCard';
+import DashboardCard from '../dashboard/DashboardCard';
 import WeekSelector from './WeekSelector';
 import GamesList from './GamesList';
 import AdminPanelSettingsIcon from '@mui/icons-material/AdminPanelSettings';
@@ -10,7 +10,7 @@ import {
   addGamesToWeek,
   getGamesForWeek,
   setPickedGames,
-} from '../../../apis/adminRequests';
+} from '../../apis/adminRequests';
 
 export default function AdminSection() {
   const currentYear = new Date().getFullYear();
@@ -22,7 +22,7 @@ export default function AdminSection() {
   const [games, setGames] = useState<AdminDbGameData[]>([]);
   const [selectedGameIds, setSelectedGameIds] = useState<number[]>([]);
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
 
   // Helper to create WeekIdData
@@ -35,7 +35,7 @@ export default function AdminSection() {
   // API Handlers
   const handlePopulateYear = async () => {
     setLoading(true);
-    setError(null);
+    setErrorMessage(null);
     setSuccessMessage(null);
 
     try {
@@ -43,10 +43,10 @@ export default function AdminSection() {
       if (result.success) {
         setSuccessMessage(`All weeks populated for ${selectedYear}`);
       } else {
-        setError(result.error || 'Failed to populate year');
+        setErrorMessage(result.error || 'Failed to populate year');
       }
     } catch {
-      setError('An unexpected error occurred while populating year');
+      setErrorMessage('An unexpected error occurred while populating year');
     } finally {
       setLoading(false);
     }
@@ -54,7 +54,7 @@ export default function AdminSection() {
 
   const handlePopulateWeek = async () => {
     setLoading(true);
-    setError(null);
+    setErrorMessage(null);
     setSuccessMessage(null);
 
     try {
@@ -65,10 +65,10 @@ export default function AdminSection() {
           `Games populated for ${selectedSeasonType} Week ${selectedWeek}, ${selectedYear}`
         );
       } else {
-        setError(result.error || 'Failed to populate week');
+        setErrorMessage(result.error || 'Failed to populate week');
       }
     } catch {
-      setError('An unexpected error occurred while populating week');
+      setErrorMessage('An unexpected error occurred while populating week');
     } finally {
       setLoading(false);
     }
@@ -76,7 +76,7 @@ export default function AdminSection() {
 
   const handleLoadGames = async () => {
     setLoading(true);
-    setError(null);
+    setErrorMessage(null);
     setSuccessMessage(null);
     setGames([]);
     setSelectedGameIds([]);
@@ -91,10 +91,10 @@ export default function AdminSection() {
         setSelectedGameIds(pickedGameIds);
         setSuccessMessage(`Loaded ${result.data.length} games`);
       } else {
-        setError(result.error || 'Failed to load games');
+        setErrorMessage(result.error || 'Failed to load games');
       }
     } catch {
-      setError('An unexpected error occurred while loading games');
+      setErrorMessage('An unexpected error occurred while loading games');
     } finally {
       setLoading(false);
     }
@@ -102,12 +102,12 @@ export default function AdminSection() {
 
   const handleSavePickedGames = async () => {
     if (selectedGameIds.length === 0) {
-      setError('Please select at least one game');
+      setErrorMessage('Please select at least one game');
       return;
     }
 
     setLoading(true);
-    setError(null);
+    setErrorMessage(null);
     setSuccessMessage(null);
 
     try {
@@ -121,10 +121,10 @@ export default function AdminSection() {
         // Reload games to reflect updated picked status
         await handleLoadGames();
       } else {
-        setError(result.error || 'Failed to save picked games');
+        setErrorMessage(result.error || 'Failed to save picked games');
       }
     } catch {
-      setError('An unexpected error occurred while saving picked games');
+      setErrorMessage('An unexpected error occurred while saving picked games');
     } finally {
       setLoading(false);
     }
@@ -145,12 +145,18 @@ export default function AdminSection() {
   };
 
   const handleCloseSnackbar = () => {
-    setError(null);
+    setErrorMessage(null);
     setSuccessMessage(null);
   };
 
   return (
-    <>
+    <Box
+      sx={{
+        display: 'grid',
+        gridTemplateColumns: { xs: '1fr', md: 'repeat(2, 1fr)' },
+        gap: 3,
+      }}
+    >
       <DashboardCard
         icon={<AdminPanelSettingsIcon sx={{ fontSize: 32, color: 'secondary.main', mr: 2 }} />}
         title="Admin Controls"
@@ -200,15 +206,15 @@ export default function AdminSection() {
       </Snackbar>
 
       <Snackbar
-        open={!!error}
+        open={!!errorMessage}
         autoHideDuration={6000}
         onClose={handleCloseSnackbar}
         anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
       >
         <Alert onClose={handleCloseSnackbar} severity="error" sx={{ width: '100%' }}>
-          {error}
+          {errorMessage}
         </Alert>
       </Snackbar>
-    </>
+    </Box>
   );
 }
