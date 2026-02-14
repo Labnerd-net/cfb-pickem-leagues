@@ -1,4 +1,4 @@
-import type { AdminDbGameData, WeekIdData, PickedGamesData } from '@shared/types/cfb-pickem-api';
+import type { AdminDbGameData, WeekQuery, PickedGamesData } from '@shared/types/cfb-pickem-api';
 import axios from 'axios';
 
 const databaseAPI = import.meta.env.VITE_API_URL || 'http://localhost:3000';
@@ -42,7 +42,7 @@ export async function addWeekstoYear(year: number): Promise<AddWeeksResponse> {
   }
 }
 
-export async function addGamesToWeek(weekData: WeekIdData): Promise<AddGamesResponse> {
+export async function addGamesToWeek(weekData: WeekQuery): Promise<AddGamesResponse> {
   try {
     const token = localStorage.getItem('jwt');
     const response = await axios.post(
@@ -62,7 +62,7 @@ export async function addGamesToWeek(weekData: WeekIdData): Promise<AddGamesResp
   }
 }
 
-export async function getGamesForWeek(weekData: WeekIdData): Promise<GetGamesResponse> {
+export async function getGamesForWeek(weekData: WeekQuery): Promise<GetGamesResponse> {
   try {
     const token = localStorage.getItem('jwt');
     const response = await axios.get(

@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Box, Alert, Snackbar } from '@mui/material';
-import type { AdminDbGameData, SeasonType, WeekIdData } from '@shared/types/cfb-pickem-api';
+import type { AdminDbGameData, SeasonType, WeekQuery } from '@shared/types/cfb-pickem-api';
 import DashboardCard from '../dashboard/DashboardCard';
 import WeekSelector from './WeekSelector';
 import GamesList from './GamesList';
@@ -25,8 +25,8 @@ export default function AdminSection() {
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
 
-  // Helper to create WeekIdData
-  const getWeekData = (): WeekIdData => ({
+  // Helper to create WeekQuery
+  const getWeekData = (): WeekQuery => ({
     year: selectedYear,
     week: selectedWeek,
     seasonType: selectedSeasonType,

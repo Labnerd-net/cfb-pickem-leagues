@@ -51,7 +51,6 @@ export interface UserGameData {
   gameId: number;
   cfbdGameId: number | null;
   ncaaGameId: string | null;
-  weekId: number;
   weekNumber: number;
   year: number;
   seasonType: SeasonType;
@@ -69,7 +68,6 @@ export interface UserDbGameData extends UserGameData {
 }
 
 export interface AdminWeekData {
-  weekId: number;
   weekNumber: number;
   year: number;
   seasonType: SeasonType;
@@ -82,7 +80,6 @@ export interface AdminDbWeekData extends AdminWeekData {
 }
 
 export interface AdminGameData {
-  weekId: number;
   gameId: number;
   cfbdGameId: number | null;
   ncaaGameId: string | null;
@@ -102,13 +99,13 @@ export interface AdminDbGameData extends AdminGameData {
   createdAt: Date;
 }
 
-export interface WeekIdData {
+export interface WeekQuery {
   year: number;
   week: number;
   seasonType: SeasonType;
 }
 
-export interface PickedGamesData extends WeekIdData {
+export interface PickedGamesData extends WeekQuery {
   games: number[];
 }
 
@@ -117,6 +114,6 @@ export interface UserGamePicks {
   pick: "home_team" | "away_team";
 }
 
-export interface AllUserGamePicks extends WeekIdData {
+export interface AllUserGamePicks extends WeekQuery {
   games: UserGamePicks[];
 }

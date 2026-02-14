@@ -28,7 +28,6 @@ export const games = userSchema.table('games', {
   gameId: integer('game_id').notNull(),
   cfbdGameId: integer('cfbd_game_id'),
   ncaaGameId: text('ncaa_game_id'),
-  weekId: integer('week_id').notNull(),
   weekNumber: integer('week_number').notNull(),
   year: integer('year').notNull(),
   seasonType: columnSeason('season_type').notNull(),
@@ -42,8 +41,8 @@ export const games = userSchema.table('games', {
   createdAt: timestamp('created_at').defaultNow().notNull(),
 }, (table) => ([
   primaryKey({ columns: [table.userId, table.gameId] }),
-  index('user_games_week_id_idx').on(table.weekId),
-  index('user_games_user_id_week_id_idx').on(table.userId, table.weekId),
+  index('user_games_year_week_idx').on(table.year, table.weekNumber),
+  index('user_games_user_year_week_idx').on(table.userId, table.year, table.weekNumber),
 ]));
 
 // ------------------------------------------------------------------

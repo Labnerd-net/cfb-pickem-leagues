@@ -1,22 +1,21 @@
 import { describe, it, expect, beforeAll, afterEach } from 'vitest';
-import { getTestDb, cleanDatabase, seedTestData, createTestWeek, createTestGame } from '../../db-utils.js';
+import { seedTestData, createTestWeek, createTestGame, cleanDatabase } from '../../db-utils.js';
 import {
 	returnWeek,
 	returnGamesForWeek,
 	returnPickedGames,
 } from '../../../src/db/dbAdminFunctions.js';
-import type { WeekIdData } from '@shared/types/cfb-pickem-api.js';
+import type { WeekQuery } from '@shared/types/cfb-pickem-api.js';
 
 describe('Admin Database Functions', () => {
-	const testDb = getTestDb();
-
 	beforeAll(async () => {
-		await seedTestData(testDb);
+		await seedTestData();
 	});
 
 	afterEach(async () => {
-		await cleanDatabase(testDb);
-		await seedTestData(testDb);
+		// Clean and reseed between tests for isolation
+		await cleanDatabase();
+		await seedTestData();
 	});
 
 	describe('returnWeek', () => {
@@ -40,12 +39,12 @@ describe('Admin Database Functions', () => {
 	describe('returnGamesForWeek', () => {
 		it('should return games for a specific week', async () => {
 			// Explicitly ensure the week exists for this test
-			await createTestWeek(testDb, 2024001, 1, 2024, 'regular');
+			await createTestWeek( 1, 2024, 'regular');
 
 			// Create a test game for the week
-			await createTestGame(testDb, 2024001, 1, 2024, 'Team A', 'Team B', true, false);
+			await createTestGame( 1, 2024, 'Team A', 'Team B', true, false);
 
-			const weekData: WeekIdData = {
+			const weekData: WeekQuery = {
 				year: 2024,
 				week: 1,
 				seasonType: 'regular',
@@ -60,7 +59,7 @@ describe('Admin Database Functions', () => {
 		});
 
 		it('should return empty array when no games exist for week', async () => {
-			const weekData: WeekIdData = {
+			const weekData: WeekQuery = {
 				year: 2024,
 				week: 15,
 				seasonType: 'regular',
@@ -76,10 +75,10 @@ describe('Admin Database Functions', () => {
 	describe('returnPickedGames', () => {
 		it('should return only picked games', async () => {
 			// Create picked and unpicked games
-			await createTestGame(testDb, 2024001, 1, 2024, 'Team A', 'Team B', true, false);
-			await createTestGame(testDb, 2024001, 1, 2024, 'Team C', 'Team D', false, false);
+			await createTestGame( 1, 2024, 'Team A', 'Team B', true, false);
+			await createTestGame( 1, 2024, 'Team C', 'Team D', false, false);
 
-			const weekData: WeekIdData = {
+			const weekData: WeekQuery = {
 				year: 2024,
 				week: 1,
 				seasonType: 'regular',
@@ -94,9 +93,9 @@ describe('Admin Database Functions', () => {
 
 		it('should return empty array when no picked games exist', async () => {
 			// Create only unpicked games
-			await createTestGame(testDb, 2024001, 1, 2024, 'Team A', 'Team B', false, false);
+			await createTestGame( 1, 2024, 'Team A', 'Team B', false, false);
 
-			const weekData: WeekIdData = {
+			const weekData: WeekQuery = {
 				year: 2024,
 				week: 1,
 				seasonType: 'regular',

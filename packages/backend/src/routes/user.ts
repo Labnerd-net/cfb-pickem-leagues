@@ -8,7 +8,7 @@ import type {
   JwtData,
   ProfileData,
   SeasonType,
-  WeekIdData,
+  WeekQuery,
 } from '@shared/types/cfb-pickem-api.js';
 import { authMiddleware } from '../utils/middleware.js';
 
@@ -44,7 +44,7 @@ user.get('/picks', async c => {
   try {
     const payload = c.get('jwtPayload');
     const userIdString = String(payload.sub);
-    const weekData: WeekIdData = {
+    const weekData: WeekQuery = {
       year: Number(c.req.query('year')),
       week: Number(c.req.query('week')),
       seasonType: (c.req.query('seasonType') || 'regular') as SeasonType,
@@ -63,7 +63,7 @@ user.get('/picks', async c => {
 // Get admin-picked games for a week
 user.get('/games', async c => {
   try {
-    const weekData: WeekIdData = {
+    const weekData: WeekQuery = {
       year: Number(c.req.query('year')),
       week: Number(c.req.query('week')),
       seasonType: (c.req.query('seasonType') || 'regular') as SeasonType,

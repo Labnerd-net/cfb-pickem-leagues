@@ -1,13 +1,12 @@
 import { eq, and, inArray, notInArray } from 'drizzle-orm';
 import { adminWeeks, adminGames } from './schema/admin.js';
 import { db } from './index.js';
-import { returnID } from '../api/index.js';
 import type {
   AdminDbGameData,
   AdminGameData,
   AdminWeekData,
   Team,
-  WeekIdData,
+  WeekQuery,
 } from '@shared/types/cfb-pickem-api.js';
 
 // ------------------------------------------------------------------
@@ -24,13 +23,15 @@ export async function returnWeek(week: number): Promise<AdminWeekData[]> {
 }
 
 // ------------------------------------------------------------------
-// Return week by WeekIdData
+// Return week by WeekQuery
 // ------------------------------------------------------------------
-export async function returnWeekByIdData(idData: WeekIdData): Promise<AdminWeekData[]> {
-  const id = returnID(idData);
-  console.log(`Inside returnWeekByIdData dbAdminFunction: week_id = ${id}`);
+export async function returnWeekByQuery(query: WeekQuery): Promise<AdminWeekData[]> {
+  console.log(`Inside returnWeekByQuery dbAdminFunction: year=${query.year}, week=${query.week}`);
   try {
-    return await db.select().from(adminWeeks).where(eq(adminWeeks.weekId, id));
+    return await db
+      .select()
+      .from(adminWeeks)
+      .where(and(eq(adminWeeks.year, query.year), eq(adminWeeks.weekNumber, query.week)));
   } catch (e) {
     console.log(e);
     throw e;
@@ -40,11 +41,13 @@ export async function returnWeekByIdData(idData: WeekIdData): Promise<AdminWeekD
 // ------------------------------------------------------------------
 // Return games for a given week
 // ------------------------------------------------------------------
-export async function returnGamesForWeek(idData: WeekIdData): Promise<AdminDbGameData[]> {
-  const id = returnID(idData);
-  console.log(`Inside returnGamesForWeek dbAdminFunction: week_id = ${id}`);
+export async function returnGamesForWeek(query: WeekQuery): Promise<AdminDbGameData[]> {
+  console.log(`Inside returnGamesForWeek dbAdminFunction: year=${query.year}, week=${query.week}`);
   try {
-    return await db.select().from(adminGames).where(eq(adminGames.weekId, id));
+    return await db
+      .select()
+      .from(adminGames)
+      .where(and(eq(adminGames.year, query.year), eq(adminGames.weekNumber, query.week)));
   } catch (e) {
     console.log(e);
     throw e;
@@ -55,10 +58,9 @@ export async function returnGamesForWeek(idData: WeekIdData): Promise<AdminDbGam
 // Add a week
 // ------------------------------------------------------------------
 export async function addWeek(week: AdminWeekData): Promise<void> {
-  console.log(`Inside addWeek dbAdminFunction: week_id=${week.weekId}`);
+  console.log(`Inside addWeek dbAdminFunction: year=${week.year}, weekNumber=${week.weekNumber}`);
   try {
     await db.insert(adminWeeks).values({
-      weekId: week.weekId,
       weekNumber: week.weekNumber,
       year: week.year,
       seasonType: week.seasonType,
@@ -75,7 +77,7 @@ export async function addWeek(week: AdminWeekData): Promise<void> {
 // Add single game to a week
 // ------------------------------------------------------------------
 export async function addGameToWeek(game: AdminGameData): Promise<void> {
-  console.log(`Inside addGameToWeek dbAdminFunction: week_id=${game.weekId}`);
+  console.log(`Inside addGameToWeek dbAdminFunction: year=${game.year}, week=${game.weekNumber}`);
   try {
     let winningTeam: Team = 'pending';
     if (game.completed && game.homePoints !== null && game.awayPoints !== null) {
@@ -86,7 +88,6 @@ export async function addGameToWeek(game: AdminGameData): Promise<void> {
       }
     }
     await db.insert(adminGames).values({
-      weekId: game.weekId,
       cfbdGameId: game.cfbdGameId,
       ncaaGameId: game.ncaaGameId,
       picked: false,
@@ -124,10 +125,11 @@ export async function returnGame(game: number): Promise<AdminDbGameData[]> {
 // ------------------------------------------------------------------
 export async function invertPickedGame(game: number): Promise<void> {
   console.log(`Inside updatePickedGame dbAdminFunction: game=${game}`);
+  const newPicked = !adminGames.picked;
   try {
     await db
       .update(adminGames)
-      .set({ picked: !adminGames.picked })
+      .set({ picked: newPicked })
       .where(eq(adminGames.gameId, game));
   } catch (e) {
     console.log(e);
@@ -152,14 +154,19 @@ export async function setPickedGame(games: number[]): Promise<void> {
 // ------------------------------------------------------------------
 // Return all picked games
 // ------------------------------------------------------------------
-export async function returnPickedGames(idData: WeekIdData): Promise<AdminDbGameData[]> {
-  const id = returnID(idData);
-  console.log(`Inside returnPickedGames dbAdminFunction: week_id=${id}`);
+export async function returnPickedGames(query: WeekQuery): Promise<AdminDbGameData[]> {
+  console.log(`Inside returnPickedGames dbAdminFunction: year=${query.year}, week=${query.week}`);
   try {
     return await db
       .select()
       .from(adminGames)
-      .where(and(eq(adminGames.weekId, id), eq(adminGames.picked, true)));
+      .where(
+        and(
+          eq(adminGames.year, query.year),
+          eq(adminGames.weekNumber, query.week),
+          eq(adminGames.picked, true)
+        )
+      );
   } catch (e) {
     console.log(e);
     throw e;

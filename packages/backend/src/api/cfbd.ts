@@ -1,7 +1,7 @@
 import { client, getGames, getCalendar } from 'cfbd';
 import type { DivisionClassification } from 'cfbd';
 import { cfbdApiKey } from '../utils/envVars.js';
-import type { Classification, WeekIdData } from '@shared/types/cfb-pickem-api.js';
+import type { Classification, WeekQuery } from '@shared/types/cfb-pickem-api.js';
 
 // Set up the client with your API key
 client.setConfig({
@@ -21,14 +21,14 @@ export async function getCfbdWeekData(year: number) {
 // ------------------------------------------------------------------
 // Returns Game data from CFBD
 // ------------------------------------------------------------------
-export async function getCfbdGameData(idData: WeekIdData, classification: Classification = 'fbs') {
+export async function getCfbdGameData(query: WeekQuery, classification: Classification = 'fbs') {
   const cfbdClassification = returnCfbdClassification(classification);
   const cfbdGameData = await getGames({
     query: {
-      year: idData.year,
+      year: query.year,
       classification: cfbdClassification,
-      week: idData.week,
-      seasonType: idData.seasonType,
+      week: query.week,
+      seasonType: query.seasonType,
     },
   });
   return cfbdGameData.data;
