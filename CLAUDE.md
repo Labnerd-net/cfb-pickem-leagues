@@ -12,6 +12,8 @@ College Football Pick'em game — a full-stack app where users predict college f
 ```bash
 pnpm dev:backend          # Start backend (tsx watch, port 3000)
 pnpm dev:frontend         # Start frontend (vite, port 5173)
+cd packages/frontend
+pnpm preview              # Preview production build locally (port 4173)
 ```
 
 ### Build & Lint
@@ -36,6 +38,38 @@ pnpm studio               # Open Drizzle Studio (DB browser)
 npx tsc --noEmit -p packages/backend/tsconfig.json
 npx tsc --noEmit -p packages/frontend/tsconfig.app.json
 ```
+
+### Testing
+```bash
+# Run all tests (root level)
+pnpm test                 # Run all tests (backend + frontend)
+pnpm test:backend         # Run backend tests only
+pnpm test:frontend        # Run frontend tests only
+pnpm test:coverage        # Run all tests with coverage reports
+
+# Package-level test commands (run from packages/backend or packages/frontend)
+cd packages/backend       # or packages/frontend
+pnpm test                 # Run tests once
+pnpm test:watch           # Run tests in watch mode (for development)
+pnpm test:ui              # Run tests with Vitest UI
+pnpm test:coverage        # Run tests with coverage report
+```
+
+**Test Database Setup (one-time):**
+```bash
+# Create separate test database to avoid affecting dev data
+psql -U postgres -h localhost -c "CREATE DATABASE \"cfb-pickem-test\";"
+
+# Run migrations against test database
+cd packages/backend
+NODE_ENV=test pnpm migrate
+```
+
+**Test Structure:**
+- **Backend** (`packages/backend/tests/`): Unit tests for utilities, API converters, middleware; database function tests with real PostgreSQL; validation tests
+- **Frontend** (`packages/frontend/tests/`): Form validation tests (Zod schemas); API request tests with MSW mocks
+- **Testing Framework**: Vitest for both packages
+- **Coverage Reports**: After running `pnpm test:coverage`, view HTML reports at `packages/backend/coverage/index.html` and `packages/frontend/coverage/index.html`
 
 ## Architecture
 
