@@ -1,5 +1,5 @@
 {
-  "id": "fdbd38e0-cb6b-403e-9bde-499fe4c8ac48",
+  "id": "640e346f-afe8-4b35-bc05-499887172621",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "version": "7",
   "dialect": "postgresql",
@@ -25,12 +25,6 @@
           "type": "text",
           "primaryKey": false,
           "notNull": false
-        },
-        "week_id": {
-          "name": "week_id",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": true
         },
         "picked": {
           "name": "picked",
@@ -104,11 +98,17 @@
         }
       },
       "indexes": {
-        "games_week_id_idx": {
-          "name": "games_week_id_idx",
+        "games_year_week_idx": {
+          "name": "games_year_week_idx",
           "columns": [
             {
-              "expression": "week_id",
+              "expression": "year",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "week_number",
               "isExpression": false,
               "asc": true,
               "nulls": "last"
@@ -134,11 +134,17 @@
           "method": "btree",
           "with": {}
         },
-        "games_week_id_picked_idx": {
-          "name": "games_week_id_picked_idx",
+        "games_year_week_picked_idx": {
+          "name": "games_year_week_picked_idx",
           "columns": [
             {
-              "expression": "week_id",
+              "expression": "year",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "week_number",
               "isExpression": false,
               "asc": true,
               "nulls": "last"
@@ -157,16 +163,18 @@
         }
       },
       "foreignKeys": {
-        "games_week_id_weeks_week_id_fk": {
-          "name": "games_week_id_weeks_week_id_fk",
+        "games_week_fk": {
+          "name": "games_week_fk",
           "tableFrom": "games",
           "tableTo": "weeks",
           "schemaTo": "admin",
           "columnsFrom": [
-            "week_id"
+            "year",
+            "week_number"
           ],
           "columnsTo": [
-            "week_id"
+            "year",
+            "week_number"
           ],
           "onDelete": "cascade",
           "onUpdate": "no action"
@@ -182,12 +190,6 @@
       "name": "weeks",
       "schema": "admin",
       "columns": {
-        "week_id": {
-          "name": "week_id",
-          "type": "integer",
-          "primaryKey": true,
-          "notNull": true
-        },
         "week_number": {
           "name": "week_number",
           "type": "integer",
@@ -227,21 +229,6 @@
         }
       },
       "indexes": {
-        "weeks_week_number_idx": {
-          "name": "weeks_week_number_idx",
-          "columns": [
-            {
-              "expression": "week_number",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            }
-          ],
-          "isUnique": false,
-          "concurrently": false,
-          "method": "btree",
-          "with": {}
-        },
         "weeks_year_season_idx": {
           "name": "weeks_year_season_idx",
           "columns": [
@@ -265,7 +252,15 @@
         }
       },
       "foreignKeys": {},
-      "compositePrimaryKeys": {},
+      "compositePrimaryKeys": {
+        "weeks_year_week_number_pk": {
+          "name": "weeks_year_week_number_pk",
+          "columns": [
+            "year",
+            "week_number"
+          ]
+        }
+      },
       "uniqueConstraints": {},
       "policies": {},
       "checkConstraints": {},
@@ -298,12 +293,6 @@
           "type": "text",
           "primaryKey": false,
           "notNull": false
-        },
-        "week_id": {
-          "name": "week_id",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": true
         },
         "week_number": {
           "name": "week_number",
@@ -376,11 +365,17 @@
         }
       },
       "indexes": {
-        "user_games_week_id_idx": {
-          "name": "user_games_week_id_idx",
+        "user_games_year_week_idx": {
+          "name": "user_games_year_week_idx",
           "columns": [
             {
-              "expression": "week_id",
+              "expression": "year",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "week_number",
               "isExpression": false,
               "asc": true,
               "nulls": "last"
@@ -391,8 +386,8 @@
           "method": "btree",
           "with": {}
         },
-        "user_games_user_id_week_id_idx": {
-          "name": "user_games_user_id_week_id_idx",
+        "user_games_user_year_week_idx": {
+          "name": "user_games_user_year_week_idx",
           "columns": [
             {
               "expression": "user_id",
@@ -401,7 +396,13 @@
               "nulls": "last"
             },
             {
-              "expression": "week_id",
+              "expression": "year",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "week_number",
               "isExpression": false,
               "asc": true,
               "nulls": "last"

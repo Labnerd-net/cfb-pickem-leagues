@@ -3,7 +3,7 @@ import type {
   AdminWeekData,
   Classification,
   Team,
-  WeekIdData,
+  WeekQuery,
 } from '@shared/types/cfb-pickem-api.js';
 import { dataSource } from '../utils/envVars.js';
 import { getCfbdGameData, getCfbdWeekData } from './cfbd.js';
@@ -16,15 +16,19 @@ export async function getWeekData(year: number): Promise<AdminWeekData[]> {
   const weekData: AdminWeekData[] = [];
   if (dataSource === 'cfbd') {
     const cfbdWeekData = await getCfbdWeekData(year);
+
+    const regularWeeks = cfbdWeekData?.filter(w => w.seasonType === 'regular') ?? [];
+    const regularWeekCount = Math.max(...regularWeeks.map(w => w.week), 0);
+
     cfbdWeekData?.forEach(week => {
-      const id = returnID({
-        seasonType: week.seasonType,
-        week: week.week,
-        year: week.season,
-      });
       const data = {} as AdminWeekData;
-      data.weekId = id;
-      data.weekNumber = week.week;
+
+      if (week.seasonType === 'postseason') {
+        data.weekNumber = regularWeekCount + week.week;
+      } else {
+        data.weekNumber = week.week;
+      }
+
       data.year = week.season;
       data.seasonType = week.seasonType;
       data.weekStart = week.startDate;
@@ -37,16 +41,13 @@ export async function getWeekData(year: number): Promise<AdminWeekData[]> {
       ? ncaaSchedule.data?.schedules.today.season
       : year;
     const ncaaSeasonType = 'regular';
-    ncaaSchedule?.data?.schedules?.games?.forEach((week, index: number) => {
-      const id = returnID({
-        seasonType: ncaaSeasonType,
-        week: index + 1,
-        year: ncaaYear,
-      });
-      console.log(`adding weekId = ${id}`);
+    const games = ncaaSchedule?.data?.schedules?.games ?? [];
+    // Remove the last entry which is an aggregate summary of all postseason games
+    const filteredGames = games.slice(0, -1);
+
+    filteredGames.forEach((week, index: number) => {
       const dates = week.contestDate.split('-');
       const data = {} as AdminWeekData;
-      data.weekId = id;
       data.weekNumber = index + 1;
       data.year = ncaaYear;
       data.seasonType = ncaaSeasonType;
@@ -62,13 +63,12 @@ export async function getWeekData(year: number): Promise<AdminWeekData[]> {
 // Converts games from different data sources to database type
 // ------------------------------------------------------------------
 export async function getGameData(
-  idData: WeekIdData,
+  queryData: WeekQuery,
   classification: Classification = 'fbs'
 ): Promise<AdminGameData[]> {
   const gameData: AdminGameData[] = [];
-  const id = returnID(idData);
   if (dataSource === 'cfbd') {
-    const cfbdGamedata = await getCfbdGameData(idData, classification);
+    const cfbdGamedata = await getCfbdGameData(queryData, classification);
     cfbdGamedata?.forEach(game => {
       let winningTeam: Team = 'pending';
       let homePoints = -1;
@@ -80,13 +80,12 @@ export async function getGameData(
         if (awayPoints > homePoints) winningTeam = 'away_team';
       }
       const data = {} as AdminGameData;
-      data.weekId = id;
       data.cfbdGameId = game.id;
       data.ncaaGameId = null;
       data.picked = false;
-      data.weekNumber = idData.week;
-      data.year = idData.year;
-      data.seasonType = idData.seasonType;
+      data.weekNumber = queryData.week;
+      data.year = queryData.year;
+      data.seasonType = queryData.seasonType;
       data.completed = game.completed;
       data.homeTeam = game.homeTeam;
       data.awayTeam = game.awayTeam;
@@ -97,7 +96,7 @@ export async function getGameData(
     });
   } else if (dataSource === 'ncaa') {
     // path = fbs/2025/01/all-conf
-    const ncaaGameData = await getNcaaScoreboard(idData, classification);
+    const ncaaGameData = await getNcaaScoreboard(queryData, classification);
     ncaaGameData?.games?.forEach(game => {
       const completed = game.game.gameState === 'final' ? true : false;
       const winningTeam = game.game.away.winner
@@ -108,13 +107,12 @@ export async function getGameData(
       const homePoints = game.game.home.score === '' ? -1 : Number(game.game.home.score);
       const awayPoints = game.game.away.score === '' ? -1 : Number(game.game.away.score);
       const data = {} as AdminGameData;
-      data.weekId = id;
       data.cfbdGameId = null;
       data.ncaaGameId = game.game.gameID;
       data.picked = false;
-      data.weekNumber = idData.week;
-      data.year = idData.year;
-      data.seasonType = idData.seasonType;
+      data.weekNumber = queryData.week;
+      data.year = queryData.year;
+      data.seasonType = queryData.seasonType;
       data.completed = completed;
       data.homeTeam = game.game.home.names.short;
       data.awayTeam = game.game.away.names.short;
@@ -125,24 +123,4 @@ export async function getGameData(
     });
   }
   return gameData;
-}
-
-// ------------------------------------------------------------------
-// Returns a unique id based on year, week, and season type
-// ------------------------------------------------------------------
-export function returnID(idData: WeekIdData): number {
-  const { seasonType, year, week } = idData;
-  let adjustment: number = 0;
-  switch (seasonType) {
-    case 'regular':
-      adjustment = 0;
-      break;
-    case 'postseason':
-      adjustment = 100;
-      break;
-    default:
-      adjustment = 900;
-  }
-  const id = Number(year) * 1000 + adjustment + Number(week);
-  return id;
 }

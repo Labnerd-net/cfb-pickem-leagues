@@ -1,17 +1,10 @@
-import { describe, it, expect, beforeAll, afterEach } from 'vitest';
-import { getTestDb, cleanDatabase, seedTestData } from '../../db-utils.js';
+import { describe, it, expect, beforeAll } from 'vitest';
+import { seedTestData } from '../../db-utils.js';
 import { returnUsers, returnUserByEmail, returnUserById } from '../../../src/db/dbUserFunctions.js';
 
 describe('User Database Functions', () => {
-	const testDb = getTestDb();
-
 	beforeAll(async () => {
-		await seedTestData(testDb);
-	});
-
-	afterEach(async () => {
-		await cleanDatabase(testDb);
-		await seedTestData(testDb);
+		await seedTestData();
 	});
 
 	describe('returnUsers', () => {

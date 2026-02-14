@@ -1,14 +1,13 @@
 import { eq, and } from 'drizzle-orm';
 import { users, games } from './schema/users.js';
 import { db } from './index.js';
-import { returnID } from '../api/index.js';
 import * as dbAdminFunctions from './dbAdminFunctions.js';
 import type {
   UserData,
   UserDbData,
   UserDbGameData,
   UserGamePicks,
-  WeekIdData,
+  WeekQuery,
 } from '@shared/types/cfb-pickem-api.js';
 
 // ------------------------------------------------------------------
@@ -107,7 +106,6 @@ export async function addPickedGame(pick: UserGamePicks, userId: string): Promis
         gameId: pick.game,
         cfbdGameId: gameInfo[0].cfbdGameId,
         ncaaGameId: gameInfo[0].ncaaGameId,
-        weekId: gameInfo[0].weekId,
         weekNumber: gameInfo[0].weekNumber,
         year: gameInfo[0].year,
         seasonType: gameInfo[0].seasonType,
@@ -139,17 +137,22 @@ export async function addPickedGame(pick: UserGamePicks, userId: string): Promis
 // Return User Games
 // ------------------------------------------------------------------
 export async function returnUserGames(
-  idData: WeekIdData,
+  query: WeekQuery,
   userId: string
 ): Promise<UserDbGameData[]> {
-  const id = returnID(idData);
   const userIdNumber = Number(userId);
-  console.log(`Inside returnUserGames dbUserFunction: week_id=${id}`);
+  console.log(`Inside returnUserGames dbUserFunction: year=${query.year}, week=${query.week}`);
   try {
     return await db
       .select()
       .from(games)
-      .where(and(eq(games.weekId, id), eq(games.userId, userIdNumber)));
+      .where(
+        and(
+          eq(games.year, query.year),
+          eq(games.weekNumber, query.week),
+          eq(games.userId, userIdNumber)
+        )
+      );
   } catch (e) {
     console.log(e);
     throw e;

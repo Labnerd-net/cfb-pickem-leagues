@@ -1,27 +1,17 @@
-import { drizzle } from 'drizzle-orm/node-postgres';
 import { sql } from 'drizzle-orm';
 import type { Role } from '@shared/types/cfb-pickem-api.js';
 import bcrypt from 'bcryptjs';
+import { db } from '../src/db/index.js';
 
-/**
- * Get a drizzle instance connected to the test database
- */
-export function getTestDb() {
-	const pgUser = process.env.DB_USER || 'postgres';
-	const pgPassword = process.env.DB_PASSWORD || 'postgres';
-	const pgHost = process.env.DB_HOST || 'localhost';
-	const pgPort = process.env.DB_PORT || '5432';
-	const pgName = process.env.DB_NAME || 'cfb-pickem-test';
-	const dbUrl = `postgres://${pgUser}:${pgPassword}@${pgHost}:${pgPort}/${pgName}`;
-
-	return drizzle(dbUrl);
-}
+// Re-export the mocked db instance for tests
+export { db as testDb };
 
 /**
  * Clean all data from test database tables (preserves schema)
  * Respects foreign key constraints by truncating in correct order
+ * Note: With PGlite, each test file gets a fresh DB, so this is rarely needed
  */
-export async function cleanDatabase(db: ReturnType<typeof drizzle>) {
+export async function cleanDatabase() {
 	await db.execute(sql`TRUNCATE TABLE "user"."games" CASCADE`);
 	await db.execute(sql`TRUNCATE TABLE "user"."users" RESTART IDENTITY CASCADE`);
 	await db.execute(sql`TRUNCATE TABLE "admin"."games" RESTART IDENTITY CASCADE`);
@@ -31,12 +21,12 @@ export async function cleanDatabase(db: ReturnType<typeof drizzle>) {
 /**
  * Seed minimal test data required for tests
  */
-export async function seedTestData(db: ReturnType<typeof drizzle>) {
+export async function seedTestData() {
 	// Insert a test week (2024 week 1, regular season)
 	await db.execute(sql`
-		INSERT INTO "admin"."weeks" (week_id, week_number, year, season_type, week_start, week_end)
-		VALUES (2024001, 1, 2024, 'regular', '2024-08-24', '2024-08-31')
-		ON CONFLICT (week_id) DO NOTHING
+		INSERT INTO "admin"."weeks" (week_number, year, season_type, week_start, week_end)
+		VALUES (1, 2024, 'regular', '2024-08-24', '2024-08-31')
+		ON CONFLICT (year, week_number) DO NOTHING
 	`);
 
 	// Insert a test admin user
@@ -59,7 +49,6 @@ export async function seedTestData(db: ReturnType<typeof drizzle>) {
  * Helper to create a test user with specific roles
  */
 export async function createTestUser(
-	db: ReturnType<typeof drizzle>,
 	email: string,
 	displayName: string,
 	roles: Role[],
@@ -75,26 +64,23 @@ export async function createTestUser(
 }
 
 /**
- * Helper to create a test week with optional games
+ * Helper to create a test week
  */
 export async function createTestWeek(
-	db: ReturnType<typeof drizzle>,
-	weekId: number,
 	weekNumber: number,
 	year: number,
 	seasonType: string = 'regular',
 ) {
 	await db.execute(sql`
-		INSERT INTO "admin"."weeks" (week_id, week_number, year, season_type, week_start, week_end)
+		INSERT INTO "admin"."weeks" (week_number, year, season_type, week_start, week_end)
 		VALUES (
-			${weekId},
 			${weekNumber},
 			${year},
 			${seasonType},
 			'2024-08-24',
 			'2024-08-31'
 		)
-		ON CONFLICT (week_id) DO NOTHING
+		ON CONFLICT (year, week_number) DO NOTHING
 	`);
 }
 
@@ -102,8 +88,6 @@ export async function createTestWeek(
  * Helper to create a test game
  */
 export async function createTestGame(
-	db: ReturnType<typeof drizzle>,
-	weekId: number,
 	weekNumber: number,
 	year: number,
 	homeTeam: string,
@@ -113,11 +97,11 @@ export async function createTestGame(
 ) {
 	const result = await db.execute(sql`
 		INSERT INTO "admin"."games" (
-			week_id, week_number, year, season_type, picked, completed,
+			week_number, year, season_type, picked, completed,
 			home_team, away_team, home_points, away_points, winning_team
 		)
 		VALUES (
-			${weekId}, ${weekNumber}, ${year}, 'regular', ${picked}, ${completed},
+			${weekNumber}, ${year}, 'regular', ${picked}, ${completed},
 			${homeTeam}, ${awayTeam}, -1, -1, 'pending'
 		)
 		RETURNING game_id

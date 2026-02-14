@@ -1,6 +1,6 @@
 import axios from 'axios';
 import type { NcaaScheduleOutput, NcaaScoreboardOutput } from '../types/ncaa-api.js';
-import type { Classification, WeekIdData } from '@shared/types/cfb-pickem-api.js';
+import type { Classification, WeekQuery } from '@shared/types/cfb-pickem-api.js';
 
 const ncaaAPI = 'https://ncaa-api.henrygd.me';
 
@@ -8,14 +8,14 @@ const ncaaAPI = 'https://ncaa-api.henrygd.me';
 // Returns Scoreboard data from NCAA-API
 // ------------------------------------------------------------------
 export async function getNcaaScoreboard(
-  idData: WeekIdData,
+  query: WeekQuery,
   classification: Classification = 'fbs',
   sport: string = 'football'
 ) {
   try {
     // path = fbs/2025/01/all-conf
-    const weekTwoDigits = String(idData.week).padStart(2, '0');
-    const path = `${classification}/${idData.year}/${weekTwoDigits}/all‑conf`;
+    const weekTwoDigits = String(query.week).padStart(2, '0');
+    const path = `${classification}/${query.year}/${weekTwoDigits}/all‑conf`;
     console.log(`${ncaaAPI}/scoreboard/${sport}/${path}`);
     const response = await axios.get<NcaaScoreboardOutput>(
       `${ncaaAPI}/scoreboard/${sport}/${path}`

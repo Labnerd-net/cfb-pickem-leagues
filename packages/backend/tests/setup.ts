@@ -1,10 +1,116 @@
 import 'dotenv/config';
 import { vi } from 'vitest';
+import { PGlite } from '@electric-sql/pglite';
+import { drizzle } from 'drizzle-orm/pglite';
 
-// Override environment variables for test database
-process.env.DB_NAME = 'cfb-pickem-test';
+// Override environment variables for tests
 process.env.NODE_ENV = 'test';
 process.env.JWT_SECRET = 'test-secret-key-do-not-use-in-production';
 
 // Set global test timeout
 vi.setConfig({ testTimeout: 10000 });
+
+// Mock the db module with PGlite
+vi.mock('../src/db/index.ts', async () => {
+	// Create a fresh PGlite instance for each test file
+	const client = new PGlite();
+	const db = drizzle(client);
+
+	// Apply schema - create admin and user schemas
+	await client.exec(`
+		CREATE SCHEMA IF NOT EXISTS admin;
+		CREATE SCHEMA IF NOT EXISTS "user";
+
+		-- Admin schema: weeks table
+		CREATE TABLE admin.weeks (
+			week_number INTEGER NOT NULL,
+			year INTEGER NOT NULL,
+			season_type TEXT NOT NULL,
+			week_start DATE NOT NULL,
+			week_end DATE NOT NULL,
+			created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,
+			PRIMARY KEY (year, week_number)
+		);
+
+		CREATE INDEX weeks_year_season_idx ON admin.weeks (year, season_type);
+
+		-- Admin schema: games table
+		CREATE TABLE admin.games (
+			game_id SERIAL PRIMARY KEY,
+			cfbd_game_id INTEGER,
+			ncaa_game_id TEXT,
+			picked BOOLEAN NOT NULL,
+			week_number INTEGER NOT NULL,
+			year INTEGER NOT NULL,
+			season_type TEXT NOT NULL,
+			completed BOOLEAN NOT NULL,
+			home_team TEXT NOT NULL,
+			away_team TEXT NOT NULL,
+			home_points INTEGER NOT NULL DEFAULT -1,
+			away_points INTEGER NOT NULL DEFAULT -1,
+			winning_team TEXT NOT NULL DEFAULT 'pending',
+			created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,
+			CONSTRAINT games_week_fk FOREIGN KEY (year, week_number)
+				REFERENCES admin.weeks (year, week_number) ON DELETE CASCADE
+		);
+
+		CREATE INDEX games_year_week_idx ON admin.games (year, week_number);
+		CREATE INDEX games_picked_idx ON admin.games (picked);
+		CREATE INDEX games_year_week_picked_idx ON admin.games (year, week_number, picked);
+
+		-- User schema: users table
+		CREATE TABLE "user".users (
+			user_id SERIAL PRIMARY KEY,
+			email TEXT NOT NULL UNIQUE,
+			display_name TEXT NOT NULL DEFAULT '',
+			password_hash TEXT NOT NULL,
+			roles TEXT[] NOT NULL,
+			created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL
+		);
+
+		-- User schema: games table
+		CREATE TABLE "user".games (
+			user_id INTEGER NOT NULL REFERENCES "user".users (user_id) ON DELETE CASCADE,
+			game_id INTEGER NOT NULL,
+			cfbd_game_id INTEGER,
+			ncaa_game_id TEXT,
+			week_number INTEGER NOT NULL,
+			year INTEGER NOT NULL,
+			season_type TEXT NOT NULL,
+			completed BOOLEAN NOT NULL,
+			home_team TEXT NOT NULL,
+			away_team TEXT NOT NULL,
+			home_points INTEGER NOT NULL,
+			away_points INTEGER NOT NULL,
+			winning_team TEXT NOT NULL DEFAULT 'pending',
+			team_chosen TEXT NOT NULL DEFAULT 'pending',
+			created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,
+			PRIMARY KEY (user_id, game_id)
+		);
+
+		CREATE INDEX user_games_year_week_idx ON "user".games (year, week_number);
+		CREATE INDEX user_games_user_year_week_idx ON "user".games (user_id, year, week_number);
+	`);
+
+	// Export the custom column types
+	const customType = (await import('drizzle-orm/pg-core')).customType;
+
+	return {
+		db,
+		columnSeason: customType({
+			dataType() {
+				return 'text';
+			},
+		}),
+		columnTeam: customType({
+			dataType() {
+				return 'text';
+			},
+		}),
+		columnRole: customType({
+			dataType() {
+				return 'text';
+			},
+		}),
+	};
+});

@@ -1,5 +1,5 @@
 import 'dotenv/config';
-import { boolean, date, index, integer, pgSchema, serial, text, timestamp } from 'drizzle-orm/pg-core';
+import { boolean, date, foreignKey, index, integer, pgSchema, primaryKey, serial, text, timestamp } from 'drizzle-orm/pg-core';
 import { relations } from 'drizzle-orm';
 import { columnSeason, columnTeam } from '../index.js';
 // import { columnSeason, columnTeam } from '../index'; // for drizzle-kit generate
@@ -10,7 +10,6 @@ const adminSchema = pgSchema('admin');
 // AdminWeeks
 // ------------------------------------------------------------------
 export const adminWeeks = adminSchema.table('weeks', {
-  weekId: integer('week_id').notNull().primaryKey(),
   weekNumber: integer('week_number').notNull(),
   year: integer('year').notNull(),
   seasonType: columnSeason('season_type').notNull(),
@@ -18,7 +17,7 @@ export const adminWeeks = adminSchema.table('weeks', {
   weekEnd: date('week_end').notNull(),
   createdAt: timestamp('created_at').defaultNow().notNull(),
 }, (table) => ([
-  index('weeks_week_number_idx').on(table.weekNumber),
+  primaryKey({ columns: [table.year, table.weekNumber] }),
   index('weeks_year_season_idx').on(table.year, table.seasonType),
 ]));
 
@@ -29,9 +28,6 @@ export const adminGames = adminSchema.table('games', {
   gameId: serial('game_id').primaryKey(),
   cfbdGameId: integer('cfbd_game_id'),
   ncaaGameId: text('ncaa_game_id'),
-  weekId: integer('week_id')
-    .notNull()
-    .references(() => adminWeeks.weekId, { onDelete: 'cascade' }),
   picked: boolean('picked').notNull(),
   weekNumber: integer('week_number').notNull(),
   year: integer('year').notNull(),
@@ -44,9 +40,14 @@ export const adminGames = adminSchema.table('games', {
   winningTeam: columnTeam('winning_team').notNull().default('pending'),
   createdAt: timestamp('created_at').defaultNow().notNull(),
 }, (table) => ([
-  index('games_week_id_idx').on(table.weekId),
+  foreignKey({
+    columns: [table.year, table.weekNumber],
+    foreignColumns: [adminWeeks.year, adminWeeks.weekNumber],
+    name: 'games_week_fk',
+  }).onDelete('cascade'),
+  index('games_year_week_idx').on(table.year, table.weekNumber),
   index('games_picked_idx').on(table.picked),
-  index('games_week_id_picked_idx').on(table.weekId, table.picked),
+  index('games_year_week_picked_idx').on(table.year, table.weekNumber, table.picked),
 ]));
 
 // ------------------------------------------------------------------

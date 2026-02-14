@@ -8,7 +8,7 @@ import type {
   PickedGamesData,
   ProfileData,
   SeasonType,
-  WeekIdData,
+  WeekQuery,
 } from '@shared/types/cfb-pickem-api.js';
 import { authMiddleware, requireRole } from '../utils/middleware.js';
 
@@ -57,7 +57,7 @@ admin.post('/year/:year', requireRole('admin'), async c => {
 // Add Games to Week
 admin.post('/week', requireRole('admin'), async c => {
   try {
-    const pickedData: WeekIdData = await c.req.json();
+    const pickedData: WeekQuery = await c.req.json();
     const gameData = await getGameData(pickedData);
     if (gameData?.length) {
       await Promise.all(gameData.map(game => dbAdminFunctions.addGameToWeek(game)));
@@ -75,7 +75,7 @@ admin.post('/week', requireRole('admin'), async c => {
 // Get Games for Week
 admin.get('/getgames', requireRole('admin'), async c => {
   try {
-    const weekData: WeekIdData = {
+    const weekData: WeekQuery = {
       year: Number(c.req.query('year')),
       week: Number(c.req.query('week')),
       seasonType: (c.req.query('seasonType') || 'regular') as SeasonType,
