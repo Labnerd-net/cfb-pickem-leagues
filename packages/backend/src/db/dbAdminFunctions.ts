@@ -23,6 +23,19 @@ export async function returnWeek(week: number): Promise<AdminWeekData[]> {
 }
 
 // ------------------------------------------------------------------
+// Return weeks by year
+// ------------------------------------------------------------------
+export async function returnWeeksByYear(year: number): Promise<AdminWeekData[]> {
+  console.log(`Inside returnWeeksByYear dbAdminFunction: year=${year}`);
+  try {
+    return await db.select().from(adminWeeks).where(eq(adminWeeks.year, year));
+  } catch (e) {
+    console.log(e);
+    throw e;
+  }
+}
+
+// ------------------------------------------------------------------
 // Return week by WeekQuery
 // ------------------------------------------------------------------
 export async function returnWeekByQuery(query: WeekQuery): Promise<AdminWeekData[]> {

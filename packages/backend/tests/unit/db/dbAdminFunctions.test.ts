@@ -2,6 +2,7 @@ import { describe, it, expect, beforeAll, afterEach } from 'vitest';
 import { seedTestData, createTestWeek, createTestGame, cleanDatabase } from '../../db-utils.js';
 import {
 	returnWeek,
+  returnWeeksByYear,
 	returnGamesForWeek,
 	returnPickedGames,
 } from '../../../src/db/dbAdminFunctions.js';
@@ -30,6 +31,26 @@ describe('Admin Database Functions', () => {
 
 		it('should return empty array for non-existent week', async () => {
 			const week = await returnWeek(99);
+
+			expect(Array.isArray(week)).toBe(true);
+			expect(week.length).toBe(0);
+		});
+	});
+
+	describe('returnWeeksByYear', () => {
+		it('should return week by year number', async () => {
+			const week = await returnWeeksByYear(2024);
+
+			expect(week).toBeDefined();
+			expect(week.length).toBe(2);
+			expect(week[0].weekNumber).toBe(1);
+			expect(week[0].year).toBe(2024);
+			expect(week[1].weekNumber).toBe(2);
+			expect(week[1].year).toBe(2024);
+		});
+
+		it('should return empty array for non-existent week', async () => {
+			const week = await returnWeeksByYear(2026);
 
 			expect(Array.isArray(week)).toBe(true);
 			expect(week.length).toBe(0);

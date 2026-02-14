@@ -1,24 +1,24 @@
-import { useState } from 'react';
-import { Box, Alert, Snackbar } from '@mui/material';
-import type { AdminDbGameData, SeasonType, WeekQuery } from '@shared/types/cfb-pickem-api';
+import { useEffect, useState } from 'react';
+import { Box, Alert, Snackbar, Typography } from '@mui/material';
+import type { AdminDbWeekData, AdminDbGameData, WeekQuery } from '@shared/types/cfb-pickem-api';
 import DashboardCard from '../dashboard/DashboardCard';
-import WeekSelector from './WeekSelector';
 import GamesList from './GamesList';
 import AdminPanelSettingsIcon from '@mui/icons-material/AdminPanelSettings';
 import {
-  addWeekstoYear,
-  addGamesToWeek,
   getGamesForWeek,
+  getWeeksForYear,
   setPickedGames,
 } from '../../apis/adminRequests';
+import WeekSelector from './WeekSelector';
 
 export default function AdminSection() {
-  const currentYear = new Date().getFullYear();
+  const currentDate = new Date()
+  const currentYear = currentDate.getFullYear();
 
   // State
   const [selectedYear, setSelectedYear] = useState(currentYear);
-  const [selectedSeasonType, setSelectedSeasonType] = useState<SeasonType>('regular');
   const [selectedWeek, setSelectedWeek] = useState(1);
+  const [weeks, setWeeks] = useState<AdminDbWeekData[]>([]);
   const [games, setGames] = useState<AdminDbGameData[]>([]);
   const [selectedGameIds, setSelectedGameIds] = useState<number[]>([]);
   const [loading, setLoading] = useState(false);
@@ -29,51 +29,10 @@ export default function AdminSection() {
   const getWeekData = (): WeekQuery => ({
     year: selectedYear,
     week: selectedWeek,
-    seasonType: selectedSeasonType,
+    seasonType: 'regular',
   });
 
   // API Handlers
-  const handlePopulateYear = async () => {
-    setLoading(true);
-    setErrorMessage(null);
-    setSuccessMessage(null);
-
-    try {
-      const result = await addWeekstoYear(selectedYear);
-      if (result.success) {
-        setSuccessMessage(`All weeks populated for ${selectedYear}`);
-      } else {
-        setErrorMessage(result.error || 'Failed to populate year');
-      }
-    } catch {
-      setErrorMessage('An unexpected error occurred while populating year');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handlePopulateWeek = async () => {
-    setLoading(true);
-    setErrorMessage(null);
-    setSuccessMessage(null);
-
-    try {
-      const weekData = getWeekData();
-      const result = await addGamesToWeek(weekData);
-      if (result.success) {
-        setSuccessMessage(
-          `Games populated for ${selectedSeasonType} Week ${selectedWeek}, ${selectedYear}`
-        );
-      } else {
-        setErrorMessage(result.error || 'Failed to populate week');
-      }
-    } catch {
-      setErrorMessage('An unexpected error occurred while populating week');
-    } finally {
-      setLoading(false);
-    }
-  };
-
   const handleLoadGames = async () => {
     setLoading(true);
     setErrorMessage(null);
@@ -149,6 +108,68 @@ export default function AdminSection() {
     setSuccessMessage(null);
   };
 
+  // Load weeks when year changes
+  useEffect(() => {
+    const handleLoadWeeks = async () => {
+      setLoading(true);
+      setErrorMessage(null);
+      setSuccessMessage(null);
+      setWeeks([]);
+
+      try {
+        const result = await getWeeksForYear(selectedYear);
+        if (result.success && result.data) {
+          setWeeks(result.data);
+          // Reset to week 1 when year changes
+          setSelectedWeek(1);
+        } else {
+          setErrorMessage(result.error || 'Failed to load weeks');
+        }
+      } catch {
+        setErrorMessage('An unexpected error occurred while loading weeks');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    handleLoadWeeks();
+  }, [selectedYear]);
+
+  // Load games when year or week changes
+  useEffect(() => {
+    const handleLoadGames = async () => {
+      setLoading(true);
+      setErrorMessage(null);
+      setSuccessMessage(null);
+      setGames([]);
+      setSelectedGameIds([]);
+
+      try {
+        const weekData: WeekQuery = {
+          year: selectedYear,
+          week: selectedWeek,
+          seasonType: 'regular',
+        };
+        const result = await getGamesForWeek(weekData);
+        if (result.success && result.data) {
+          setGames(result.data);
+          // Pre-select games that are already marked as picked
+          const pickedGameIds = result.data.filter((game) => game.picked).map((game) => game.gameId);
+          setSelectedGameIds(pickedGameIds);
+          setSuccessMessage(`Loaded ${result.data.length} games`);
+        } else {
+          setErrorMessage(result.error || 'Failed to load games');
+        }
+      } catch {
+        setErrorMessage('An unexpected error occurred while loading games');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    handleLoadGames();
+  }, [selectedYear, selectedWeek]);
+
   return (
     <Box
       sx={{
@@ -165,19 +186,16 @@ export default function AdminSection() {
       >
         <Box sx={{ mt: 2 }}>
           <WeekSelector
+            currentYear={currentYear}
             selectedYear={selectedYear}
             onYearChange={setSelectedYear}
-            selectedSeasonType={selectedSeasonType}
-            onSeasonTypeChange={setSelectedSeasonType}
+            weeks={weeks}
             selectedWeek={selectedWeek}
             onWeekChange={setSelectedWeek}
-            onPopulateYear={handlePopulateYear}
-            onPopulateWeek={handlePopulateWeek}
-            onLoadGames={handleLoadGames}
             loading={loading}
-          />
+          />          
 
-          {games.length > 0 && (
+          {games.length > 0 ? (
             <Box sx={{ mt: 4, pt: 4, borderTop: 2, borderColor: 'divider' }}>
               <GamesList
                 games={games}
@@ -189,6 +207,18 @@ export default function AdminSection() {
                 loading={loading}
               />
             </Box>
+          ) : (
+            <Typography
+              sx={{
+                fontFamily: '"Work Sans", sans-serif',
+                color: 'text.secondary',
+                textAlign: 'center',
+                py: 4,
+                fontStyle: 'italic',
+              }}
+            >
+              No Games Loaded
+            </Typography>
           )}
         </Box>
       </DashboardCard>

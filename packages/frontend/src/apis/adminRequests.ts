@@ -1,4 +1,4 @@
-import type { AdminDbGameData, WeekQuery, PickedGamesData } from '@shared/types/cfb-pickem-api';
+import type { AdminDbGameData, AdminDbWeekData, WeekQuery, PickedGamesData } from '@shared/types/cfb-pickem-api';
 import axios from 'axios';
 
 const databaseAPI = import.meta.env.VITE_API_URL || 'http://localhost:3000';
@@ -7,6 +7,12 @@ const path = 'api/admin';
 export interface AddWeeksResponse {
   success: boolean;
   data?: { status: string };
+  error?: string;
+}
+
+export interface GetWeeksResponse {
+  success: boolean;
+  data?: AdminDbWeekData[];
   error?: string;
 }
 
@@ -22,7 +28,7 @@ export interface GetGamesResponse {
   error?: string;
 }
 
-export async function addWeekstoYear(year: number): Promise<AddWeeksResponse> {
+export async function addWeeksToYear(year: number): Promise<AddWeeksResponse> {
   try {
     const token = localStorage.getItem('jwt');
     const response = await axios.post(
@@ -32,6 +38,28 @@ export async function addWeekstoYear(year: number): Promise<AddWeeksResponse> {
     );
     if (response.data.ok) {
       return { success: true, data: response.data.data };
+    }
+    return { success: false, error: response.data.error };
+  } catch (error) {
+    if (axios.isAxiosError(error) && error.response?.data?.error) {
+      return { success: false, error: error.response.data.error };
+    }
+    return { success: false, error: 'An unexpected error occurred' };
+  }
+}
+
+export async function getWeeksForYear(year: number): Promise<GetWeeksResponse> {
+  try {
+    const token = localStorage.getItem('jwt');
+    const response = await axios.get(
+      `${databaseAPI}/${path}/getweeks`,
+      {
+        params: { year },
+        headers: { Authorization: `Bearer ${token}` },
+      }
+    );
+    if (response.data.ok) {
+      return { success: true, data: response.data.data.weeks };
     }
     return { success: false, error: response.data.error };
   } catch (error) {

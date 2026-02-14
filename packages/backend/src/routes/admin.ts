@@ -37,14 +37,34 @@ admin.post('/users', requireRole('admin'), async c => {
 // Add Weeks to Year
 admin.post('/year/:year', requireRole('admin'), async c => {
   try {
-    // const payload = c.get('jwtPayload')
-    // const user = await dbUserFunctions.returnUserById(payload.sub);
     const yearNumber = Number(c.req.param('year'));
     const weekData = await getWeekData(yearNumber);
     if (weekData?.length) {
       await Promise.all(weekData.map(week => dbAdminFunctions.addWeek(week)));
     }
     return c.json(ok({ status: 'added all weeks' }));
+  } catch (e: unknown) {
+    if (e instanceof Error) {
+      return c.json(err(e.message, 500));
+    }
+    console.error('An unexpected error occurred:', e);
+    return c.json(err('An unexpected error occurred', 500));
+  }
+});
+
+// Get Weeks for Year
+admin.get('/getweeks', requireRole('admin'), async c => {
+  try {
+    const yearNumber = Number(c.req.query('year'));
+    let weeks = await dbAdminFunctions.returnWeeksByYear(yearNumber);
+    if (!weeks || weeks.length === 0) {
+      const weekData = await getWeekData(yearNumber);
+      if (weekData?.length) {
+        await Promise.all(weekData.map(week => dbAdminFunctions.addWeek(week)));
+      }
+      weeks = await dbAdminFunctions.returnWeeksByYear(yearNumber);
+    }
+    return c.json(ok({ weeks }));
   } catch (e: unknown) {
     if (e instanceof Error) {
       return c.json(err(e.message, 500));
@@ -80,9 +100,13 @@ admin.get('/getgames', requireRole('admin'), async c => {
       week: Number(c.req.query('week')),
       seasonType: (c.req.query('seasonType') || 'regular') as SeasonType,
     };
-    const weekGames = await dbAdminFunctions.returnGamesForWeek(weekData);
+    let weekGames = await dbAdminFunctions.returnGamesForWeek(weekData);
     if (!weekGames || weekGames.length === 0) {
-      return c.json(err('No games found for this week', 404));
+      const gameData = await getGameData(weekData);
+      if (gameData?.length) {
+        await Promise.all(gameData.map(game => dbAdminFunctions.addGameToWeek(game)));
+      }
+      weekGames = await dbAdminFunctions.returnGamesForWeek(weekData);
     }
     return c.json(ok({ weekGames }));
   } catch (e: unknown) {

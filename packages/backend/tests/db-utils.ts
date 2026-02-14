@@ -22,10 +22,15 @@ export async function cleanDatabase() {
  * Seed minimal test data required for tests
  */
 export async function seedTestData() {
-	// Insert a test week (2024 week 1, regular season)
+	// Insert a 2 test weeks (2024 week 1 & 2, regular season)
 	await db.execute(sql`
 		INSERT INTO "admin"."weeks" (week_number, year, season_type, week_start, week_end)
 		VALUES (1, 2024, 'regular', '2024-08-24', '2024-08-31')
+		ON CONFLICT (year, week_number) DO NOTHING
+	`);
+	await db.execute(sql`
+		INSERT INTO "admin"."weeks" (week_number, year, season_type, week_start, week_end)
+		VALUES (2, 2024, 'regular', '2024-08-31', '2024-09-07')
 		ON CONFLICT (year, week_number) DO NOTHING
 	`);
 

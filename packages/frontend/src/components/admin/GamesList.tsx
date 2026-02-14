@@ -1,4 +1,4 @@
-import { Box, Typography } from '@mui/material';
+import { Box } from '@mui/material';
 import type { AdminDbGameData } from '@shared/types/cfb-pickem-api';
 import GameCard from './GameCard';
 import GameListControl from './GameListControl';
@@ -22,22 +22,6 @@ export default function GamesList({
   onSaveSelection,
   loading = false,
 }: GamesListProps) {
-  if (games.length === 0) {
-    return (
-      <Typography
-        sx={{
-          fontFamily: '"Work Sans", sans-serif',
-          color: 'text.secondary',
-          textAlign: 'center',
-          py: 4,
-          fontStyle: 'italic',
-        }}
-      >
-        No games loaded. Select a week and click "Load Games" to begin.
-      </Typography>
-    );
-  }
-
   return (
     <Box>
       <GameListControl 

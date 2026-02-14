@@ -19,4 +19,5 @@ create a spec to add specific admin functions to the dashboard if the user is a 
 create a spec for adding tests to the backend and the frontend using vitest. The focus should be on testing critical features and high-risk logic.  But any logic that makes sense to test should be tested too.
 
 ## fix schema weekId
+### Done
 create a spec for removing the weekId schema variable. weekId is created as a combination of the year, week, and seasonType, which is confusing.  I should be able to use the week and year as a combined primary key in drizzle.  However, CFBD season week output is split between season type, but NCAA-API does not.  We would still need to create a consistant weekNumber between the 2 APIs.
