@@ -23,4 +23,8 @@ create a spec for adding tests to the backend and the frontend using vitest. The
 create a spec for removing the weekId schema variable. weekId is created as a combination of the year, week, and seasonType, which is confusing.  I should be able to use the week and year as a combined primary key in drizzle.  However, CFBD season week output is split between season type, but NCAA-API does not.  We would still need to create a consistant weekNumber between the 2 APIs.
 
 ### remove seasonType from frontend
+### Done
 create a spec to remove the seasonType variables from the frontend.  create a function to calculate the seasonType based on the week when using the cfbd api
+
+### user dashboard pulls picked games
+create a spec to automatically pull the admin picked teams onto the users dashboard so the user can choose which team they think will win.  There user will need to choose a year and week to display the picked games for that week.  The default will be the current week
