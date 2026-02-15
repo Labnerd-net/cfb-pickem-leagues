@@ -49,7 +49,7 @@ CREATE TABLE "user"."games" (
 CREATE TABLE "user"."users" (
 	"user_id" serial PRIMARY KEY NOT NULL,
 	"email" text NOT NULL,
-	"display_name" text DEFAULT '' NOT NULL,
+	"display_name" text NOT NULL,
 	"password_hash" text NOT NULL,
 	"roles" text[] NOT NULL,
 	"created_at" timestamp DEFAULT now() NOT NULL,
