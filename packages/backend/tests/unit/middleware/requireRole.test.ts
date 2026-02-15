@@ -36,7 +36,7 @@ describe('requireRole middleware', () => {
 		const mockNext = vi.fn();
 
 		const middleware = requireRole('admin');
-		const result = await middleware(mockContext, mockNext as Next);
+		await middleware(mockContext, mockNext as Next);
 
 		expect(mockNext).not.toHaveBeenCalled();
 		expect(mockContext.json).toHaveBeenCalledWith(err('Forbidden', 403));
@@ -51,7 +51,7 @@ describe('requireRole middleware', () => {
 		const mockNext = vi.fn();
 
 		const middleware = requireRole('user');
-		const result = await middleware(mockContext, mockNext as Next);
+		await middleware(mockContext, mockNext as Next);
 
 		expect(mockNext).not.toHaveBeenCalled();
 		expect(mockContext.json).toHaveBeenCalledWith(err('Forbidden', 403));

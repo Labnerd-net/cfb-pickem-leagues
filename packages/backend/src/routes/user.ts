@@ -7,8 +7,7 @@ import type {
   AllUserGamePicks,
   JwtData,
   ProfileData,
-  SeasonType,
-  WeekQuery,
+  WeekIdentifier,
 } from '@shared/types/cfb-pickem-api.js';
 import { authMiddleware } from '../utils/middleware.js';
 
@@ -44,12 +43,11 @@ user.get('/picks', async c => {
   try {
     const payload = c.get('jwtPayload');
     const userIdString = String(payload.sub);
-    const weekData: WeekQuery = {
+    const weekIdentifier: WeekIdentifier = {
       year: Number(c.req.query('year')),
       week: Number(c.req.query('week')),
-      seasonType: (c.req.query('seasonType') || 'regular') as SeasonType,
     };
-    const picks = await dbUserFunctions.returnUserGames(weekData, userIdString);
+    const picks = await dbUserFunctions.returnUserGames(weekIdentifier, userIdString);
     return c.json(ok({ picks }));
   } catch (e: unknown) {
     if (e instanceof Error) {
@@ -63,12 +61,11 @@ user.get('/picks', async c => {
 // Get admin-picked games for a week
 user.get('/games', async c => {
   try {
-    const weekData: WeekQuery = {
+    const weekIdentifier: WeekIdentifier = {
       year: Number(c.req.query('year')),
       week: Number(c.req.query('week')),
-      seasonType: (c.req.query('seasonType') || 'regular') as SeasonType,
     };
-    const pickedGames: AdminDbGameData[] = await returnPickedGames(weekData);
+    const pickedGames: AdminDbGameData[] = await returnPickedGames(weekIdentifier);
     if (!pickedGames || pickedGames.length === 0) {
       return c.json(err('No picked games found for this week', 404));
     }

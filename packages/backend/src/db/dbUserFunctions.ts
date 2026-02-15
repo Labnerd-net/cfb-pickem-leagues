@@ -7,7 +7,7 @@ import type {
   UserDbData,
   UserDbGameData,
   UserGamePicks,
-  WeekQuery,
+  WeekIdentifier,
 } from '@shared/types/cfb-pickem-api.js';
 
 // ------------------------------------------------------------------
@@ -137,19 +137,19 @@ export async function addPickedGame(pick: UserGamePicks, userId: string): Promis
 // Return User Games
 // ------------------------------------------------------------------
 export async function returnUserGames(
-  query: WeekQuery,
+  identifier: WeekIdentifier,
   userId: string
 ): Promise<UserDbGameData[]> {
   const userIdNumber = Number(userId);
-  console.log(`Inside returnUserGames dbUserFunction: year=${query.year}, week=${query.week}`);
+  console.log(`Inside returnUserGames dbUserFunction: year=${identifier.year}, week=${identifier.week}`);
   try {
     return await db
       .select()
       .from(games)
       .where(
         and(
-          eq(games.year, query.year),
-          eq(games.weekNumber, query.week),
+          eq(games.year, identifier.year),
+          eq(games.weekNumber, identifier.week),
           eq(games.userId, userIdNumber)
         )
       );

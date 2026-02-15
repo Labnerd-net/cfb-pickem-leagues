@@ -5,10 +5,9 @@ import { getWeekData, getGameData } from '../api/index.js';
 import { ok, err } from '../utils/response.js';
 import type {
   JwtData,
-  PickedGamesData,
   ProfileData,
-  SeasonType,
-  WeekQuery,
+  WeekIdentifier,
+  PickedGamesRequest,
 } from '@shared/types/cfb-pickem-api.js';
 import { authMiddleware, requireRole } from '../utils/middleware.js';
 
@@ -77,8 +76,9 @@ admin.get('/getweeks', requireRole('admin'), async c => {
 // Add Games to Week
 admin.post('/week', requireRole('admin'), async c => {
   try {
-    const pickedData: WeekQuery = await c.req.json();
-    const gameData = await getGameData(pickedData);
+    const weekIdentifier: WeekIdentifier = await c.req.json();
+    const weekQuery = await dbAdminFunctions.enrichWeekIdentifier(weekIdentifier);
+    const gameData = await getGameData(weekQuery);
     if (gameData?.length) {
       await Promise.all(gameData.map(game => dbAdminFunctions.addGameToWeek(game)));
     }
@@ -95,18 +95,31 @@ admin.post('/week', requireRole('admin'), async c => {
 // Get Games for Week
 admin.get('/getgames', requireRole('admin'), async c => {
   try {
-    const weekData: WeekQuery = {
+    const weekIdentifier: WeekIdentifier = {
       year: Number(c.req.query('year')),
       week: Number(c.req.query('week')),
-      seasonType: (c.req.query('seasonType') || 'regular') as SeasonType,
     };
-    let weekGames = await dbAdminFunctions.returnGamesForWeek(weekData);
+
+    // Auto-load weeks if they don't exist
+    const existingWeeks = await dbAdminFunctions.returnWeeksByYear(weekIdentifier.year);
+    if (!existingWeeks || existingWeeks.length === 0) {
+      const weekData = await getWeekData(weekIdentifier.year);
+      if (weekData?.length) {
+        await Promise.all(weekData.map(week => dbAdminFunctions.addWeek(week)));
+      }
+    }
+
+    // Try to get games from database
+    let weekGames = await dbAdminFunctions.returnGamesForWeek(weekIdentifier);
+
+    // If no games found, fetch from external api
     if (!weekGames || weekGames.length === 0) {
-      const gameData = await getGameData(weekData);
+      const weekQuery = await dbAdminFunctions.enrichWeekIdentifier(weekIdentifier);
+      const gameData = await getGameData(weekQuery);
       if (gameData?.length) {
         await Promise.all(gameData.map(game => dbAdminFunctions.addGameToWeek(game)));
       }
-      weekGames = await dbAdminFunctions.returnGamesForWeek(weekData);
+      weekGames = await dbAdminFunctions.returnGamesForWeek(weekIdentifier);
     }
     return c.json(ok({ weekGames }));
   } catch (e: unknown) {
@@ -121,7 +134,7 @@ admin.get('/getgames', requireRole('admin'), async c => {
 // Set picked games
 admin.post('/setpicks', requireRole('admin'), async c => {
   try {
-    const pickedData: PickedGamesData = await c.req.json();
+    const pickedData: PickedGamesRequest = await c.req.json();
     await dbAdminFunctions.setPickedGame(pickedData.games);
     return c.json(ok({ status: 'updated picked games' }));
   } catch (e: unknown) {

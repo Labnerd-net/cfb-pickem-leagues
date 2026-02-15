@@ -5,8 +5,10 @@ import {
   returnWeeksByYear,
 	returnGamesForWeek,
 	returnPickedGames,
+	getSeasonTypeForWeek,
+	enrichWeekIdentifier,
 } from '../../../src/db/dbAdminFunctions.js';
-import type { WeekQuery } from '@shared/types/cfb-pickem-api.js';
+import type { WeekIdentifier } from '@shared/types/cfb-pickem-api.js';
 
 describe('Admin Database Functions', () => {
 	beforeAll(async () => {
@@ -65,10 +67,9 @@ describe('Admin Database Functions', () => {
 			// Create a test game for the week
 			await createTestGame( 1, 2024, 'Team A', 'Team B', true, false);
 
-			const weekData: WeekQuery = {
+			const weekData: WeekIdentifier = {
 				year: 2024,
 				week: 1,
-				seasonType: 'regular',
 			};
 
 			const games = await returnGamesForWeek(weekData);
@@ -80,10 +81,9 @@ describe('Admin Database Functions', () => {
 		});
 
 		it('should return empty array when no games exist for week', async () => {
-			const weekData: WeekQuery = {
+			const weekData: WeekIdentifier = {
 				year: 2024,
 				week: 15,
-				seasonType: 'regular',
 			};
 
 			const games = await returnGamesForWeek(weekData);
@@ -99,10 +99,9 @@ describe('Admin Database Functions', () => {
 			await createTestGame( 1, 2024, 'Team A', 'Team B', true, false);
 			await createTestGame( 1, 2024, 'Team C', 'Team D', false, false);
 
-			const weekData: WeekQuery = {
+			const weekData: WeekIdentifier = {
 				year: 2024,
 				week: 1,
-				seasonType: 'regular',
 			};
 
 			const pickedGames = await returnPickedGames(weekData);
@@ -116,16 +115,46 @@ describe('Admin Database Functions', () => {
 			// Create only unpicked games
 			await createTestGame( 1, 2024, 'Team A', 'Team B', false, false);
 
-			const weekData: WeekQuery = {
+			const weekData: WeekIdentifier = {
 				year: 2024,
 				week: 1,
-				seasonType: 'regular',
 			};
 
 			const pickedGames = await returnPickedGames(weekData);
 
 			expect(Array.isArray(pickedGames)).toBe(true);
 			expect(pickedGames.length).toBe(0);
+		});
+	});
+
+	describe('getSeasonTypeForWeek', () => {
+		it('should return seasonType for existing week', async () => {
+			const seasonType = await getSeasonTypeForWeek(2024, 1);
+
+			expect(seasonType).toBe('regular');
+		});
+
+		it('should return null for non-existent week', async () => {
+			const seasonType = await getSeasonTypeForWeek(2026, 99);
+
+			expect(seasonType).toBeNull();
+		});
+	});
+
+	describe('enrichWeekIdentifier', () => {
+		it('should convert WeekIdentifier to WeekQuery', async () => {
+			const weekQuery = await enrichWeekIdentifier({ year: 2024, week: 1 });
+
+			expect(weekQuery).toBeDefined();
+			expect(weekQuery.year).toBe(2024);
+			expect(weekQuery.week).toBe(1);
+			expect(weekQuery.seasonType).toBe('regular');
+		});
+
+		it('should throw error for non-existent week', async () => {
+			await expect(
+				enrichWeekIdentifier({ year: 2026, week: 99 })
+			).rejects.toThrow('Week 99 of year 2026 not found');
 		});
 	});
 });

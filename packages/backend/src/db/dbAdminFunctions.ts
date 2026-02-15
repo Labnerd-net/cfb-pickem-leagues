@@ -7,6 +7,8 @@ import type {
   AdminWeekData,
   Team,
   WeekQuery,
+  WeekIdentifier,
+  SeasonType,
 } from '@shared/types/cfb-pickem-api.js';
 
 // ------------------------------------------------------------------
@@ -36,15 +38,15 @@ export async function returnWeeksByYear(year: number): Promise<AdminWeekData[]> 
 }
 
 // ------------------------------------------------------------------
-// Return week by WeekQuery
+// Return week by WeekIdentifier
 // ------------------------------------------------------------------
-export async function returnWeekByQuery(query: WeekQuery): Promise<AdminWeekData[]> {
-  console.log(`Inside returnWeekByQuery dbAdminFunction: year=${query.year}, week=${query.week}`);
+export async function returnWeekByQuery(identifier: WeekIdentifier): Promise<AdminWeekData[]> {
+  console.log(`Inside returnWeekByQuery dbAdminFunction: year=${identifier.year}, week=${identifier.week}`);
   try {
     return await db
       .select()
       .from(adminWeeks)
-      .where(and(eq(adminWeeks.year, query.year), eq(adminWeeks.weekNumber, query.week)));
+      .where(and(eq(adminWeeks.year, identifier.year), eq(adminWeeks.weekNumber, identifier.week)));
   } catch (e) {
     console.log(e);
     throw e;
@@ -54,13 +56,13 @@ export async function returnWeekByQuery(query: WeekQuery): Promise<AdminWeekData
 // ------------------------------------------------------------------
 // Return games for a given week
 // ------------------------------------------------------------------
-export async function returnGamesForWeek(query: WeekQuery): Promise<AdminDbGameData[]> {
-  console.log(`Inside returnGamesForWeek dbAdminFunction: year=${query.year}, week=${query.week}`);
+export async function returnGamesForWeek(identifier: WeekIdentifier): Promise<AdminDbGameData[]> {
+  console.log(`Inside returnGamesForWeek dbAdminFunction: year=${identifier.year}, week=${identifier.week}`);
   try {
     return await db
       .select()
       .from(adminGames)
-      .where(and(eq(adminGames.year, query.year), eq(adminGames.weekNumber, query.week)));
+      .where(and(eq(adminGames.year, identifier.year), eq(adminGames.weekNumber, identifier.week)));
   } catch (e) {
     console.log(e);
     throw e;
@@ -167,16 +169,16 @@ export async function setPickedGame(games: number[]): Promise<void> {
 // ------------------------------------------------------------------
 // Return all picked games
 // ------------------------------------------------------------------
-export async function returnPickedGames(query: WeekQuery): Promise<AdminDbGameData[]> {
-  console.log(`Inside returnPickedGames dbAdminFunction: year=${query.year}, week=${query.week}`);
+export async function returnPickedGames(identifier: WeekIdentifier): Promise<AdminDbGameData[]> {
+  console.log(`Inside returnPickedGames dbAdminFunction: year=${identifier.year}, week=${identifier.week}`);
   try {
     return await db
       .select()
       .from(adminGames)
       .where(
         and(
-          eq(adminGames.year, query.year),
-          eq(adminGames.weekNumber, query.week),
+          eq(adminGames.year, identifier.year),
+          eq(adminGames.weekNumber, identifier.week),
           eq(adminGames.picked, true)
         )
       );
@@ -184,4 +186,49 @@ export async function returnPickedGames(query: WeekQuery): Promise<AdminDbGameDa
     console.log(e);
     throw e;
   }
+}
+
+// ------------------------------------------------------------------
+// Get seasonType for a week
+// ------------------------------------------------------------------
+export async function getSeasonTypeForWeek(
+  year: number,
+  week: number
+): Promise<SeasonType | null> {
+  console.log(`Inside getSeasonTypeForWeek dbAdminFunction: year=${year}, week=${week}`);
+  try {
+    const weekData = await db
+      .select({ seasonType: adminWeeks.seasonType })
+      .from(adminWeeks)
+      .where(and(eq(adminWeeks.year, year), eq(adminWeeks.weekNumber, week)))
+      .limit(1);
+
+    return weekData.length > 0 ? weekData[0].seasonType : null;
+  } catch (e) {
+    console.log(e);
+    throw e;
+  }
+}
+
+// ------------------------------------------------------------------
+// Convert WeekIdentifier to WeekQuery by looking up seasonType
+// ------------------------------------------------------------------
+export async function enrichWeekIdentifier(
+  identifier: WeekIdentifier
+): Promise<WeekQuery> {
+  console.log(`Inside enrichWeekIdentifier dbAdminFunction: year=${identifier.year}, week=${identifier.week}`);
+  const seasonType = await getSeasonTypeForWeek(identifier.year, identifier.week);
+
+  if (!seasonType) {
+    throw new Error(
+      `Week ${identifier.week} of year ${identifier.year} not found in database. ` +
+      `Please ensure weeks are loaded before fetching games.`
+    );
+  }
+
+  return {
+    year: identifier.year,
+    week: identifier.week,
+    seasonType,
+  };
 }

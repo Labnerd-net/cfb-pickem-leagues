@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Box, Alert, Snackbar, Typography } from '@mui/material';
-import type { AdminDbWeekData, AdminDbGameData, WeekQuery } from '@shared/types/cfb-pickem-api';
+import type { AdminDbWeekData, AdminDbGameData, WeekIdentifier } from '@shared/types/cfb-pickem-api';
 import DashboardCard from '../dashboard/DashboardCard';
 import GamesList from './GamesList';
 import AdminPanelSettingsIcon from '@mui/icons-material/AdminPanelSettings';
@@ -25,13 +25,6 @@ export default function AdminSection() {
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
 
-  // Helper to create WeekQuery
-  const getWeekData = (): WeekQuery => ({
-    year: selectedYear,
-    week: selectedWeek,
-    seasonType: 'regular',
-  });
-
   // API Handlers
   const handleLoadGames = async () => {
     setLoading(true);
@@ -41,7 +34,10 @@ export default function AdminSection() {
     setSelectedGameIds([]);
 
     try {
-      const weekData = getWeekData();
+      const weekData: WeekIdentifier = {
+        year: selectedYear,
+        week: selectedWeek,
+      };
       const result = await getGamesForWeek(weekData);
       if (result.success && result.data) {
         setGames(result.data);
@@ -71,7 +67,8 @@ export default function AdminSection() {
 
     try {
       const pickedData = {
-        ...getWeekData(),
+        year: selectedYear,
+        week: selectedWeek,
         games: selectedGameIds,
       };
       const result = await setPickedGames(pickedData);
@@ -145,10 +142,9 @@ export default function AdminSection() {
       setSelectedGameIds([]);
 
       try {
-        const weekData: WeekQuery = {
+        const weekData: WeekIdentifier = {
           year: selectedYear,
           week: selectedWeek,
-          seasonType: 'regular',
         };
         const result = await getGamesForWeek(weekData);
         if (result.success && result.data) {
