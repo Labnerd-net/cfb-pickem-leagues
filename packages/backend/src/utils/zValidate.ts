@@ -6,6 +6,8 @@ import type {
   PickedGamesData,
   // UserGamePicks,
   WeekQuery,
+  WeekIdentifier,
+  PickedGamesRequest,
 } from '@shared/types/cfb-pickem-api.js';
 
 const loginSchema: z.ZodType<Credentials> = z.object({
@@ -40,6 +42,17 @@ const pickedGameSchema: z.ZodType<PickedGamesData> = z.object({
   games: z.number().array(),
 });
 
+const weekIdentifierSchema: z.ZodType<WeekIdentifier> = z.object({
+  year: z.number(),
+  week: z.number(),
+});
+
+const pickedGameRequestSchema: z.ZodType<PickedGamesRequest> = z.object({
+  year: z.number(),
+  week: z.number(),
+  games: z.number().array(),
+});
+
 // const userPickedGameSchema: z.ZodType<UserGamePicks> = z.object({
 //   game: z.number(),
 //   pick: z.enum(['home_team', 'away_team']),
@@ -53,3 +66,5 @@ const pickedGameSchema: z.ZodType<PickedGamesData> = z.object({
 export const loginValidator = zValidator('json', loginSchema);
 export const weekQueryValidator = zValidator('json', weekQuerySchema);
 export const pickedGameValidator = zValidator('json', pickedGameSchema);
+export const weekIdentifierValidator = zValidator('json', weekIdentifierSchema);
+export const pickedGameRequestValidator = zValidator('json', pickedGameRequestSchema);

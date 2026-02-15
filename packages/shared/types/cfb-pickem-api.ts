@@ -99,19 +99,31 @@ export interface AdminDbGameData extends AdminGameData {
   createdAt: Date;
 }
 
-export interface WeekQuery {
+export interface UserGamePicks {
+  game: number;
+  pick: "home_team" | "away_team";
+}
+
+
+export interface WeekIdentifier {
   year: number;
   week: number;
+}
+
+export interface PickedGamesRequest extends WeekIdentifier {
+  games: number[];
+}
+
+export interface AllUserGamePicksRequest extends WeekIdentifier {
+  games: UserGamePicks[];
+}
+
+export interface WeekQuery extends WeekIdentifier {
   seasonType: SeasonType;
 }
 
 export interface PickedGamesData extends WeekQuery {
   games: number[];
-}
-
-export interface UserGamePicks {
-  game: number;
-  pick: "home_team" | "away_team";
 }
 
 export interface AllUserGamePicks extends WeekQuery {
