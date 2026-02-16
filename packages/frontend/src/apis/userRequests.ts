@@ -1,5 +1,5 @@
 import axios from 'axios';
-import type { AdminDbGameData, ProfileData, UserDbGameData, WeekIdentifier } from '@shared/types/cfb-pickem-api.js';
+import type { AdminDbGameData, AllUserGamePicksRequest, ProfileData, UserDbGameData, WeekIdentifier } from '@shared/types/cfb-pickem-api.js';
 
 const databaseAPI = import.meta.env.VITE_API_URL || 'http://localhost:3000';
 const path = 'api/user';
@@ -91,14 +91,18 @@ export async function getPickedGames(weekData: WeekIdentifier): Promise<AdminGam
   }
 }
 
-export async function postUserPicks(): Promise<PicksResponse> {
+export async function postUserPicks(picks: AllUserGamePicksRequest): Promise<PicksResponse> {
   try {
-    const token = localStorage.getItem('jwt'); // or read from a cookie
-    const response = await axios.post(`${databaseAPI}/${path}/picks`, {
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
-    });
+    const token = localStorage.getItem('jwt');
+    const response = await axios.post(
+      `${databaseAPI}/${path}/picks`,
+      picks,
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      }
+    );
     if (response.data.ok) {
       return { success: true, data: response.data.data };
     }

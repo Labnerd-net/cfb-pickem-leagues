@@ -3,6 +3,7 @@ import DashboardCard from '../dashboard/DashboardCard';
 import SportsFootballIcon from '@mui/icons-material/SportsFootball';
 import LeaderboardIcon from '@mui/icons-material/Leaderboard';
 import CalendarMonthIcon from '@mui/icons-material/CalendarMonth';
+import UserPicksSection from './UserPicksSection';
 
 export default function UserSection() {
   return (
@@ -51,15 +52,7 @@ export default function UserSection() {
         accentColor="primary"
         gridColumn={{ xs: '1', md: 'span 2' }}
       >
-        <Typography
-          sx={{
-            fontFamily: '"Work Sans", sans-serif',
-            color: 'text.secondary',
-            fontStyle: 'italic',
-          }}
-        >
-          Coming soon...
-        </Typography>
+        <UserPicksSection />
       </DashboardCard>
     </Box>
   );
