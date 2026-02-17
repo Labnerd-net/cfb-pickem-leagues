@@ -11,8 +11,8 @@ async function runMigrations() {
   const pgPort = process.env.DB_PORT || '5432';
   const pgName = process.env.DB_NAME || 'cfb-pickem';
 
-  // Use SSL in production (set to 'require' for self-signed certs)
-  const sslConfig = process.env.NODE_ENV === 'production' ? { ssl: { rejectUnauthorized: false } } : {};
+  // Set DB_SSL=true to enable SSL (e.g. for external managed databases with self-signed certs)
+  const sslConfig = process.env.DB_SSL === 'true' ? { ssl: { rejectUnauthorized: false } } : {};
 
   const pool = new Pool({
     user: pgUser,
