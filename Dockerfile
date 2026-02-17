@@ -8,7 +8,7 @@ RUN corepack enable && corepack prepare pnpm@latest --activate
 WORKDIR /app
 
 # Copy workspace files
-COPY pnpm-workspace.yaml package.json pnpm-lock.yaml ./
+COPY pnpm-workspace.yaml package.json pnpm-lock.yaml tsconfig.base.json ./
 
 # Copy all package manifests
 COPY packages/backend/package.json packages/backend/
@@ -25,10 +25,9 @@ RUN pnpm install --frozen-lockfile
 # ================================
 FROM base AS build
 
-# Copy dependencies from deps stage
+# Copy dependencies from deps stage (shared has no node_modules - types only)
 COPY --from=deps /app/node_modules ./node_modules
 COPY --from=deps /app/packages/backend/node_modules ./packages/backend/node_modules
-COPY --from=deps /app/packages/shared/node_modules ./packages/shared/node_modules
 
 # Copy source code
 COPY packages/backend ./packages/backend
@@ -56,13 +55,11 @@ COPY packages/shared/package.json packages/shared/
 # Install production dependencies only
 RUN pnpm install --prod --frozen-lockfile
 
-# Copy built application
+# Copy built application (dist/backend/src/... due to monorepo rootDir computation)
 COPY --from=build /app/packages/backend/dist ./packages/backend/dist
-COPY --from=build /app/packages/shared ./packages/shared
 
 # Copy migration files (CRITICAL for production migrations)
 COPY --from=build /app/packages/backend/drizzle ./packages/backend/drizzle
-COPY --from=build /app/packages/backend/src/scripts ./packages/backend/src/scripts
 
 # Set working directory to backend
 WORKDIR /app/packages/backend
