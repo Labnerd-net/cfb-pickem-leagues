@@ -43,3 +43,5 @@ if (dataSource === 'cfbd' && !process.env.CFBD_API_KEY) {
 }
 
 export const cfbdApiKey = process.env.CFBD_API_KEY || '';
+
+export const logLevel = process.env.LOG_LEVEL ?? 'info';
