@@ -41,7 +41,7 @@ export default function UserWeekSelector({
         type="number"
         label="Year"
         value={selectedYear}
-        onChange={(e) => onYearChange(parseInt(e.target.value))}
+        onChange={(e) => { const y = parseInt(e.target.value); if (!isNaN(y)) onYearChange(y); }}
         disabled={loading}
         slotProps={{ htmlInput: { min: currentYear - 5, max: currentYear + 1 } }}
       />

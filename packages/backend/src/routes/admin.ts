@@ -101,6 +101,7 @@ admin.get('/getgames', requireRole('admin'), async c => {
       year: Number(c.req.query('year')),
       week: Number(c.req.query('week')),
     };
+    if (isNaN(weekIdentifier.year) || isNaN(weekIdentifier.week)) return c.json(err('year and week are required', 400));
 
     // Auto-load weeks if they don't exist
     const existingWeeks = await dbAdminFunctions.returnWeeksByYear(weekIdentifier.year);

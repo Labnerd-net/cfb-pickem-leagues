@@ -48,6 +48,7 @@ user.get('/picks', async c => {
       year: Number(c.req.query('year')),
       week: Number(c.req.query('week')),
     };
+    if (isNaN(weekIdentifier.year) || isNaN(weekIdentifier.week)) return c.json(err('year and week are required', 400));
     const picks = await dbUserFunctions.returnUserGames(weekIdentifier, userIdString);
     return c.json(ok({ picks }));
   } catch (e: unknown) {
@@ -66,6 +67,7 @@ user.get('/games', async c => {
       year: Number(c.req.query('year')),
       week: Number(c.req.query('week')),
     };
+    if (isNaN(weekIdentifier.year) || isNaN(weekIdentifier.week)) return c.json(err('year and week are required', 400));
     const pickedGames: AdminDbGameData[] = await returnPickedGames(weekIdentifier);
     if (!pickedGames || pickedGames.length === 0) {
       return c.json(err('No picked games found for this week', 404));
