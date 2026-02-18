@@ -31,7 +31,7 @@ export interface PicksResponse {
 
 export interface GetWeeksResponse {
   success: boolean;
-  data?: AdminDbWeekData[];
+  data?: { weeks: AdminDbWeekData[] };
   error?: string;
 }
 
@@ -68,7 +68,7 @@ export async function getWeeksForYear(year: number): Promise<GetWeeksResponse> {
       }
     );
     if (response.data.ok) {
-      return { success: true, data: response.data.data.weeks };
+      return { success: true, data: response.data.data };
     }
     return { success: false, error: response.data.error };
   } catch (error) {

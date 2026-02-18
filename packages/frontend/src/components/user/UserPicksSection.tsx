@@ -8,10 +8,6 @@ import UserWeekSelector from './UserWeekSelector';
 import UserPicksGamesList from './UserPicksGamesList';
 
 // API response types that match backend structure
-interface WeeksResponse {
-  weeks: AdminDbWeekData[];
-}
-
 interface GamesResponse {
   pickedGames: AdminDbGameData[];
 }
@@ -49,10 +45,10 @@ export default function UserPicksSection() {
 
         const allWeeks: AdminDbWeekData[] = [];
         if (currentYearResult.success && currentYearResult.data) {
-          allWeeks.push(...(currentYearResult.data as unknown as WeeksResponse).weeks);
+          allWeeks.push(...currentYearResult.data.weeks);
         }
         if (nextYearResult.success && nextYearResult.data) {
-          allWeeks.push(...(nextYearResult.data as unknown as WeeksResponse).weeks);
+          allWeeks.push(...nextYearResult.data.weeks);
         }
 
         if (allWeeks.length === 0) {
@@ -91,7 +87,7 @@ export default function UserPicksSection() {
     async function loadWeeks() {
       const result = await getWeeksForYear(selectedYear);
       if (result.success && result.data) {
-        const weeksData = (result.data as unknown as WeeksResponse).weeks;
+        const weeksData = result.data.weeks;
         setWeeks(weeksData);
         // Reset to week 1 when year changes
         if (weeksData.length > 0) {
