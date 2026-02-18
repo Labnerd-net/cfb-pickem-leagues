@@ -182,7 +182,6 @@ export default function AdminSection() {
       >
         <Box sx={{ mt: 2 }}>
           <WeekSelector
-            currentYear={currentYear}
             selectedYear={selectedYear}
             onYearChange={setSelectedYear}
             weeks={weeks}

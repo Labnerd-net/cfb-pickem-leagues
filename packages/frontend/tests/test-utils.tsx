@@ -1,4 +1,4 @@
-import { render, RenderOptions } from '@testing-library/react';
+import { render, type RenderOptions } from '@testing-library/react';
 import { MemoryRouter } from 'react-router';
 import { AuthProvider } from '../src/contexts/auth/AuthProvider.js';
 import type { ReactElement, ReactNode } from 'react';
@@ -33,5 +33,6 @@ export function renderWithProviders(
 }
 
 // Re-export everything from @testing-library/react
+// eslint-disable-next-line react-refresh/only-export-components
 export * from '@testing-library/react';
 export { renderWithProviders as render };

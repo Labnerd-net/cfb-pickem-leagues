@@ -1,8 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Box, Typography, CircularProgress, Snackbar, Alert } from '@mui/material';
 import type { AdminDbWeekData, AdminDbGameData, UserDbGameData } from '@shared/types/cfb-pickem-api';
-import { getWeeksForYear } from '../../apis/adminRequests';
-import { getPickedGames, getUserPicks, postUserPicks } from '../../apis/userRequests';
+import { getPickedGames, getUserPicks, getWeeksForYear, postUserPicks } from '../../apis/userRequests';
 import { getCurrentWeek } from '../../utils/weekCalculation';
 import { logger } from '../../utils/logger';
 import UserWeekSelector from './UserWeekSelector';
@@ -42,10 +41,10 @@ export default function UserPicksSection() {
         setInitializing(true);
         const currentYear = new Date().getFullYear();
 
-        // Fetch weeks for current year and next year (to handle off-season)
+        // Fetch weeks for previous year and current year (to handle off-season)
         const [currentYearResult, nextYearResult] = await Promise.all([
+          getWeeksForYear(currentYear - 1),
           getWeeksForYear(currentYear),
-          getWeeksForYear(currentYear + 1),
         ]);
 
         const allWeeks: AdminDbWeekData[] = [];

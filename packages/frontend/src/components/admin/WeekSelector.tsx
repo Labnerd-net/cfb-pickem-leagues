@@ -1,7 +1,6 @@
 import {
   Box,
   Stack,
-  TextField,
   Select,
   MenuItem,
   FormControl,
@@ -10,17 +9,15 @@ import {
 import type { AdminDbWeekData } from '@shared/types/cfb-pickem-api';
 
 interface WeekSelectorProps {
-  currentYear: number;
   selectedYear: number;
-  onYearChange: (year: number) => void;
-  weeks: AdminDbWeekData[];
   selectedWeek: number;
+  weeks: AdminDbWeekData[];
+  onYearChange: (year: number) => void;
   onWeekChange: (week: number) => void;
   loading?: boolean;
 }
 
 export default function WeekSelector({
-  currentYear,
   selectedYear,
   onYearChange,
   weeks,
@@ -28,10 +25,11 @@ export default function WeekSelector({
   onWeekChange,
   loading = false,
 }: WeekSelectorProps) {
+  const currentYear = new Date().getFullYear();
+  const yearOptions = [currentYear - 2, currentYear - 1, currentYear];
 
   return (
     <Stack spacing={3}>
-      {/* Year Controls */}
       <Box
         sx={{
           display: 'grid',
@@ -40,15 +38,14 @@ export default function WeekSelector({
           alignItems: 'center',
         }}
       >
-        <TextField
-          fullWidth
-          type="number"
-          label="Year"
-          value={selectedYear}
-          onChange={(e) => { const y = parseInt(e.target.value); if (!isNaN(y)) onYearChange(y); }}
-          disabled={loading}
-          slotProps={{ htmlInput: { min: currentYear - 5, max: currentYear } }}
-        />
+        <FormControl fullWidth disabled={loading}>
+          <InputLabel>Year</InputLabel>
+          <Select value={selectedYear} label="Year" onChange={(e) => onYearChange(Number(e.target.value))}>
+            {yearOptions.sort((a, b) => b - a).map(year => (
+              <MenuItem key={year} value={year}>{year}</MenuItem>
+            ))}
+          </Select>
+        </FormControl>
 
         <FormControl fullWidth disabled={loading}>
           <InputLabel>Week</InputLabel>
