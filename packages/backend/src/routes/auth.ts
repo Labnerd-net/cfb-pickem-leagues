@@ -14,6 +14,7 @@ import { authMiddleware } from '../utils/middleware.js';
 import { validatePassword } from '../utils/passwordValidation.js';
 import { validateEmail } from '../utils/emailValidation.js';
 import { authRateLimit } from '../utils/rateLimiter.js';
+import logger from '../utils/logger.js';
 
 type Variables = {
   jwtPayload: JwtData;
@@ -74,7 +75,7 @@ auth.post('/register', authRateLimit, async c => {
     if (e instanceof Error) {
       return c.json(err(e.message), 500);
     }
-    console.error('An unexpected error occurred:', e);
+    logger.error({ err: e }, 'Unexpected error in auth route');
     return c.json(err('An unexpected error occurred'), 500);
   }
 });
@@ -105,7 +106,7 @@ auth.post('/login', authRateLimit, async c => {
     if (e instanceof Error) {
       return c.json(err(e.message), 500);
     }
-    console.error('An unexpected error occurred:', e);
+    logger.error({ err: e }, 'Unexpected error in auth route');
     return c.json(err('An unexpected error occurred'), 500);
   }
 });
@@ -128,7 +129,7 @@ auth.delete('/deleteUser', authMiddleware, async c => {
     if (e instanceof Error) {
       return c.json(err(e.message), 500);
     }
-    console.error('An unexpected error occurred:', e);
+    logger.error({ err: e }, 'Unexpected error in auth route');
     return c.json(err('An unexpected error occurred'), 500);
   }
 });

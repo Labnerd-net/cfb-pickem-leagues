@@ -1,5 +1,6 @@
 import type { AdminDbGameData, AdminDbWeekData, WeekIdentifier, PickedGamesRequest } from '@shared/types/cfb-pickem-api';
 import axios from 'axios';
+import { logger } from '../utils/logger';
 
 const databaseAPI = import.meta.env.VITE_API_URL || 'http://localhost:3000';
 const path = 'api/admin';
@@ -42,8 +43,10 @@ export async function addWeeksToYear(year: number): Promise<AddWeeksResponse> {
     return { success: false, error: response.data.error };
   } catch (error) {
     if (axios.isAxiosError(error) && error.response?.data?.error) {
+      logger.error('addWeeksToYear failed', error.response.status, error.response.data.error);
       return { success: false, error: error.response.data.error };
     }
+    logger.error('addWeeksToYear unexpected error', error);
     return { success: false, error: 'An unexpected error occurred' };
   }
 }
@@ -64,8 +67,10 @@ export async function getWeeksForYear(year: number): Promise<GetWeeksResponse> {
     return { success: false, error: response.data.error };
   } catch (error) {
     if (axios.isAxiosError(error) && error.response?.data?.error) {
+      logger.error('getWeeksForYear failed', error.response.status, error.response.data.error);
       return { success: false, error: error.response.data.error };
     }
+    logger.error('getWeeksForYear unexpected error', error);
     return { success: false, error: 'An unexpected error occurred' };
   }
 }
@@ -84,8 +89,10 @@ export async function addGamesToWeek(weekData: WeekIdentifier): Promise<AddGames
     return { success: false, error: response.data.error };
   } catch (error) {
     if (axios.isAxiosError(error) && error.response?.data?.error) {
+      logger.error('addGamesToWeek failed', error.response.status, error.response.data.error);
       return { success: false, error: error.response.data.error };
     }
+    logger.error('addGamesToWeek unexpected error', error);
     return { success: false, error: 'An unexpected error occurred' };
   }
 }
@@ -109,8 +116,10 @@ export async function getGamesForWeek(weekData: WeekIdentifier): Promise<GetGame
     return { success: false, error: response.data.error };
   } catch (error) {
     if (axios.isAxiosError(error) && error.response?.data?.error) {
+      logger.error('getGamesForWeek failed', error.response.status, error.response.data.error);
       return { success: false, error: error.response.data.error };
     }
+    logger.error('getGamesForWeek unexpected error', error);
     return { success: false, error: 'An unexpected error occurred' };
   }
 }
@@ -135,8 +144,10 @@ export async function setPickedGames(pickedData: PickedGamesRequest): Promise<Se
     return { success: false, error: response.data.error };
   } catch (error) {
     if (axios.isAxiosError(error) && error.response?.data?.error) {
+      logger.error('setPickedGames failed', error.response.status, error.response.data.error);
       return { success: false, error: error.response.data.error };
     }
+    logger.error('setPickedGames unexpected error', error);
     return { success: false, error: 'An unexpected error occurred' };
   }
 }

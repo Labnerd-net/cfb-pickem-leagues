@@ -4,6 +4,7 @@ import type { AdminDbWeekData, AdminDbGameData, UserDbGameData } from '@shared/t
 import { getWeeksForYear } from '../../apis/adminRequests';
 import { getPickedGames, getUserPicks, postUserPicks } from '../../apis/userRequests';
 import { getCurrentWeek } from '../../utils/weekCalculation';
+import { logger } from '../../utils/logger';
 import UserWeekSelector from './UserWeekSelector';
 import UserPicksGamesList from './UserPicksGamesList';
 
@@ -72,7 +73,7 @@ export default function UserPicksSection() {
         const weeksForYear = allWeeks.filter(w => w.year === current.year);
         setWeeks(weeksForYear);
       } catch (error) {
-        console.error('Error initializing:', error);
+        logger.error('Error initializing:', error);
         setSnackbarMessage('Failed to initialize. Please try again.');
         setSnackbarSeverity('error');
         setSnackbarOpen(true);
@@ -159,7 +160,7 @@ export default function UserPicksSection() {
           setSavedPickIds(new Set());
         }
       } catch (error) {
-        console.error('Error loading games and picks:', error);
+        logger.error('Error loading games and picks:', error);
         setSnackbarMessage('Failed to load data. Please try again.');
         setSnackbarSeverity('error');
         setSnackbarOpen(true);
@@ -216,7 +217,7 @@ export default function UserPicksSection() {
         setSnackbarOpen(true);
       }
     } catch (error) {
-      console.error('Error submitting picks:', error);
+      logger.error('Error submitting picks:', error);
       setSnackbarMessage('An error occurred while saving picks');
       setSnackbarSeverity('error');
       setSnackbarOpen(true);

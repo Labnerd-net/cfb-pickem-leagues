@@ -1,5 +1,6 @@
 import axios from 'axios';
 import type { AdminDbGameData, AllUserGamePicksRequest, ProfileData, UserDbGameData, WeekIdentifier } from '@shared/types/cfb-pickem-api.js';
+import { logger } from '../utils/logger';
 
 const databaseAPI = import.meta.env.VITE_API_URL || 'http://localhost:3000';
 const path = 'api/user';
@@ -42,8 +43,10 @@ export async function getUserProfile(): Promise<ProfileResponse> {
     return { success: false, error: response.data.error };
   } catch (error) {
     if (axios.isAxiosError(error) && error.response?.data?.error) {
+      logger.error('getUserProfile failed', error.response.status, error.response.data.error);
       return { success: false, error: error.response.data.error };
     }
+    logger.error('getUserProfile unexpected error', error);
     return { success: false, error: 'An unexpected error occurred' };
   }
 }
@@ -63,8 +66,10 @@ export async function getUserPicks(weekData: WeekIdentifier): Promise<UserGameRe
     return { success: false, error: response.data.error };
   } catch (error) {
     if (axios.isAxiosError(error) && error.response?.data?.error) {
+      logger.error('getUserPicks failed', error.response.status, error.response.data.error);
       return { success: false, error: error.response.data.error };
     }
+    logger.error('getUserPicks unexpected error', error);
     return { success: false, error: 'An unexpected error occurred' };
   }
 }
@@ -85,8 +90,10 @@ export async function getPickedGames(weekData: WeekIdentifier): Promise<AdminGam
     return { success: false, error: response.data.error };
   } catch (error) {
     if (axios.isAxiosError(error) && error.response?.data?.error) {
+      logger.error('getPickedGames failed', error.response.status, error.response.data.error);
       return { success: false, error: error.response.data.error };
     }
+    logger.error('getPickedGames unexpected error', error);
     return { success: false, error: 'An unexpected error occurred' };
   }
 }
@@ -109,8 +116,10 @@ export async function postUserPicks(picks: AllUserGamePicksRequest): Promise<Pic
     return { success: false, error: response.data.error };
   } catch (error) {
     if (axios.isAxiosError(error) && error.response?.data?.error) {
+      logger.error('postUserPicks failed', error.response.status, error.response.data.error);
       return { success: false, error: error.response.data.error };
     }
+    logger.error('postUserPicks unexpected error', error);
     return { success: false, error: 'An unexpected error occurred' };
   }
 }

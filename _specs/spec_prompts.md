@@ -28,3 +28,6 @@ create a spec to remove the seasonType variables from the frontend.  create a fu
 
 ### user dashboard pulls picked games
 create a spec to automatically pull the admin picked teams onto the users dashboard so the user can choose which team they think will win.  There user will need to choose a year and week to display the picked games for that week.  The default will be the current week
+
+## Logging system
+create a logging system to log both frontend and backend actions to help me debug the issues I am having in dokploy.  Create a log level variable so I can control the amount of feedback.  I will take your suggestion of using Pino for backend that I can see in docker logs.  For the frontend, just output to the console for debugging which can be enabled by env variable.

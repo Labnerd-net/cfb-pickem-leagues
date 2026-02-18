@@ -10,6 +10,7 @@ import type {
   PickedGamesRequest,
 } from '@shared/types/cfb-pickem-api.js';
 import { authMiddleware, requireRole } from '../utils/middleware.js';
+import logger from '../utils/logger.js';
 
 type Variables = {
   jwtPayload: JwtData;
@@ -28,7 +29,7 @@ admin.post('/users', requireRole('admin'), async c => {
     if (e instanceof Error) {
       return c.json(err(e.message, 500));
     }
-    console.error('An unexpected error occurred:', e);
+    logger.error({ err: e }, 'Unexpected error in admin route');
     return c.json(err('An unexpected error occurred', 500));
   }
 });
@@ -46,7 +47,7 @@ admin.post('/year/:year', requireRole('admin'), async c => {
     if (e instanceof Error) {
       return c.json(err(e.message, 500));
     }
-    console.error('An unexpected error occurred:', e);
+    logger.error({ err: e }, 'Unexpected error in admin route');
     return c.json(err('An unexpected error occurred', 500));
   }
 });
@@ -68,7 +69,7 @@ admin.get('/getweeks', requireRole('admin'), async c => {
     if (e instanceof Error) {
       return c.json(err(e.message, 500));
     }
-    console.error('An unexpected error occurred:', e);
+    logger.error({ err: e }, 'Unexpected error in admin route');
     return c.json(err('An unexpected error occurred', 500));
   }
 });
@@ -87,7 +88,7 @@ admin.post('/week', requireRole('admin'), async c => {
     if (e instanceof Error) {
       return c.json(err(e.message, 500));
     }
-    console.error('An unexpected error occurred:', e);
+    logger.error({ err: e }, 'Unexpected error in admin route');
     return c.json(err('An unexpected error occurred', 500));
   }
 });
@@ -126,7 +127,7 @@ admin.get('/getgames', requireRole('admin'), async c => {
     if (e instanceof Error) {
       return c.json(err(e.message, 500));
     }
-    console.error('An unexpected error occurred:', e);
+    logger.error({ err: e }, 'Unexpected error in admin route');
     return c.json(err('An unexpected error occurred', 500));
   }
 });
@@ -141,7 +142,7 @@ admin.post('/setpicks', requireRole('admin'), async c => {
     if (e instanceof Error) {
       return c.json(err(e.message, 500));
     }
-    console.error('An unexpected error occurred:', e);
+    logger.error({ err: e }, 'Unexpected error in admin route');
     return c.json(err('An unexpected error occurred', 500));
   }
 });

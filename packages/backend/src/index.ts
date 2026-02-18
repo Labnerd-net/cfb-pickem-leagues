@@ -2,11 +2,12 @@ import { serve } from '@hono/node-server';
 import { Hono } from 'hono';
 import { cors } from 'hono/cors';
 import { prettyJSON } from 'hono/pretty-json';
-import { clientURLs, serverPort } from './utils/envVars.js';
+import { clientURLs, serverPort, dataSource } from './utils/envVars.js';
 import authRoutes from './routes/auth.js';
 import adminRoutes from './routes/admin.js';
 import userRoutes from './routes/user.js';
 import { logger } from './utils/middleware.js';
+import pinoLogger from './utils/logger.js';
 
 const app = new Hono();
 
@@ -38,6 +39,6 @@ serve(
     port: serverPort,
   },
   info => {
-    console.log(`Server is running on http://localhost:${info.port}`);
+    pinoLogger.info({ port: info.port, dataSource, dbHost: process.env.DB_HOST ?? 'localhost' }, 'Server started');
   }
 );

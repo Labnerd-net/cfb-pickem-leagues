@@ -10,6 +10,7 @@ import type {
   WeekIdentifier,
 } from '@shared/types/cfb-pickem-api.js';
 import { authMiddleware } from '../utils/middleware.js';
+import logger from '../utils/logger.js';
 
 type Variables = {
   jwtPayload: JwtData;
@@ -33,7 +34,7 @@ user.get('/profile', async c => {
     if (e instanceof Error) {
       return c.json(err(e.message, 500));
     }
-    console.error('An unexpected error occurred:', e);
+    logger.error({ err: e }, 'Unexpected error in user route');
     return c.json(err('An unexpected error occurred', 500));
   }
 });
@@ -53,7 +54,7 @@ user.get('/picks', async c => {
     if (e instanceof Error) {
       return c.json(err(e.message, 500));
     }
-    console.error('An unexpected error occurred:', e);
+    logger.error({ err: e }, 'Unexpected error in user route');
     return c.json(err('An unexpected error occurred', 500));
   }
 });
@@ -74,7 +75,7 @@ user.get('/games', async c => {
     if (e instanceof Error) {
       return c.json(err(e.message, 500));
     }
-    console.error('An unexpected error occurred:', e);
+    logger.error({ err: e }, 'Unexpected error in user route');
     return c.json(err('An unexpected error occurred', 500));
   }
 });
@@ -93,7 +94,7 @@ user.post('/picks', async c => {
     if (e instanceof Error) {
       return c.json(err(e.message, 500));
     }
-    console.error('An unexpected error occurred:', e);
+    logger.error({ err: e }, 'Unexpected error in user route');
     return c.json(err('An unexpected error occurred', 500));
   }
 });

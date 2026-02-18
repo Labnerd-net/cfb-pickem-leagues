@@ -1,4 +1,5 @@
 import sdv from 'sportsdataverse';
+import logger from '../utils/logger.js';
 
 export async function getSdvCfbSchedule(
   year: number,
@@ -51,31 +52,25 @@ export async function getSdvCfbTeamInfo(id: number) {
 export async function testAPI() {
   // Get play-by-play data for a specific game
   const playByPlay = await sdv.cfb.getPlayByPlay(401256194);
-  console.log('sdv.cfb.getPlayByPlay(401256194):');
-  console.log(JSON.stringify(playByPlay));
+  logger.debug({ playByPlay }, 'sdv.cfb.getPlayByPlay(401256194)');
 
   // Get PickCenter betting data
   const picks = await sdv.cfb.getPicks(401256194);
-  console.log('sdv.cfb.getPicks(401256194):');
-  console.log(JSON.stringify(picks));
+  logger.debug({ picks }, 'sdv.cfb.getPicks(401256194)');
 
   // Get CFB rankings for a specific week
   const rankings = await sdv.cfb.getRankings({ year: 2020, week: 4 });
-  console.log('sdv.cfb.getRankings({ year: 2020, week: 4 }):');
-  console.log(JSON.stringify(rankings));
+  logger.debug({ rankings }, 'sdv.cfb.getRankings({ year: 2020, week: 4 })');
 
   // Get conference standings
   const standings = await sdv.cfb.getStandings({ year: 2020, group: 80 });
-  console.log('sdv.cfb.getStandings({ year: 2020, group: 80 }):');
-  console.log(JSON.stringify(standings));
+  logger.debug({ standings }, 'sdv.cfb.getStandings({ year: 2020, group: 80 })');
 
   // Get list of conferences
   const conferences = await sdv.cfb.getConferences({ year: 2021, group: 80 });
-  console.log('sdv.cfb.getConferences({ year: 2021, group: 80 }):');
-  console.log(JSON.stringify(conferences));
+  logger.debug({ conferences }, 'sdv.cfb.getConferences({ year: 2021, group: 80 })');
 
   // Get team roster
   const roster = await sdv.cfb.getTeamPlayers(52);
-  console.log('sdv.cfb.getTeamPlayers(52):');
-  console.log(JSON.stringify(roster));
+  logger.debug({ roster }, 'sdv.cfb.getTeamPlayers(52)');
 }

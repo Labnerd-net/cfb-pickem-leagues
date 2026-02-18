@@ -1,6 +1,7 @@
 import axios from 'axios';
 import type { NcaaScheduleOutput, NcaaScoreboardOutput } from '../types/ncaa-api.js';
 import type { Classification, WeekQuery } from '@shared/types/cfb-pickem-api.js';
+import logger from '../utils/logger.js';
 
 const ncaaAPI = 'https://ncaa-api.henrygd.me';
 
@@ -16,13 +17,12 @@ export async function getNcaaScoreboard(
     // path = fbs/2025/01/all-conf
     const weekTwoDigits = String(query.week).padStart(2, '0');
     const path = `${classification}/${query.year}/${weekTwoDigits}/all‑conf`;
-    console.log(`${ncaaAPI}/scoreboard/${sport}/${path}`);
-    const response = await axios.get<NcaaScoreboardOutput>(
-      `${ncaaAPI}/scoreboard/${sport}/${path}`
-    );
+    const url = `${ncaaAPI}/scoreboard/${sport}/${path}`;
+    logger.debug({ url }, 'NCAA scoreboard request');
+    const response = await axios.get<NcaaScoreboardOutput>(url);
     return response.data;
   } catch (error) {
-    console.error(error);
+    logger.error({ err: error }, 'getNcaaScoreboard failed');
   }
 }
 
@@ -35,7 +35,7 @@ export async function getNcaaGame(id: number, type: string = '') {
     const response = await axios.get(`${ncaaAPI}/game/${id}${type}`);
     return response.data;
   } catch (error) {
-    console.error(error);
+    logger.error({ err: error }, 'getNcaaGame failed');
   }
 }
 
@@ -55,7 +55,7 @@ export async function getNcaaSchedule(
     );
     return response.data;
   } catch (error) {
-    console.error(error);
+    logger.error({ err: error }, 'getNcaaSchedule failed');
   }
 }
 
@@ -67,7 +67,7 @@ export async function getNcaaTeams() {
     const response = await axios.get(`${ncaaAPI}/schools-index`);
     return response.data;
   } catch (error) {
-    console.error(error);
+    logger.error({ err: error }, 'getNcaaTeams failed');
   }
 }
 
@@ -85,7 +85,7 @@ export async function getNcaaTeamLogo(school: string) {
     });
     return response.data;
   } catch (error) {
-    console.error(error);
+    logger.error({ err: error }, 'getNcaaTeamLogo failed');
   }
 }
 
@@ -103,7 +103,7 @@ export async function getNcaaStats(
     const response = await axios.get(`${ncaaAPI}/stats/${sport}/${classification}/${year}/${path}`);
     return response.data;
   } catch (error) {
-    console.error(error);
+    logger.error({ err: error }, 'getNcaaStats failed');
   }
 }
 
