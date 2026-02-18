@@ -31,3 +31,6 @@ create a spec to automatically pull the admin picked teams onto the users dashbo
 
 ## Logging system
 create a logging system to log both frontend and backend actions to help me debug the issues I am having in dokploy.  Create a log level variable so I can control the amount of feedback.  I will take your suggestion of using Pino for backend that I can see in docker logs.  For the frontend, just output to the console for debugging which can be enabled by env variable.
+
+## Update year selector
+create a spec that updates the admin and user year selections to a dropdown menu that only includes the current year, the next year, and the previous year
