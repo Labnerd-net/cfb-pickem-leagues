@@ -2,6 +2,7 @@ import { eq, and } from 'drizzle-orm';
 import { users, games } from './schema/users.js';
 import { db } from './index.js';
 import * as dbAdminFunctions from './dbAdminFunctions.js';
+import logger from '../utils/logger.js';
 import type {
   UserData,
   UserDbData,
@@ -14,11 +15,11 @@ import type {
 // Return all users
 // ------------------------------------------------------------------
 export async function returnUsers(): Promise<UserDbData[]> {
-  console.log(`Inside returnUsers dbUserFunction`);
+  logger.debug('returnUsers');
   try {
     return await db.select().from(users);
   } catch (e) {
-    console.log(e);
+    logger.error({ err: e }, 'returnUsers failed');
     throw e;
   }
 }
@@ -27,11 +28,11 @@ export async function returnUsers(): Promise<UserDbData[]> {
 // Return user by Email
 // ------------------------------------------------------------------
 export async function returnUserByEmail(email: string): Promise<UserDbData[]> {
-  console.log(`Inside returnUserByEmail dbUserFunction: email=${email}`);
+  logger.debug({ email }, 'returnUserByEmail');
   try {
     return await db.select().from(users).where(eq(users.email, email));
   } catch (e) {
-    console.log(e);
+    logger.error({ err: e }, 'returnUserByEmail failed');
     throw e;
   }
 }
@@ -40,12 +41,12 @@ export async function returnUserByEmail(email: string): Promise<UserDbData[]> {
 // Return user by Id
 // ------------------------------------------------------------------
 export async function returnUserById(userId: string): Promise<UserDbData[]> {
-  console.log(`Inside returnUserById dbUserFunction: id=${userId}`);
+  logger.debug({ userId }, 'returnUserById');
   try {
     const userIdNumber = Number(userId);
     return await db.select().from(users).where(eq(users.userId, userIdNumber));
   } catch (e) {
-    console.log(e);
+    logger.error({ err: e }, 'returnUserById failed');
     throw e;
   }
 }
@@ -54,7 +55,7 @@ export async function returnUserById(userId: string): Promise<UserDbData[]> {
 // Add user
 // ------------------------------------------------------------------
 export async function addUser(user: UserData) {
-  console.log(`Inside addUser dbUserFunction: adding ${user.email}`);
+  logger.debug({ email: user.email }, 'addUser');
   try {
     return await db
       .insert(users)
@@ -66,7 +67,7 @@ export async function addUser(user: UserData) {
       })
       .returning({ id: users.userId, email: users.email, displayName: users.displayName, roles: users.roles });
   } catch (e) {
-    console.log(e);
+    logger.error({ err: e }, 'addUser failed');
     throw e;
   }
 }
@@ -75,12 +76,12 @@ export async function addUser(user: UserData) {
 // Delete user by Id
 // ------------------------------------------------------------------
 export async function deleteUserById(userId: string) {
-  console.log(`Inside deleteUserById dbUserFunction: deleting id=${userId}`);
+  logger.debug({ userId }, 'deleteUserById');
   try {
     const userIdNumber = Number(userId);
     return await db.delete(users).where(eq(users.userId, userIdNumber));
   } catch (e) {
-    console.log(e);
+    logger.error({ err: e }, 'deleteUserById failed');
     throw e;
   }
 }
@@ -89,7 +90,7 @@ export async function deleteUserById(userId: string) {
 // Add Game Picks to user
 // ------------------------------------------------------------------
 export async function addPickedGame(pick: UserGamePicks, userId: string): Promise<void> {
-  console.log(`Inside addPickedGames dbUserFunction: game = ${pick.game}`);
+  logger.debug({ game: pick.game, userId }, 'addPickedGame');
   try {
     const userIdNumber = Number(userId);
     const gameInfo = await dbAdminFunctions.returnGame(pick.game);
@@ -128,7 +129,7 @@ export async function addPickedGame(pick: UserGamePicks, userId: string): Promis
         },
       });
   } catch (e) {
-    console.log(e);
+    logger.error({ err: e }, 'addPickedGame failed');
     throw e;
   }
 }
@@ -141,7 +142,7 @@ export async function returnUserGames(
   userId: string
 ): Promise<UserDbGameData[]> {
   const userIdNumber = Number(userId);
-  console.log(`Inside returnUserGames dbUserFunction: year=${identifier.year}, week=${identifier.week}`);
+  logger.debug({ year: identifier.year, week: identifier.week, userId }, 'returnUserGames');
   try {
     return await db
       .select()
@@ -154,7 +155,7 @@ export async function returnUserGames(
         )
       );
   } catch (e) {
-    console.log(e);
+    logger.error({ err: e }, 'returnUserGames failed');
     throw e;
   }
 }

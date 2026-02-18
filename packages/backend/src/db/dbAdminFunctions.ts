@@ -1,6 +1,7 @@
 import { eq, and, inArray, notInArray } from 'drizzle-orm';
 import { adminWeeks, adminGames } from './schema/admin.js';
 import { db } from './index.js';
+import logger from '../utils/logger.js';
 import type {
   AdminDbGameData,
   AdminGameData,
@@ -15,11 +16,11 @@ import type {
 // Return week
 // ------------------------------------------------------------------
 export async function returnWeek(week: number): Promise<AdminWeekData[]> {
-  console.log(`Inside returnWeek dbAdminFunction: week=${week}`);
+  logger.debug({ week }, 'returnWeek');
   try {
     return await db.select().from(adminWeeks).where(eq(adminWeeks.weekNumber, week));
   } catch (e) {
-    console.log(e);
+    logger.error({ err: e }, 'returnWeek failed');
     throw e;
   }
 }
@@ -28,11 +29,11 @@ export async function returnWeek(week: number): Promise<AdminWeekData[]> {
 // Return weeks by year
 // ------------------------------------------------------------------
 export async function returnWeeksByYear(year: number): Promise<AdminWeekData[]> {
-  console.log(`Inside returnWeeksByYear dbAdminFunction: year=${year}`);
+  logger.debug({ year }, 'returnWeeksByYear');
   try {
     return await db.select().from(adminWeeks).where(eq(adminWeeks.year, year));
   } catch (e) {
-    console.log(e);
+    logger.error({ err: e }, 'returnWeeksByYear failed');
     throw e;
   }
 }
@@ -41,14 +42,14 @@ export async function returnWeeksByYear(year: number): Promise<AdminWeekData[]> 
 // Return week by WeekIdentifier
 // ------------------------------------------------------------------
 export async function returnWeekByQuery(identifier: WeekIdentifier): Promise<AdminWeekData[]> {
-  console.log(`Inside returnWeekByQuery dbAdminFunction: year=${identifier.year}, week=${identifier.week}`);
+  logger.debug({ year: identifier.year, week: identifier.week }, 'returnWeekByQuery');
   try {
     return await db
       .select()
       .from(adminWeeks)
       .where(and(eq(adminWeeks.year, identifier.year), eq(adminWeeks.weekNumber, identifier.week)));
   } catch (e) {
-    console.log(e);
+    logger.error({ err: e }, 'returnWeekByQuery failed');
     throw e;
   }
 }
@@ -57,14 +58,14 @@ export async function returnWeekByQuery(identifier: WeekIdentifier): Promise<Adm
 // Return games for a given week
 // ------------------------------------------------------------------
 export async function returnGamesForWeek(identifier: WeekIdentifier): Promise<AdminDbGameData[]> {
-  console.log(`Inside returnGamesForWeek dbAdminFunction: year=${identifier.year}, week=${identifier.week}`);
+  logger.debug({ year: identifier.year, week: identifier.week }, 'returnGamesForWeek');
   try {
     return await db
       .select()
       .from(adminGames)
       .where(and(eq(adminGames.year, identifier.year), eq(adminGames.weekNumber, identifier.week)));
   } catch (e) {
-    console.log(e);
+    logger.error({ err: e }, 'returnGamesForWeek failed');
     throw e;
   }
 }
@@ -73,7 +74,7 @@ export async function returnGamesForWeek(identifier: WeekIdentifier): Promise<Ad
 // Add a week
 // ------------------------------------------------------------------
 export async function addWeek(week: AdminWeekData): Promise<void> {
-  console.log(`Inside addWeek dbAdminFunction: year=${week.year}, weekNumber=${week.weekNumber}`);
+  logger.debug({ year: week.year, weekNumber: week.weekNumber }, 'addWeek');
   try {
     await db.insert(adminWeeks).values({
       weekNumber: week.weekNumber,
@@ -83,7 +84,7 @@ export async function addWeek(week: AdminWeekData): Promise<void> {
       weekEnd: week.weekEnd,
     });
   } catch (e) {
-    console.log(e);
+    logger.error({ err: e }, 'addWeek failed');
     throw e;
   }
 }
@@ -92,7 +93,7 @@ export async function addWeek(week: AdminWeekData): Promise<void> {
 // Add single game to a week
 // ------------------------------------------------------------------
 export async function addGameToWeek(game: AdminGameData): Promise<void> {
-  console.log(`Inside addGameToWeek dbAdminFunction: year=${game.year}, week=${game.weekNumber}`);
+  logger.debug({ year: game.year, week: game.weekNumber }, 'addGameToWeek');
   try {
     let winningTeam: Team = 'pending';
     if (game.completed && game.homePoints !== null && game.awayPoints !== null) {
@@ -117,7 +118,7 @@ export async function addGameToWeek(game: AdminGameData): Promise<void> {
       winningTeam: winningTeam,
     });
   } catch (e) {
-    console.log(e);
+    logger.error({ err: e }, 'addGameToWeek failed');
     throw e;
   }
 }
@@ -126,11 +127,11 @@ export async function addGameToWeek(game: AdminGameData): Promise<void> {
 // Return game
 // ------------------------------------------------------------------
 export async function returnGame(game: number): Promise<AdminDbGameData[]> {
-  console.log(`Inside returnGame dbAdminFunction: game=${game}`);
+  logger.debug({ game }, 'returnGame');
   try {
     return await db.select().from(adminGames).where(eq(adminGames.gameId, game));
   } catch (e) {
-    console.log(e);
+    logger.error({ err: e }, 'returnGame failed');
     throw e;
   }
 }
@@ -139,7 +140,7 @@ export async function returnGame(game: number): Promise<AdminDbGameData[]> {
 // Invert picked game
 // ------------------------------------------------------------------
 export async function invertPickedGame(game: number): Promise<void> {
-  console.log(`Inside updatePickedGame dbAdminFunction: game=${game}`);
+  logger.debug({ game }, 'invertPickedGame');
   const newPicked = !adminGames.picked;
   try {
     await db
@@ -147,7 +148,7 @@ export async function invertPickedGame(game: number): Promise<void> {
       .set({ picked: newPicked })
       .where(eq(adminGames.gameId, game));
   } catch (e) {
-    console.log(e);
+    logger.error({ err: e }, 'invertPickedGame failed');
     throw e;
   }
 }
@@ -156,12 +157,12 @@ export async function invertPickedGame(game: number): Promise<void> {
 // Set all picked games from number array
 // ------------------------------------------------------------------
 export async function setPickedGame(games: number[]): Promise<void> {
-  console.log(`Inside updatePickedGame dbAdminFunction: games=${games}`);
+  logger.debug({ count: games.length }, 'setPickedGame');
   try {
     await db.update(adminGames).set({ picked: true }).where(inArray(adminGames.gameId, games));
     await db.update(adminGames).set({ picked: false }).where(notInArray(adminGames.gameId, games));
   } catch (e) {
-    console.log(e);
+    logger.error({ err: e }, 'setPickedGame failed');
     throw e;
   }
 }
@@ -170,7 +171,7 @@ export async function setPickedGame(games: number[]): Promise<void> {
 // Return all picked games
 // ------------------------------------------------------------------
 export async function returnPickedGames(identifier: WeekIdentifier): Promise<AdminDbGameData[]> {
-  console.log(`Inside returnPickedGames dbAdminFunction: year=${identifier.year}, week=${identifier.week}`);
+  logger.debug({ year: identifier.year, week: identifier.week }, 'returnPickedGames');
   try {
     return await db
       .select()
@@ -183,7 +184,7 @@ export async function returnPickedGames(identifier: WeekIdentifier): Promise<Adm
         )
       );
   } catch (e) {
-    console.log(e);
+    logger.error({ err: e }, 'returnPickedGames failed');
     throw e;
   }
 }
@@ -195,7 +196,7 @@ export async function getSeasonTypeForWeek(
   year: number,
   week: number
 ): Promise<SeasonType | null> {
-  console.log(`Inside getSeasonTypeForWeek dbAdminFunction: year=${year}, week=${week}`);
+  logger.debug({ year, week }, 'getSeasonTypeForWeek');
   try {
     const weekData = await db
       .select({ seasonType: adminWeeks.seasonType })
@@ -205,7 +206,7 @@ export async function getSeasonTypeForWeek(
 
     return weekData.length > 0 ? weekData[0].seasonType : null;
   } catch (e) {
-    console.log(e);
+    logger.error({ err: e }, 'getSeasonTypeForWeek failed');
     throw e;
   }
 }
@@ -216,7 +217,7 @@ export async function getSeasonTypeForWeek(
 export async function enrichWeekIdentifier(
   identifier: WeekIdentifier
 ): Promise<WeekQuery> {
-  console.log(`Inside enrichWeekIdentifier dbAdminFunction: year=${identifier.year}, week=${identifier.week}`);
+  logger.debug({ year: identifier.year, week: identifier.week }, 'enrichWeekIdentifier');
   const seasonType = await getSeasonTypeForWeek(identifier.year, identifier.week);
 
   if (!seasonType) {
