@@ -1,9 +1,10 @@
 import { Hono } from 'hono';
 import * as dbUserFunctions from '../db/dbUserFunctions.js';
-import { returnPickedGames } from '../db/dbAdminFunctions.js';
+import { returnPickedGames, returnWeeksByYear } from '../db/dbAdminFunctions.js';
 import { ok, err } from '../utils/response.js';
 import type {
   AdminDbGameData,
+  AdminWeekData,
   AllUserGamePicks,
   JwtData,
   ProfileData,
@@ -51,6 +52,25 @@ user.get('/picks', async c => {
     if (isNaN(weekIdentifier.year) || isNaN(weekIdentifier.week)) return c.json(err('year and week are required', 400));
     const picks = await dbUserFunctions.returnUserGames(weekIdentifier, userIdString);
     return c.json(ok({ picks }));
+  } catch (e: unknown) {
+    if (e instanceof Error) {
+      return c.json(err(e.message, 500));
+    }
+    logger.error({ err: e }, 'Unexpected error in user route');
+    return c.json(err('An unexpected error occurred', 500));
+  }
+});
+
+// List weeks in a year with picked games
+user.get('/getweeks', async c => {
+  try {
+    const yearNumber= Number(c.req.query('year'));
+    if (isNaN(yearNumber)) return c.json(err('year is required', 400));
+    const weeks: AdminWeekData[] = await returnWeeksByYear(yearNumber);
+    if (!weeks || weeks.length === 0) {
+      return c.json(err('No weeks available for this year', 404));
+    }
+    return c.json(ok({ weeks }));
   } catch (e: unknown) {
     if (e instanceof Error) {
       return c.json(err(e.message, 500));
