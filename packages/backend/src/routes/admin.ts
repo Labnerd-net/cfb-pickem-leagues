@@ -56,6 +56,7 @@ admin.post('/year/:year', requireRole('admin'), async c => {
 admin.get('/getweeks', requireRole('admin'), async c => {
   try {
     const yearNumber = Number(c.req.query('year'));
+    if (!yearNumber || isNaN(yearNumber)) return c.json(err('year is required', 400));
     let weeks = await dbAdminFunctions.returnWeeksByYear(yearNumber);
     if (!weeks || weeks.length === 0) {
       const weekData = await getWeekData(yearNumber);
