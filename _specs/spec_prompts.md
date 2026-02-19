@@ -27,10 +27,16 @@ create a spec for removing the weekId schema variable. weekId is created as a co
 create a spec to remove the seasonType variables from the frontend.  create a function to calculate the seasonType based on the week when using the cfbd api
 
 ### user dashboard pulls picked games
+### Done
 create a spec to automatically pull the admin picked teams onto the users dashboard so the user can choose which team they think will win.  There user will need to choose a year and week to display the picked games for that week.  The default will be the current week
 
 ## Logging system
+### Done
 create a logging system to log both frontend and backend actions to help me debug the issues I am having in dokploy.  Create a log level variable so I can control the amount of feedback.  I will take your suggestion of using Pino for backend that I can see in docker logs.  For the frontend, just output to the console for debugging which can be enabled by env variable.
 
 ## Update year selector
+### Done
 create a spec that updates the admin and user year selections to a dropdown menu that only includes the current year, the next year, and the previous year
+
+## Create Users tab
+create a spec to have a new tab called users that is only seen by admin users.  In this tab, all the users will be listed with their information like email and roles.
