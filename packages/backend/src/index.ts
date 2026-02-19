@@ -11,7 +11,8 @@ import pinoLogger from './utils/logger.js';
 
 const app = new Hono();
 
-app.use('*',
+app.use(
+  '*',
   cors({
     origin: clientURLs,
     allowHeaders: ['Content-Type', 'Authorization'],
@@ -39,6 +40,9 @@ serve(
     port: serverPort,
   },
   info => {
-    pinoLogger.info({ port: info.port, dataSource, dbHost: process.env.DB_HOST ?? 'localhost' }, 'Server started');
+    pinoLogger.info(
+      { port: info.port, dataSource, dbHost: process.env.DB_HOST ?? 'localhost' },
+      'Server started'
+    );
   }
 );

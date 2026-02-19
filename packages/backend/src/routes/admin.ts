@@ -53,7 +53,7 @@ admin.post('/year/:year', requireRole('admin'), async c => {
 });
 
 // Get Weeks for Year
-admin.get('/getweeks', requireRole('admin'), async c => {
+admin.get('/weeks', requireRole('admin'), async c => {
   try {
     const yearNumber = Number(c.req.query('year'));
     if (!yearNumber || isNaN(yearNumber)) return c.json(err('year is required', 400));
@@ -95,13 +95,14 @@ admin.post('/week', requireRole('admin'), async c => {
 });
 
 // Get Games for Week
-admin.get('/getgames', requireRole('admin'), async c => {
+admin.get('/games', requireRole('admin'), async c => {
   try {
     const weekIdentifier: WeekIdentifier = {
       year: Number(c.req.query('year')),
       week: Number(c.req.query('week')),
     };
-    if (isNaN(weekIdentifier.year) || isNaN(weekIdentifier.week)) return c.json(err('year and week are required', 400));
+    if (isNaN(weekIdentifier.year) || isNaN(weekIdentifier.week))
+      return c.json(err('year and week are required', 400));
 
     // Auto-load weeks if they don't exist
     const existingWeeks = await dbAdminFunctions.returnWeeksByYear(weekIdentifier.year);
@@ -135,10 +136,10 @@ admin.get('/getgames', requireRole('admin'), async c => {
 });
 
 // Set picked games
-admin.post('/setpicks', requireRole('admin'), async c => {
+admin.post('/picks', requireRole('admin'), async c => {
   try {
     const pickedData: PickedGamesRequest = await c.req.json();
-    await dbAdminFunctions.setPickedGame(pickedData.games);
+    await dbAdminFunctions.setPickedGames(pickedData);
     return c.json(ok({ status: 'updated picked games' }));
   } catch (e: unknown) {
     if (e instanceof Error) {

@@ -49,7 +49,8 @@ user.get('/picks', async c => {
       year: Number(c.req.query('year')),
       week: Number(c.req.query('week')),
     };
-    if (isNaN(weekIdentifier.year) || isNaN(weekIdentifier.week)) return c.json(err('year and week are required', 400));
+    if (isNaN(weekIdentifier.year) || isNaN(weekIdentifier.week))
+      return c.json(err('year and week are required', 400));
     const picks = await dbUserFunctions.returnUserGames(weekIdentifier, userIdString);
     return c.json(ok({ picks }));
   } catch (e: unknown) {
@@ -62,9 +63,9 @@ user.get('/picks', async c => {
 });
 
 // List weeks in a year with picked games
-user.get('/getweeks', async c => {
+user.get('/weeks', async c => {
   try {
-    const yearNumber= Number(c.req.query('year'));
+    const yearNumber = Number(c.req.query('year'));
     if (isNaN(yearNumber)) return c.json(err('year is required', 400));
     const weeks: AdminWeekData[] = await returnWeeksByYear(yearNumber);
     if (!weeks || weeks.length === 0) {
@@ -87,16 +88,14 @@ user.get('/games', async c => {
       year: Number(c.req.query('year')),
       week: Number(c.req.query('week')),
     };
-    if (isNaN(weekIdentifier.year) || isNaN(weekIdentifier.week)) return c.json(err('year and week are required', 400));
+    if (isNaN(weekIdentifier.year) || isNaN(weekIdentifier.week))
+      return c.json(err('year and week are required', 400));
     const pickedGames: AdminDbGameData[] = await returnPickedGames(weekIdentifier);
-    if (!pickedGames || pickedGames.length === 0) {
+    if (!pickedGames || pickedGames.length === 0)
       return c.json(err('No picked games found for this week', 404));
-    }
     return c.json(ok({ pickedGames }));
   } catch (e: unknown) {
-    if (e instanceof Error) {
-      return c.json(err(e.message, 500));
-    }
+    if (e instanceof Error) return c.json(err(e.message, 500));
     logger.error({ err: e }, 'Unexpected error in user route');
     return c.json(err('An unexpected error occurred', 500));
   }

@@ -55,7 +55,7 @@ export async function getWeeksForYear(year: number): Promise<GetWeeksResponse> {
   try {
     const token = localStorage.getItem('jwt');
     const response = await axios.get(
-      `${databaseAPI}/${path}/getweeks`,
+      `${databaseAPI}/${path}/weeks`,
       {
         params: { year },
         headers: { Authorization: `Bearer ${token}` },
@@ -101,7 +101,7 @@ export async function getGamesForWeek(weekData: WeekIdentifier): Promise<GetGame
   try {
     const token = localStorage.getItem('jwt');
     const response = await axios.get(
-      `${databaseAPI}/${path}/getgames`,
+      `${databaseAPI}/${path}/games`,
       {
         params: {
           year: weekData.year,
@@ -134,7 +134,7 @@ export async function setPickedGames(pickedData: PickedGamesRequest): Promise<Se
   try {
     const token = localStorage.getItem('jwt');
     const response = await axios.post(
-      `${databaseAPI}/${path}/setpicks`,
+      `${databaseAPI}/${path}/picks`,
       pickedData,
       { headers: { Authorization: `Bearer ${token}` } }
     );

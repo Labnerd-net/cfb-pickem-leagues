@@ -65,7 +65,12 @@ export async function addUser(user: UserData) {
         passwordHash: user.passwordHash,
         roles: user.roles,
       })
-      .returning({ id: users.userId, email: users.email, displayName: users.displayName, roles: users.roles });
+      .returning({
+        id: users.userId,
+        email: users.email,
+        displayName: users.displayName,
+        roles: users.roles,
+      });
   } catch (e) {
     logger.error({ err: e }, 'addUser failed');
     throw e;

@@ -1,4 +1,4 @@
-import { jwt } from 'hono/jwt'
+import { jwt } from 'hono/jwt';
 import { createMiddleware } from 'hono/factory';
 import type { Context, Next } from 'hono';
 import { jwtAlgorithm, jwtSecret } from '../utils/envVars.js';
@@ -17,15 +17,15 @@ export const logger = createMiddleware(async (c, next) => {
 export const authMiddleware = jwt({
   secret: jwtSecret,
   alg: jwtAlgorithm,
-})
+});
 
 // Middleware for routes requiring a specific role
 export const requireRole = (role: Role) => {
   return async (c: Context, next: Next) => {
-    const payload: JwtData = c.get('jwtPayload')
+    const payload: JwtData = c.get('jwtPayload');
     if (!payload || !payload.roles.includes(role)) {
-      return c.json(err('Forbidden', 403))
+      return c.json(err('Forbidden', 403));
     }
-    await next()
-  }
-}
+    await next();
+  };
+};

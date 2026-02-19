@@ -61,7 +61,7 @@ export async function getWeeksForYear(year: number): Promise<GetWeeksResponse> {
   try {
     const token = localStorage.getItem('jwt');
     const response = await axios.get(
-      `${databaseAPI}/${path}/getweeks`,
+      `${databaseAPI}/${path}/weeks`,
       {
         params: { year },
         headers: { Authorization: `Bearer ${token}` },

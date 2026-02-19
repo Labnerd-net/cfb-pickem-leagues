@@ -10,6 +10,7 @@ import type {
   WeekQuery,
   WeekIdentifier,
   SeasonType,
+  PickedGamesRequest,
 } from '@shared/types/cfb-pickem-api.js';
 
 // ------------------------------------------------------------------
@@ -143,10 +144,7 @@ export async function invertPickedGame(game: number): Promise<void> {
   logger.debug({ game }, 'invertPickedGame');
   const newPicked = !adminGames.picked;
   try {
-    await db
-      .update(adminGames)
-      .set({ picked: newPicked })
-      .where(eq(adminGames.gameId, game));
+    await db.update(adminGames).set({ picked: newPicked }).where(eq(adminGames.gameId, game));
   } catch (e) {
     logger.error({ err: e }, 'invertPickedGame failed');
     throw e;
@@ -156,11 +154,29 @@ export async function invertPickedGame(game: number): Promise<void> {
 // ------------------------------------------------------------------
 // Set all picked games from number array
 // ------------------------------------------------------------------
-export async function setPickedGame(games: number[]): Promise<void> {
-  logger.debug({ count: games.length }, 'setPickedGame');
+export async function setPickedGames(pickedGames: PickedGamesRequest): Promise<void> {
+  logger.debug({ count: pickedGames.games.length }, 'setPickedGame');
   try {
-    await db.update(adminGames).set({ picked: true }).where(inArray(adminGames.gameId, games));
-    await db.update(adminGames).set({ picked: false }).where(notInArray(adminGames.gameId, games));
+    await db
+      .update(adminGames)
+      .set({ picked: true })
+      .where(
+        and(
+          inArray(adminGames.gameId, pickedGames.games),
+          eq(adminGames.weekNumber, pickedGames.week),
+          eq(adminGames.year, pickedGames.year)
+        )
+      );
+    await db
+      .update(adminGames)
+      .set({ picked: false })
+      .where(
+        and(
+          notInArray(adminGames.gameId, pickedGames.games),
+          eq(adminGames.weekNumber, pickedGames.week),
+          eq(adminGames.year, pickedGames.year)
+        )
+      );
   } catch (e) {
     logger.error({ err: e }, 'setPickedGame failed');
     throw e;
@@ -192,10 +208,7 @@ export async function returnPickedGames(identifier: WeekIdentifier): Promise<Adm
 // ------------------------------------------------------------------
 // Get seasonType for a week
 // ------------------------------------------------------------------
-export async function getSeasonTypeForWeek(
-  year: number,
-  week: number
-): Promise<SeasonType | null> {
+export async function getSeasonTypeForWeek(year: number, week: number): Promise<SeasonType | null> {
   logger.debug({ year, week }, 'getSeasonTypeForWeek');
   try {
     const weekData = await db
@@ -214,16 +227,14 @@ export async function getSeasonTypeForWeek(
 // ------------------------------------------------------------------
 // Convert WeekIdentifier to WeekQuery by looking up seasonType
 // ------------------------------------------------------------------
-export async function enrichWeekIdentifier(
-  identifier: WeekIdentifier
-): Promise<WeekQuery> {
+export async function enrichWeekIdentifier(identifier: WeekIdentifier): Promise<WeekQuery> {
   logger.debug({ year: identifier.year, week: identifier.week }, 'enrichWeekIdentifier');
   const seasonType = await getSeasonTypeForWeek(identifier.year, identifier.week);
 
   if (!seasonType) {
     throw new Error(
       `Week ${identifier.week} of year ${identifier.year} not found in database. ` +
-      `Please ensure weeks are loaded before fetching games.`
+        `Please ensure weeks are loaded before fetching games.`
     );
   }
 
