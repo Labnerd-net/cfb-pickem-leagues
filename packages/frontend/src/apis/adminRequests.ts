@@ -1,4 +1,4 @@
-import type { AdminDbGameData, AdminDbWeekData, WeekIdentifier, PickedGamesRequest } from '@shared/types/cfb-pickem-api';
+import type { AdminDbGameData, AdminDbWeekData, WeekIdentifier, PickedGamesRequest, ProfileData } from '@shared/types/cfb-pickem-api';
 import axios from 'axios';
 import { logger } from '../utils/logger';
 
@@ -120,6 +120,33 @@ export async function getGamesForWeek(weekData: WeekIdentifier): Promise<GetGame
       return { success: false, error: error.response.data.error };
     }
     logger.error('getGamesForWeek unexpected error', error);
+    return { success: false, error: 'An unexpected error occurred' };
+  }
+}
+
+export interface GetUsersResponse {
+  success: boolean;
+  data?: ProfileData[];
+  error?: string;
+}
+
+export async function getUsers(): Promise<GetUsersResponse> {
+  try {
+    const token = localStorage.getItem('jwt');
+    const response = await axios.get(
+      `${databaseAPI}/${path}/users`,
+      { headers: { Authorization: `Bearer ${token}` } }
+    );
+    if (response.data.ok) {
+      return { success: true, data: response.data.data.allUserProfiles };
+    }
+    return { success: false, error: response.data.error };
+  } catch (error) {
+    if (axios.isAxiosError(error) && error.response?.data?.error) {
+      logger.error('getUsers failed', error.response.status, error.response.data.error);
+      return { success: false, error: error.response.data.error };
+    }
+    logger.error('getUsers unexpected error', error);
     return { success: false, error: 'An unexpected error occurred' };
   }
 }

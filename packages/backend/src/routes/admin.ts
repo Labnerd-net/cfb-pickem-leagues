@@ -20,7 +20,7 @@ const admin = new Hono<{ Variables: Variables }>();
 admin.use(authMiddleware);
 
 // Return all users' details
-admin.post('/users', requireRole('admin'), async c => {
+admin.get('/users', requireRole('admin'), async c => {
   try {
     const allUsers = await returnUsers();
     const allUserProfiles: ProfileData[] = allUsers;
