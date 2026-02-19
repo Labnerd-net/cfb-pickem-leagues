@@ -127,17 +127,19 @@ export const handlers = [
 		});
 	}),
 
-	http.post(`${API_URL}/api/admin/users`, () => {
+	http.get(`${API_URL}/api/admin/users`, () => {
 		return HttpResponse.json({
 			ok: true,
-			data: [
-				{
-					userId: 1,
-					email: 'test@example.com',
-					displayName: 'Test User',
-					roles: ['user'],
-				},
-			],
+			data: {
+				allUserProfiles: [
+					{
+						userId: 1,
+						email: 'test@example.com',
+						displayName: 'Test User',
+						roles: ['user'],
+					},
+				],
+			},
 		});
 	}),
 ];
