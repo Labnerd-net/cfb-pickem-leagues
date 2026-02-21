@@ -125,6 +125,52 @@ export async function addGameToWeek(game: AdminGameData): Promise<void> {
 }
 
 // ------------------------------------------------------------------
+// Upsert single game for a week (safe to re-import; preserves picked & gameId)
+// ------------------------------------------------------------------
+export async function upsertGameForWeek(game: AdminGameData): Promise<void> {
+  logger.debug({ year: game.year, week: game.weekNumber }, 'upsertGameForWeek');
+  try {
+    let winningTeam: Team = 'pending';
+    if (game.completed && game.homePoints !== null && game.awayPoints !== null) {
+      if (game.homePoints > game.awayPoints) {
+        winningTeam = 'home_team';
+      } else if (game.awayPoints > game.homePoints) {
+        winningTeam = 'away_team';
+      }
+    }
+    await db
+      .insert(adminGames)
+      .values({
+        cfbdGameId: game.cfbdGameId,
+        ncaaGameId: game.ncaaGameId,
+        picked: false,
+        weekNumber: game.weekNumber,
+        year: game.year,
+        seasonType: game.seasonType,
+        completed: game.completed,
+        homeTeam: game.homeTeam,
+        awayTeam: game.awayTeam,
+        homePoints: game.completed ? game.homePoints : null,
+        awayPoints: game.completed ? game.awayPoints : null,
+        winningTeam,
+      })
+      .onConflictDoUpdate({
+        target: [adminGames.year, adminGames.weekNumber, adminGames.homeTeam, adminGames.awayTeam],
+        set: {
+          seasonType: game.seasonType,
+          completed: game.completed,
+          homePoints: game.completed ? game.homePoints : null,
+          awayPoints: game.completed ? game.awayPoints : null,
+          winningTeam,
+        },
+      });
+  } catch (e) {
+    logger.error({ err: e }, 'upsertGameForWeek failed');
+    throw e;
+  }
+}
+
+// ------------------------------------------------------------------
 // Return game
 // ------------------------------------------------------------------
 export async function returnGame(game: number): Promise<AdminDbGameData[]> {

@@ -10,6 +10,7 @@ import {
   serial,
   text,
   timestamp,
+  unique,
 } from 'drizzle-orm/pg-core';
 import { relations } from 'drizzle-orm';
 import { columnSeason, columnTeam } from '../index.js';
@@ -66,6 +67,7 @@ export const adminGames = adminSchema.table(
     index('games_year_week_idx').on(table.year, table.weekNumber),
     index('games_picked_idx').on(table.picked),
     index('games_year_week_picked_idx').on(table.year, table.weekNumber, table.picked),
+    unique('games_natural_key').on(table.year, table.weekNumber, table.homeTeam, table.awayTeam),
   ]
 );
 
