@@ -15,6 +15,7 @@ COPY pnpm-workspace.yaml package.json pnpm-lock.yaml tsconfig.base.json ./
 # Copy all package manifests
 COPY packages/frontend/package.json packages/frontend/
 COPY packages/shared/package.json packages/shared/
+COPY packages/backend/package.json packages/backend/
 
 # ================================
 # Dependencies stage
@@ -41,6 +42,7 @@ COPY --from=deps /app/packages/frontend/node_modules ./packages/frontend/node_mo
 # Copy source
 COPY packages/frontend ./packages/frontend
 COPY packages/shared ./packages/shared
+COPY packages/backend/src ./packages/backend/src
 
 WORKDIR /app/packages/frontend
 RUN pnpm build
