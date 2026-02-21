@@ -1,20 +1,12 @@
 import { useState, useEffect } from 'react';
 import { Box, Typography, CircularProgress, Snackbar, Alert } from '@mui/material';
-import type { AdminDbWeekData, AdminDbGameData, UserDbGameData } from '@shared/types/cfb-pickem-api';
+import type { AdminDbWeekData, AdminDbGameData } from '@shared/types/cfb-pickem-api';
 import { getPickedGames, getUserPicks, getWeeksForYear, postUserPicks } from '../../apis/userRequests';
 import { getCurrentWeek } from '../../utils/weekCalculation';
 import { logger } from '../../utils/logger';
 import UserWeekSelector from './UserWeekSelector';
 import UserPicksGamesList from './UserPicksGamesList';
 
-// API response types that match backend structure
-interface GamesResponse {
-  pickedGames: AdminDbGameData[];
-}
-
-interface PicksResponse {
-  picks: UserDbGameData[];
-}
 
 export default function UserPicksSection() {
   const [selectedYear, setSelectedYear] = useState<number>(0);
@@ -121,8 +113,7 @@ export default function UserPicksSection() {
 
         // Handle games
         if (gamesResult.success && gamesResult.data) {
-          const gamesData = (gamesResult.data as unknown as GamesResponse).pickedGames;
-          setAvailableGames(gamesData);
+          setAvailableGames(gamesResult.data);
         } else {
           setAvailableGames([]);
           if (gamesResult.error) {
@@ -137,7 +128,7 @@ export default function UserPicksSection() {
 
         // Handle existing picks
         if (picksResult.success && picksResult.data) {
-          const picks = (picksResult.data as unknown as PicksResponse).picks;
+          const picks = picksResult.data;
           const picksMap = new Map<number, 'home_team' | 'away_team'>();
           const savedIds = new Set<number>();
 
