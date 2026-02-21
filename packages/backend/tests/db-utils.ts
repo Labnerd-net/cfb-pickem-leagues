@@ -107,7 +107,7 @@ export async function createTestGame(
 		)
 		VALUES (
 			${weekNumber}, ${year}, 'regular', ${picked}, ${completed},
-			${homeTeam}, ${awayTeam}, -1, -1, 'pending'
+			${homeTeam}, ${awayTeam}, NULL, NULL, 'pending'
 		)
 		RETURNING game_id
 	`);

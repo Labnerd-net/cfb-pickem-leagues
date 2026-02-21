@@ -1,7 +1,6 @@
 import 'dotenv/config';
 import {
-  boolean,
-  index,
+  foreignKey,
   integer,
   pgSchema,
   primaryKey,
@@ -10,8 +9,10 @@ import {
   timestamp,
 } from 'drizzle-orm/pg-core';
 import { relations } from 'drizzle-orm';
-import { columnRole, columnSeason, columnTeam } from '../index.js';
-// import { columnRole, columnSeason, columnTeam } from '../index'; // for drizzle-kit generate
+import { columnRole, columnTeam } from '../index.js';
+// import { columnRole, columnTeam } from '../index'; // for drizzle-kit generate
+import { adminGames } from '../schema/admin.js';
+// import { adminGames } from '../schema/admin'; // for drizzle-kit generate
 
 const userSchema = pgSchema('user');
 
@@ -28,7 +29,7 @@ export const users = userSchema.table('users', {
 });
 
 // ------------------------------------------------------------------
-// Games – each game belongs to a user
+// Games – picks only; join with admin.games for game metadata
 // ------------------------------------------------------------------
 export const games = userSchema.table(
   'games',
@@ -37,24 +38,16 @@ export const games = userSchema.table(
       .notNull()
       .references(() => users.userId, { onDelete: 'cascade' }),
     gameId: integer('game_id').notNull(),
-    cfbdGameId: integer('cfbd_game_id'),
-    ncaaGameId: text('ncaa_game_id'),
-    weekNumber: integer('week_number').notNull(),
-    year: integer('year').notNull(),
-    seasonType: columnSeason('season_type').notNull(),
-    completed: boolean('completed').notNull(),
-    homeTeam: text('home_team').notNull(),
-    awayTeam: text('away_team').notNull(),
-    homePoints: integer('home_points').notNull(),
-    awayPoints: integer('away_points').notNull(),
-    winningTeam: columnTeam('winning_team').notNull().default('pending'),
     teamChosen: columnTeam('team_chosen').notNull().default('pending'),
     createdAt: timestamp('created_at').defaultNow().notNull(),
   },
   table => [
     primaryKey({ columns: [table.userId, table.gameId] }),
-    index('user_games_year_week_idx').on(table.year, table.weekNumber),
-    index('user_games_user_year_week_idx').on(table.userId, table.year, table.weekNumber),
+    foreignKey({
+      columns: [table.gameId],
+      foreignColumns: [adminGames.gameId],
+      name: 'user_games_admin_games_fk',
+    }).onDelete('cascade'),
   ]
 );
 
