@@ -114,8 +114,8 @@ export async function addGameToWeek(game: AdminGameData): Promise<void> {
       completed: game.completed,
       homeTeam: game.homeTeam,
       awayTeam: game.awayTeam,
-      homePoints: game.completed ? game.homePoints : -1,
-      awayPoints: game.completed ? game.awayPoints : -1,
+      homePoints: game.completed ? game.homePoints : null,
+      awayPoints: game.completed ? game.awayPoints : null,
       winningTeam: winningTeam,
     });
   } catch (e) {

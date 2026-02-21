@@ -1,5 +1,6 @@
 import { eq, and } from 'drizzle-orm';
 import { users, games } from './schema/users.js';
+import { adminGames } from './schema/admin.js';
 import { db } from './index.js';
 import * as dbAdminFunctions from './dbAdminFunctions.js';
 import logger from '../utils/logger.js';
@@ -110,27 +111,12 @@ export async function addPickedGame(pick: UserGamePicks, userId: string): Promis
       .values({
         userId: userIdNumber,
         gameId: pick.game,
-        cfbdGameId: gameInfo[0].cfbdGameId,
-        ncaaGameId: gameInfo[0].ncaaGameId,
-        weekNumber: gameInfo[0].weekNumber,
-        year: gameInfo[0].year,
-        seasonType: gameInfo[0].seasonType,
-        completed: gameInfo[0].completed,
-        homeTeam: gameInfo[0].homeTeam,
-        awayTeam: gameInfo[0].awayTeam,
-        homePoints: gameInfo[0].completed ? gameInfo[0].homePoints : -1,
-        awayPoints: gameInfo[0].completed ? gameInfo[0].awayPoints : -1,
-        winningTeam: gameInfo[0].winningTeam,
         teamChosen: pick.pick,
       })
       .onConflictDoUpdate({
         target: [games.userId, games.gameId],
         set: {
           teamChosen: pick.pick,
-          completed: gameInfo[0].completed,
-          homePoints: gameInfo[0].completed ? gameInfo[0].homePoints : -1,
-          awayPoints: gameInfo[0].completed ? gameInfo[0].awayPoints : -1,
-          winningTeam: gameInfo[0].winningTeam,
         },
       });
   } catch (e) {
@@ -150,12 +136,29 @@ export async function returnUserGames(
   logger.debug({ year: identifier.year, week: identifier.week, userId }, 'returnUserGames');
   try {
     return await db
-      .select()
+      .select({
+        gameId: adminGames.gameId,
+        cfbdGameId: adminGames.cfbdGameId,
+        ncaaGameId: adminGames.ncaaGameId,
+        weekNumber: adminGames.weekNumber,
+        year: adminGames.year,
+        seasonType: adminGames.seasonType,
+        completed: adminGames.completed,
+        homeTeam: adminGames.homeTeam,
+        awayTeam: adminGames.awayTeam,
+        homePoints: adminGames.homePoints,
+        awayPoints: adminGames.awayPoints,
+        winningTeam: adminGames.winningTeam,
+        userId: games.userId,
+        teamChosen: games.teamChosen,
+        createdAt: games.createdAt,
+      })
       .from(games)
+      .innerJoin(adminGames, eq(games.gameId, adminGames.gameId))
       .where(
         and(
-          eq(games.year, identifier.year),
-          eq(games.weekNumber, identifier.week),
+          eq(adminGames.year, identifier.year),
+          eq(adminGames.weekNumber, identifier.week),
           eq(games.userId, userIdNumber)
         )
       );

@@ -57,8 +57,8 @@ export interface UserGameData {
   completed: boolean;
   homeTeam: string;
   awayTeam: string;
-  homePoints: number;
-  awayPoints: number;
+  homePoints: number | null;
+  awayPoints: number | null;
   winningTeam: Team;
   teamChosen: Team;
 }
@@ -90,8 +90,8 @@ export interface AdminGameData {
   completed: boolean;
   homeTeam: string;
   awayTeam: string;
-  homePoints: number;
-  awayPoints: number;
+  homePoints: number | null;
+  awayPoints: number | null;
   winningTeam: Team;
 }
 

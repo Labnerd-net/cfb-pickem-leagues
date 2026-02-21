@@ -71,8 +71,8 @@ export async function getGameData(
     const cfbdGamedata = await getCfbdGameData(queryData, classification);
     cfbdGamedata?.forEach(game => {
       let winningTeam: Team = 'pending';
-      let homePoints = -1;
-      let awayPoints = -1;
+      let homePoints: number | null = null;
+      let awayPoints: number | null = null;
       if (game.completed && game.homePoints && game.awayPoints) {
         homePoints = game.homePoints;
         awayPoints = game.awayPoints;
@@ -104,8 +104,8 @@ export async function getGameData(
         : game.game.home.winner
           ? 'home_team'
           : 'pending';
-      const homePoints = game.game.home.score === '' ? -1 : Number(game.game.home.score);
-      const awayPoints = game.game.away.score === '' ? -1 : Number(game.game.away.score);
+      const homePoints = game.game.home.score === '' ? null : Number(game.game.home.score);
+      const awayPoints = game.game.away.score === '' ? null : Number(game.game.away.score);
       const data = {} as AdminGameData;
       data.cfbdGameId = null;
       data.ncaaGameId = game.game.gameID;

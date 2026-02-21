@@ -6,15 +6,13 @@ Retrospective on what would change if starting this project from scratch.
 
 ## Things to change
 
-### 1. User picks schema — biggest structural issue
+### 1. User picks schema — biggest structural issue -- Done
 
-The `user_games` table copies all game data (teams, scores, points, `winningTeam`) from `admin_games`. This is denormalization without clear benefit. When scores come in, both tables must be updated. Currently `addPickedGame` syncs game data on pick submission, but there is no mechanism to sync scores for *existing* picks when game results change. User picks will silently show stale scores.
+`user.games` now holds only `(userId, gameId, teamChosen, createdAt)`. `returnUserGames` joins with `admin.games` at query time, so scores updated after a pick is submitted are immediately visible without re-submitting. FK from `user.games.gameId` → `admin.games.gameId` with cascade delete prevents orphan picks.
 
-**Fix**: User picks table should be `(userId, gameId, teamChosen)` only. Join with `admin_games` at query time. One source of truth for game state.
+### 2. The `-1` sentinel for "no points" -- Done
 
-### 2. The `-1` sentinel for "no points"
-
-`homePoints: game.completed ? game.homePoints : -1` — using -1 to mean null is a code smell. The column should be nullable, and null should mean "not played yet." A 0-0 game is a valid score.
+`homePoints` and `awayPoints` are now nullable (`INTEGER` with no default). `null` means "not played yet." API converters and DB functions updated accordingly. Shared types updated to `number | null`.
 
 ### 3. End-to-end type safety
 
