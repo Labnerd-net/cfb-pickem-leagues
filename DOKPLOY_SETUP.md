@@ -66,7 +66,40 @@ DATA_SOURCE=ncaa
 - **Start Command**: `pnpm start:prod` (this runs migrations then starts the app)
 - **Port**: 3000
 
-### 4. Deploy
+### 4. Automatic Deployments
+
+Two options for triggering deploys on every push to `main`:
+
+**Option A: GitHub webhook (recommended)**
+
+1. In Dokploy, open your application → **General** tab
+2. Enable the **Auto Deploy** toggle
+3. Copy the **Webhook URL** shown in Dokploy
+4. In GitHub → repo **Settings → Webhooks → Add webhook**
+   - Payload URL: paste the Dokploy webhook URL
+   - Content type: `application/json`
+   - Which events: "Just the push event"
+5. Save — pushes to the configured branch now trigger deploys automatically
+
+**Option B: GitHub Actions**
+
+Store the Dokploy webhook URL as a GitHub secret (`DOKPLOY_DEPLOY_WEBHOOK`), then add a workflow:
+
+```yaml
+# .github/workflows/deploy.yml
+on:
+  push:
+    branches: [main]
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - run: curl -X POST "${{ secrets.DOKPLOY_DEPLOY_WEBHOOK }}"
+```
+
+The webhook URL is available in Dokploy under your app's **General → Refresh Token** section.
+
+### 5. Deploy
 
 Click **Deploy** in Dokploy. The deployment will:
 1. Build the Docker image
@@ -76,7 +109,7 @@ Click **Deploy** in Dokploy. The deployment will:
 5. Run migrations automatically (`pnpm migrate:prod`)
 6. Start the application
 
-Watch the logs to confirm everything runs successfully. You should see:
+Watch the Dokploy logs to confirm everything runs successfully. You should see:
 ```
 Creating database schemas...
 ✅ Schemas ready
