@@ -5,22 +5,8 @@
     {
       "idx": 0,
       "version": "7",
-      "when": 1771473632980,
-      "tag": "0000_burly_rachel_grey",
-      "breakpoints": true
-    },
-    {
-      "idx": 1,
-      "version": "7",
-      "when": 1771648101316,
-      "tag": "0001_glossy_gunslinger",
-      "breakpoints": true
-    },
-    {
-      "idx": 2,
-      "version": "7",
-      "when": 1771648973967,
-      "tag": "0002_lucky_steve_rogers",
+      "when": 1771691897375,
+      "tag": "0000_dashing_sharon_ventura",
       "breakpoints": true
     }
   ]
