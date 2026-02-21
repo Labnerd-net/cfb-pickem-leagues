@@ -14,9 +14,11 @@ Retrospective on what would change if starting this project from scratch.
 
 `homePoints` and `awayPoints` are now nullable (`INTEGER` with no default). `null` means "not played yet." API converters and DB functions updated accordingly. Shared types updated to `number | null`.
 
-### 3. End-to-end type safety
+### 3. End-to-end type safety -- Done
 
 The shared types package helps, but it is still manual — drift between what the API actually returns and what the frontend expects won't be caught at the boundary. Hono ships an RPC client (`hono/client`) that generates typed API calls from route definitions. That would replace the manual `src/apis/` fetch functions and catch mismatches at compile time without adding tRPC overhead.
+
+`hono/client` is now wired up in `packages/frontend/src/lib/api.ts` using `hc<AppType>`. Typed API calls replace the manual fetch wrappers.
 
 ### 4. JWT in localStorage -- Done
 
