@@ -7,30 +7,6 @@ export interface ProfileResponse {
   error?: string;
 }
 
-export interface UserGameResponse {
-  success: boolean;
-  data?: UserDbGameData[];
-  error?: string;
-}
-
-export interface AdminGameResponse {
-  success: boolean;
-  data?: AdminDbGameData[];
-  error?: string;
-}
-
-export interface PicksResponse {
-  success: boolean;
-  data?: { status: string };
-  error?: string;
-}
-
-export interface GetWeeksResponse {
-  success: boolean;
-  data?: { weeks: AdminDbWeekData[] };
-  error?: string;
-}
-
 export async function getUserProfile(): Promise<ProfileResponse> {
   try {
     const res = await client.api.user.profile.$get();
@@ -45,6 +21,12 @@ export async function getUserProfile(): Promise<ProfileResponse> {
   }
 }
 
+export interface GetWeeksResponse {
+  success: boolean;
+  data?: { weeks: AdminDbWeekData[] };
+  error?: string;
+}
+
 export async function getWeeksForYear(year: number): Promise<GetWeeksResponse> {
   try {
     const res = await client.api.user.weeks.$get({ query: { year: String(year) } });
@@ -57,6 +39,12 @@ export async function getWeeksForYear(year: number): Promise<GetWeeksResponse> {
   } catch {
     return { success: false, error: 'Request failed' };
   }
+}
+
+export interface UserGameResponse {
+  success: boolean;
+  data?: UserDbGameData[];
+  error?: string;
 }
 
 export async function getUserPicks(weekData: WeekIdentifier): Promise<UserGameResponse> {
@@ -75,6 +63,12 @@ export async function getUserPicks(weekData: WeekIdentifier): Promise<UserGameRe
   }
 }
 
+export interface AdminGameResponse {
+  success: boolean;
+  data?: AdminDbGameData[];
+  error?: string;
+}
+
 export async function getPickedGames(weekData: WeekIdentifier): Promise<AdminGameResponse> {
   try {
     const res = await client.api.user.games.$get({
@@ -89,6 +83,12 @@ export async function getPickedGames(weekData: WeekIdentifier): Promise<AdminGam
   } catch {
     return { success: false, error: 'Request failed' };
   }
+}
+
+export interface PicksResponse {
+  success: boolean;
+  data?: { status: string };
+  error?: string;
 }
 
 export async function postUserPicks(picks: AllUserGamePicksRequest): Promise<PicksResponse> {

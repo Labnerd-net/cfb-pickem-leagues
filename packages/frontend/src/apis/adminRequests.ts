@@ -7,24 +7,6 @@ export interface AddWeeksResponse {
   error?: string;
 }
 
-export interface GetWeeksResponse {
-  success: boolean;
-  data?: AdminDbWeekData[];
-  error?: string;
-}
-
-export interface AddGamesResponse {
-  success: boolean;
-  data?: { status: string };
-  error?: string;
-}
-
-export interface GetGamesResponse {
-  success: boolean;
-  data?: AdminDbGameData[];
-  error?: string;
-}
-
 export async function addWeeksToYear(year: number): Promise<AddWeeksResponse> {
   try {
     const res = await client.api.admin.year[':year'].$post({
@@ -41,6 +23,12 @@ export async function addWeeksToYear(year: number): Promise<AddWeeksResponse> {
   }
 }
 
+export interface GetWeeksResponse {
+  success: boolean;
+  data?: AdminDbWeekData[];
+  error?: string;
+}
+
 export async function getWeeksForYear(year: number): Promise<GetWeeksResponse> {
   try {
     const res = await client.api.admin.weeks.$get({ query: { year: String(year) } });
@@ -55,6 +43,12 @@ export async function getWeeksForYear(year: number): Promise<GetWeeksResponse> {
   }
 }
 
+export interface AddGamesResponse {
+  success: boolean;
+  data?: { status: string };
+  error?: string;
+}
+
 export async function addGamesToWeek(weekData: WeekIdentifier): Promise<AddGamesResponse> {
   try {
     const res = await client.api.admin.week.$post({ json: weekData });
@@ -67,6 +61,12 @@ export async function addGamesToWeek(weekData: WeekIdentifier): Promise<AddGames
   } catch {
     return { success: false, error: 'Request failed' };
   }
+}
+
+export interface GetGamesResponse {
+  success: boolean;
+  data?: AdminDbGameData[];
+  error?: string;
 }
 
 export async function getGamesForWeek(weekData: WeekIdentifier): Promise<GetGamesResponse> {
