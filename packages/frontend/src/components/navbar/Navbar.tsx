@@ -10,8 +10,8 @@ export default function Navbar() {
   const navigate = useNavigate();
   const theme = useTheme();
 
-  const handleLogout = () => {
-    logout();
+  const handleLogout = async () => {
+    await logout();
     navigate('/');
   };
 

@@ -57,9 +57,9 @@ const RegistrationForm: React.FC = () => {
 
     const result = await registerUser(data);
 
-    if (result.success && result.data?.token) {
+    if (result.success) {
       try {
-        await login(result.data.token);
+        await login();
         navigate('/dashboard');
       } catch {
         setError('Failed to load user profile');

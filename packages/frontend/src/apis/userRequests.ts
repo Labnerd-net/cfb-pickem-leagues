@@ -37,11 +37,8 @@ export interface GetWeeksResponse {
 
 export async function getUserProfile(): Promise<ProfileResponse> {
   try {
-    const token = localStorage.getItem('jwt');
     const response = await axios.get(`${databaseAPI}/${path}/profile`, {
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
+      withCredentials: true,
     });
     if (response.data.ok) {
       return { success: true, data: response.data.data };
@@ -59,14 +56,10 @@ export async function getUserProfile(): Promise<ProfileResponse> {
 
 export async function getWeeksForYear(year: number): Promise<GetWeeksResponse> {
   try {
-    const token = localStorage.getItem('jwt');
-    const response = await axios.get(
-      `${databaseAPI}/${path}/weeks`,
-      {
-        params: { year },
-        headers: { Authorization: `Bearer ${token}` },
-      }
-    );
+    const response = await axios.get(`${databaseAPI}/${path}/weeks`, {
+      params: { year },
+      withCredentials: true,
+    });
     if (response.data.ok) {
       return { success: true, data: response.data.data };
     }
@@ -83,12 +76,9 @@ export async function getWeeksForYear(year: number): Promise<GetWeeksResponse> {
 
 export async function getUserPicks(weekData: WeekIdentifier): Promise<UserGameResponse> {
   try {
-    const token = localStorage.getItem('jwt'); // or read from a cookie
     const response = await axios.get(`${databaseAPI}/${path}/picks`, {
       params: weekData,
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
+      withCredentials: true,
     });
     if (response.data.ok) {
       return { success: true, data: response.data.data };
@@ -106,14 +96,10 @@ export async function getUserPicks(weekData: WeekIdentifier): Promise<UserGameRe
 
 export async function getPickedGames(weekData: WeekIdentifier): Promise<AdminGameResponse> {
   try {
-    const token = localStorage.getItem('jwt');
-    const response = await axios.get(
-      `${databaseAPI}/${path}/games`,
-      {
-        params: weekData,
-        headers: { Authorization: `Bearer ${token}` },
-      }
-    );
+    const response = await axios.get(`${databaseAPI}/${path}/games`, {
+      params: weekData,
+      withCredentials: true,
+    });
     if (response.data.ok) {
       return { success: true, data: response.data.data };
     }
@@ -130,16 +116,9 @@ export async function getPickedGames(weekData: WeekIdentifier): Promise<AdminGam
 
 export async function postUserPicks(picks: AllUserGamePicksRequest): Promise<PicksResponse> {
   try {
-    const token = localStorage.getItem('jwt');
-    const response = await axios.post(
-      `${databaseAPI}/${path}/picks`,
-      picks,
-      {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      }
-    );
+    const response = await axios.post(`${databaseAPI}/${path}/picks`, picks, {
+      withCredentials: true,
+    });
     if (response.data.ok) {
       return { success: true, data: response.data.data };
     }

@@ -50,9 +50,9 @@ const LoginForm: React.FC = () => {
 
     const result = await loginUser(credentials);
 
-    if (result.success && result.data?.token) {
+    if (result.success) {
       try {
-        await login(result.data.token);
+        await login();
         if (rememberMe) {
           localStorage.setItem('rememberMe', 'true');
         }

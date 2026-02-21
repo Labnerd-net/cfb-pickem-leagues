@@ -1,65 +1,50 @@
 import { type ReactNode, useState, useEffect } from 'react';
 import { AuthContext } from './AuthContext';
-import { getUserProfile } from '../../apis/userRequests';
+import { getMe, logoutUser } from '../../apis/authRequests';
 import type { ProfileData } from '@shared/types/cfb-pickem-api';
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<ProfileData | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
-  // On mount: check for existing token and validate it
+  // On mount: determine auth state by calling /auth/me
   useEffect(() => {
     const initAuth = async () => {
-      const token = localStorage.getItem('jwt');
-      if (token) {
-        try {
-          const profileData = await getUserProfile();
-          if (profileData.success && profileData.data) {
-            setUser({
-              userId: profileData.data.userId,
-              email: profileData.data.email,
-              displayName: profileData.data.displayName,
-              roles: profileData.data.roles,
-            });
-          } else {
-            // Token invalid or expired
-            localStorage.removeItem('jwt');
-          }
-        } catch {
-          // Token validation failed
-          localStorage.removeItem('jwt');
+      try {
+        const result = await getMe();
+        if (result.success && result.data) {
+          setUser({
+            userId: result.data.userId,
+            email: result.data.email,
+            displayName: result.data.displayName,
+            roles: result.data.roles,
+          });
         }
+      } catch {
+        // No valid cookie — user is not authenticated
       }
       setIsLoading(false);
     };
     initAuth();
   }, []);
 
-  const login = async (token: string) => {
-    localStorage.setItem('jwt', token);
-    try {
-      const profileData = await getUserProfile();
-      if (profileData.success && profileData.data) {
-        setUser({
-          userId: profileData.data.userId,
-          email: profileData.data.email,
-          displayName: profileData.data.displayName,
-          roles: profileData.data.roles,
-        });
-      } else {
-        // Profile fetch failed
-        localStorage.removeItem('jwt');
-        throw new Error(profileData.error || 'Failed to fetch user profile');
-      }
-    } catch (error) {
-      // Handle error - clear token if profile fetch fails
-      localStorage.removeItem('jwt');
-      throw error;
+  // Called after a successful login or register response — cookie is already set by server
+  const login = async () => {
+    const result = await getMe();
+    if (result.success && result.data) {
+      setUser({
+        userId: result.data.userId,
+        email: result.data.email,
+        displayName: result.data.displayName,
+        roles: result.data.roles,
+      });
+    } else {
+      throw new Error(result.error || 'Failed to fetch user profile');
     }
   };
 
-  const logout = () => {
-    localStorage.removeItem('jwt');
+  const logout = async () => {
+    await logoutUser();
     setUser(null);
   };
 

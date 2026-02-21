@@ -31,11 +31,10 @@ export interface GetGamesResponse {
 
 export async function addWeeksToYear(year: number): Promise<AddWeeksResponse> {
   try {
-    const token = localStorage.getItem('jwt');
     const response = await axios.post(
       `${databaseAPI}/${path}/year/${year}`,
-      {}, // empty body
-      { headers: { Authorization: `Bearer ${token}` } }
+      {},
+      { withCredentials: true }
     );
     if (response.data.ok) {
       return { success: true, data: response.data.data };
@@ -53,14 +52,10 @@ export async function addWeeksToYear(year: number): Promise<AddWeeksResponse> {
 
 export async function getWeeksForYear(year: number): Promise<GetWeeksResponse> {
   try {
-    const token = localStorage.getItem('jwt');
-    const response = await axios.get(
-      `${databaseAPI}/${path}/weeks`,
-      {
-        params: { year },
-        headers: { Authorization: `Bearer ${token}` },
-      }
-    );
+    const response = await axios.get(`${databaseAPI}/${path}/weeks`, {
+      params: { year },
+      withCredentials: true,
+    });
     if (response.data.ok) {
       return { success: true, data: response.data.data.weeks };
     }
@@ -77,12 +72,9 @@ export async function getWeeksForYear(year: number): Promise<GetWeeksResponse> {
 
 export async function addGamesToWeek(weekData: WeekIdentifier): Promise<AddGamesResponse> {
   try {
-    const token = localStorage.getItem('jwt');
-    const response = await axios.post(
-      `${databaseAPI}/${path}/week`,
-      weekData,
-      { headers: { Authorization: `Bearer ${token}` } }
-    );
+    const response = await axios.post(`${databaseAPI}/${path}/week`, weekData, {
+      withCredentials: true,
+    });
     if (response.data.ok) {
       return { success: true, data: response.data.data };
     }
@@ -99,17 +91,13 @@ export async function addGamesToWeek(weekData: WeekIdentifier): Promise<AddGames
 
 export async function getGamesForWeek(weekData: WeekIdentifier): Promise<GetGamesResponse> {
   try {
-    const token = localStorage.getItem('jwt');
-    const response = await axios.get(
-      `${databaseAPI}/${path}/games`,
-      {
-        params: {
-          year: weekData.year,
-          week: weekData.week,
-        },
-        headers: { Authorization: `Bearer ${token}` },
-      }
-    );
+    const response = await axios.get(`${databaseAPI}/${path}/games`, {
+      params: {
+        year: weekData.year,
+        week: weekData.week,
+      },
+      withCredentials: true,
+    });
     if (response.data.ok) {
       return { success: true, data: response.data.data.weekGames };
     }
@@ -132,11 +120,9 @@ export interface GetUsersResponse {
 
 export async function getUsers(): Promise<GetUsersResponse> {
   try {
-    const token = localStorage.getItem('jwt');
-    const response = await axios.get(
-      `${databaseAPI}/${path}/users`,
-      { headers: { Authorization: `Bearer ${token}` } }
-    );
+    const response = await axios.get(`${databaseAPI}/${path}/users`, {
+      withCredentials: true,
+    });
     if (response.data.ok) {
       return { success: true, data: response.data.data.allUserProfiles };
     }
@@ -159,12 +145,9 @@ export interface SetPicksResponse {
 
 export async function setPickedGames(pickedData: PickedGamesRequest): Promise<SetPicksResponse> {
   try {
-    const token = localStorage.getItem('jwt');
-    const response = await axios.post(
-      `${databaseAPI}/${path}/picks`,
-      pickedData,
-      { headers: { Authorization: `Bearer ${token}` } }
-    );
+    const response = await axios.post(`${databaseAPI}/${path}/picks`, pickedData, {
+      withCredentials: true,
+    });
     if (response.data.ok) {
       return { success: true, data: response.data.data };
     }
@@ -178,4 +161,3 @@ export async function setPickedGames(pickedData: PickedGamesRequest): Promise<Se
     return { success: false, error: 'An unexpected error occurred' };
   }
 }
-
