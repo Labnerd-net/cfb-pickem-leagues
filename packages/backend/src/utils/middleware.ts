@@ -1,4 +1,5 @@
-import { jwt } from 'hono/jwt';
+import { verify } from 'hono/jwt';
+import { getCookie } from 'hono/cookie';
 import { createMiddleware } from 'hono/factory';
 import type { Context, Next } from 'hono';
 import { jwtAlgorithm, jwtSecret } from '../utils/envVars.js';
@@ -13,10 +14,19 @@ export const logger = createMiddleware(async (c, next) => {
   pinoLogger.info({ method: c.req.method, path: c.req.path, status: c.res.status, duration: ms });
 });
 
-// Middleware for routes requiring login
-export const authMiddleware = jwt({
-  secret: jwtSecret,
-  alg: jwtAlgorithm,
+// Middleware for routes requiring login — reads JWT from httpOnly cookie
+export const authMiddleware = createMiddleware(async (c, next) => {
+  const token = getCookie(c, 'auth_token');
+  if (!token) {
+    return c.json(err('Unauthorized', 401), 401);
+  }
+  try {
+    const payload = await verify(token, jwtSecret, jwtAlgorithm);
+    c.set('jwtPayload', payload as unknown as JwtData);
+    await next();
+  } catch {
+    return c.json(err('Unauthorized', 401), 401);
+  }
 });
 
 // Middleware for routes requiring a specific role

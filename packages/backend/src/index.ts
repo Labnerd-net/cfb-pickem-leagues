@@ -17,7 +17,7 @@ app.use(
     origin: clientURLs,
     allowHeaders: ['Content-Type', 'Authorization'],
     allowMethods: ['GET', 'POST', 'PATCH', 'DELETE'],
-    exposeHeaders: ['Content-Length'],
+    exposeHeaders: ['Content-Length', 'Set-Cookie'],
     maxAge: 600,
     credentials: true,
   })

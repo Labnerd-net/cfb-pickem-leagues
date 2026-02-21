@@ -31,7 +31,7 @@ describe('GET /api/admin/users', () => {
 	it('should return all users for admin', async () => {
 		const token = await makeToken(['admin', 'user']);
 		const res = await app.request('/api/admin/users', {
-			headers: { Authorization: `Bearer ${token}` },
+			headers: { Cookie: `auth_token=${token}` },
 		});
 
 		expect(res.status).toBe(200);
@@ -44,7 +44,7 @@ describe('GET /api/admin/users', () => {
 	it('should return 403 body for non-admin user', async () => {
 		const token = await makeToken(['user'], 2);
 		const res = await app.request('/api/admin/users', {
-			headers: { Authorization: `Bearer ${token}` },
+			headers: { Cookie: `auth_token=${token}` },
 		});
 
 		const body = await res.json();
@@ -52,7 +52,7 @@ describe('GET /api/admin/users', () => {
 		expect(body.code).toBe(403);
 	});
 
-	it('should return 401 with no token', async () => {
+	it('should return 401 with no cookie', async () => {
 		const res = await app.request('/api/admin/users');
 
 		expect(res.status).toBe(401);

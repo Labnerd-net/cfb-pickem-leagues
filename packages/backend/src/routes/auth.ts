@@ -1,5 +1,6 @@
 import { Hono } from 'hono';
 import { sign } from 'hono/jwt';
+import { setCookie, deleteCookie } from 'hono/cookie';
 import * as bcrypt from 'bcryptjs';
 import * as dbUserFunctions from '../db/dbUserFunctions.js';
 import { ok, err } from '../utils/response.js';
@@ -9,6 +10,8 @@ import {
   jwtAlgorithm,
   getJwtExpirationSeconds,
   jwtSecret,
+  jwtExpirationDays,
+  isProduction,
 } from '../utils/envVars.js';
 import { authMiddleware } from '../utils/middleware.js';
 import { validatePassword } from '../utils/passwordValidation.js';
@@ -21,6 +24,14 @@ type Variables = {
 };
 
 const auth = new Hono<{ Variables: Variables }>();
+
+const cookieOptions = {
+  httpOnly: true,
+  sameSite: 'Strict' as const,
+  secure: isProduction,
+  path: '/',
+  maxAge: jwtExpirationDays * 24 * 60 * 60,
+};
 
 // Register a new user
 auth.post('/register', authRateLimit, async c => {
@@ -70,7 +81,8 @@ auth.post('/register', authRateLimit, async c => {
       exp: getJwtExpirationSeconds(),
     };
     const token = await sign(payload, jwtSecret, jwtAlgorithm);
-    return c.json(ok({ token }));
+    setCookie(c, 'auth_token', token, cookieOptions);
+    return c.json(ok({}));
   } catch (e: unknown) {
     if (e instanceof Error) {
       return c.json(err(e.message), 500);
@@ -101,7 +113,8 @@ auth.post('/login', authRateLimit, async c => {
       exp: getJwtExpirationSeconds(),
     };
     const token = await sign(payload, jwtSecret, jwtAlgorithm);
-    return c.json(ok({ token }));
+    setCookie(c, 'auth_token', token, cookieOptions);
+    return c.json(ok({}));
   } catch (e: unknown) {
     if (e instanceof Error) {
       return c.json(err(e.message), 500);
@@ -109,6 +122,25 @@ auth.post('/login', authRateLimit, async c => {
     logger.error({ err: e }, 'Unexpected error in auth route');
     return c.json(err('An unexpected error occurred'), 500);
   }
+});
+
+// Log out — clears the auth cookie
+auth.post('/logout', c => {
+  deleteCookie(c, 'auth_token', { path: '/' });
+  return c.json(ok({}));
+});
+
+// Return the current user's profile from the JWT cookie
+auth.get('/me', authMiddleware, c => {
+  const payload: JwtData = c.get('jwtPayload');
+  return c.json(
+    ok({
+      userId: payload.sub,
+      email: payload.email,
+      displayName: payload.displayName,
+      roles: payload.roles,
+    })
+  );
 });
 
 // Delete a user by ID
