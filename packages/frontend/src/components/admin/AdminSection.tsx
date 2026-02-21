@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Box, Alert, Snackbar, Typography } from '@mui/material';
+import { Box, Alert, Snackbar, Typography, Button, CircularProgress } from '@mui/material';
 import type { AdminDbWeekData, AdminDbGameData, WeekIdentifier } from '@shared/types/cfb-pickem-api';
 import DashboardCard from '../dashboard/DashboardCard';
 import GamesList from './GamesList';
@@ -8,6 +8,8 @@ import {
   getGamesForWeek,
   getWeeksForYear,
   setPickedGames,
+  addWeeksToYear,
+  addGamesToWeek,
 } from '../../apis/adminRequests';
 import WeekSelector from './WeekSelector';
 
@@ -22,8 +24,11 @@ export default function AdminSection() {
   const [games, setGames] = useState<AdminDbGameData[]>([]);
   const [selectedGameIds, setSelectedGameIds] = useState<number[]>([]);
   const [loading, setLoading] = useState(false);
+  const [importing, setImporting] = useState(false);
+  const [weeksChecked, setWeeksChecked] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
+  const [importFeedback, setImportFeedback] = useState<{ severity: 'success' | 'error'; message: string } | null>(null);
 
   // API Handlers
   const handleLoadGames = async () => {
@@ -86,6 +91,51 @@ export default function AdminSection() {
     }
   };
 
+  const handleImportWeeks = async () => {
+    setImporting(true);
+    setImportFeedback(null);
+    try {
+      const result = await addWeeksToYear(selectedYear);
+      if (result.success) {
+        const weeksResult = await getWeeksForYear(selectedYear);
+        if (weeksResult.success && weeksResult.data) {
+          setWeeks(weeksResult.data);
+          if (weeksResult.data.length > 0) setSelectedWeek(weeksResult.data[0].weekNumber);
+        }
+        setImportFeedback({ severity: 'success', message: `Weeks loaded for ${selectedYear}` });
+      } else {
+        setImportFeedback({ severity: 'error', message: result.error || 'Failed to load weeks' });
+      }
+    } catch {
+      setImportFeedback({ severity: 'error', message: 'An unexpected error occurred' });
+    } finally {
+      setImporting(false);
+    }
+  };
+
+  const handleImportGames = async () => {
+    setImporting(true);
+    setImportFeedback(null);
+    try {
+      const result = await addGamesToWeek({ year: selectedYear, week: selectedWeek });
+      if (result.success) {
+        const gamesResult = await getGamesForWeek({ year: selectedYear, week: selectedWeek });
+        if (gamesResult.success && gamesResult.data) {
+          setGames(gamesResult.data);
+          const pickedIds = gamesResult.data.filter((g) => g.picked).map((g) => g.gameId);
+          setSelectedGameIds(pickedIds);
+        }
+        setImportFeedback({ severity: 'success', message: result.data?.status || 'Games imported' });
+      } else {
+        setImportFeedback({ severity: 'error', message: result.error || 'Failed to import games' });
+      }
+    } catch {
+      setImportFeedback({ severity: 'error', message: 'An unexpected error occurred' });
+    } finally {
+      setImporting(false);
+    }
+  };
+
   const handleGameSelection = (gameId: number, selected: boolean) => {
     setSelectedGameIds((prev) =>
       selected ? [...prev, gameId] : prev.filter((id) => id !== gameId)
@@ -107,11 +157,13 @@ export default function AdminSection() {
 
   // Load weeks when year changes
   useEffect(() => {
-    const handleLoadWeeks = async () => {
+    const loadWeeks = async () => {
       setLoading(true);
+      setWeeksChecked(false);
       setErrorMessage(null);
       setSuccessMessage(null);
       setWeeks([]);
+      setImportFeedback(null);
 
       try {
         const result = await getWeeksForYear(selectedYear);
@@ -125,21 +177,23 @@ export default function AdminSection() {
       } catch {
         setErrorMessage('An unexpected error occurred while loading weeks');
       } finally {
+        setWeeksChecked(true);
         setLoading(false);
       }
     };
 
-    handleLoadWeeks();
+    loadWeeks();
   }, [selectedYear]);
 
   // Load games when year or week changes
   useEffect(() => {
-    const handleLoadGames = async () => {
+    const loadGames = async () => {
       setLoading(true);
       setErrorMessage(null);
       setSuccessMessage(null);
       setGames([]);
       setSelectedGameIds([]);
+      setImportFeedback(null);
 
       try {
         const weekData: WeekIdentifier = {
@@ -152,7 +206,6 @@ export default function AdminSection() {
           // Pre-select games that are already marked as picked
           const pickedGameIds = result.data.filter((game) => game.picked).map((game) => game.gameId);
           setSelectedGameIds(pickedGameIds);
-          setSuccessMessage(`Loaded ${result.data.length} games`);
         } else {
           setErrorMessage(result.error || 'Failed to load games');
         }
@@ -163,7 +216,7 @@ export default function AdminSection() {
       }
     };
 
-    handleLoadGames();
+    loadGames();
   }, [selectedYear, selectedWeek]);
 
   return (
@@ -187,33 +240,94 @@ export default function AdminSection() {
             weeks={weeks}
             selectedWeek={selectedWeek}
             onWeekChange={setSelectedWeek}
-            loading={loading}
-          />          
+            loading={loading || importing}
+          />
 
-          {games.length > 0 ? (
-            <Box sx={{ mt: 4, pt: 4, borderTop: 2, borderColor: 'divider' }}>
-              <GamesList
-                games={games}
-                selectedGameIds={selectedGameIds}
-                onGameSelect={handleGameSelection}
-                onSelectAll={handleSelectAll}
-                onDeselectAll={handleDeselectAll}
-                onSaveSelection={handleSavePickedGames}
-                loading={loading}
-              />
-            </Box>
-          ) : (
-            <Typography
-              sx={{
-                fontFamily: '"Work Sans", sans-serif',
-                color: 'text.secondary',
-                textAlign: 'center',
-                py: 4,
-                fontStyle: 'italic',
-              }}
+          {/* Import feedback alert */}
+          {importFeedback && (
+            <Alert
+              severity={importFeedback.severity}
+              onClose={() => setImportFeedback(null)}
+              sx={{ mt: 2 }}
             >
-              No Games Loaded
-            </Typography>
+              {importFeedback.message}
+            </Alert>
+          )}
+
+          {/* Empty weeks state */}
+          {weeksChecked && !loading && weeks.length === 0 && (
+            <Box sx={{ mt: 3, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2 }}>
+              <Typography
+                sx={{
+                  fontFamily: '"Work Sans", sans-serif',
+                  color: 'text.secondary',
+                  fontStyle: 'italic',
+                }}
+              >
+                No weeks loaded for {selectedYear}
+              </Typography>
+              <Button
+                variant="contained"
+                onClick={handleImportWeeks}
+                disabled={importing}
+                startIcon={importing ? <CircularProgress size={16} /> : undefined}
+              >
+                {importing ? 'Loading Weeks...' : 'Load Weeks'}
+              </Button>
+            </Box>
+          )}
+
+          {/* Games section — only render when weeks are loaded */}
+          {weeks.length > 0 && (
+            <Box sx={{ mt: 4, pt: 4, borderTop: 2, borderColor: 'divider' }}>
+              {games.length > 0 ? (
+                <>
+                  <Box sx={{ display: 'flex', justifyContent: 'flex-end', mb: 2 }}>
+                    <Button
+                      variant="outlined"
+                      size="small"
+                      onClick={handleImportGames}
+                      disabled={importing || loading}
+                      startIcon={importing ? <CircularProgress size={16} /> : undefined}
+                    >
+                      {importing ? 'Re-importing...' : 'Re-import'}
+                    </Button>
+                  </Box>
+                  <GamesList
+                    games={games}
+                    selectedGameIds={selectedGameIds}
+                    onGameSelect={handleGameSelection}
+                    onSelectAll={handleSelectAll}
+                    onDeselectAll={handleDeselectAll}
+                    onSaveSelection={handleSavePickedGames}
+                    loading={loading}
+                  />
+                </>
+              ) : (
+                !loading && (
+                  <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2 }}>
+                    <Typography
+                      sx={{
+                        fontFamily: '"Work Sans", sans-serif',
+                        color: 'text.secondary',
+                        textAlign: 'center',
+                        fontStyle: 'italic',
+                      }}
+                    >
+                      No games imported for week {selectedWeek}
+                    </Typography>
+                    <Button
+                      variant="contained"
+                      onClick={handleImportGames}
+                      disabled={importing}
+                      startIcon={importing ? <CircularProgress size={16} /> : undefined}
+                    >
+                      {importing ? 'Importing...' : 'Import Games'}
+                    </Button>
+                  </Box>
+                )
+              )}
+            </Box>
           )}
         </Box>
       </DashboardCard>

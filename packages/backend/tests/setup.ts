@@ -57,6 +57,7 @@ vi.mock('../src/db/index.ts', async () => {
 		CREATE INDEX games_year_week_idx ON admin.games (year, week_number);
 		CREATE INDEX games_picked_idx ON admin.games (picked);
 		CREATE INDEX games_year_week_picked_idx ON admin.games (year, week_number, picked);
+		ALTER TABLE admin.games ADD CONSTRAINT games_natural_key UNIQUE (year, week_number, home_team, away_team);
 
 		-- User schema: users table
 		CREATE TABLE "user".users (

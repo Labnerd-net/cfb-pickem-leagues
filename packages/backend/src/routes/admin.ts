@@ -2,7 +2,7 @@ import { Hono } from 'hono';
 import { HTTPException } from 'hono/http-exception';
 import * as dbAdminFunctions from '../db/dbAdminFunctions.js';
 import { returnUsers } from '../db/dbUserFunctions.js';
-import { getWeekData, getGameData } from '../api/index.js';
+import { getGameData, getWeekData } from '../api/index.js';
 import type {
   JwtData,
   ProfileData,
@@ -36,14 +36,7 @@ const admin = new Hono<{ Variables: Variables }>()
     const yearNumber = Number(c.req.query('year'));
     if (!yearNumber || isNaN(yearNumber))
       throw new HTTPException(400, { message: 'year is required' });
-    let weeks = await dbAdminFunctions.returnWeeksByYear(yearNumber);
-    if (!weeks || weeks.length === 0) {
-      const weekData = await getWeekData(yearNumber);
-      if (weekData?.length) {
-        await Promise.all(weekData.map(week => dbAdminFunctions.addWeek(week)));
-      }
-      weeks = await dbAdminFunctions.returnWeeksByYear(yearNumber);
-    }
+    const weeks = await dbAdminFunctions.returnWeeksByYear(yearNumber);
     return c.json({ weeks });
   })
   // Add Games to Week
@@ -51,10 +44,13 @@ const admin = new Hono<{ Variables: Variables }>()
     const weekIdentifier: WeekIdentifier = await c.req.json();
     const weekQuery = await dbAdminFunctions.enrichWeekIdentifier(weekIdentifier);
     const gameData = await getGameData(weekQuery);
-    if (gameData?.length) {
-      await Promise.all(gameData.map(game => dbAdminFunctions.addGameToWeek(game)));
+    if (!gameData?.length) {
+      throw new HTTPException(422, {
+        message: 'No games returned from external API for this week',
+      });
     }
-    return c.json({ status: 'added all games' });
+    await Promise.all(gameData.map(game => dbAdminFunctions.upsertGameForWeek(game)));
+    return c.json({ status: `imported ${gameData.length} games` });
   })
   // Get Games for Week
   .get('/games', authMiddleware, requireRole('admin'), async c => {
@@ -64,28 +60,7 @@ const admin = new Hono<{ Variables: Variables }>()
     };
     if (isNaN(weekIdentifier.year) || isNaN(weekIdentifier.week))
       throw new HTTPException(400, { message: 'year and week are required' });
-
-    // Auto-load weeks if they don't exist
-    const existingWeeks = await dbAdminFunctions.returnWeeksByYear(weekIdentifier.year);
-    if (!existingWeeks || existingWeeks.length === 0) {
-      const weekData = await getWeekData(weekIdentifier.year);
-      if (weekData?.length) {
-        await Promise.all(weekData.map(week => dbAdminFunctions.addWeek(week)));
-      }
-    }
-
-    // Try to get games from database
-    let weekGames = await dbAdminFunctions.returnGamesForWeek(weekIdentifier);
-
-    // If no games found, fetch from external api
-    if (!weekGames || weekGames.length === 0) {
-      const weekQuery = await dbAdminFunctions.enrichWeekIdentifier(weekIdentifier);
-      const gameData = await getGameData(weekQuery);
-      if (gameData?.length) {
-        await Promise.all(gameData.map(game => dbAdminFunctions.addGameToWeek(game)));
-      }
-      weekGames = await dbAdminFunctions.returnGamesForWeek(weekIdentifier);
-    }
+    const weekGames = await dbAdminFunctions.returnGamesForWeek(weekIdentifier);
     return c.json({ weekGames });
   })
   // Set picked games
