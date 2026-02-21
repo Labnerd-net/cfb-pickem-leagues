@@ -12,7 +12,7 @@ WORKDIR /app
 # Copy workspace files
 COPY pnpm-workspace.yaml package.json pnpm-lock.yaml tsconfig.base.json ./
 
-# Copy all package manifests
+# Copy all package manifests (backend included so pnpm workspace install succeeds)
 COPY packages/frontend/package.json packages/frontend/
 COPY packages/shared/package.json packages/shared/
 COPY packages/backend/package.json packages/backend/
@@ -35,15 +35,13 @@ ENV VITE_API_URL=$VITE_API_URL
 # Copy dependencies
 COPY --from=deps /app/node_modules ./node_modules
 COPY --from=deps /app/packages/frontend/node_modules ./packages/frontend/node_modules
-COPY --from=deps /app/packages/backend/node_modules ./packages/backend/node_modules
 
 # Copy source
 COPY packages/frontend ./packages/frontend
 COPY packages/shared ./packages/shared
-COPY packages/backend/src ./packages/backend/src
 
 WORKDIR /app/packages/frontend
-RUN pnpm build
+RUN npx vite build
 
 # ================================
 # Production stage (nginx)
