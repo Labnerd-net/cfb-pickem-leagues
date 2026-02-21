@@ -9,12 +9,14 @@ usersSchemaFile="${backend}/src/db/schema/users.ts"
 cd "${backend}"
 
 # change $backend/src/db/schema files
-# Comment line 4
-sed -i '4s/^/\/\//' ${adminSchemaFile}
-sed -i '4s/^/\/\//' ${usersSchemaFile}
-# Uncomment line 5
-sed -i '5s/^\/\///' ${adminSchemaFile}
-sed -i '5s/^\/\///' ${usersSchemaFile}
+# Comment line
+sed -i '15s/^/\/\//' ${adminSchemaFile}
+sed -i '12s/^/\/\//' ${usersSchemaFile}
+sed -i '14s/^/\/\//' ${usersSchemaFile}
+# Uncomment line
+sed -i '16s/^\/\///' ${adminSchemaFile}
+sed -i '13s/^\/\///' ${usersSchemaFile}
+sed -i '15s/^\/\///' ${usersSchemaFile}
 
 # Start studio in background
 echo "Running: pnpm run studio &"
