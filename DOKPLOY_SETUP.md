@@ -74,7 +74,7 @@ Two options for triggering deploys on every push to `main`:
 
 1. In Dokploy, open your application → **General** tab
 2. Enable the **Auto Deploy** toggle
-3. Copy the **Webhook URL** shown in Dokploy
+3. Copy the **Webhook URL** from the **General → Refresh Token** section
 4. In GitHub → repo **Settings → Webhooks → Add webhook**
    - Payload URL: paste the Dokploy webhook URL
    - Content type: `application/json`
@@ -96,8 +96,6 @@ jobs:
     steps:
       - run: curl -X POST "${{ secrets.DOKPLOY_DEPLOY_WEBHOOK }}"
 ```
-
-The webhook URL is available in Dokploy under your app's **General → Refresh Token** section.
 
 ### 5. Deploy
 
