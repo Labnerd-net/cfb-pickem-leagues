@@ -38,6 +38,7 @@ ENV VITE_LOG_LEVEL=debug
 # Copy dependencies
 COPY --from=deps /app/node_modules ./node_modules
 COPY --from=deps /app/packages/frontend/node_modules ./packages/frontend/node_modules
+COPY --from=deps /app/packages/backend/node_modules ./packages/backend/node_modules
 
 # Copy source
 COPY packages/frontend ./packages/frontend
