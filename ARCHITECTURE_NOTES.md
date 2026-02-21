@@ -20,13 +20,13 @@ The `user_games` table copies all game data (teams, scores, points, `winningTeam
 
 The shared types package helps, but it is still manual — drift between what the API actually returns and what the frontend expects won't be caught at the boundary. Hono ships an RPC client (`hono/client`) that generates typed API calls from route definitions. That would replace the manual `src/apis/` fetch functions and catch mismatches at compile time without adding tRPC overhead.
 
-### 4. JWT in localStorage
+### 4. JWT in localStorage -- Done
 
-Documented XSS risk. HttpOnly cookies with CSRF protection are more defensible. For a friends-group pick'em app it may be acceptable, but it should be a conscious tradeoff.
+Migrated to httpOnly, SameSite=Strict cookie. XSS exposure of the long-lived credential eliminated. No CSRF token needed given same-origin-only use.
 
-### 5. Drop the multi-DB abstraction
+### 5. Drop the multi-DB abstraction -- Done
 
-The `DB_TYPE` env var supporting SQLite/Postgres/D1 adds real complexity: separate schema files, dialect-specific configs, `db` typed as `any`, runtime import switching. Unless there is a real deployment need for D1 today, this is speculative complexity. Pick Postgres and commit. Revisit if D1 becomes a real requirement.
+Postgres is the only supported database. The codebase is committed to a single dialect with typed Drizzle schemas.
 
 ### 6. TanStack Query on the frontend
 
