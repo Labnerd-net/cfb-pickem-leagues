@@ -1,10 +1,6 @@
-import axios from 'axios';
 import type { Credentials, RegistrationData } from '@shared/types/cfb-pickem-api.js';
 import type { ProfileResponse } from './userRequests';
-import { logger } from '../utils/logger';
-
-const databaseAPI = import.meta.env.VITE_API_URL || 'http://localhost:3000';
-const path = 'api/auth';
+import { client } from '../lib/api';
 
 export interface AuthResponse {
   success: boolean;
@@ -13,97 +9,66 @@ export interface AuthResponse {
 
 export async function loginUser(credentials: Credentials): Promise<AuthResponse> {
   try {
-    const response = await axios.post(`${databaseAPI}/${path}/login`, credentials, {
-      withCredentials: true,
-    });
-    if (response.data.ok) {
-      return { success: true };
+    const res = await client.api.auth.login.$post({ json: credentials });
+    if (!res.ok) {
+      const body = await res.json() as unknown as { error: string };
+      return { success: false, error: body.error };
     }
-    return { success: false, error: response.data.error };
-  } catch (error) {
-    if (axios.isAxiosError(error) && error.response?.data?.error) {
-      logger.error('loginUser failed', error.response.status, error.response.data.error);
-      return { success: false, error: error.response.data.error };
-    }
-    logger.error('loginUser unexpected error', error);
-    return { success: false, error: 'An unexpected error occurred' };
+    return { success: true };
+  } catch {
+    return { success: false, error: 'Request failed' };
   }
 }
 
 export async function registerUser(data: RegistrationData): Promise<AuthResponse> {
   try {
-    const response = await axios.post(`${databaseAPI}/${path}/register`, data, {
-      withCredentials: true,
-    });
-    if (response.data.ok) {
-      return { success: true };
+    const res = await client.api.auth.register.$post({ json: data });
+    if (!res.ok) {
+      const body = await res.json() as unknown as { error: string };
+      return { success: false, error: body.error };
     }
-    return { success: false, error: response.data.error };
-  } catch (error) {
-    if (axios.isAxiosError(error) && error.response?.data?.error) {
-      logger.error('registerUser failed', error.response.status, error.response.data.error);
-      return { success: false, error: error.response.data.error };
-    }
-    logger.error('registerUser unexpected error', error);
-    return { success: false, error: 'An unexpected error occurred' };
+    return { success: true };
+  } catch {
+    return { success: false, error: 'Request failed' };
   }
 }
 
 export async function logoutUser(): Promise<AuthResponse> {
   try {
-    const response = await axios.post(
-      `${databaseAPI}/${path}/logout`,
-      {},
-      { withCredentials: true }
-    );
-    if (response.data.ok) {
-      return { success: true };
+    const res = await client.api.auth.logout.$post();
+    if (!res.ok) {
+      const body = await res.json() as unknown as { error: string };
+      return { success: false, error: body.error };
     }
-    return { success: false, error: response.data.error };
-  } catch (error) {
-    if (axios.isAxiosError(error) && error.response?.data?.error) {
-      logger.error('logoutUser failed', error.response.status, error.response.data.error);
-      return { success: false, error: error.response.data.error };
-    }
-    logger.error('logoutUser unexpected error', error);
-    return { success: false, error: 'An unexpected error occurred' };
+    return { success: true };
+  } catch {
+    return { success: false, error: 'Request failed' };
   }
 }
 
 export async function getMe(): Promise<ProfileResponse> {
   try {
-    const response = await axios.get(`${databaseAPI}/${path}/me`, {
-      withCredentials: true,
-    });
-    if (response.data.ok) {
-      return { success: true, data: response.data.data };
+    const res = await client.api.auth.me.$get();
+    if (!res.ok) {
+      const body = await res.json() as unknown as { error: string };
+      return { success: false, error: body.error };
     }
-    return { success: false, error: response.data.error };
-  } catch (error) {
-    if (axios.isAxiosError(error) && error.response?.data?.error) {
-      logger.error('getMe failed', error.response.status, error.response.data.error);
-      return { success: false, error: error.response.data.error };
-    }
-    logger.error('getMe unexpected error', error);
-    return { success: false, error: 'An unexpected error occurred' };
+    const data = await res.json();
+    return { success: true, data };
+  } catch {
+    return { success: false, error: 'Request failed' };
   }
 }
 
 export async function deleteUser(): Promise<AuthResponse> {
   try {
-    const response = await axios.delete(`${databaseAPI}/${path}/deleteUser`, {
-      withCredentials: true,
-    });
-    if (response.data.ok) {
-      return { success: true };
+    const res = await client.api.auth.deleteUser.$delete();
+    if (!res.ok) {
+      const body = await res.json() as unknown as { error: string };
+      return { success: false, error: body.error };
     }
-    return { success: false, error: response.data.error };
-  } catch (error) {
-    if (axios.isAxiosError(error) && error.response?.data?.error) {
-      logger.error('deleteUser failed', error.response.status, error.response.data.error);
-      return { success: false, error: error.response.data.error };
-    }
-    logger.error('deleteUser unexpected error', error);
-    return { success: false, error: 'An unexpected error occurred' };
+    return { success: true };
+  } catch {
+    return { success: false, error: 'Request failed' };
   }
 }

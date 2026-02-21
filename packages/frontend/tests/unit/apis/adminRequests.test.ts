@@ -19,14 +19,13 @@ describe('Admin API Requests', () => {
 			expect(result.data?.[0].displayName).toBe('Test User');
 		});
 
-		it('should return failure when backend returns ok: false', async () => {
+		it('should return failure when backend returns an error status', async () => {
 			server.use(
 				http.get('http://localhost:3000/api/admin/users', () => {
-					return HttpResponse.json({
-						ok: false,
-						error: 'Forbidden',
-						code: 403,
-					});
+					return HttpResponse.json(
+						{ error: 'Forbidden' },
+						{ status: 403 },
+					);
 				}),
 			);
 

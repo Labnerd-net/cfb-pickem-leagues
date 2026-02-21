@@ -1,9 +1,9 @@
 import { Hono } from 'hono';
+import { HTTPException } from 'hono/http-exception';
 import { sign } from 'hono/jwt';
 import { setCookie, deleteCookie } from 'hono/cookie';
 import * as bcrypt from 'bcryptjs';
 import * as dbUserFunctions from '../db/dbUserFunctions.js';
-import { ok, err } from '../utils/response.js';
 import type { Credentials, JwtData, UserData } from '@shared/types/cfb-pickem-api.js';
 import {
   bcryptSaltRounds,
@@ -17,13 +17,10 @@ import { authMiddleware } from '../utils/middleware.js';
 import { validatePassword } from '../utils/passwordValidation.js';
 import { validateEmail } from '../utils/emailValidation.js';
 import { authRateLimit } from '../utils/rateLimiter.js';
-import logger from '../utils/logger.js';
 
 type Variables = {
   jwtPayload: JwtData;
 };
-
-const auth = new Hono<{ Variables: Variables }>();
 
 const cookieOptions = {
   httpOnly: true,
@@ -33,38 +30,28 @@ const cookieOptions = {
   maxAge: jwtExpirationDays * 24 * 60 * 60,
 };
 
-// Register a new user
-auth.post('/register', authRateLimit, async c => {
-  try {
+const auth = new Hono<{ Variables: Variables }>()
+  // Register a new user
+  .post('/register', authRateLimit, async c => {
     const { email, password, displayName } = await c.req.json();
-    if (!email || !password) {
-      return c.json(err('Email and password required'), 400);
-    }
+    if (!email || !password)
+      throw new HTTPException(400, { message: 'Email and password required' });
+    if (!displayName || typeof displayName !== 'string' || displayName.trim().length === 0)
+      throw new HTTPException(400, { message: 'Display name is required' });
+    if (displayName.length > 50)
+      throw new HTTPException(400, { message: 'Display name must be less than 50 characters' });
 
-    // Validate display name
-    if (!displayName || typeof displayName !== 'string' || displayName.trim().length === 0) {
-      return c.json(err('Display name is required'), 400);
-    }
-    if (displayName.length > 50) {
-      return c.json(err('Display name must be less than 50 characters'), 400);
-    }
-
-    // Validate email format
     const emailValidation = validateEmail(email);
-    if (!emailValidation.valid) {
-      return c.json(err(emailValidation.error!), 400);
-    }
+    if (!emailValidation.valid)
+      throw new HTTPException(400, { message: emailValidation.error! });
 
-    // Validate password strength
     const passwordValidation = validatePassword(password);
-    if (!passwordValidation.valid) {
-      return c.json(err(passwordValidation.error!), 400);
-    }
+    if (!passwordValidation.valid)
+      throw new HTTPException(400, { message: passwordValidation.error! });
 
     const existing = await dbUserFunctions.returnUserByEmail(email);
-    if (existing?.length) {
-      return c.json(err('User already exists'), 409);
-    }
+    if (existing?.length) throw new HTTPException(409, { message: 'User already exists' });
+
     const passwordHash = await bcrypt.hash(password, bcryptSaltRounds);
     const totalUsers = await dbUserFunctions.returnUsers();
     const roles = totalUsers.length === 0 ? ['user', 'admin'] : ['user'];
@@ -82,29 +69,18 @@ auth.post('/register', authRateLimit, async c => {
     };
     const token = await sign(payload, jwtSecret, jwtAlgorithm);
     setCookie(c, 'auth_token', token, cookieOptions);
-    return c.json(ok({}));
-  } catch (e: unknown) {
-    if (e instanceof Error) {
-      return c.json(err(e.message), 500);
-    }
-    logger.error({ err: e }, 'Unexpected error in auth route');
-    return c.json(err('An unexpected error occurred'), 500);
-  }
-});
-
-// Log in an existing user
-auth.post('/login', authRateLimit, async c => {
-  try {
+    return c.json({});
+  })
+  // Log in an existing user
+  .post('/login', authRateLimit, async c => {
     const { email, password }: Credentials = await c.req.json();
-    if (!email || !password) {
-      return c.json(err('Email and password required'), 400);
-    }
+    if (!email || !password)
+      throw new HTTPException(400, { message: 'Email and password required' });
     const user = await dbUserFunctions.returnUserByEmail(email);
-    if (!user || user.length === 0) {
-      return c.json(err('Invalid credentials'), 401);
-    }
+    if (!user || user.length === 0)
+      throw new HTTPException(401, { message: 'Invalid credentials' });
     const isValid = await bcrypt.compare(password, user[0].passwordHash);
-    if (!isValid) return c.json(err('Invalid credentials'), 401);
+    if (!isValid) throw new HTTPException(401, { message: 'Invalid credentials' });
     const payload = {
       sub: user[0].userId,
       email: user[0].email,
@@ -114,56 +90,33 @@ auth.post('/login', authRateLimit, async c => {
     };
     const token = await sign(payload, jwtSecret, jwtAlgorithm);
     setCookie(c, 'auth_token', token, cookieOptions);
-    return c.json(ok({}));
-  } catch (e: unknown) {
-    if (e instanceof Error) {
-      return c.json(err(e.message), 500);
-    }
-    logger.error({ err: e }, 'Unexpected error in auth route');
-    return c.json(err('An unexpected error occurred'), 500);
-  }
-});
-
-// Log out — clears the auth cookie
-auth.post('/logout', c => {
-  deleteCookie(c, 'auth_token', { path: '/' });
-  return c.json(ok({}));
-});
-
-// Return the current user's profile from the JWT cookie
-auth.get('/me', authMiddleware, c => {
-  const payload: JwtData = c.get('jwtPayload');
-  return c.json(
-    ok({
+    return c.json({});
+  })
+  // Log out — clears the auth cookie
+  .post('/logout', c => {
+    deleteCookie(c, 'auth_token', { path: '/' });
+    return c.json({});
+  })
+  // Return the current user's profile from the JWT cookie
+  .get('/me', authMiddleware, c => {
+    const payload: JwtData = c.get('jwtPayload');
+    return c.json({
       userId: payload.sub,
       email: payload.email,
       displayName: payload.displayName,
       roles: payload.roles,
-    })
-  );
-});
-
-// Delete a user by ID
-auth.delete('/deleteUser', authMiddleware, async c => {
-  try {
+    });
+  })
+  // Delete a user by ID
+  .delete('/deleteUser', authMiddleware, async c => {
     const payload = c.get('jwtPayload');
     const userIdNumber = String(payload.sub);
     const user = await dbUserFunctions.returnUserById(userIdNumber);
-    if (!user || user.length === 0) {
-      return c.json(err('User not found'), 404);
-    }
+    if (!user || user.length === 0)
+      throw new HTTPException(404, { message: 'User not found' });
     const returnValue = await dbUserFunctions.deleteUserById(userIdNumber);
-    if (!returnValue) {
-      return c.json(err('User not found'), 404);
-    }
-    return c.json(ok({ status: 'deleted' }));
-  } catch (e: unknown) {
-    if (e instanceof Error) {
-      return c.json(err(e.message), 500);
-    }
-    logger.error({ err: e }, 'Unexpected error in auth route');
-    return c.json(err('An unexpected error occurred'), 500);
-  }
-});
+    if (!returnValue) throw new HTTPException(404, { message: 'User not found' });
+    return c.json({ status: 'deleted' });
+  });
 
 export default auth;

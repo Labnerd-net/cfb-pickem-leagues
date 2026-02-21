@@ -5,59 +5,30 @@ const API_URL = 'http://localhost:3000';
 export const handlers = [
 	// Auth endpoints
 	http.post(`${API_URL}/api/auth/login`, () => {
-		return HttpResponse.json({
-			ok: true,
-			data: {
-				token: 'mock-jwt-token',
-				user: {
-					userId: 1,
-					email: 'test@example.com',
-					displayName: 'Test User',
-					roles: ['user'],
-				},
-			},
-		});
+		return HttpResponse.json({});
 	}),
 
 	http.post(`${API_URL}/api/auth/register`, () => {
-		return HttpResponse.json({
-			ok: true,
-			data: {
-				token: 'mock-jwt-token',
-				user: {
-					userId: 1,
-					email: 'newuser@example.com',
-					displayName: 'New User',
-					roles: ['user'],
-				},
-			},
-		});
+		return HttpResponse.json({});
 	}),
 
 	http.delete(`${API_URL}/api/auth/deleteUser`, () => {
-		return HttpResponse.json({
-			ok: true,
-			data: { message: 'User deleted successfully' },
-		});
+		return HttpResponse.json({ status: 'deleted' });
 	}),
 
 	// User endpoints
 	http.get(`${API_URL}/api/user/profile`, () => {
 		return HttpResponse.json({
-			ok: true,
-			data: {
-				userId: 1,
-				email: 'test@example.com',
-				displayName: 'Test User',
-				roles: ['user'],
-			},
+			userId: 1,
+			email: 'test@example.com',
+			displayName: 'Test User',
+			roles: ['user'],
 		});
 	}),
 
 	http.get(`${API_URL}/api/user/games`, () => {
 		return HttpResponse.json({
-			ok: true,
-			data: [
+			pickedGames: [
 				{
 					gameId: 1,
 					homeTeam: 'Team A',
@@ -71,8 +42,7 @@ export const handlers = [
 
 	http.get(`${API_URL}/api/user/picks`, () => {
 		return HttpResponse.json({
-			ok: true,
-			data: [
+			picks: [
 				{
 					gameId: 1,
 					teamChosen: 'home_team',
@@ -82,64 +52,46 @@ export const handlers = [
 	}),
 
 	http.post(`${API_URL}/api/user/picks`, () => {
-		return HttpResponse.json({
-			ok: true,
-			data: { message: 'Picks saved successfully' },
-		});
+		return HttpResponse.json({ status: 'updated picked games' });
 	}),
 
 	// Admin endpoints
 	http.post(`${API_URL}/api/admin/year/:year`, () => {
-		return HttpResponse.json({
-			ok: true,
-			data: { message: 'Year populated successfully' },
-		});
+		return HttpResponse.json({ status: 'added all weeks' });
 	}),
 
 	http.post(`${API_URL}/api/admin/week`, () => {
+		return HttpResponse.json({ status: 'added all games' });
+	}),
+
+	http.get(`${API_URL}/api/admin/games`, () => {
 		return HttpResponse.json({
-			ok: true,
-			data: { message: 'Week populated successfully' },
+			weekGames: [
+				{
+					gameId: 1,
+					homeTeam: 'Team A',
+					awayTeam: 'Team B',
+					completed: false,
+					picked: true,
+				},
+			],
 		});
 	}),
 
-	http.get(`${API_URL}/api/admin/getgames`, () => {
-		return HttpResponse.json({
-			ok: true,
-			data: {
-				weekGames: [
-					{
-						gameId: 1,
-						homeTeam: 'Team A',
-						awayTeam: 'Team B',
-						completed: false,
-						picked: true,
-					},
-				],
-			},
-		});
-	}),
-
-	http.post(`${API_URL}/api/admin/setpicks`, () => {
-		return HttpResponse.json({
-			ok: true,
-			data: { message: 'Picks set successfully' },
-		});
+	http.post(`${API_URL}/api/admin/picks`, () => {
+		return HttpResponse.json({ status: 'updated picked games' });
 	}),
 
 	http.get(`${API_URL}/api/admin/users`, () => {
 		return HttpResponse.json({
-			ok: true,
-			data: {
-				allUserProfiles: [
-					{
-						userId: 1,
-						email: 'test@example.com',
-						displayName: 'Test User',
-						roles: ['user'],
-					},
-				],
-			},
+			allUserProfiles: [
+				{
+					userId: 1,
+					email: 'test@example.com',
+					displayName: 'Test User',
+					roles: ['user'],
+				},
+			],
 		});
 	}),
 ];

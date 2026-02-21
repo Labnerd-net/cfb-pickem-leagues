@@ -1,6 +1,6 @@
 import { describe, it, expect, vi } from 'vitest';
 import { requireRole } from '../../../src/utils/middleware.js';
-import { err } from '../../../src/utils/response.js';
+import { HTTPException } from 'hono/http-exception';
 import type { Context, Next } from 'hono';
 
 describe('requireRole middleware', () => {
@@ -30,31 +30,29 @@ describe('requireRole middleware', () => {
 				roles: ['user'],
 				email: 'test@example.com',
 			}),
-			json: vi.fn().mockReturnValue({ ok: false, error: 'Forbidden', code: 403 }),
+			json: vi.fn(),
 		} as unknown as Context;
 
 		const mockNext = vi.fn();
 
 		const middleware = requireRole('admin');
-		await middleware(mockContext, mockNext as Next);
+		await expect(middleware(mockContext, mockNext as Next)).rejects.toThrow(HTTPException);
 
 		expect(mockNext).not.toHaveBeenCalled();
-		expect(mockContext.json).toHaveBeenCalledWith(err('Forbidden', 403));
 	});
 
 	it('should deny access when JWT payload is missing', async () => {
 		const mockContext = {
 			get: vi.fn().mockReturnValue(null),
-			json: vi.fn().mockReturnValue({ ok: false, error: 'Forbidden', code: 403 }),
+			json: vi.fn(),
 		} as unknown as Context;
 
 		const mockNext = vi.fn();
 
 		const middleware = requireRole('user');
-		await middleware(mockContext, mockNext as Next);
+		await expect(middleware(mockContext, mockNext as Next)).rejects.toThrow(HTTPException);
 
 		expect(mockNext).not.toHaveBeenCalled();
-		expect(mockContext.json).toHaveBeenCalledWith(err('Forbidden', 403));
 	});
 
 	it('should allow access when user has multiple roles including required', async () => {

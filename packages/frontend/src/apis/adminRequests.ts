@@ -1,9 +1,5 @@
 import type { AdminDbGameData, AdminDbWeekData, WeekIdentifier, PickedGamesRequest, ProfileData } from '@shared/types/cfb-pickem-api';
-import axios from 'axios';
-import { logger } from '../utils/logger';
-
-const databaseAPI = import.meta.env.VITE_API_URL || 'http://localhost:3000';
-const path = 'api/admin';
+import { client } from '../lib/api';
 
 export interface AddWeeksResponse {
   success: boolean;
@@ -31,84 +27,61 @@ export interface GetGamesResponse {
 
 export async function addWeeksToYear(year: number): Promise<AddWeeksResponse> {
   try {
-    const response = await axios.post(
-      `${databaseAPI}/${path}/year/${year}`,
-      {},
-      { withCredentials: true }
-    );
-    if (response.data.ok) {
-      return { success: true, data: response.data.data };
+    const res = await client.api.admin.year[':year'].$post({
+      param: { year: String(year) },
+    });
+    if (!res.ok) {
+      const body = await res.json() as unknown as { error: string };
+      return { success: false, error: body.error };
     }
-    return { success: false, error: response.data.error };
-  } catch (error) {
-    if (axios.isAxiosError(error) && error.response?.data?.error) {
-      logger.error('addWeeksToYear failed', error.response.status, error.response.data.error);
-      return { success: false, error: error.response.data.error };
-    }
-    logger.error('addWeeksToYear unexpected error', error);
-    return { success: false, error: 'An unexpected error occurred' };
+    const data = await res.json();
+    return { success: true, data };
+  } catch {
+    return { success: false, error: 'Request failed' };
   }
 }
 
 export async function getWeeksForYear(year: number): Promise<GetWeeksResponse> {
   try {
-    const response = await axios.get(`${databaseAPI}/${path}/weeks`, {
-      params: { year },
-      withCredentials: true,
-    });
-    if (response.data.ok) {
-      return { success: true, data: response.data.data.weeks };
+    const res = await client.api.admin.weeks.$get({ query: { year: String(year) } });
+    if (!res.ok) {
+      const body = await res.json() as unknown as { error: string };
+      return { success: false, error: body.error };
     }
-    return { success: false, error: response.data.error };
-  } catch (error) {
-    if (axios.isAxiosError(error) && error.response?.data?.error) {
-      logger.error('getWeeksForYear failed', error.response.status, error.response.data.error);
-      return { success: false, error: error.response.data.error };
-    }
-    logger.error('getWeeksForYear unexpected error', error);
-    return { success: false, error: 'An unexpected error occurred' };
+    const body = await res.json();
+    return { success: true, data: body.weeks as unknown as AdminDbWeekData[] };
+  } catch {
+    return { success: false, error: 'Request failed' };
   }
 }
 
 export async function addGamesToWeek(weekData: WeekIdentifier): Promise<AddGamesResponse> {
   try {
-    const response = await axios.post(`${databaseAPI}/${path}/week`, weekData, {
-      withCredentials: true,
-    });
-    if (response.data.ok) {
-      return { success: true, data: response.data.data };
+    const res = await client.api.admin.week.$post({ json: weekData });
+    if (!res.ok) {
+      const body = await res.json() as unknown as { error: string };
+      return { success: false, error: body.error };
     }
-    return { success: false, error: response.data.error };
-  } catch (error) {
-    if (axios.isAxiosError(error) && error.response?.data?.error) {
-      logger.error('addGamesToWeek failed', error.response.status, error.response.data.error);
-      return { success: false, error: error.response.data.error };
-    }
-    logger.error('addGamesToWeek unexpected error', error);
-    return { success: false, error: 'An unexpected error occurred' };
+    const data = await res.json();
+    return { success: true, data };
+  } catch {
+    return { success: false, error: 'Request failed' };
   }
 }
 
 export async function getGamesForWeek(weekData: WeekIdentifier): Promise<GetGamesResponse> {
   try {
-    const response = await axios.get(`${databaseAPI}/${path}/games`, {
-      params: {
-        year: weekData.year,
-        week: weekData.week,
-      },
-      withCredentials: true,
+    const res = await client.api.admin.games.$get({
+      query: { year: String(weekData.year), week: String(weekData.week) },
     });
-    if (response.data.ok) {
-      return { success: true, data: response.data.data.weekGames };
+    if (!res.ok) {
+      const body = await res.json() as unknown as { error: string };
+      return { success: false, error: body.error };
     }
-    return { success: false, error: response.data.error };
-  } catch (error) {
-    if (axios.isAxiosError(error) && error.response?.data?.error) {
-      logger.error('getGamesForWeek failed', error.response.status, error.response.data.error);
-      return { success: false, error: error.response.data.error };
-    }
-    logger.error('getGamesForWeek unexpected error', error);
-    return { success: false, error: 'An unexpected error occurred' };
+    const body = await res.json();
+    return { success: true, data: body.weekGames as unknown as AdminDbGameData[] };
+  } catch {
+    return { success: false, error: 'Request failed' };
   }
 }
 
@@ -120,20 +93,15 @@ export interface GetUsersResponse {
 
 export async function getUsers(): Promise<GetUsersResponse> {
   try {
-    const response = await axios.get(`${databaseAPI}/${path}/users`, {
-      withCredentials: true,
-    });
-    if (response.data.ok) {
-      return { success: true, data: response.data.data.allUserProfiles };
+    const res = await client.api.admin.users.$get();
+    if (!res.ok) {
+      const body = await res.json() as unknown as { error: string };
+      return { success: false, error: body.error };
     }
-    return { success: false, error: response.data.error };
-  } catch (error) {
-    if (axios.isAxiosError(error) && error.response?.data?.error) {
-      logger.error('getUsers failed', error.response.status, error.response.data.error);
-      return { success: false, error: error.response.data.error };
-    }
-    logger.error('getUsers unexpected error', error);
-    return { success: false, error: 'An unexpected error occurred' };
+    const body = await res.json();
+    return { success: true, data: body.allUserProfiles as unknown as ProfileData[] };
+  } catch {
+    return { success: false, error: 'Request failed' };
   }
 }
 
@@ -145,19 +113,14 @@ export interface SetPicksResponse {
 
 export async function setPickedGames(pickedData: PickedGamesRequest): Promise<SetPicksResponse> {
   try {
-    const response = await axios.post(`${databaseAPI}/${path}/picks`, pickedData, {
-      withCredentials: true,
-    });
-    if (response.data.ok) {
-      return { success: true, data: response.data.data };
+    const res = await client.api.admin.picks.$post({ json: pickedData });
+    if (!res.ok) {
+      const body = await res.json() as unknown as { error: string };
+      return { success: false, error: body.error };
     }
-    return { success: false, error: response.data.error };
-  } catch (error) {
-    if (axios.isAxiosError(error) && error.response?.data?.error) {
-      logger.error('setPickedGames failed', error.response.status, error.response.data.error);
-      return { success: false, error: error.response.data.error };
-    }
-    logger.error('setPickedGames unexpected error', error);
-    return { success: false, error: 'An unexpected error occurred' };
+    const data = await res.json();
+    return { success: true, data };
+  } catch {
+    return { success: false, error: 'Request failed' };
   }
 }

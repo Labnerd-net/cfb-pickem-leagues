@@ -1,10 +1,10 @@
 import { verify } from 'hono/jwt';
 import { getCookie } from 'hono/cookie';
 import { createMiddleware } from 'hono/factory';
+import { HTTPException } from 'hono/http-exception';
 import type { Context, Next } from 'hono';
 import { jwtAlgorithm, jwtSecret } from '../utils/envVars.js';
 import type { JwtData, Role } from '@shared/types/cfb-pickem-api.js';
-import { err } from './response.js';
 import pinoLogger from './logger.js';
 
 export const logger = createMiddleware(async (c, next) => {
@@ -17,15 +17,13 @@ export const logger = createMiddleware(async (c, next) => {
 // Middleware for routes requiring login — reads JWT from httpOnly cookie
 export const authMiddleware = createMiddleware(async (c, next) => {
   const token = getCookie(c, 'auth_token');
-  if (!token) {
-    return c.json(err('Unauthorized', 401), 401);
-  }
+  if (!token) throw new HTTPException(401, { message: 'Unauthorized' });
   try {
     const payload = await verify(token, jwtSecret, jwtAlgorithm);
     c.set('jwtPayload', payload as unknown as JwtData);
     await next();
   } catch {
-    return c.json(err('Unauthorized', 401), 401);
+    throw new HTTPException(401, { message: 'Unauthorized' });
   }
 });
 
@@ -34,7 +32,7 @@ export const requireRole = (role: Role) => {
   return async (c: Context, next: Next) => {
     const payload: JwtData = c.get('jwtPayload');
     if (!payload || !payload.roles.includes(role)) {
-      return c.json(err('Forbidden', 403));
+      throw new HTTPException(403, { message: 'Forbidden' });
     }
     await next();
   };
