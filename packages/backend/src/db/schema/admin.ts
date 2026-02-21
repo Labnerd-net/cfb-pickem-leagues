@@ -77,5 +77,8 @@ export const adminWeekRelations = relations(adminWeeks, ({ many }) => ({
 }));
 
 export const adminGameRelations = relations(adminGames, ({ one }) => ({
-  adminWeeks: one(adminWeeks),
+  adminWeeks: one(adminWeeks, {
+    fields: [adminGames.year, adminGames.weekNumber],
+    references: [adminWeeks.year, adminWeeks.weekNumber],
+  }),
 }));

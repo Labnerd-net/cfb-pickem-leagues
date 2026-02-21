@@ -1,5 +1,6 @@
 import { serve } from '@hono/node-server';
 import { Hono } from 'hono';
+import { HTTPException } from 'hono/http-exception';
 import { cors } from 'hono/cors';
 import { prettyJSON } from 'hono/pretty-json';
 import { clientURLs, serverPort, dataSource } from './utils/envVars.js';
@@ -26,12 +27,24 @@ app.use(prettyJSON());
 app.use(logger);
 
 app.get('/', c => c.text('Welcome to the CFB Pickem!'));
-app.notFound(c => c.json({ message: 'Not Found', ok: false }, 404));
+app.notFound(c => c.json({ message: 'Not Found' }, 404));
 app.get('/health', c => c.json({ status: 'UP' }));
 
-app.route('/api/auth', authRoutes);
-app.route('/api/admin', adminRoutes);
-app.route('/api/user', userRoutes);
+// Typed sub-app for AppType inference — keep route() chained for type propagation
+const routes = new Hono()
+  .route('/api/auth', authRoutes)
+  .route('/api/admin', adminRoutes)
+  .route('/api/user', userRoutes);
+
+app.route('', routes);
+
+app.onError((err, c) => {
+  if (err instanceof HTTPException) {
+    return c.json({ error: err.message }, err.status);
+  }
+  pinoLogger.error(err);
+  return c.json({ error: 'An unexpected error occurred' }, 500);
+});
 
 serve(
   {
@@ -46,3 +59,5 @@ serve(
     );
   }
 );
+
+export type AppType = typeof routes;

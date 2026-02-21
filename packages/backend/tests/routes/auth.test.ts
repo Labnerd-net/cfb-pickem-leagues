@@ -1,5 +1,6 @@
 import { describe, it, expect, beforeAll } from 'vitest';
 import { Hono } from 'hono';
+import { HTTPException } from 'hono/http-exception';
 import { sign } from 'hono/jwt';
 import { seedTestData } from '../db-utils.js';
 import authRoutes from '../../src/routes/auth.js';
@@ -8,6 +9,10 @@ const TEST_JWT_SECRET = 'test-secret-key-do-not-use-in-production';
 
 const app = new Hono();
 app.route('/api/auth', authRoutes);
+app.onError((err, c) => {
+	if (err instanceof HTTPException) return c.json({ error: err.message }, err.status);
+	return c.json({ error: 'An unexpected error occurred' }, 500);
+});
 
 async function makeToken(overrides: Record<string, unknown> = {}) {
 	return sign(
@@ -37,9 +42,6 @@ describe('POST /api/auth/login', () => {
 		});
 
 		expect(res.status).toBe(200);
-		const body = await res.json();
-		expect(body.ok).toBe(true);
-		expect(body.data?.token).toBeUndefined();
 
 		const setCookie = res.headers.get('set-cookie');
 		expect(setCookie).toBeTruthy();
@@ -89,10 +91,9 @@ describe('GET /api/auth/me', () => {
 
 		expect(res.status).toBe(200);
 		const body = await res.json();
-		expect(body.ok).toBe(true);
-		expect(body.data.email).toBe('admin@test.com');
-		expect(body.data.displayName).toBe('Test Admin');
-		expect(Array.isArray(body.data.roles)).toBe(true);
+		expect(body.email).toBe('admin@test.com');
+		expect(body.displayName).toBe('Test Admin');
+		expect(Array.isArray(body.roles)).toBe(true);
 	});
 
 	it('returns 401 when no cookie is present', async () => {

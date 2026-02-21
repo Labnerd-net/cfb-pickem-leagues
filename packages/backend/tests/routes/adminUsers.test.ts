@@ -1,5 +1,6 @@
 import { describe, it, expect, beforeAll } from 'vitest';
 import { Hono } from 'hono';
+import { HTTPException } from 'hono/http-exception';
 import { sign } from 'hono/jwt';
 import { seedTestData } from '../db-utils.js';
 import adminRoutes from '../../src/routes/admin.js';
@@ -8,6 +9,10 @@ const TEST_JWT_SECRET = 'test-secret-key-do-not-use-in-production';
 
 const app = new Hono();
 app.route('/api/admin', adminRoutes);
+app.onError((err, c) => {
+	if (err instanceof HTTPException) return c.json({ error: err.message }, err.status);
+	return c.json({ error: 'An unexpected error occurred' }, 500);
+});
 
 async function makeToken(roles: string[], userId = 1) {
 	return sign(
@@ -36,20 +41,19 @@ describe('GET /api/admin/users', () => {
 
 		expect(res.status).toBe(200);
 		const body = await res.json();
-		expect(body.ok).toBe(true);
-		expect(Array.isArray(body.data.allUserProfiles)).toBe(true);
-		expect(body.data.allUserProfiles.length).toBeGreaterThan(0);
+		expect(Array.isArray(body.allUserProfiles)).toBe(true);
+		expect(body.allUserProfiles.length).toBeGreaterThan(0);
 	});
 
-	it('should return 403 body for non-admin user', async () => {
+	it('should return 403 for non-admin user', async () => {
 		const token = await makeToken(['user'], 2);
 		const res = await app.request('/api/admin/users', {
 			headers: { Cookie: `auth_token=${token}` },
 		});
 
+		expect(res.status).toBe(403);
 		const body = await res.json();
-		expect(body.ok).toBe(false);
-		expect(body.code).toBe(403);
+		expect(body.error).toBe('Forbidden');
 	});
 
 	it('should return 401 with no cookie', async () => {

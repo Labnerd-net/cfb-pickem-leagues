@@ -25,12 +25,14 @@ echo "Starting Postgres docker container"
 docker compose -f "$baseFolder/docker/docker-compose-pg.yml" up -d
 
 # change $backend/src/db/schema files
-# Comment line 4
-sed -i '4s/^/\/\//' ${adminSchemaFile}
-sed -i '4s/^/\/\//' ${usersSchemaFile}
-# Uncomment line 5
-sed -i '5s/^\/\///' ${adminSchemaFile}
-sed -i '5s/^\/\///' ${usersSchemaFile}
+# Comment line
+sed -i '15s/^/\/\//' ${adminSchemaFile}
+sed -i '12s/^/\/\//' ${usersSchemaFile}
+sed -i '14s/^/\/\//' ${usersSchemaFile}
+# Uncomment line
+sed -i '16s/^\/\///' ${adminSchemaFile}
+sed -i '13s/^\/\///' ${usersSchemaFile}
+sed -i '15s/^\/\///' ${usersSchemaFile}
 
 # Run drizzle-kit generate
 echo "Running: pnpm run generate"
@@ -73,11 +75,13 @@ pnpm run migrate
 sleep 8s
 
 # change $backend/src/db/schema files
-# Comment line 5
-sed -i '5s/^/\/\//' ${adminSchemaFile}
-sed -i '5s/^/\/\//' ${usersSchemaFile}
-# Uncomment line 4
-sed -i '4s/^\/\///' ${adminSchemaFile}
-sed -i '4s/^\/\///' ${usersSchemaFile}
+# Comment line
+sed -i '16s/^/\/\//' ${adminSchemaFile}
+sed -i '13s/^/\/\//' ${usersSchemaFile}
+sed -i '15s/^/\/\//' ${usersSchemaFile}
+# Uncomment line
+sed -i '15s/^\/\///' ${adminSchemaFile}
+sed -i '12s/^\/\///' ${usersSchemaFile}
+sed -i '14s/^\/\///' ${usersSchemaFile}
 
 cd "${baseFolder}/scripts"

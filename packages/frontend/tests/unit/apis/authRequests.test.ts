@@ -12,7 +12,7 @@ describe('Auth API Requests', () => {
 	});
 
 	describe('loginUser', () => {
-		it('should return success response with token and user data', async () => {
+		it('should return success on valid credentials', async () => {
 			const credentials = {
 				email: 'test@example.com',
 				password: 'password123',
@@ -21,19 +21,13 @@ describe('Auth API Requests', () => {
 			const result = await loginUser(credentials);
 
 			expect(result.success).toBe(true);
-			expect(result.data).toBeDefined();
-			expect(result.data?.token).toBe('mock-jwt-token');
 		});
 
 		it('should handle login failure', async () => {
 			server.use(
 				http.post('http://localhost:3000/api/auth/login', () => {
 					return HttpResponse.json(
-						{
-							ok: false,
-							error: 'Invalid credentials',
-							code: 401,
-						},
+						{ error: 'Invalid credentials' },
 						{ status: 401 },
 					);
 				}),
@@ -70,7 +64,7 @@ describe('Auth API Requests', () => {
 	});
 
 	describe('registerUser', () => {
-		it('should return success response with token and user data', async () => {
+		it('should return success on valid registration data', async () => {
 			const userData = {
 				email: 'newuser@example.com',
 				password: 'password123',
@@ -80,19 +74,13 @@ describe('Auth API Requests', () => {
 			const result = await registerUser(userData);
 
 			expect(result.success).toBe(true);
-			expect(result.data).toBeDefined();
-			expect(result.data?.token).toBe('mock-jwt-token');
 		});
 
 		it('should handle duplicate email error', async () => {
 			server.use(
 				http.post('http://localhost:3000/api/auth/register', () => {
 					return HttpResponse.json(
-						{
-							ok: false,
-							error: 'Email already exists',
-							code: 400,
-						},
+						{ error: 'Email already exists' },
 						{ status: 400 },
 					);
 				}),
@@ -124,11 +112,7 @@ describe('Auth API Requests', () => {
 			server.use(
 				http.delete('http://localhost:3000/api/auth/deleteUser', () => {
 					return HttpResponse.json(
-						{
-							ok: false,
-							error: 'Unauthorized',
-							code: 401,
-						},
+						{ error: 'Unauthorized' },
 						{ status: 401 },
 					);
 				}),
