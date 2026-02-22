@@ -14,7 +14,9 @@ CREATE TABLE "admin"."games" (
 	"home_points" integer,
 	"away_points" integer,
 	"winning_team" text DEFAULT 'pending' NOT NULL,
-	"created_at" timestamp DEFAULT now() NOT NULL
+	"start_time" timestamp,
+	"created_at" timestamp DEFAULT now() NOT NULL,
+	CONSTRAINT "games_natural_key" UNIQUE("year","week_number","home_team","away_team")
 );
 --> statement-breakpoint
 CREATE TABLE "admin"."weeks" (

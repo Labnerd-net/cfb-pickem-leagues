@@ -85,6 +85,7 @@ describe('POST /api/admin/week', () => {
   it('calls external API and inserts returned games', async () => {
     vi.mocked(getGameData).mockResolvedValue([
       {
+        gameId: 0,
         cfbdGameId: null,
         ncaaGameId: 'game-post-1',
         picked: false,
@@ -97,6 +98,7 @@ describe('POST /api/admin/week', () => {
         homePoints: null,
         awayPoints: null,
         winningTeam: 'pending',
+        startTime: null,
       },
     ]);
 
@@ -119,6 +121,7 @@ describe('POST /api/admin/week', () => {
   it('calling POST /admin/week twice does not duplicate rows', async () => {
     vi.mocked(getGameData).mockResolvedValue([
       {
+        gameId: 0,
         cfbdGameId: null,
         ncaaGameId: 'game-dup-1',
         picked: false,
@@ -131,6 +134,7 @@ describe('POST /api/admin/week', () => {
         homePoints: null,
         awayPoints: null,
         winningTeam: 'pending',
+        startTime: null,
       },
     ]);
 

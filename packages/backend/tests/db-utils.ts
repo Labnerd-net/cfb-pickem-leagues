@@ -99,15 +99,16 @@ export async function createTestGame(
 	awayTeam: string,
 	picked = false,
 	completed = false,
+	startTime: Date | null = null,
 ) {
 	const result = await db.execute(sql`
 		INSERT INTO "admin"."games" (
 			week_number, year, season_type, picked, completed,
-			home_team, away_team, home_points, away_points, winning_team
+			home_team, away_team, home_points, away_points, winning_team, start_time
 		)
 		VALUES (
 			${weekNumber}, ${year}, 'regular', ${picked}, ${completed},
-			${homeTeam}, ${awayTeam}, NULL, NULL, 'pending'
+			${homeTeam}, ${awayTeam}, NULL, NULL, 'pending', ${startTime}
 		)
 		RETURNING game_id
 	`);

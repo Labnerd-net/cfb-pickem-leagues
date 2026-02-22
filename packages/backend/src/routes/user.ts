@@ -1,7 +1,7 @@
 import { Hono } from 'hono';
 import { HTTPException } from 'hono/http-exception';
 import * as dbUserFunctions from '../db/dbUserFunctions.js';
-import { returnPickedGames, returnWeeksByYear } from '../db/dbAdminFunctions.js';
+import { returnPickedGames, returnWeeksByYear, returnGame } from '../db/dbAdminFunctions.js';
 import type {
   AdminDbGameData,
   AdminWeekData,
@@ -11,6 +11,7 @@ import type {
   WeekIdentifier,
 } from '@shared/types/cfb-pickem-api.js';
 import { authMiddleware } from '../utils/middleware.js';
+import { ignorePickDeadline } from '../utils/envVars.js';
 
 type Variables = {
   jwtPayload: JwtData;
@@ -67,6 +68,28 @@ const user = new Hono<{ Variables: Variables }>()
     const payload = c.get('jwtPayload');
     const userIdString = String(payload.sub);
     const userPicks: AllUserGamePicks = await c.req.json();
+
+    if (!ignorePickDeadline) {
+      const now = new Date();
+      for (const pick of userPicks.games) {
+        const gameRows = await returnGame(pick.game);
+        if (!gameRows || gameRows.length === 0) {
+          throw new HTTPException(404, { message: `Game ${pick.game} not found` });
+        }
+        const game = gameRows[0];
+        if (game.startTime === null) {
+          throw new HTTPException(422, {
+            message: `Game ${pick.game} has no start time set and cannot accept picks.`,
+          });
+        }
+        if (now >= game.startTime) {
+          throw new HTTPException(422, {
+            message: `Game ${pick.game} (${game.awayTeam} @ ${game.homeTeam}) is locked — kickoff has passed. Check your other picks too.`,
+          });
+        }
+      }
+    }
+
     for (const pick of userPicks.games) {
       await dbUserFunctions.addPickedGame(pick, userIdString);
     }

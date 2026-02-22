@@ -149,6 +149,7 @@ export async function returnUserGames(
         homePoints: adminGames.homePoints,
         awayPoints: adminGames.awayPoints,
         winningTeam: adminGames.winningTeam,
+        startTime: adminGames.startTime,
         userId: games.userId,
         teamChosen: games.teamChosen,
         createdAt: games.createdAt,

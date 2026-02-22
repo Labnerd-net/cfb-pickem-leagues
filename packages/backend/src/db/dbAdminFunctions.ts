@@ -117,6 +117,7 @@ export async function addGameToWeek(game: AdminGameData): Promise<void> {
       homePoints: game.completed ? game.homePoints : null,
       awayPoints: game.completed ? game.awayPoints : null,
       winningTeam: winningTeam,
+      startTime: game.startTime,
     });
   } catch (e) {
     logger.error({ err: e }, 'addGameToWeek failed');
@@ -153,6 +154,7 @@ export async function upsertGameForWeek(game: AdminGameData): Promise<void> {
         homePoints: game.completed ? game.homePoints : null,
         awayPoints: game.completed ? game.awayPoints : null,
         winningTeam,
+        startTime: game.startTime,
       })
       .onConflictDoUpdate({
         target: [adminGames.year, adminGames.weekNumber, adminGames.homeTeam, adminGames.awayTeam],
@@ -162,6 +164,7 @@ export async function upsertGameForWeek(game: AdminGameData): Promise<void> {
           homePoints: game.completed ? game.homePoints : null,
           awayPoints: game.completed ? game.awayPoints : null,
           winningTeam,
+          startTime: game.startTime,
         },
       });
   } catch (e) {

@@ -56,6 +56,7 @@ export const adminGames = adminSchema.table(
     homePoints: integer('home_points'),
     awayPoints: integer('away_points'),
     winningTeam: columnTeam('winning_team').notNull().default('pending'),
+    startTime: timestamp('start_time'),
     createdAt: timestamp('created_at').defaultNow().notNull(),
   },
   table => [

@@ -1,5 +1,5 @@
 {
-  "id": "5ebf4a70-b65b-4cc8-9355-2db6dc9e6ba3",
+  "id": "f8d75f4e-5fba-47d4-9661-b6588e16bee8",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "version": "7",
   "dialect": "postgresql",
@@ -86,6 +86,12 @@
           "primaryKey": false,
           "notNull": true,
           "default": "'pending'"
+        },
+        "start_time": {
+          "name": "start_time",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": false
         },
         "created_at": {
           "name": "created_at",
@@ -179,7 +185,18 @@
         }
       },
       "compositePrimaryKeys": {},
-      "uniqueConstraints": {},
+      "uniqueConstraints": {
+        "games_natural_key": {
+          "name": "games_natural_key",
+          "nullsNotDistinct": false,
+          "columns": [
+            "year",
+            "week_number",
+            "home_team",
+            "away_team"
+          ]
+        }
+      },
       "policies": {},
       "checkConstraints": {},
       "isRLSEnabled": false
