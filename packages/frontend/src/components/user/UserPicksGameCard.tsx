@@ -114,7 +114,7 @@ export default function UserPicksGameCard({
         >
           {game.startTime ? new Date(game.startTime).toLocaleString() : 'Start time TBD'}
         </Typography>
-        {game.completed && (
+        {game.completed && game.awayPoints !== null && game.homePoints !== null && (
           <Typography
             variant="body2"
             sx={{

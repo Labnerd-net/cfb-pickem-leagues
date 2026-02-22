@@ -11,13 +11,6 @@ When `getGameData` or `getWeekData` throws, the route returns a generic 500 "An 
 
 ---
 
-### Completed games show "null" for scores when points not yet populated
-**Files:** `packages/frontend/src/components/admin/GameCard.tsx:90`, `packages/frontend/src/components/user/UserPicksGameCard.tsx`
-
-Both components render score like `Final: {game.awayTeam} {game.awayPoints} - {game.homePoints} {game.homeTeam}` guarded only by `game.completed`. If a game is marked completed before scores are written, the display reads "Final: Alabama null - null Georgia". Fix: add `game.awayPoints !== null && game.homePoints !== null` to the condition.
-
----
-
 ## Validation Gaps
 
 _(none currently open)_
