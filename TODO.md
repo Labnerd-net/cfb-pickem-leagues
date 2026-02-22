@@ -11,12 +11,8 @@ Roughly priority-ordered within each section.
 
 ---
 
-### External API failures are silently swallowed
-**Files:** `packages/backend/src/api/ncaa-api.ts:24–26`, `packages/backend/src/api/index.ts:101`
-
-All `getNcaa*` functions catch errors, log them, and return `undefined`. The callers use optional chaining (`ncaaGameData?.games?.forEach(...)`) so they silently process zero games and return a 200 with an empty result. Admin has no indication anything went wrong.
-
-Fix: rethrow after logging, or return a typed `Result<T, Error>` and handle explicitly in the route.
+### ~~External API failures are silently swallowed~~ — FIXED
+All `getNcaa*` functions now rethrow after logging. Errors propagate to the route layer and surface as 500 responses instead of silent empty results.
 
 ---
 

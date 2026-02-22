@@ -23,6 +23,7 @@ export async function getNcaaScoreboard(
     return response.data;
   } catch (error) {
     logger.error({ err: error }, 'getNcaaScoreboard failed');
+    throw error;
   }
 }
 
@@ -36,6 +37,7 @@ export async function getNcaaGame(id: number, type: string = '') {
     return response.data;
   } catch (error) {
     logger.error({ err: error }, 'getNcaaGame failed');
+    throw error;
   }
 }
 
@@ -56,6 +58,7 @@ export async function getNcaaSchedule(
     return response.data;
   } catch (error) {
     logger.error({ err: error }, 'getNcaaSchedule failed');
+    throw error;
   }
 }
 
@@ -68,6 +71,7 @@ export async function getNcaaTeams() {
     return response.data;
   } catch (error) {
     logger.error({ err: error }, 'getNcaaTeams failed');
+    throw error;
   }
 }
 
@@ -86,6 +90,7 @@ export async function getNcaaTeamLogo(school: string) {
     return response.data;
   } catch (error) {
     logger.error({ err: error }, 'getNcaaTeamLogo failed');
+    throw error;
   }
 }
 
@@ -104,6 +109,7 @@ export async function getNcaaStats(
     return response.data;
   } catch (error) {
     logger.error({ err: error }, 'getNcaaStats failed');
+    throw error;
   }
 }
 

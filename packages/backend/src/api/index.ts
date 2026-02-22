@@ -37,9 +37,7 @@ export async function getWeekData(year: number): Promise<AdminWeekData[]> {
     });
   } else if (dataSource === 'ncaa') {
     const ncaaSchedule = await getNcaaSchedule(year);
-    const ncaaYear = ncaaSchedule?.data?.schedules?.today?.season
-      ? ncaaSchedule.data?.schedules.today.season
-      : year;
+    const ncaaYear = ncaaSchedule?.data?.schedules?.today?.season ?? year;
     const ncaaSeasonType = 'regular';
     const games = ncaaSchedule?.data?.schedules?.games ?? [];
     // Remove the last entry which is an aggregate summary of all postseason games
