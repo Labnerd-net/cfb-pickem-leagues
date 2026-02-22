@@ -26,6 +26,8 @@ const admin = new Hono<{ Variables: Variables }>()
   // Add Weeks to Year
   .post('/year/:year', apiRateLimit, authMiddleware, requireRole('admin'), async c => {
     const yearNumber = Number(c.req.param('year'));
+    if (isNaN(yearNumber) || yearNumber < 1900 || yearNumber > 2100)
+      throw new HTTPException(400, { message: 'year must be between 1900 and 2100' });
     const weekData = await getWeekData(yearNumber);
     if (weekData?.length) {
       await Promise.all(weekData.map(week => dbAdminFunctions.addWeek(week)));
@@ -35,8 +37,8 @@ const admin = new Hono<{ Variables: Variables }>()
   // Get Weeks for Year
   .get('/weeks', apiRateLimit, authMiddleware, requireRole('admin'), async c => {
     const yearNumber = Number(c.req.query('year'));
-    if (!yearNumber || isNaN(yearNumber))
-      throw new HTTPException(400, { message: 'year is required' });
+    if (isNaN(yearNumber) || yearNumber < 1900 || yearNumber > 2100)
+      throw new HTTPException(400, { message: 'year must be between 1900 and 2100' });
     const weeks = await dbAdminFunctions.returnWeeksByYear(yearNumber);
     return c.json({ weeks });
   })
@@ -59,8 +61,10 @@ const admin = new Hono<{ Variables: Variables }>()
       year: Number(c.req.query('year')),
       week: Number(c.req.query('week')),
     };
-    if (isNaN(weekIdentifier.year) || isNaN(weekIdentifier.week))
-      throw new HTTPException(400, { message: 'year and week are required' });
+    if (isNaN(weekIdentifier.year) || weekIdentifier.year < 1900 || weekIdentifier.year > 2100)
+      throw new HTTPException(400, { message: 'year must be between 1900 and 2100' });
+    if (isNaN(weekIdentifier.week) || weekIdentifier.week < 1 || weekIdentifier.week > 52)
+      throw new HTTPException(400, { message: 'week must be between 1 and 52' });
     const weekGames = await dbAdminFunctions.returnGamesForWeek(weekIdentifier);
     return c.json({ weekGames });
   })

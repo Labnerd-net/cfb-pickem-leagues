@@ -36,15 +36,18 @@ const user = new Hono<{ Variables: Variables }>()
       year: Number(c.req.query('year')),
       week: Number(c.req.query('week')),
     };
-    if (isNaN(weekIdentifier.year) || isNaN(weekIdentifier.week))
-      throw new HTTPException(400, { message: 'year and week are required' });
+    if (isNaN(weekIdentifier.year) || weekIdentifier.year < 1900 || weekIdentifier.year > 2100)
+      throw new HTTPException(400, { message: 'year must be between 1900 and 2100' });
+    if (isNaN(weekIdentifier.week) || weekIdentifier.week < 1 || weekIdentifier.week > 52)
+      throw new HTTPException(400, { message: 'week must be between 1 and 52' });
     const picks = await dbUserFunctions.returnUserGames(weekIdentifier, userIdString);
     return c.json({ picks });
   })
   // List weeks in a year with picked games
   .get('/weeks', apiRateLimit, authMiddleware, async c => {
     const yearNumber = Number(c.req.query('year'));
-    if (isNaN(yearNumber)) throw new HTTPException(400, { message: 'year is required' });
+    if (isNaN(yearNumber) || yearNumber < 1900 || yearNumber > 2100)
+      throw new HTTPException(400, { message: 'year must be between 1900 and 2100' });
     const weeks: AdminWeekData[] = await returnWeeksByYear(yearNumber);
     if (!weeks || weeks.length === 0)
       throw new HTTPException(404, { message: 'No weeks available for this year' });
@@ -56,8 +59,10 @@ const user = new Hono<{ Variables: Variables }>()
       year: Number(c.req.query('year')),
       week: Number(c.req.query('week')),
     };
-    if (isNaN(weekIdentifier.year) || isNaN(weekIdentifier.week))
-      throw new HTTPException(400, { message: 'year and week are required' });
+    if (isNaN(weekIdentifier.year) || weekIdentifier.year < 1900 || weekIdentifier.year > 2100)
+      throw new HTTPException(400, { message: 'year must be between 1900 and 2100' });
+    if (isNaN(weekIdentifier.week) || weekIdentifier.week < 1 || weekIdentifier.week > 52)
+      throw new HTTPException(400, { message: 'week must be between 1 and 52' });
     const pickedGames: AdminDbGameData[] = await returnPickedGames(weekIdentifier);
     if (!pickedGames || pickedGames.length === 0)
       throw new HTTPException(404, { message: 'No picked games found for this week' });

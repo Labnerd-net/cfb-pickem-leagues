@@ -20,21 +20,13 @@ Fix: rethrow after logging, or return a typed `Result<T, Error>` and handle expl
 
 ---
 
-### `year=0` passes validation
-**File:** `packages/backend/src/routes/admin.ts:27`
-
-```ts
-if (!yearNumber || isNaN(yearNumber))  // !0 is true, but this check is placed on yearNumber after conversion
-```
-
-Actually `!0` is `true` so `year=0` would be caught — but `year=-1` or `year=99999` would not be rejected. Add explicit bounds: `if (isNaN(yearNumber) || yearNumber < 1900 || yearNumber > 2100)`.
+### ~~`year=0` passes validation~~ — FIXED
+All year parameters now use `isNaN(year) || year < 1900 || year > 2100` bounds checks in both `user.ts` and `admin.ts`.
 
 ---
 
-### Negative/zero week numbers are accepted
-**Files:** `packages/backend/src/routes/user.ts:35–40`, `packages/backend/src/routes/admin.ts`
-
-`isNaN` check is present but no logical bounds are enforced on week numbers. A request with `week=-1` will reach the database query unchanged.
+### ~~Negative/zero week numbers are accepted~~ — FIXED
+All week parameters now use `isNaN(week) || week < 1 || week > 52` bounds checks in both `user.ts` and `admin.ts`.
 
 ---
 
