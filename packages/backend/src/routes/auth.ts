@@ -113,9 +113,7 @@ const auth = new Hono<{ Variables: Variables }>()
     const user = await dbUserFunctions.returnUserById(payload.sub);
     if (!user || user.length === 0)
       throw new HTTPException(404, { message: 'User not found' });
-    await dbUserFunctions.logDeletedUser(user[0]);
-    const returnValue = await dbUserFunctions.deleteUserById(payload.sub);
-    if (!returnValue) throw new HTTPException(404, { message: 'User not found' });
+    await dbUserFunctions.deleteUserWithAudit(user[0]);
     return c.json({ status: 'deleted' });
   });
 

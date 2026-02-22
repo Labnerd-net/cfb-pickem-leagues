@@ -59,13 +59,6 @@ This is a core feature of a pick'em game. Without it, there's no way to determin
 
 ---
 
-### User deletion not wrapped in a transaction
-**File:** `packages/backend/src/routes/auth.ts:116-118`
-
-`logDeletedUser` and `deleteUserById` are separate DB calls with no transaction. If `logDeletedUser` succeeds but `deleteUserById` fails, the user is logged as deleted but still exists. If `deleteUserById` succeeds but `logDeletedUser` fails, the deletion has no audit record. Wrap both in a single transaction.
-
----
-
 ## Code Quality / Tech Debt
 
 _(none currently open)_

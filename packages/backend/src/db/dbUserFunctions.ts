@@ -78,33 +78,23 @@ export async function addUser(user: UserData) {
 }
 
 // ------------------------------------------------------------------
-// Log deleted user to audit table
+// Delete user and write audit record atomically
 // ------------------------------------------------------------------
-export async function logDeletedUser(user: UserDbData) {
-  logger.debug({ userId: user.userId }, 'logDeletedUser');
+export async function deleteUserWithAudit(user: UserDbData): Promise<void> {
+  logger.debug({ userId: user.userId }, 'deleteUserWithAudit');
   try {
-    await db.insert(deletedUsers).values({
-      userId: user.userId,
-      email: user.email,
-      displayName: user.displayName,
-      roles: user.roles,
-      createdAt: user.createdAt,
+    await db.transaction(async (tx) => {
+      await tx.insert(deletedUsers).values({
+        userId: user.userId,
+        email: user.email,
+        displayName: user.displayName,
+        roles: user.roles,
+        createdAt: user.createdAt,
+      });
+      await tx.delete(users).where(eq(users.userId, user.userId));
     });
   } catch (e) {
-    logger.error({ err: e }, 'logDeletedUser failed');
-    throw e;
-  }
-}
-
-// ------------------------------------------------------------------
-// Delete user by Id
-// ------------------------------------------------------------------
-export async function deleteUserById(userId: number) {
-  logger.debug({ userId }, 'deleteUserById');
-  try {
-    return await db.delete(users).where(eq(users.userId, userId));
-  } catch (e) {
-    logger.error({ err: e }, 'deleteUserById failed');
+    logger.error({ err: e }, 'deleteUserWithAudit failed');
     throw e;
   }
 }
