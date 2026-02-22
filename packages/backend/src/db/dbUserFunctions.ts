@@ -1,5 +1,5 @@
 import { eq, and } from 'drizzle-orm';
-import { users, games } from './schema/users.js';
+import { users, games, deletedUsers } from './schema/users.js';
 import { adminGames } from './schema/admin.js';
 import { db } from './index.js';
 import * as dbAdminFunctions from './dbAdminFunctions.js';
@@ -73,6 +73,25 @@ export async function addUser(user: UserData) {
       });
   } catch (e) {
     logger.error({ err: e }, 'addUser failed');
+    throw e;
+  }
+}
+
+// ------------------------------------------------------------------
+// Log deleted user to audit table
+// ------------------------------------------------------------------
+export async function logDeletedUser(user: UserDbData) {
+  logger.debug({ userId: user.userId }, 'logDeletedUser');
+  try {
+    await db.insert(deletedUsers).values({
+      userId: user.userId,
+      email: user.email,
+      displayName: user.displayName,
+      roles: user.roles,
+      createdAt: user.createdAt,
+    });
+  } catch (e) {
+    logger.error({ err: e }, 'logDeletedUser failed');
     throw e;
   }
 }

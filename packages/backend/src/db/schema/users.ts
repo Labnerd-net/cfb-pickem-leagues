@@ -52,6 +52,19 @@ export const games = userSchema.table(
 );
 
 // ------------------------------------------------------------------
+// Deleted Users – audit log; populated before hard delete
+// ------------------------------------------------------------------
+export const deletedUsers = userSchema.table('deleted_users', {
+  id: serial('id').primaryKey(),
+  userId: integer('user_id').notNull(),
+  email: text('email').notNull(),
+  displayName: text('display_name').notNull(),
+  roles: columnRole('roles').array().notNull(),
+  createdAt: timestamp('created_at').notNull(),
+  deletedAt: timestamp('deleted_at').defaultNow().notNull(),
+});
+
+// ------------------------------------------------------------------
 // Relation helpers
 // ------------------------------------------------------------------
 export const usersRelations = relations(users, ({ many }) => ({

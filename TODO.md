@@ -105,12 +105,8 @@ Removed. See bug entry above.
 
 ---
 
-### Hard deletes with no audit trail
-User deletion (`DELETE /auth/deleteUser`) permanently removes the account and all picks with no soft-delete, no tombstone, and no audit log. A mistake or compromised account could lose data irreversibly.
-
-Consider:
-- Soft delete with `deletedAt` timestamp
-- Or at minimum, log deleted user ID/email to a persistent audit table before deletion
+### ~~Hard deletes with no audit trail~~ — FIXED
+Added `user.deleted_users` audit table. `DELETE /auth/deleteUser` now calls `logDeletedUser` before the hard delete, preserving userId, email, displayName, roles, and original createdAt.
 
 ---
 
