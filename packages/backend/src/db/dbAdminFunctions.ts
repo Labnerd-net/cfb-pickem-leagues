@@ -187,20 +187,6 @@ export async function returnGame(game: number): Promise<AdminDbGameData[]> {
 }
 
 // ------------------------------------------------------------------
-// Invert picked game
-// ------------------------------------------------------------------
-export async function invertPickedGame(game: number): Promise<void> {
-  logger.debug({ game }, 'invertPickedGame');
-  const newPicked = !adminGames.picked;
-  try {
-    await db.update(adminGames).set({ picked: newPicked }).where(eq(adminGames.gameId, game));
-  } catch (e) {
-    logger.error({ err: e }, 'invertPickedGame failed');
-    throw e;
-  }
-}
-
-// ------------------------------------------------------------------
 // Set all picked games from number array
 // ------------------------------------------------------------------
 export async function setPickedGames(pickedGames: PickedGamesRequest): Promise<void> {

@@ -6,14 +6,8 @@ Roughly priority-ordered within each section.
 
 ## Bugs
 
-### `invertPickedGame` always sets `picked: false`
-**File:** `packages/backend/src/db/dbAdminFunctions.ts:194`
-
-```ts
-const newPicked = !adminGames.picked;  // adminGames is the Drizzle table object, not a row value
-```
-
-`adminGames` is the schema table reference (a Drizzle object, always truthy), so `!adminGames.picked` is always `false`. The function needs to fetch the current row's `picked` value first, then invert it.
+### ~~`invertPickedGame` always sets `picked: false`~~ — FIXED
+`invertPickedGame` was a dead export (no route or frontend called it). Removed entirely from `dbAdminFunctions.ts`. Use `setPickedGames` to replace the full picked set atomically.
 
 ---
 
@@ -123,8 +117,8 @@ A 404 for "no picked games" is correct when used in the context of "this week ha
 
 ## Code Quality / Tech Debt
 
-### `invertPickedGame` is an awkward API
-The function toggles a single game's picked state based on a separate fetch-then-update, which adds a round trip and a TOCTTOU window. The admin UI already sends the full list of picked game IDs via `setPickedGames`. Consider removing `invertPickedGame` entirely and always using `setPickedGames` to replace the full set atomically.
+### ~~`invertPickedGame` is an awkward API~~ — FIXED
+Removed. See bug entry above.
 
 ---
 
@@ -157,8 +151,8 @@ The hyphen in `all‑conf` appears to be a Unicode non-breaking hyphen (U+2011),
 
 ## Tests
 
-### No tests for `invertPickedGame`
-Given the bug above, this function has no test coverage confirming the toggle behavior.
+### ~~No tests for `invertPickedGame`~~ — N/A
+Function removed.
 
 ---
 
