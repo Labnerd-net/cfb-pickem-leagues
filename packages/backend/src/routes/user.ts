@@ -12,6 +12,7 @@ import type {
 } from '@shared/types/cfb-pickem-api.js';
 import { authMiddleware } from '../utils/middleware.js';
 import { ignorePickDeadline } from '../utils/envVars.js';
+import { apiRateLimit } from '../utils/rateLimiter.js';
 
 type Variables = {
   jwtPayload: JwtData;
@@ -19,7 +20,7 @@ type Variables = {
 
 const user = new Hono<{ Variables: Variables }>()
   // Show user info
-  .get('/profile', authMiddleware, async c => {
+  .get('/profile', apiRateLimit, authMiddleware, async c => {
     const payload = c.get('jwtPayload');
     const userData = await dbUserFunctions.returnUserById(payload.sub);
     if (!userData || userData.length !== 1)
@@ -28,7 +29,7 @@ const user = new Hono<{ Variables: Variables }>()
     return c.json(profile);
   })
   // Get user game picks
-  .get('/picks', authMiddleware, async c => {
+  .get('/picks', apiRateLimit, authMiddleware, async c => {
     const payload = c.get('jwtPayload');
     const userIdString = String(payload.sub);
     const weekIdentifier: WeekIdentifier = {
@@ -41,7 +42,7 @@ const user = new Hono<{ Variables: Variables }>()
     return c.json({ picks });
   })
   // List weeks in a year with picked games
-  .get('/weeks', authMiddleware, async c => {
+  .get('/weeks', apiRateLimit, authMiddleware, async c => {
     const yearNumber = Number(c.req.query('year'));
     if (isNaN(yearNumber)) throw new HTTPException(400, { message: 'year is required' });
     const weeks: AdminWeekData[] = await returnWeeksByYear(yearNumber);
@@ -50,7 +51,7 @@ const user = new Hono<{ Variables: Variables }>()
     return c.json({ weeks });
   })
   // Get admin-picked games for a week
-  .get('/games', authMiddleware, async c => {
+  .get('/games', apiRateLimit, authMiddleware, async c => {
     const weekIdentifier: WeekIdentifier = {
       year: Number(c.req.query('year')),
       week: Number(c.req.query('week')),
@@ -63,7 +64,7 @@ const user = new Hono<{ Variables: Variables }>()
     return c.json({ pickedGames });
   })
   // Set user game picks
-  .post('/picks', authMiddleware, async c => {
+  .post('/picks', apiRateLimit, authMiddleware, async c => {
     const payload = c.get('jwtPayload');
     const userIdString = String(payload.sub);
     const userPicks: AllUserGamePicks = await c.req.json();

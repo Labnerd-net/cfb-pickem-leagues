@@ -108,7 +108,7 @@ const auth = new Hono<{ Variables: Variables }>()
     });
   })
   // Delete a user by ID
-  .delete('/deleteUser', authMiddleware, async c => {
+  .delete('/deleteUser', authRateLimit, authMiddleware, async c => {
     const payload = c.get('jwtPayload');
     const user = await dbUserFunctions.returnUserById(payload.sub);
     if (!user || user.length === 0)

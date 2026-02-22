@@ -63,10 +63,8 @@ No guard against an empty array, which would clear all picked games for the week
 
 ## Security
 
-### No rate limiting on user routes
-**File:** `packages/backend/src/routes/user.ts`
-
-`authRateLimit` is applied to auth endpoints but not to `POST /user/picks` or other user routes. These can be spammed freely by an authenticated user.
+### ~~No rate limiting on user routes~~ — FIXED
+All routes in `user.ts` and `admin.ts` now use `apiRateLimit` (100 req / 15 min). Previously `authRateLimit` (5 req / 15 min) was mistakenly applied to user/admin routes, and `POST /admin/picks` had no rate limiting at all.
 
 ---
 
