@@ -75,6 +75,10 @@ const user = new Hono<{ Variables: Variables }>()
     const userIdString = String(payload.sub);
     const userPicks: AllUserGamePicksRequest = c.req.valid('json');
 
+    const gameIds = userPicks.games.map(p => p.game);
+    if (new Set(gameIds).size !== gameIds.length)
+      throw new HTTPException(400, { message: 'Duplicate game IDs in picks request' });
+
     if (!ignorePickDeadline) {
       const now = new Date();
       for (const pick of userPicks.games) {

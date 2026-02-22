@@ -37,10 +37,8 @@ All week parameters now use `isNaN(week) || week < 1 || week > 52` bounds checks
 
 ---
 
-### Duplicate game IDs in a single picks request
-**File:** `packages/backend/src/routes/user.ts:70`
-
-If the same `gameId` appears twice in one request, both iterations run and the second silently overwrites the first via `onConflictDoUpdate`. The request should be rejected with a 400.
+### ~~Duplicate game IDs in a single picks request~~ — FIXED
+`POST /user/picks` now rejects with 400 if the same game ID appears more than once in the request.
 
 ---
 
