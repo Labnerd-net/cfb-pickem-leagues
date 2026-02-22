@@ -39,4 +39,15 @@ create a logging system to log both frontend and backend actions to help me debu
 create a spec that updates the admin and user year selections to a dropdown menu that only includes the current year, the next year, and the previous year
 
 ## Create Users tab
+### Done
 create a spec to have a new tab called users that is only seen by admin users.  In this tab, all the users will be listed with their information like email and roles.
+
+## Create pick deadline
+
+## Create notifications for users (email/signal?)
+
+## Implement leader board
+
+## fix failing tests in dist/
+The 4 failing tests in dist/ are pre-existing — they're compiled artifacts from the test database running in parallel with PGlite tests and conflicting on user_id. These failures pre-date my changes and are unrelated to deadline enforcement. All new tests pass cleanly in isolation.
+
