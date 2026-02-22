@@ -6,49 +6,25 @@ Roughly priority-ordered within each section.
 
 ## Bugs
 
-### ~~`invertPickedGame` always sets `picked: false`~~ — FIXED
-`invertPickedGame` was a dead export (no route or frontend called it). Removed entirely from `dbAdminFunctions.ts`. Use `setPickedGames` to replace the full picked set atomically.
+### External API failures return 500 with no detail
+When `getGameData` or `getWeekData` throws, the route returns a generic 500 "An unexpected error occurred" with no context about which external API failed or why. Admin sees no actionable information.
 
 ---
 
-### ~~External API failures are silently swallowed~~ — FIXED
-All `getNcaa*` functions now rethrow after logging. Errors propagate to the route layer and surface as 500 responses instead of silent empty results.
+### Completed games show "null" for scores when points not yet populated
+**Files:** `packages/frontend/src/components/admin/GameCard.tsx:90`, `packages/frontend/src/components/user/UserPicksGameCard.tsx`
 
----
-
-### ~~`year=0` passes validation~~ — FIXED
-All year parameters now use `isNaN(year) || year < 1900 || year > 2100` bounds checks in both `user.ts` and `admin.ts`.
-
----
-
-### ~~Negative/zero week numbers are accepted~~ — FIXED
-All week parameters now use `isNaN(week) || week < 1 || week > 52` bounds checks in both `user.ts` and `admin.ts`.
+Both components render score like `Final: {game.awayTeam} {game.awayPoints} - {game.homePoints} {game.homeTeam}` guarded only by `game.completed`. If a game is marked completed before scores are written, the display reads "Final: Alabama null - null Georgia". Fix: add `game.awayPoints !== null && game.homePoints !== null` to the condition.
 
 ---
 
 ## Validation Gaps
 
-### ~~Pick values are not validated against allowed enum~~ — FIXED
-`allUserPickedRequestValidator` (Zod) is now applied to `POST /user/picks`. It validates `pick` against `z.enum(['home_team', 'away_team'])` and ensures `game` is a number. Also corrected the route's body type from `AllUserGamePicks` to `AllUserGamePicksRequest` to match what the frontend actually sends.
-
----
-
-### ~~Duplicate game IDs in a single picks request~~ — FIXED
-`POST /user/picks` now rejects with 400 if the same game ID appears more than once in the request.
-
----
-
-### ~~`setPickedGames` accepts an empty games array~~ — FIXED
-`POST /admin/picks` now returns 422 if `games` is empty.
+_(none currently open)_
 
 ---
 
 ## Security
-
-### ~~No rate limiting on user routes~~ — FIXED
-All routes in `user.ts` and `admin.ts` now use `apiRateLimit` (100 req / 15 min). Previously `authRateLimit` (5 req / 15 min) was mistakenly applied to user/admin routes, and `POST /admin/picks` had no rate limiting at all.
-
----
 
 ### Weak password minimum (6 characters)
 **File:** `packages/backend/src/utils/passwordValidation.ts:15`
@@ -83,49 +59,26 @@ This is a core feature of a pick'em game. Without it, there's no way to determin
 
 ## Error Handling
 
-### ~~API adapter errors don't propagate to the route layer~~ — FIXED
-Resolved by the NCAA rethrow fix above. CFBD functions never had try/catch so they already propagated. All adapter errors now surface as 500s at the route layer.
+### TOCTTOU: picks deadline not enforced atomically
+**File:** `packages/backend/src/routes/user.ts`
+
+`now` is captured once before the check loop. If a game's startTime passes during the insert loop, the pick is accepted. A test in `picks-deadline.test.ts` documents this behavior. Fix requires wrapping the deadline check and insert in a DB transaction per game.
 
 ---
 
-### ~~`returnPickedGames` returning 404 vs empty list~~ — FIXED
-`GET /user/games` now checks week existence via `returnWeekByQuery` first (404 if not found), then returns picked games as an empty array if none are picked yet.
+### User deletion not wrapped in a transaction
+**File:** `packages/backend/src/routes/auth.ts:116-118`
+
+`logDeletedUser` and `deleteUserById` are separate DB calls with no transaction. If `logDeletedUser` succeeds but `deleteUserById` fails, the user is logged as deleted but still exists. If `deleteUserById` succeeds but `logDeletedUser` fails, the deletion has no audit record. Wrap both in a single transaction.
 
 ---
 
 ## Code Quality / Tech Debt
 
-### ~~`invertPickedGame` is an awkward API~~ — FIXED
-Removed. See bug entry above.
-
----
-
-### ~~User ID handling inconsistency~~ — FIXED
-`addUser` returning clause now uses `userId` consistently. `returnUserById` and `deleteUserById` changed from `string` to `number` parameters, eliminating the redundant `String()`/`Number()` conversions in callers.
-
----
-
-### ~~Hard deletes with no audit trail~~ — FIXED
-Added `user.deleted_users` audit table. `DELETE /auth/deleteUser` now calls `logDeletedUser` before the hard delete, preserving userId, email, displayName, roles, and original createdAt.
-
----
-
-### ~~`ncaa-api.ts` URL contains a non-breaking hyphen~~ — FIXED
-Replaced U+2011 non-breaking hyphen in `all‑conf` with ASCII hyphen (U+002D).
+_(none currently open)_
 
 ---
 
 ## Tests
 
-### ~~No tests for `invertPickedGame`~~ — N/A
-Function removed.
-
----
-
-### ~~No integration tests for the picks deadline enforcement~~ — FIXED
-Added TOCTTOU test to `picks-deadline.test.ts`. Uses `vi.useFakeTimers()` and a `vi.doMock` on `addPickedGame` to advance system time past startTime before the insert runs, demonstrating that `now` captured before the check loop allows the pick through even after the game locks.
-
----
-
-### ~~API adapter error path is untested~~ — FIXED
-Added tests to `adminGames.test.ts` confirming that a rejected `getGameData` returns 500 from `POST /admin/week`, and a rejected `getWeekData` returns 500 from `POST /admin/year/:year`. Also covers the empty-array case for `getWeekData` (200, no DB writes).
+_(none currently open)_
