@@ -122,8 +122,8 @@ Function removed.
 
 ---
 
-### No integration tests for the picks deadline enforcement
-The TOCTTOU between deadline check and insert is not covered. A test simulating a game that starts between check and insert would catch this.
+### ~~No integration tests for the picks deadline enforcement~~ — FIXED
+Added TOCTTOU test to `picks-deadline.test.ts`. Uses `vi.useFakeTimers()` and a `vi.doMock` on `addPickedGame` to advance system time past startTime before the insert runs, demonstrating that `now` captured before the check loop allows the pick through even after the game locks.
 
 ---
 

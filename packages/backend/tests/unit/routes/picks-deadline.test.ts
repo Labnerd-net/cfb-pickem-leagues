@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach, vi } from 'vitest';
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { Hono } from 'hono';
 import { HTTPException } from 'hono/http-exception';
 import { seedTestData, createTestWeek, createTestGame, cleanDatabase } from '../../db-utils.js';
@@ -135,6 +135,53 @@ describe('POST /picks deadline enforcement', () => {
 
 		const app = await buildApp(true);
 		const res = await app.request(makePicksRequest(gameId));
+		expect(res.status).toBe(200);
+	});
+});
+
+describe('POST /picks TOCTTOU: startTime passes after now is captured', () => {
+	beforeEach(async () => {
+		vi.resetModules();
+		await cleanDatabase();
+		await seedTestData();
+		await createTestWeek(1, 2024, 'regular');
+	});
+
+	afterEach(() => {
+		vi.useRealTimers();
+	});
+
+	it('pick is accepted when startTime passes between the deadline check and the DB insert', async () => {
+		const baseTime = 1700000000000;
+		vi.useFakeTimers();
+		vi.setSystemTime(baseTime);
+
+		// startTime is 500ms ahead of the captured `now`
+		const startTime = new Date(baseTime + 500);
+		const row = await createTestGame(1, 2024, 'TOCTTOU Home', 'TOCTTOU Away', true, false, startTime);
+		const gameId = (row as { game_id: number }).game_id;
+
+		// Mock addPickedGame to advance system time past startTime before inserting,
+		// simulating the race between the check and the actual DB write.
+		vi.doMock('../../../src/db/dbUserFunctions.js', async () => {
+			const actual = await vi.importActual<typeof import('../../../src/db/dbUserFunctions.js')>(
+				'../../../src/db/dbUserFunctions.js'
+			);
+			return {
+				...actual,
+				addPickedGame: async (...args: Parameters<typeof actual.addPickedGame>) => {
+					vi.setSystemTime(baseTime + 1000); // past startTime
+					return actual.addPickedGame(...args);
+				},
+			};
+		});
+
+		const app = await buildApp(false);
+		const res = await app.request(makePicksRequest(gameId));
+
+		// now = baseTime < startTime → check passes.
+		// By the time addPickedGame runs, system time = baseTime+1000 > startTime.
+		// The pick is still accepted because `now` was captured before the check loop.
 		expect(res.status).toBe(200);
 	});
 });

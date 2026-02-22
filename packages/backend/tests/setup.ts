@@ -70,6 +70,17 @@ vi.mock('../src/db/index.ts', async () => {
 			created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL
 		);
 
+		-- User schema: deleted_users audit table
+		CREATE TABLE "user".deleted_users (
+			id SERIAL PRIMARY KEY,
+			user_id INTEGER NOT NULL,
+			email TEXT NOT NULL,
+			display_name TEXT NOT NULL,
+			roles TEXT[] NOT NULL,
+			created_at TIMESTAMP NOT NULL,
+			deleted_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL
+		);
+
 		-- User schema: games table (picks only; join with admin.games for metadata)
 		CREATE TABLE "user".games (
 			user_id INTEGER NOT NULL REFERENCES "user".users (user_id) ON DELETE CASCADE,
