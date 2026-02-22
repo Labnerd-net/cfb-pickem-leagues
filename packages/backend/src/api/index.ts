@@ -92,6 +92,7 @@ export async function getGameData(
       data.homePoints = homePoints;
       data.awayPoints = awayPoints;
       data.winningTeam = winningTeam;
+      data.startTime = game.startDate ? new Date(game.startDate) : null;
       gameData.push(data);
     });
   } else if (dataSource === 'ncaa') {
@@ -119,6 +120,9 @@ export async function getGameData(
       data.homePoints = homePoints;
       data.awayPoints = awayPoints;
       data.winningTeam = winningTeam;
+      data.startTime = game.game.startTimeEpoch
+        ? new Date(Number(game.game.startTimeEpoch) * 1000)
+        : null;
       gameData.push(data);
     });
   }

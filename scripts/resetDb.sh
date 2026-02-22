@@ -26,11 +26,11 @@ docker compose -f "$baseFolder/docker/docker-compose-pg.yml" up -d
 
 # change $backend/src/db/schema files
 # Comment line
-sed -i '15s/^/\/\//' ${adminSchemaFile}
+sed -i '16s/^/\/\//' ${adminSchemaFile}
 sed -i '12s/^/\/\//' ${usersSchemaFile}
 sed -i '14s/^/\/\//' ${usersSchemaFile}
 # Uncomment line
-sed -i '16s/^\/\///' ${adminSchemaFile}
+sed -i '17s/^\/\///' ${adminSchemaFile}
 sed -i '13s/^\/\///' ${usersSchemaFile}
 sed -i '15s/^\/\///' ${usersSchemaFile}
 
@@ -76,11 +76,11 @@ sleep 8s
 
 # change $backend/src/db/schema files
 # Comment line
-sed -i '16s/^/\/\//' ${adminSchemaFile}
+sed -i '17s/^/\/\//' ${adminSchemaFile}
 sed -i '13s/^/\/\//' ${usersSchemaFile}
 sed -i '15s/^/\/\//' ${usersSchemaFile}
 # Uncomment line
-sed -i '15s/^\/\///' ${adminSchemaFile}
+sed -i '16s/^\/\///' ${adminSchemaFile}
 sed -i '12s/^\/\///' ${usersSchemaFile}
 sed -i '14s/^\/\///' ${usersSchemaFile}
 

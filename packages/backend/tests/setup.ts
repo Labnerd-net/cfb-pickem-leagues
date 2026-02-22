@@ -49,6 +49,7 @@ vi.mock('../src/db/index.ts', async () => {
 			home_points INTEGER,
 			away_points INTEGER,
 			winning_team TEXT NOT NULL DEFAULT 'pending',
+			start_time TIMESTAMP,
 			created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,
 			CONSTRAINT games_week_fk FOREIGN KEY (year, week_number)
 				REFERENCES admin.weeks (year, week_number) ON DELETE CASCADE

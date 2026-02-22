@@ -47,3 +47,6 @@ export const cfbdApiKey = process.env.CFBD_API_KEY || '';
 export const logLevel = process.env.LOG_LEVEL ?? 'info';
 
 export const isProduction = process.env.NODE_ENV === 'production';
+
+// Set to 'true' to bypass pick deadline enforcement (useful for off-season testing)
+export const ignorePickDeadline = process.env.PICKS_IGNORE_DEADLINE === 'true';

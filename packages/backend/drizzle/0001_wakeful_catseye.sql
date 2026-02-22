@@ -1,1 +1,0 @@
-ALTER TABLE "admin"."games" ADD CONSTRAINT "games_natural_key" UNIQUE("year","week_number","home_team","away_team");

@@ -1,6 +1,7 @@
-import { Paper, RadioGroup, FormControlLabel, Radio, Box, Typography } from '@mui/material';
+import { Paper, RadioGroup, FormControlLabel, Radio, Box, Typography, Chip } from '@mui/material';
 import type { AdminDbGameData } from '@shared/types/cfb-pickem-api';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
+import LockIcon from '@mui/icons-material/Lock';
 
 interface UserPicksGameCardProps {
   game: AdminDbGameData;
@@ -15,7 +16,11 @@ export default function UserPicksGameCard({
   onPickChange,
   hasSavedPick
 }: UserPicksGameCardProps) {
+  const ignoreDeadline = import.meta.env.VITE_IGNORE_PICK_DEADLINE === 'true';
+  const isLocked = !ignoreDeadline && game.startTime !== null && new Date() >= new Date(game.startTime);
+
   const handleChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    if (isLocked) return;
     const pick = event.target.value as 'home_team' | 'away_team';
     onPickChange(game.gameId, pick);
   };
@@ -26,16 +31,38 @@ export default function UserPicksGameCard({
       sx={{
         p: 2,
         border: 2,
-        borderColor: selectedTeam ? 'primary.main' : 'transparent',
+        borderColor: isLocked ? 'grey.400' : selectedTeam ? 'primary.main' : 'transparent',
         transition: 'all 0.2s',
         position: 'relative',
+        opacity: isLocked ? 0.7 : 1,
         backgroundColor: hasSavedPick ? 'action.hover' : 'background.paper',
         '&:hover': {
-          borderColor: selectedTeam ? 'primary.main' : 'grey.300',
+          borderColor: isLocked ? 'grey.400' : selectedTeam ? 'primary.main' : 'grey.300',
         },
       }}
     >
-      {hasSavedPick && (
+      {isLocked ? (
+        <Box
+          sx={{
+            position: 'absolute',
+            top: 8,
+            right: 8,
+          }}
+        >
+          <Chip
+            icon={<LockIcon fontSize="small" />}
+            label="LOCKED"
+            size="small"
+            sx={{
+              fontFamily: '"Work Sans", sans-serif',
+              fontWeight: 600,
+              fontSize: '0.7rem',
+              backgroundColor: 'grey.300',
+              color: 'text.secondary',
+            }}
+          />
+        </Box>
+      ) : hasSavedPick ? (
         <Box
           sx={{
             position: 'absolute',
@@ -52,7 +79,7 @@ export default function UserPicksGameCard({
             SAVED
           </Typography>
         </Box>
-      )}
+      ) : null}
 
       <Box sx={{ mb: 2 }}>
         <Typography
@@ -76,6 +103,17 @@ export default function UserPicksGameCard({
         >
           Week {game.weekNumber} • {game.seasonType}
         </Typography>
+        <Typography
+          variant="body2"
+          sx={{
+            fontFamily: '"Work Sans", sans-serif',
+            color: 'text.secondary',
+            fontSize: '0.8rem',
+            mt: 0.25,
+          }}
+        >
+          {game.startTime ? new Date(game.startTime).toLocaleString() : 'Start time TBD'}
+        </Typography>
         {game.completed && (
           <Typography
             variant="body2"
@@ -98,6 +136,7 @@ export default function UserPicksGameCard({
       >
         <FormControlLabel
           value="away_team"
+          disabled={isLocked}
           control={<Radio />}
           label={
             <Typography
@@ -112,6 +151,7 @@ export default function UserPicksGameCard({
         />
         <FormControlLabel
           value="home_team"
+          disabled={isLocked}
           control={<Radio />}
           label={
             <Typography

@@ -60,6 +60,7 @@ export interface UserGameData {
   homePoints: number | null;
   awayPoints: number | null;
   winningTeam: Team;
+  startTime: Date | null;
   teamChosen: Team;
 }
 
@@ -93,6 +94,7 @@ export interface AdminGameData {
   homePoints: number | null;
   awayPoints: number | null;
   winningTeam: Team;
+  startTime: Date | null;
 }
 
 export interface AdminDbGameData extends AdminGameData {
