@@ -88,10 +88,8 @@ Resolved by the NCAA rethrow fix above. CFBD functions never had try/catch so th
 
 ---
 
-### `returnPickedGames` returning 404 vs empty list
-**File:** `packages/backend/src/routes/admin.ts:63–64`
-
-A 404 for "no picked games" is correct when used in the context of "this week hasn't been configured," but it conflates two different states: week doesn't exist vs. week exists but nothing is picked yet. The frontend has to handle both as the same error case.
+### ~~`returnPickedGames` returning 404 vs empty list~~ — FIXED
+`GET /user/games` now checks week existence via `returnWeekByQuery` first (404 if not found), then returns picked games as an empty array if none are picked yet.
 
 ---
 

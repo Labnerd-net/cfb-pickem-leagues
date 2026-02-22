@@ -1,7 +1,7 @@
 import { Hono } from 'hono';
 import { HTTPException } from 'hono/http-exception';
 import * as dbUserFunctions from '../db/dbUserFunctions.js';
-import { returnPickedGames, returnWeeksByYear, returnGame } from '../db/dbAdminFunctions.js';
+import { returnPickedGames, returnWeeksByYear, returnWeekByQuery, returnGame } from '../db/dbAdminFunctions.js';
 import type {
   AdminDbGameData,
   AdminWeekData,
@@ -64,9 +64,10 @@ const user = new Hono<{ Variables: Variables }>()
       throw new HTTPException(400, { message: 'year must be between 1900 and 2100' });
     if (isNaN(weekIdentifier.week) || weekIdentifier.week < 1 || weekIdentifier.week > 52)
       throw new HTTPException(400, { message: 'week must be between 1 and 52' });
+    const week = await returnWeekByQuery(weekIdentifier);
+    if (!week || week.length === 0)
+      throw new HTTPException(404, { message: 'Week not found' });
     const pickedGames: AdminDbGameData[] = await returnPickedGames(weekIdentifier);
-    if (!pickedGames || pickedGames.length === 0)
-      throw new HTTPException(404, { message: 'No picked games found for this week' });
     return c.json({ pickedGames });
   })
   // Set user game picks
