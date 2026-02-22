@@ -45,7 +45,7 @@ create a spec to have a new tab called users that is only seen by admin users.  
 ## Create pick deadline
 ### Done
 
-## Create notifications for users (email/signal?)
+## Create notifications for users (email/discord?)
 
 ## Implement leader board
 

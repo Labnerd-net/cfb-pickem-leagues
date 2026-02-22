@@ -86,17 +86,35 @@ NODE_ENV=test pnpm migrate
 4. **Middleware** (`src/utils/middleware.ts`) — JWT auth middleware and `requireRole()` guard.
 
 ### Auth Flow
-JWT-based. Tokens stored in localStorage on frontend, sent as `Authorization: Bearer` headers. First registered user is auto-assigned admin role.
+JWT-based. Token is set as an **httpOnly cookie** by the backend (`auth_token`). The frontend Hono RPC client is initialized with `credentials: 'include'` so the cookie is sent automatically. `AuthProvider` determines auth state on mount by calling `GET /api/auth/me`. First registered user is auto-assigned admin role.
+
+### Hono RPC Client
+The frontend uses Hono's typed RPC client for end-to-end type safety. The backend exports `AppType` from `src/index.ts`; the frontend imports it (via tsconfig path alias `@backend/index.js`) and constructs the client in `src/lib/api.ts`:
+
+```ts
+import { hc } from 'hono/client';
+import type { AppType } from '@backend/index.js';
+export const client = hc<AppType>(import.meta.env.VITE_API_URL, { init: { credentials: 'include' } });
+```
+
+All frontend API functions in `src/apis/` (`authRequests.ts`, `userRequests.ts`, `adminRequests.ts`) call through this client. **Do not use `fetch` directly in new API functions.**
 
 ### Key Conventions
-- Backend GET endpoints use query parameters (not JSON bodies) for `WeekIdData` (`?year=2024&week=1&seasonType=regular`).
-- Backend POST endpoints accept JSON bodies.
-- All API responses use `ok(data)` / `err(message, code)` wrappers from `src/utils/response.ts`.
-- Frontend API functions are organized by domain in `src/apis/` — `userRequests.ts` for user-accessible endpoints, `adminRequests.ts` for admin-only.
+- Backend GET endpoints use query parameters for week selection: `?year=2024&week=1&seasonType=regular`.
+- Backend POST/PATCH endpoints accept JSON bodies.
+- Route handlers respond with `c.json()` directly — there is no `ok()`/`err()` wrapper utility.
+- Route-level input validation uses `src/utils/zValidate.ts` with Zod schemas.
+- Frontend API functions are organized by domain in `src/apis/` — `authRequests.ts` for auth, `userRequests.ts` for user endpoints, `adminRequests.ts` for admin-only.
 
-### Database ID Strategy
-- **Week ID**: `year * 1000 + adjustment + weekNumber` (adjustment: 0=regular, 100=postseason, 900=other)
-- **User Game ID**: `gameId * 1000 + userId` (composite key encoding)
+### Database Key Strategy
+- **Weeks**: composite primary key `(year, weekNumber)` — no surrogate ID
+- **Games**: `serial` auto-increment `game_id`
+- **User picks** (`user.games`): composite primary key `(userId, gameId)` — picks-only join table; join with `admin.games` for game metadata
+
+### Specs and Plans
+
+- `_specs/` — feature specification files. Each spec describes requirements, edge cases, and acceptance criteria for a feature. New specs are created via the `/spec` slash command.
+- `_plans/` — implementation plan files paired with specs.
 
 ## Environment Variables
 
@@ -110,6 +128,7 @@ JWT_ALGORITHM=HS256
 JWT_EXPIRATION_DAYS=7
 DATA_SOURCE=ncaa          # or cfbd, sdv
 CFBD_API_KEY=<required if DATA_SOURCE=cfbd>
+NODE_ENV=production       # enables secure cookies
 ```
 
 Frontend: `VITE_API_URL=http://localhost:3000`
