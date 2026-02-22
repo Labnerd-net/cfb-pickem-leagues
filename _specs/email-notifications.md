@@ -92,3 +92,9 @@ The only real decision is the cron job deployment. A separate container is clean
 Resist the urge to build a full notification preferences UI in this pass. A simple PATCH endpoint is enough; a settings page can come later. Keep the email content plain text — HTML templates add time for minimal gain at this scale.
 
 The "week finalized" explicit admin action is the right call. Polling for all games complete is fragile and timing-dependent. The admin knows when the week is done.
+
+## Notes
+
+  - The cron deployment is the only real architectural decision — setInterval inside the API process is fine for v1 given your Dokploy setup, but a separate container is cleaner long-term.                                   
+  - The "week finalized" explicit admin action is worth thinking about before implementing — it adds a new concept (the finalized state) that touches the admin UI. You may want to spec the admin UI changes separately.        
+  - The spec leaves the cron-job hosting open — Dokploy can run a second service that does nothing but hit the cron endpoint on a schedule, which avoids any in-process scheduling entirely.
