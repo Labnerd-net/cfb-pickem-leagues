@@ -127,5 +127,5 @@ Added TOCTTOU test to `picks-deadline.test.ts`. Uses `vi.useFakeTimers()` and a 
 
 ---
 
-### API adapter error path is untested
-No tests confirm that a failed external API call results in an appropriate error response from the admin import endpoints.
+### ~~API adapter error path is untested~~ — FIXED
+Added tests to `adminGames.test.ts` confirming that a rejected `getGameData` returns 500 from `POST /admin/week`, and a rejected `getWeekData` returns 500 from `POST /admin/year/:year`. Also covers the empty-array case for `getWeekData` (200, no DB writes).

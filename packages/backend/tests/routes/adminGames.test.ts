@@ -11,7 +11,7 @@ vi.mock('../../src/api/index.js', () => ({
   getGameData: vi.fn(),
 }));
 
-import { getGameData } from '../../src/api/index.js';
+import { getGameData, getWeekData } from '../../src/api/index.js';
 
 const TEST_JWT_SECRET = 'test-secret-key-do-not-use-in-production';
 
@@ -172,5 +172,57 @@ describe('POST /api/admin/week', () => {
     expect(res.status).toBe(422);
     const body = await res.json();
     expect(body.error).toBeTruthy();
+  });
+
+  it('returns 500 when external API throws', async () => {
+    vi.mocked(getGameData).mockRejectedValue(new Error('NCAA API unavailable'));
+
+    const token = await makeAdminToken();
+    const res = await app.request('/api/admin/week', {
+      method: 'POST',
+      headers: {
+        Cookie: `auth_token=${token}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ year: 2024, week: 1 }),
+    });
+
+    expect(res.status).toBe(500);
+  });
+});
+
+describe('POST /api/admin/year/:year', () => {
+  beforeAll(async () => {
+    await seedTestData();
+  });
+
+  afterEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it('returns 500 when external API throws', async () => {
+    vi.mocked(getWeekData).mockRejectedValue(new Error('NCAA API unavailable'));
+
+    const token = await makeAdminToken();
+    const res = await app.request('/api/admin/year/2024', {
+      method: 'POST',
+      headers: { Cookie: `auth_token=${token}` },
+    });
+
+    expect(res.status).toBe(500);
+  });
+
+  it('returns 200 with no DB writes when external API returns empty array', async () => {
+    vi.mocked(getWeekData).mockResolvedValue([]);
+
+    const token = await makeAdminToken();
+    const res = await app.request('/api/admin/year/2024', {
+      method: 'POST',
+      headers: { Cookie: `auth_token=${token}` },
+    });
+
+    expect(res.status).toBe(200);
+    const body = await res.json();
+    expect(body.status).toBe('added all weeks');
   });
 });
