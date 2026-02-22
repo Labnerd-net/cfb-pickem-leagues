@@ -3,14 +3,10 @@ import { HTTPException } from 'hono/http-exception';
 import * as dbAdminFunctions from '../db/dbAdminFunctions.js';
 import { returnUsers } from '../db/dbUserFunctions.js';
 import { getGameData, getWeekData } from '../api/index.js';
-import type {
-  JwtData,
-  ProfileData,
-  WeekIdentifier,
-  PickedGamesRequest,
-} from '@shared/types/cfb-pickem-api.js';
+import type { JwtData, ProfileData, WeekIdentifier } from '@shared/types/cfb-pickem-api.js';
 import { authMiddleware, requireRole } from '../utils/middleware.js';
 import { apiRateLimit } from '../utils/rateLimiter.js';
+import { weekIdentifierValidator, pickedGameRequestValidator } from '../utils/zValidate.js';
 
 type Variables = {
   jwtPayload: JwtData;
@@ -43,8 +39,8 @@ const admin = new Hono<{ Variables: Variables }>()
     return c.json({ weeks });
   })
   // Add Games to Week
-  .post('/week', apiRateLimit, authMiddleware, requireRole('admin'), async c => {
-    const weekIdentifier: WeekIdentifier = await c.req.json();
+  .post('/week', apiRateLimit, weekIdentifierValidator, authMiddleware, requireRole('admin'), async c => {
+    const weekIdentifier = c.req.valid('json');
     const weekQuery = await dbAdminFunctions.enrichWeekIdentifier(weekIdentifier);
     const gameData = await getGameData(weekQuery);
     if (!gameData?.length) {
@@ -69,8 +65,8 @@ const admin = new Hono<{ Variables: Variables }>()
     return c.json({ weekGames });
   })
   // Set picked games
-  .post('/picks', apiRateLimit, authMiddleware, requireRole('admin'), async c => {
-    const pickedData: PickedGamesRequest = await c.req.json();
+  .post('/picks', apiRateLimit, pickedGameRequestValidator, authMiddleware, requireRole('admin'), async c => {
+    const pickedData = c.req.valid('json');
     await dbAdminFunctions.setPickedGames(pickedData);
     return c.json({ status: 'updated picked games' });
   });

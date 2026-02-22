@@ -32,10 +32,8 @@ All week parameters now use `isNaN(week) || week < 1 || week > 52` bounds checks
 
 ## Validation Gaps
 
-### Pick values are not validated against allowed enum
-**File:** `packages/backend/src/routes/user.ts:70`
-
-`pick.pick` is passed straight to the database without checking it is `"home_team"` or `"away_team"`. The Zod schema for `AllUserGamePicksRequest` in shared types should be enforcing this — verify the zValidate middleware is actually applied to this route and the schema covers the `pick` field.
+### ~~Pick values are not validated against allowed enum~~ — FIXED
+`allUserPickedRequestValidator` (Zod) is now applied to `POST /user/picks`. It validates `pick` against `z.enum(['home_team', 'away_team'])` and ensures `game` is a number. Also corrected the route's body type from `AllUserGamePicks` to `AllUserGamePicksRequest` to match what the frontend actually sends.
 
 ---
 

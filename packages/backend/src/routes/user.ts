@@ -5,7 +5,7 @@ import { returnPickedGames, returnWeeksByYear, returnGame } from '../db/dbAdminF
 import type {
   AdminDbGameData,
   AdminWeekData,
-  AllUserGamePicks,
+  AllUserGamePicksRequest,
   JwtData,
   ProfileData,
   WeekIdentifier,
@@ -13,6 +13,7 @@ import type {
 import { authMiddleware } from '../utils/middleware.js';
 import { ignorePickDeadline } from '../utils/envVars.js';
 import { apiRateLimit } from '../utils/rateLimiter.js';
+import { allUserPickedRequestValidator } from '../utils/zValidate.js';
 
 type Variables = {
   jwtPayload: JwtData;
@@ -69,10 +70,10 @@ const user = new Hono<{ Variables: Variables }>()
     return c.json({ pickedGames });
   })
   // Set user game picks
-  .post('/picks', apiRateLimit, authMiddleware, async c => {
+  .post('/picks', apiRateLimit, allUserPickedRequestValidator, authMiddleware, async c => {
     const payload = c.get('jwtPayload');
     const userIdString = String(payload.sub);
-    const userPicks: AllUserGamePicks = await c.req.json();
+    const userPicks: AllUserGamePicksRequest = c.req.valid('json');
 
     if (!ignorePickDeadline) {
       const now = new Date();
