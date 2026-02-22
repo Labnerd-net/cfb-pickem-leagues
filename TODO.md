@@ -6,11 +6,6 @@ Roughly priority-ordered within each section.
 
 ## Bugs
 
-### External API failures return 500 with no detail
-When `getGameData` or `getWeekData` throws, the route returns a generic 500 "An unexpected error occurred" with no context about which external API failed or why. Admin sees no actionable information.
-
----
-
 ## Validation Gaps
 
 _(none currently open)_

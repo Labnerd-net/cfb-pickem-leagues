@@ -24,7 +24,13 @@ const admin = new Hono<{ Variables: Variables }>()
     const yearNumber = Number(c.req.param('year'));
     if (isNaN(yearNumber) || yearNumber < 1900 || yearNumber > 2100)
       throw new HTTPException(400, { message: 'year must be between 1900 and 2100' });
-    const weekData = await getWeekData(yearNumber);
+    let weekData;
+    try {
+      weekData = await getWeekData(yearNumber);
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : String(e);
+      throw new HTTPException(502, { message: `External API error: ${msg}` });
+    }
     if (weekData?.length) {
       await Promise.all(weekData.map(week => dbAdminFunctions.addWeek(week)));
     }
@@ -42,7 +48,13 @@ const admin = new Hono<{ Variables: Variables }>()
   .post('/week', apiRateLimit, weekIdentifierValidator, authMiddleware, requireRole('admin'), async c => {
     const weekIdentifier = c.req.valid('json');
     const weekQuery = await dbAdminFunctions.enrichWeekIdentifier(weekIdentifier);
-    const gameData = await getGameData(weekQuery);
+    let gameData;
+    try {
+      gameData = await getGameData(weekQuery);
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : String(e);
+      throw new HTTPException(502, { message: `External API error: ${msg}` });
+    }
     if (!gameData?.length) {
       throw new HTTPException(422, {
         message: 'No games returned from external API for this week',

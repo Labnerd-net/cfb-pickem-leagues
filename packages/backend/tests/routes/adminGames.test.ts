@@ -174,7 +174,7 @@ describe('POST /api/admin/week', () => {
     expect(body.error).toBeTruthy();
   });
 
-  it('returns 500 when external API throws', async () => {
+  it('returns 502 with error detail when external API throws', async () => {
     vi.mocked(getGameData).mockRejectedValue(new Error('NCAA API unavailable'));
 
     const token = await makeAdminToken();
@@ -187,7 +187,9 @@ describe('POST /api/admin/week', () => {
       body: JSON.stringify({ year: 2024, week: 1 }),
     });
 
-    expect(res.status).toBe(500);
+    expect(res.status).toBe(502);
+    const body = await res.json();
+    expect(body.error).toContain('NCAA API unavailable');
   });
 });
 
@@ -200,7 +202,7 @@ describe('POST /api/admin/year/:year', () => {
     vi.clearAllMocks();
   });
 
-  it('returns 500 when external API throws', async () => {
+  it('returns 502 with error detail when external API throws', async () => {
     vi.mocked(getWeekData).mockRejectedValue(new Error('NCAA API unavailable'));
 
     const token = await makeAdminToken();
@@ -209,7 +211,9 @@ describe('POST /api/admin/year/:year', () => {
       headers: { Cookie: `auth_token=${token}` },
     });
 
-    expect(res.status).toBe(500);
+    expect(res.status).toBe(502);
+    const body = await res.json();
+    expect(body.error).toContain('NCAA API unavailable');
   });
 
   it('returns 200 with no DB writes when external API returns empty array', async () => {
