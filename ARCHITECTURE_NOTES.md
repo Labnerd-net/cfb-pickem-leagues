@@ -32,7 +32,7 @@ Postgres is the only supported database. The codebase is committed to a single d
 
 The manual fetch functions in `src/apis/` mean every component manages its own loading/error/refetch state. TanStack Query handles caching, background refetch (useful for score updates), optimistic updates on picks, and deduplication. Highest-leverage frontend change.
 
-### 7. Side-effect GET routes
+### 7. Side-effect GET routes -- Done
 
 `GET /admin/games` silently fetches from the external API and writes to the DB if no games exist. GETs should be idempotent. Split fetch-and-store into an explicit POST action. Reads that cause writes make debugging harder.
 
