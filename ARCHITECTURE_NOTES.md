@@ -36,9 +36,9 @@ The manual fetch functions in `src/apis/` mean every component manages its own l
 
 `GET /admin/games` silently fetches from the external API and writes to the DB if no games exist. GETs should be idempotent. Split fetch-and-store into an explicit POST action. Reads that cause writes make debugging harder.
 
-### 8. No pick deadline enforcement
+### 8. No pick deadline enforcement -- Done
 
-Nothing prevents a user from making or changing a pick after a game has kicked off. Game start times need to be in the schema, and the pick submission endpoint needs to enforce the deadline.
+`start_time` added to `admin.games`. All three API adapters (NCAA, CFBD, SDV) populate it on import. `POST /picks` enforces the deadline server-side — 422 if `now >= startTime` or `startTime` is null. `PICKS_IGNORE_DEADLINE=true` bypasses enforcement for off-season testing. Frontend derives locked state client-side from `startTime` and shows a LOCKED chip with disabled radios.
 
 ---
 
