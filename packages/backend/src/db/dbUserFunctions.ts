@@ -41,11 +41,10 @@ export async function returnUserByEmail(email: string): Promise<UserDbData[]> {
 // ------------------------------------------------------------------
 // Return user by Id
 // ------------------------------------------------------------------
-export async function returnUserById(userId: string): Promise<UserDbData[]> {
+export async function returnUserById(userId: number): Promise<UserDbData[]> {
   logger.debug({ userId }, 'returnUserById');
   try {
-    const userIdNumber = Number(userId);
-    return await db.select().from(users).where(eq(users.userId, userIdNumber));
+    return await db.select().from(users).where(eq(users.userId, userId));
   } catch (e) {
     logger.error({ err: e }, 'returnUserById failed');
     throw e;
@@ -67,7 +66,7 @@ export async function addUser(user: UserData) {
         roles: user.roles,
       })
       .returning({
-        id: users.userId,
+        userId: users.userId,
         email: users.email,
         displayName: users.displayName,
         roles: users.roles,
@@ -81,11 +80,10 @@ export async function addUser(user: UserData) {
 // ------------------------------------------------------------------
 // Delete user by Id
 // ------------------------------------------------------------------
-export async function deleteUserById(userId: string) {
+export async function deleteUserById(userId: number) {
   logger.debug({ userId }, 'deleteUserById');
   try {
-    const userIdNumber = Number(userId);
-    return await db.delete(users).where(eq(users.userId, userIdNumber));
+    return await db.delete(users).where(eq(users.userId, userId));
   } catch (e) {
     logger.error({ err: e }, 'deleteUserById failed');
     throw e;

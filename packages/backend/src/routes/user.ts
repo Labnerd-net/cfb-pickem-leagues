@@ -21,8 +21,7 @@ const user = new Hono<{ Variables: Variables }>()
   // Show user info
   .get('/profile', authMiddleware, async c => {
     const payload = c.get('jwtPayload');
-    const userIdString = String(payload.sub);
-    const userData = await dbUserFunctions.returnUserById(userIdString);
+    const userData = await dbUserFunctions.returnUserById(payload.sub);
     if (!userData || userData.length !== 1)
       throw new HTTPException(404, { message: 'User not found' });
     const profile: ProfileData = userData[0];

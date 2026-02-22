@@ -122,10 +122,8 @@ Removed. See bug entry above.
 
 ---
 
-### User ID handling inconsistency
-**File:** `packages/backend/src/routes/auth.ts`
-
-`addUser` returns `result[0].id`, while `returnUserByEmail` returns a row with `.userId`. Field names diverge between insert returning clause and select. Standardize to one name in the DB layer.
+### ~~User ID handling inconsistency~~ — FIXED
+`addUser` returning clause now uses `userId` consistently. `returnUserById` and `deleteUserById` changed from `string` to `number` parameters, eliminating the redundant `String()`/`Number()` conversions in callers.
 
 ---
 

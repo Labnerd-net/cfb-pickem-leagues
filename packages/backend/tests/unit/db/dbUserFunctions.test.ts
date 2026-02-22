@@ -47,7 +47,7 @@ describe('User Database Functions', () => {
 
 	describe('returnUserById', () => {
 		it('should return user when ID exists', async () => {
-			const users = await returnUserById('1');
+			const users = await returnUserById(1);
 
 			expect(users).toBeDefined();
 			expect(Array.isArray(users)).toBe(true);
@@ -57,7 +57,7 @@ describe('User Database Functions', () => {
 		});
 
 		it('should return empty array when ID does not exist', async () => {
-			const users = await returnUserById('999');
+			const users = await returnUserById(999);
 
 			expect(Array.isArray(users)).toBe(true);
 			expect(users.length).toBe(0);

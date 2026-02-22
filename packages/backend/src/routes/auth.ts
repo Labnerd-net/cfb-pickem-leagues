@@ -61,7 +61,7 @@ const auth = new Hono<{ Variables: Variables }>()
       throw new Error(`Could not add new user with email=${email}`);
     }
     const payload = {
-      sub: result[0].id,
+      sub: result[0].userId,
       email: result[0].email,
       displayName: result[0].displayName,
       roles: result[0].roles,
@@ -110,11 +110,10 @@ const auth = new Hono<{ Variables: Variables }>()
   // Delete a user by ID
   .delete('/deleteUser', authMiddleware, async c => {
     const payload = c.get('jwtPayload');
-    const userIdNumber = String(payload.sub);
-    const user = await dbUserFunctions.returnUserById(userIdNumber);
+    const user = await dbUserFunctions.returnUserById(payload.sub);
     if (!user || user.length === 0)
       throw new HTTPException(404, { message: 'User not found' });
-    const returnValue = await dbUserFunctions.deleteUserById(userIdNumber);
+    const returnValue = await dbUserFunctions.deleteUserById(payload.sub);
     if (!returnValue) throw new HTTPException(404, { message: 'User not found' });
     return c.json({ status: 'deleted' });
   });
