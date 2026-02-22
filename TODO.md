@@ -83,8 +83,8 @@ This is a core feature of a pick'em game. Without it, there's no way to determin
 
 ## Error Handling
 
-### API adapter errors don't propagate to the route layer
-Related to the silent failure bug above, but broader: none of the API adapter functions (`getNcaaScoreboard`, `getNcaaSchedule`, `getCfbdGameData`, etc.) rethrow on failure. The route handlers have no way to distinguish "API returned empty week" from "API call failed."
+### ~~API adapter errors don't propagate to the route layer~~ — FIXED
+Resolved by the NCAA rethrow fix above. CFBD functions never had try/catch so they already propagated. All adapter errors now surface as 500s at the route layer.
 
 ---
 
