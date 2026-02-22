@@ -67,6 +67,8 @@ const admin = new Hono<{ Variables: Variables }>()
   // Set picked games
   .post('/picks', apiRateLimit, pickedGameRequestValidator, authMiddleware, requireRole('admin'), async c => {
     const pickedData = c.req.valid('json');
+    if (pickedData.games.length === 0)
+      throw new HTTPException(422, { message: 'games array must not be empty' });
     await dbAdminFunctions.setPickedGames(pickedData);
     return c.json({ status: 'updated picked games' });
   });

@@ -42,10 +42,8 @@ All week parameters now use `isNaN(week) || week < 1 || week > 52` bounds checks
 
 ---
 
-### `setPickedGames` accepts an empty games array
-**File:** `packages/backend/src/routes/admin.ts:67–70`
-
-No guard against an empty array, which would clear all picked games for the week with no confirmation. Return a 422 if `pickedGames.games.length === 0`, or add an explicit "clear all" endpoint that requires deliberate action.
+### ~~`setPickedGames` accepts an empty games array~~ — FIXED
+`POST /admin/picks` now returns 422 if `games` is empty.
 
 ---
 
