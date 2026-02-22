@@ -16,7 +16,7 @@ export async function getNcaaScoreboard(
   try {
     // path = fbs/2025/01/all-conf
     const weekTwoDigits = String(query.week).padStart(2, '0');
-    const path = `${classification}/${query.year}/${weekTwoDigits}/all‑conf`;
+    const path = `${classification}/${query.year}/${weekTwoDigits}/all-conf`;
     const url = `${ncaaAPI}/scoreboard/${sport}/${path}`;
     logger.debug({ url }, 'NCAA scoreboard request');
     const response = await axios.get<NcaaScoreboardOutput>(url);

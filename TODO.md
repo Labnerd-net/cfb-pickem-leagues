@@ -120,14 +120,8 @@ Consider:
 
 ---
 
-### `ncaa-api.ts` URL contains a non-breaking hyphen
-**File:** `packages/backend/src/api/ncaa-api.ts:19`
-
-```ts
-const path = `${classification}/${query.year}/${weekTwoDigits}/all‑conf`;
-```
-
-The hyphen in `all‑conf` appears to be a Unicode non-breaking hyphen (U+2011), not an ASCII hyphen. This will cause 404s from the NCAA API. Verify this character is correct.
+### ~~`ncaa-api.ts` URL contains a non-breaking hyphen~~ — FIXED
+Replaced U+2011 non-breaking hyphen in `all‑conf` with ASCII hyphen (U+002D).
 
 ---
 
