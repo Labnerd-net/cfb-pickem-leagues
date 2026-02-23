@@ -192,26 +192,28 @@ export async function returnGame(game: number): Promise<AdminDbGameData[]> {
 export async function setPickedGames(pickedGames: PickedGamesRequest): Promise<void> {
   logger.debug({ count: pickedGames.games.length }, 'setPickedGame');
   try {
-    await db
-      .update(adminGames)
-      .set({ picked: true })
-      .where(
-        and(
-          inArray(adminGames.gameId, pickedGames.games),
-          eq(adminGames.weekNumber, pickedGames.week),
-          eq(adminGames.year, pickedGames.year)
-        )
-      );
-    await db
-      .update(adminGames)
-      .set({ picked: false })
-      .where(
-        and(
-          notInArray(adminGames.gameId, pickedGames.games),
-          eq(adminGames.weekNumber, pickedGames.week),
-          eq(adminGames.year, pickedGames.year)
-        )
-      );
+    await db.transaction(async tx => {
+      await tx
+        .update(adminGames)
+        .set({ picked: true })
+        .where(
+          and(
+            inArray(adminGames.gameId, pickedGames.games),
+            eq(adminGames.weekNumber, pickedGames.week),
+            eq(adminGames.year, pickedGames.year)
+          )
+        );
+      await tx
+        .update(adminGames)
+        .set({ picked: false })
+        .where(
+          and(
+            notInArray(adminGames.gameId, pickedGames.games),
+            eq(adminGames.weekNumber, pickedGames.week),
+            eq(adminGames.year, pickedGames.year)
+          )
+        );
+    });
   } catch (e) {
     logger.error({ err: e }, 'setPickedGame failed');
     throw e;

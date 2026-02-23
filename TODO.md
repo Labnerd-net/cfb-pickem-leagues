@@ -10,10 +10,9 @@ Roughly priority-ordered within each section.
 
 Deadline checks now run in a separate pre-pass over all picks before any DB writes begin. A locked game in the middle of the list no longer silently saves the picks that preceded it.
 
-### `setPickedGames` two-statement update is not atomic
-**File:** `packages/backend/src/db/dbAdminFunctions.ts:195-214`
+### ~~`setPickedGames` two-statement update is not atomic~~ ✓ Fixed
 
-`picked = true` and `picked = false` are two separate `UPDATE` statements with no transaction. If the second fails, picked games are partially updated and the "unmark others" step is lost. Needs `db.transaction(...)`.
+Both `UPDATE` statements are now wrapped in `db.transaction()`. If either fails, the whole operation rolls back.
 
 ### Frontend never fetches upcoming season's weeks (pre-season data invisible)
 **File:** `packages/frontend/src/components/user/UserPicksSection.tsx`
