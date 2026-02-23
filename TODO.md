@@ -30,21 +30,6 @@ Nothing from this spec exists in the codebase: no Resend integration, no `notifi
 
 ---
 
-### No leaderboard or scoring endpoints
-No endpoint exists for:
-- Viewing pick results for a week (which users got which games right)
-- A per-user score/record across the season
-- Any kind of standings/leaderboard
-
-This is a core feature of a pick'em game. Without it, there's no way to determine a winner.
-
----
-
-### No way for a user to view their pick history across weeks
-`GET /user/picks` requires explicit `year`/`week` parameters. There is no summary endpoint showing a user's record or history.
-
----
-
 ## Error Handling
 
 ## Code Quality / Tech Debt
