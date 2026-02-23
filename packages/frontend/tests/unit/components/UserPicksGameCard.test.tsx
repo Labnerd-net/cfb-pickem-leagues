@@ -41,6 +41,8 @@ describe('UserPicksGameCard', () => {
   });
 
   it('renders disabled radios and LOCKED badge when startTime is in the past', () => {
+    const original = import.meta.env.VITE_IGNORE_PICK_DEADLINE;
+    import.meta.env.VITE_IGNORE_PICK_DEADLINE = 'false';
     const pastTime = new Date(Date.now() - 60 * 60 * 1000);
     render(
       <UserPicksGameCard
@@ -51,6 +53,7 @@ describe('UserPicksGameCard', () => {
     const radios = screen.getAllByRole('radio');
     radios.forEach(r => expect(r).toBeDisabled());
     expect(screen.getByText('LOCKED')).toBeInTheDocument();
+    import.meta.env.VITE_IGNORE_PICK_DEADLINE = original;
   });
 
   it('displays formatted start time when startTime is set', () => {
