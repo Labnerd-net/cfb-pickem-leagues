@@ -71,7 +71,7 @@ export async function getGameData(
       let winningTeam: Team = 'pending';
       let homePoints: number | null = null;
       let awayPoints: number | null = null;
-      if (game.completed && game.homePoints && game.awayPoints) {
+      if (game.completed && game.homePoints != null && game.awayPoints != null) {
         homePoints = game.homePoints;
         awayPoints = game.awayPoints;
         if (homePoints > awayPoints) winningTeam = 'home_team';

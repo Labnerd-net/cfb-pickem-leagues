@@ -109,6 +109,64 @@ describe('API Converters', () => {
 		});
 	});
 
+	describe('getGameData - CFBD', () => {
+		it('should correctly determine winner when one team scores 0 (shutout)', async () => {
+			vi.resetModules();
+			vi.doMock('../../../src/utils/envVars.js', () => ({
+				dataSource: 'cfbd',
+			}));
+
+			const { getCfbdGameData } = await import('../../../src/api/cfbd.js');
+			vi.mocked(getCfbdGameData).mockResolvedValue([
+				{
+					id: 1,
+					completed: true,
+					homeTeam: 'Alabama',
+					awayTeam: 'Vanderbilt',
+					homePoints: 42,
+					awayPoints: 0,
+					startDate: '2025-09-06T17:00:00.000Z',
+				} as any,
+			]);
+
+			const { getGameData } = await import('../../../src/api/index.js');
+			const games = await getGameData({ year: 2025, week: 2, seasonType: 'regular' });
+
+			expect(games).toHaveLength(1);
+			expect(games[0].winningTeam).toBe('home_team');
+			expect(games[0].homePoints).toBe(42);
+			expect(games[0].awayPoints).toBe(0);
+		});
+
+		it('should leave winningTeam as pending for incomplete games', async () => {
+			vi.resetModules();
+			vi.doMock('../../../src/utils/envVars.js', () => ({
+				dataSource: 'cfbd',
+			}));
+
+			const { getCfbdGameData } = await import('../../../src/api/cfbd.js');
+			vi.mocked(getCfbdGameData).mockResolvedValue([
+				{
+					id: 2,
+					completed: false,
+					homeTeam: 'Ohio St.',
+					awayTeam: 'Michigan',
+					homePoints: null,
+					awayPoints: null,
+					startDate: '2025-11-29T19:00:00.000Z',
+				} as any,
+			]);
+
+			const { getGameData } = await import('../../../src/api/index.js');
+			const games = await getGameData({ year: 2025, week: 14, seasonType: 'regular' });
+
+			expect(games).toHaveLength(1);
+			expect(games[0].winningTeam).toBe('pending');
+			expect(games[0].homePoints).toBeNull();
+			expect(games[0].awayPoints).toBeNull();
+		});
+	});
+
 	describe('shared type contracts', () => {
 		it('AdminWeekData should not have weekId property', () => {
 			const week: AdminWeekData = {
