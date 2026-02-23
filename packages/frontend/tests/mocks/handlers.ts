@@ -4,6 +4,13 @@ const API_URL = 'http://localhost:3000';
 
 export const handlers = [
 	// Auth endpoints
+	http.get(`${API_URL}/api/auth/me`, () => {
+		return HttpResponse.json(
+			{ error: 'Unauthorized' },
+			{ status: 401 },
+		);
+	}),
+
 	http.post(`${API_URL}/api/auth/login`, () => {
 		return HttpResponse.json({});
 	}),
@@ -80,6 +87,23 @@ export const handlers = [
 
 	http.post(`${API_URL}/api/admin/picks`, () => {
 		return HttpResponse.json({ status: 'updated picked games' });
+	}),
+
+	// Leaderboard endpoints
+	http.get(`${API_URL}/api/leaderboard`, () => {
+		return HttpResponse.json({
+			leaderboard: [
+				{
+					userId: 1,
+					displayName: 'Test User',
+					total: 10,
+					correct: 7,
+					incorrect: 3,
+					pending: 0,
+					percentage: 0.7,
+				},
+			],
+		});
 	}),
 
 	http.get(`${API_URL}/api/admin/users`, () => {

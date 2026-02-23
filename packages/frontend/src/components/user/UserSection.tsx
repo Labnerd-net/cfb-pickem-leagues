@@ -4,6 +4,7 @@ import SportsFootballIcon from '@mui/icons-material/SportsFootball';
 import LeaderboardIcon from '@mui/icons-material/Leaderboard';
 import CalendarMonthIcon from '@mui/icons-material/CalendarMonth';
 import UserPicksSection from './UserPicksSection';
+import LeaderboardSection from './LeaderboardSection';
 
 export default function UserSection() {
   return (
@@ -35,15 +36,7 @@ export default function UserSection() {
         title="Leaderboard"
         accentColor="secondary"
       >
-        <Typography
-          sx={{
-            fontFamily: '"Work Sans", sans-serif',
-            color: 'text.secondary',
-            fontStyle: 'italic',
-          }}
-        >
-          Coming soon...
-        </Typography>
+        <LeaderboardSection />
       </DashboardCard>
 
       <DashboardCard
