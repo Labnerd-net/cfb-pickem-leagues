@@ -63,10 +63,9 @@ Added shared `yearSchema` (int, 1900–2100) and `weekSchema` (int, 1–52) cons
 
 ## Tests
 
-### No tests for `returnLeaderboard` — most complex SQL in the codebase
-**File:** `packages/backend/src/db/dbUserFunctions.ts:180`
+### ~~No tests for `returnLeaderboard` — most complex SQL in the codebase~~ ✓ Fixed
 
-The leaderboard query involves multi-table left joins and conditional aggregation. No test coverage despite being core to the game's scoring. Should cover: correct/incorrect/pending counts, percentage calculation, user with zero picks, tie in rankings.
+Six tests added to `dbUserFunctions.test.ts` covering: correct/incorrect/pending counts, percentage calculation, null percentage for zero-pick users, descending sort on correct count, year isolation, and empty-year behavior.
 
 ### ~~No tests for `weekCalculation.ts`~~ ✓ Fixed in PR #23
 

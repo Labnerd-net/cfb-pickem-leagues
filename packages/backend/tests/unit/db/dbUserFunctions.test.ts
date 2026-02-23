@@ -1,12 +1,13 @@
 import { describe, it, expect, beforeAll, afterEach } from 'vitest';
 import { sql } from 'drizzle-orm';
-import { seedTestData, createTestWeek, createTestGame, cleanDatabase } from '../../db-utils.js';
+import { seedTestData, createTestWeek, createTestGame, createTestUser, cleanDatabase } from '../../db-utils.js';
 import {
 	returnUsers,
 	returnUserByEmail,
 	returnUserById,
 	addPickedGame,
 	returnUserGames,
+	returnLeaderboard,
 } from '../../../src/db/dbUserFunctions.js';
 import { db } from '../../../src/db/index.js';
 
@@ -169,6 +170,128 @@ describe('User Database Functions', () => {
 
 			expect(Array.isArray(picks)).toBe(true);
 			expect(picks.length).toBe(0);
+		});
+	});
+
+	describe('returnLeaderboard', () => {
+		afterEach(async () => {
+			await cleanDatabase();
+			await seedTestData();
+		});
+
+		it('returns correct/incorrect/pending counts for a user with picks', async () => {
+			await createTestWeek(1, 2024, 'regular');
+			const g1 = await createTestGame(1, 2024, 'Home A', 'Away A', true, true);
+			const g2 = await createTestGame(1, 2024, 'Home B', 'Away B', true, true);
+			const g3 = await createTestGame(1, 2024, 'Home C', 'Away C', true, false);
+			const id1 = (g1 as { game_id: number }).game_id;
+			const id2 = (g2 as { game_id: number }).game_id;
+			const id3 = (g3 as { game_id: number }).game_id;
+
+			// Mark g1 home wins, g2 away wins, g3 still pending
+			await db.execute(sql`UPDATE "admin"."games" SET winning_team = 'home_team' WHERE game_id = ${id1}`);
+			await db.execute(sql`UPDATE "admin"."games" SET winning_team = 'away_team' WHERE game_id = ${id2}`);
+
+			// User 1: correct on g1, incorrect on g2, pending on g3
+			await addPickedGame({ game: id1, pick: 'home_team' }, '1');
+			await addPickedGame({ game: id2, pick: 'home_team' }, '1');
+			await addPickedGame({ game: id3, pick: 'home_team' }, '1');
+
+			const entries = await returnLeaderboard(2024);
+			const user1 = entries.find(e => e.userId === 1)!;
+
+			expect(user1.correct).toBe(1);
+			expect(user1.incorrect).toBe(1);
+			expect(user1.pending).toBe(1);
+			expect(user1.total).toBe(3);
+		});
+
+		it('calculates percentage correctly', async () => {
+			await createTestWeek(1, 2024, 'regular');
+			const g1 = await createTestGame(1, 2024, 'Home A', 'Away A', true, true);
+			const g2 = await createTestGame(1, 2024, 'Home B', 'Away B', true, true);
+			const id1 = (g1 as { game_id: number }).game_id;
+			const id2 = (g2 as { game_id: number }).game_id;
+
+			await db.execute(sql`UPDATE "admin"."games" SET winning_team = 'home_team' WHERE game_id = ${id1}`);
+			await db.execute(sql`UPDATE "admin"."games" SET winning_team = 'home_team' WHERE game_id = ${id2}`);
+
+			// User 1: 1 correct out of 2 total (50%)
+			await addPickedGame({ game: id1, pick: 'home_team' }, '1');
+			await addPickedGame({ game: id2, pick: 'away_team' }, '1');
+
+			const entries = await returnLeaderboard(2024);
+			const user1 = entries.find(e => e.userId === 1)!;
+
+			expect(user1.percentage).toBeCloseTo(0.5);
+		});
+
+		it('returns null percentage for user with zero picks', async () => {
+			// User 2 has no picks — still appears due to LEFT JOIN
+			const entries = await returnLeaderboard(2024);
+			const user2 = entries.find(e => e.userId === 2)!;
+
+			expect(user2).toBeDefined();
+			expect(user2.total).toBe(0);
+			expect(user2.correct).toBe(0);
+			expect(user2.percentage).toBeNull();
+		});
+
+		it('orders tied users by correct count descending', async () => {
+			await createTestWeek(1, 2024, 'regular');
+			const g1 = await createTestGame(1, 2024, 'Home A', 'Away A', true, true);
+			const g2 = await createTestGame(1, 2024, 'Home B', 'Away B', true, true);
+			const id1 = (g1 as { game_id: number }).game_id;
+			const id2 = (g2 as { game_id: number }).game_id;
+
+			await db.execute(sql`UPDATE "admin"."games" SET winning_team = 'home_team' WHERE game_id = ${id1}`);
+			await db.execute(sql`UPDATE "admin"."games" SET winning_team = 'home_team' WHERE game_id = ${id2}`);
+
+			// User 1: 2 correct; User 2: 1 correct — user 1 should rank first
+			await addPickedGame({ game: id1, pick: 'home_team' }, '1');
+			await addPickedGame({ game: id2, pick: 'home_team' }, '1');
+			await addPickedGame({ game: id1, pick: 'home_team' }, '2');
+			await addPickedGame({ game: id2, pick: 'away_team' }, '2');
+
+			const entries = await returnLeaderboard(2024);
+
+			expect(entries[0].userId).toBe(1);
+			expect(entries[0].correct).toBe(2);
+			expect(entries[1].userId).toBe(2);
+			expect(entries[1].correct).toBe(1);
+		});
+
+		it('returns empty array for a year with no data', async () => {
+			const entries = await returnLeaderboard(1999);
+
+			// All users appear (LEFT JOIN) but with zero picks
+			entries.forEach(e => {
+				expect(e.total).toBe(0);
+				expect(e.percentage).toBeNull();
+			});
+		});
+
+		it('does not include picks from other years', async () => {
+			await createTestWeek(1, 2024, 'regular');
+			await createTestWeek(1, 2025, 'regular');
+			const g2024 = await createTestGame(1, 2024, 'Home A', 'Away A', true, true);
+			const g2025 = await createTestGame(1, 2025, 'Home B', 'Away B', true, true);
+			const id2024 = (g2024 as { game_id: number }).game_id;
+			const id2025 = (g2025 as { game_id: number }).game_id;
+
+			await db.execute(sql`UPDATE "admin"."games" SET winning_team = 'home_team' WHERE game_id = ${id2024}`);
+			await db.execute(sql`UPDATE "admin"."games" SET winning_team = 'home_team' WHERE game_id = ${id2025}`);
+
+			// User 1 picks correctly in both years
+			await addPickedGame({ game: id2024, pick: 'home_team' }, '1');
+			await addPickedGame({ game: id2025, pick: 'home_team' }, '1');
+
+			const entries2024 = await returnLeaderboard(2024);
+			const user1in2024 = entries2024.find(e => e.userId === 1)!;
+
+			// Only the 2024 pick should count
+			expect(user1in2024.total).toBe(1);
+			expect(user1in2024.correct).toBe(1);
 		});
 	});
 });
