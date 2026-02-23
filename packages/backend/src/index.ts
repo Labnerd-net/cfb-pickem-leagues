@@ -7,6 +7,7 @@ import { clientURLs, serverPort, dataSource } from './utils/envVars.js';
 import authRoutes from './routes/auth.js';
 import adminRoutes from './routes/admin.js';
 import userRoutes from './routes/user.js';
+import leaderboardRoutes from './routes/leaderboard.js';
 import { logger } from './utils/middleware.js';
 import pinoLogger from './utils/logger.js';
 
@@ -34,7 +35,8 @@ app.get('/health', c => c.json({ status: 'UP' }));
 const routes = new Hono()
   .route('/api/auth', authRoutes)
   .route('/api/admin', adminRoutes)
-  .route('/api/user', userRoutes);
+  .route('/api/user', userRoutes)
+  .route('/api/leaderboard', leaderboardRoutes);
 
 app.route('', routes);
 

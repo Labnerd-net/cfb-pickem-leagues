@@ -144,3 +144,22 @@ export interface UserPickHistoryEntry {
 export interface UserPickHistoryResponse {
   history: UserPickHistoryEntry[];
 }
+
+export interface LeaderboardEntry {
+  userId: number;
+  displayName: string;
+  total: number;
+  correct: number;
+  incorrect: number;
+  pending: number;
+  percentage: number | null; // null when total === 0
+}
+
+export interface WeekScoresEntry {
+  userId: number;
+  displayName: string;
+  total: number;
+  correct: number;
+  incorrect: number;
+  pending: number;
+}
