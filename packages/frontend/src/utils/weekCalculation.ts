@@ -5,6 +5,19 @@ export interface CurrentWeek {
   week: number;
 }
 
+// VITE_SEASON_ROLLOVER_MONTH: 1-based month (e.g. 3 = March). Converted to 0-based for JS Date.
+const SEASON_ROLLOVER_MONTH = (Number(import.meta.env.VITE_SEASON_ROLLOVER_MONTH) || 3) - 1;
+
+/**
+ * Returns the current CFB season year. Before the rollover month, returns the prior calendar
+ * year so that January–February still show the previous season (e.g. bowl games / natty).
+ */
+export function getCurrentSeason(date: Date = new Date()): number {
+  return date.getMonth() < SEASON_ROLLOVER_MONTH
+    ? date.getFullYear() - 1
+    : date.getFullYear();
+}
+
 export function getMostRecentCompletedWeek(weeks: AdminDbWeekData[]): CurrentWeek {
   const now = new Date();
   const completed = weeks
@@ -16,7 +29,7 @@ export function getMostRecentCompletedWeek(weeks: AdminDbWeekData[]): CurrentWee
   const sorted = [...weeks].sort((a, b) => a.year - b.year || a.weekNumber - b.weekNumber);
   return sorted.length > 0
     ? { year: sorted[0].year, week: sorted[0].weekNumber }
-    : { year: now.getFullYear(), week: 1 };
+    : { year: getCurrentSeason(now), week: 1 };
 }
 
 export function getCurrentWeek(weeks: AdminDbWeekData[]): CurrentWeek {
@@ -36,13 +49,13 @@ export function getCurrentWeek(weeks: AdminDbWeekData[]): CurrentWeek {
   // Off-season: Default to first week of next season
   // Sort by year descending, then find week 1
   const sortedByYear = [...weeks].sort((a, b) => b.year - a.year);
-  const latestYear = sortedByYear[0]?.year || now.getFullYear();
+  const latestYear = sortedByYear[0]?.year || getCurrentSeason(now);
   const nextSeasonWeek1 = weeks.find(w => w.year === latestYear && w.weekNumber === 1);
 
   if (nextSeasonWeek1) {
     return { year: nextSeasonWeek1.year, week: nextSeasonWeek1.weekNumber };
   }
 
-  // Fallback: use current year, week 1
-  return { year: now.getFullYear(), week: 1 };
+  // Fallback: use current season year, week 1
+  return { year: getCurrentSeason(now), week: 1 };
 }

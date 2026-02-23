@@ -1,5 +1,6 @@
 import { Box, Select, MenuItem, FormControl, InputLabel } from '@mui/material';
 import type { AdminDbWeekData } from '@shared/types/cfb-pickem-api';
+import { getCurrentSeason } from '../../utils/weekCalculation';
 
 interface UserWeekSelectorProps {
   selectedYear: number;
@@ -18,8 +19,8 @@ export default function UserWeekSelector({
   onWeekChange,
   loading,
 }: UserWeekSelectorProps) {
-  const currentYear = new Date().getFullYear();
-  const yearOptions = [currentYear - 2, currentYear - 1, currentYear];
+  const currentSeason = getCurrentSeason();
+  const yearOptions = [currentSeason - 2, currentSeason - 1, currentSeason];
 
   return (
     <Box
@@ -31,17 +32,17 @@ export default function UserWeekSelector({
       }}
     >
       <FormControl fullWidth disabled={loading}>
-        <InputLabel>Year</InputLabel>
+        <InputLabel>Season</InputLabel>
         <Select
           value={selectedYear}
-          label="Year"
+          label="Season"
           onChange={e => onYearChange(Number(e.target.value))}
         >
           {yearOptions
             .sort((a, b) => b - a)
             .map(year => (
               <MenuItem key={year} value={year}>
-                {year}
+                {year} Season
               </MenuItem>
             ))}
         </Select>
