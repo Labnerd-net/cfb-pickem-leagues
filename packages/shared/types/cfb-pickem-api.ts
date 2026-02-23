@@ -131,3 +131,16 @@ export interface PickedGamesData extends WeekQuery {
 export interface AllUserGamePicks extends WeekQuery {
   games: UserGamePicks[];
 }
+
+export interface UserPickHistoryEntry {
+  year: number;
+  weekNumber: number;
+  total: number;
+  correct: number;
+  incorrect: number;
+  pending: number;
+}
+
+export interface UserPickHistoryResponse {
+  history: UserPickHistoryEntry[];
+}

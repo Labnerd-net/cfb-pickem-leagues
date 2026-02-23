@@ -44,6 +44,16 @@ const user = new Hono<{ Variables: Variables }>()
     const picks = await dbUserFunctions.returnUserGames(weekIdentifier, userIdString);
     return c.json({ picks });
   })
+  // Get per-week pick history for a year
+  .get('/history', apiRateLimit, authMiddleware, async c => {
+    const payload = c.get('jwtPayload');
+    const userIdString = String(payload.sub);
+    const yearNumber = Number(c.req.query('year'));
+    if (isNaN(yearNumber) || yearNumber < 1900 || yearNumber > 2100)
+      throw new HTTPException(400, { message: 'year must be between 1900 and 2100' });
+    const history = await dbUserFunctions.returnUserPickHistory(yearNumber, userIdString);
+    return c.json({ history });
+  })
   // List weeks in a year with picked games
   .get('/weeks', apiRateLimit, authMiddleware, async c => {
     const yearNumber = Number(c.req.query('year'));

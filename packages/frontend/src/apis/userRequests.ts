@@ -1,4 +1,4 @@
-import type { AdminDbGameData, AdminDbWeekData, AllUserGamePicksRequest, ProfileData, UserDbGameData, WeekIdentifier } from '@shared/types/cfb-pickem-api.js';
+import type { AdminDbGameData, AdminDbWeekData, AllUserGamePicksRequest, ProfileData, UserDbGameData, UserPickHistoryResponse, WeekIdentifier } from '@shared/types/cfb-pickem-api.js';
 import { client } from '../lib/api';
 
 export interface ProfileResponse {
@@ -80,6 +80,26 @@ export async function getPickedGames(weekData: WeekIdentifier): Promise<AdminGam
     }
     const body = await res.json();
     return { success: true, data: body.pickedGames as unknown as AdminDbGameData[] };
+  } catch {
+    return { success: false, error: 'Request failed' };
+  }
+}
+
+export interface PickHistoryResponse {
+  success: boolean;
+  data?: UserPickHistoryResponse;
+  error?: string;
+}
+
+export async function getUserPickHistory(year: number): Promise<PickHistoryResponse> {
+  try {
+    const res = await client.api.user.history.$get({ query: { year: String(year) } });
+    if (!res.ok) {
+      const body = await res.json() as unknown as { error: string };
+      return { success: false, error: body.error };
+    }
+    const data = await res.json();
+    return { success: true, data: data as unknown as UserPickHistoryResponse };
   } catch {
     return { success: false, error: 'Request failed' };
   }
