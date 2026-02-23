@@ -1,4 +1,5 @@
 import { eq, and, sql } from 'drizzle-orm';
+import { alias } from 'drizzle-orm/pg-core';
 import { users, games, deletedUsers } from './schema/users.js';
 import { adminGames } from './schema/admin.js';
 import { db } from './index.js';
@@ -10,6 +11,8 @@ import type {
   UserDbGameData,
   UserGamePicks,
   UserPickHistoryEntry,
+  LeaderboardEntry,
+  WeekScoresEntry,
   WeekIdentifier,
 } from '@shared/types/cfb-pickem-api.js';
 
@@ -167,6 +170,85 @@ export async function returnUserPickHistory(
     }));
   } catch (e) {
     logger.error({ err: e }, 'returnUserPickHistory failed');
+    throw e;
+  }
+}
+
+// ------------------------------------------------------------------
+// Return season-level leaderboard (all users, LEFT JOIN so zero-pick users appear)
+// ------------------------------------------------------------------
+export async function returnLeaderboard(year: number): Promise<LeaderboardEntry[]> {
+  logger.debug({ year }, 'returnLeaderboard');
+  // Alias user.games to avoid a table-name collision with admin.games in the same query
+  const userGames = alias(games, 'user_games');
+  try {
+    const rows = await db
+      .select({
+        userId: users.userId,
+        displayName: users.displayName,
+        total: sql<number>`COUNT(${adminGames.gameId})`,
+        correct: sql<number>`COUNT(CASE WHEN ${adminGames.winningTeam} != 'pending' AND ${adminGames.winningTeam} = ${userGames.teamChosen} THEN 1 END)`,
+        incorrect: sql<number>`COUNT(CASE WHEN ${adminGames.winningTeam} != 'pending' AND ${adminGames.winningTeam} != ${userGames.teamChosen} THEN 1 END)`,
+        pending: sql<number>`COUNT(CASE WHEN ${adminGames.winningTeam} = 'pending' THEN 1 END)`,
+      })
+      .from(users)
+      .leftJoin(userGames, eq(users.userId, userGames.userId))
+      .leftJoin(adminGames, and(eq(userGames.gameId, adminGames.gameId), eq(adminGames.year, year)))
+      .groupBy(users.userId, users.displayName)
+      .orderBy(
+        sql`COUNT(CASE WHEN ${adminGames.winningTeam} != 'pending' AND ${adminGames.winningTeam} = ${userGames.teamChosen} THEN 1 END) DESC`
+      );
+    return rows.map(r => {
+      const total = Number(r.total);
+      const correct = Number(r.correct);
+      return {
+        userId: r.userId,
+        displayName: r.displayName,
+        total,
+        correct,
+        incorrect: Number(r.incorrect),
+        pending: Number(r.pending),
+        percentage: total === 0 ? null : correct / total,
+      };
+    });
+  } catch (e) {
+    logger.error({ err: e }, 'returnLeaderboard failed');
+    throw e;
+  }
+}
+
+// ------------------------------------------------------------------
+// Return per-week scores across all users who made picks for a week
+// ------------------------------------------------------------------
+export async function returnWeekScores(year: number, week: number): Promise<WeekScoresEntry[]> {
+  logger.debug({ year, week }, 'returnWeekScores');
+  try {
+    const rows = await db
+      .select({
+        userId: users.userId,
+        displayName: users.displayName,
+        total: sql<number>`COUNT(*)`,
+        correct: sql<number>`COUNT(CASE WHEN ${adminGames.winningTeam} != 'pending' AND ${adminGames.winningTeam} = ${games.teamChosen} THEN 1 END)`,
+        incorrect: sql<number>`COUNT(CASE WHEN ${adminGames.winningTeam} != 'pending' AND ${adminGames.winningTeam} != ${games.teamChosen} THEN 1 END)`,
+        pending: sql<number>`COUNT(CASE WHEN ${adminGames.winningTeam} = 'pending' THEN 1 END)`,
+      })
+      .from(games)
+      .innerJoin(
+        adminGames,
+        and(eq(games.gameId, adminGames.gameId), eq(adminGames.year, year), eq(adminGames.weekNumber, week))
+      )
+      .innerJoin(users, eq(games.userId, users.userId))
+      .groupBy(users.userId, users.displayName);
+    return rows.map(r => ({
+      userId: r.userId,
+      displayName: r.displayName,
+      total: Number(r.total),
+      correct: Number(r.correct),
+      incorrect: Number(r.incorrect),
+      pending: Number(r.pending),
+    }));
+  } catch (e) {
+    logger.error({ err: e }, 'returnWeekScores failed');
     throw e;
   }
 }
