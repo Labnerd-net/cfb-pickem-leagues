@@ -16,10 +16,10 @@ The loop interleaves deadline validation with DB writes. If picks `[A, B, C]` ar
 
 `picked = true` and `picked = false` are two separate `UPDATE` statements with no transaction. If the second fails, picked games are partially updated and the "unmark others" step is lost. Needs `db.transaction(...)`.
 
-### Frontend never fetches upcoming year's weeks (pre-season data invisible)
-**File:** `packages/frontend/src/components/user/UserPicksSection.tsx:37-40`
+### Frontend never fetches upcoming season's weeks (pre-season data invisible)
+**File:** `packages/frontend/src/components/user/UserPicksSection.tsx`
 
-The initialization fetches `currentYear - 1` and `currentYear`. The variable `nextYearResult` actually fetches `currentYear`, not `currentYear + 1`. If an admin loads next season's data before the calendar year rolls over (common during bowl/pre-season), users won't see those weeks until January 1st.
+The initialization fetches `currentSeason - 1` and `currentSeason`. If an admin loads next season's data before the season rollover date (March 1 by default), users won't see those weeks. The misnamed `nextYearResult` variable was fixed in PR #23, but fetching `currentSeason + 1` was not added.
 
 ## Validation Gaps
 
@@ -29,10 +29,9 @@ _(none currently open)_
 
 ## Security
 
-### `GET /admin/users` returns `passwordHash` in the response body
-**File:** `packages/backend/src/routes/admin.ts:18-20`, `packages/backend/src/db/dbUserFunctions.ts:25`
+### ~~`GET /admin/users` returns `passwordHash` in the response body~~ ✓ Fixed
 
-`returnUsers()` does `db.select().from(users)` — all columns. The route assigns this to `ProfileData[]` via TypeScript type assertion, which has no runtime effect. The password hash is included in the JSON response. The DB query should select only the `ProfileData` fields explicitly.
+`returnUsers()` now selects only `userId`, `email`, `displayName`, `roles` explicitly. The bogus `ProfileData[]` type assertion in the route was removed.
 
 ### First-user admin assignment has a TOCTOU race condition
 **File:** `packages/backend/src/routes/auth.ts:55-56`
@@ -73,7 +72,6 @@ Nothing from this spec exists in the codebase: no Resend integration, no `notifi
 
 The leaderboard query involves multi-table left joins and conditional aggregation. No test coverage despite being core to the game's scoring. Should cover: correct/incorrect/pending counts, percentage calculation, user with zero picks, tie in rankings.
 
-### No tests for `weekCalculation.ts`
-**File:** `packages/frontend/src/utils/weekCalculation.ts`
+### ~~No tests for `weekCalculation.ts`~~ ✓ Fixed in PR #23
 
-`getCurrentWeek` and `getMostRecentCompletedWeek` contain date-range logic and fallback behavior (off-season, empty array) that drives the default week selection on the entire dashboard. Completely untested.
+`getCurrentWeek`, `getMostRecentCompletedWeek`, and the new `getCurrentSeason` utility are now covered in `packages/frontend/tests/unit/utils/weekCalculation.test.ts`.

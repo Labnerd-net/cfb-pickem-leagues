@@ -3,7 +3,7 @@ import { HTTPException } from 'hono/http-exception';
 import * as dbAdminFunctions from '../db/dbAdminFunctions.js';
 import { returnUsers } from '../db/dbUserFunctions.js';
 import { getGameData, getWeekData } from '../api/index.js';
-import type { JwtData, ProfileData, WeekIdentifier } from '@shared/types/cfb-pickem-api.js';
+import type { JwtData, WeekIdentifier } from '@shared/types/cfb-pickem-api.js';
 import { authMiddleware, requireRole } from '../utils/middleware.js';
 import { apiRateLimit } from '../utils/rateLimiter.js';
 import { weekIdentifierValidator, pickedGameRequestValidator } from '../utils/zValidate.js';
@@ -15,8 +15,7 @@ type Variables = {
 const admin = new Hono<{ Variables: Variables }>()
   // Return all users' details
   .get('/users', apiRateLimit, authMiddleware, requireRole('admin'), async c => {
-    const allUsers = await returnUsers();
-    const allUserProfiles: ProfileData[] = allUsers;
+    const allUserProfiles = await returnUsers();
     return c.json({ allUserProfiles });
   })
   // Add Weeks to Year

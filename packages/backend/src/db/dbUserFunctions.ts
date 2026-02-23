@@ -6,6 +6,7 @@ import { db } from './index.js';
 import * as dbAdminFunctions from './dbAdminFunctions.js';
 import logger from '../utils/logger.js';
 import type {
+  ProfileData,
   UserData,
   UserDbData,
   UserDbGameData,
@@ -19,10 +20,17 @@ import type {
 // ------------------------------------------------------------------
 // Return all users
 // ------------------------------------------------------------------
-export async function returnUsers(): Promise<UserDbData[]> {
+export async function returnUsers(): Promise<ProfileData[]> {
   logger.debug('returnUsers');
   try {
-    return await db.select().from(users);
+    return await db
+      .select({
+        userId: users.userId,
+        email: users.email,
+        displayName: users.displayName,
+        roles: users.roles,
+      })
+      .from(users);
   } catch (e) {
     logger.error({ err: e }, 'returnUsers failed');
     throw e;
