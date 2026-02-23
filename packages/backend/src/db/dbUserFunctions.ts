@@ -1,4 +1,4 @@
-import { eq, and } from 'drizzle-orm';
+import { eq, and, sql } from 'drizzle-orm';
 import { users, games, deletedUsers } from './schema/users.js';
 import { adminGames } from './schema/admin.js';
 import { db } from './index.js';
@@ -9,6 +9,7 @@ import type {
   UserDbData,
   UserDbGameData,
   UserGamePicks,
+  UserPickHistoryEntry,
   WeekIdentifier,
 } from '@shared/types/cfb-pickem-api.js';
 
@@ -128,6 +129,44 @@ export async function addPickedGame(pick: UserGamePicks, userId: string): Promis
       });
   } catch (e) {
     logger.error({ err: e }, 'addPickedGame failed');
+    throw e;
+  }
+}
+
+// ------------------------------------------------------------------
+// Return User Pick History (per-week summary for a year)
+// ------------------------------------------------------------------
+export async function returnUserPickHistory(
+  year: number,
+  userId: string
+): Promise<UserPickHistoryEntry[]> {
+  const userIdNumber = Number(userId);
+  logger.debug({ year, userId }, 'returnUserPickHistory');
+  try {
+    const rows = await db
+      .select({
+        year: adminGames.year,
+        weekNumber: adminGames.weekNumber,
+        total: sql<number>`COUNT(*)`,
+        correct: sql<number>`COUNT(CASE WHEN ${adminGames.winningTeam} != 'pending' AND ${adminGames.winningTeam} = ${games.teamChosen} THEN 1 END)`,
+        incorrect: sql<number>`COUNT(CASE WHEN ${adminGames.winningTeam} != 'pending' AND ${adminGames.winningTeam} != ${games.teamChosen} THEN 1 END)`,
+        pending: sql<number>`COUNT(CASE WHEN ${adminGames.winningTeam} = 'pending' THEN 1 END)`,
+      })
+      .from(games)
+      .innerJoin(adminGames, eq(games.gameId, adminGames.gameId))
+      .where(and(eq(adminGames.year, year), eq(games.userId, userIdNumber)))
+      .groupBy(adminGames.year, adminGames.weekNumber)
+      .orderBy(sql`${adminGames.weekNumber} DESC`);
+    return rows.map(r => ({
+      year: r.year,
+      weekNumber: r.weekNumber,
+      total: Number(r.total),
+      correct: Number(r.correct),
+      incorrect: Number(r.incorrect),
+      pending: Number(r.pending),
+    }));
+  } catch (e) {
+    logger.error({ err: e }, 'returnUserPickHistory failed');
     throw e;
   }
 }
