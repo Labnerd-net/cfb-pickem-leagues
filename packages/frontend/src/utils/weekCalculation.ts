@@ -5,6 +5,20 @@ export interface CurrentWeek {
   week: number;
 }
 
+export function getMostRecentCompletedWeek(weeks: AdminDbWeekData[]): CurrentWeek {
+  const now = new Date();
+  const completed = weeks
+    .filter(w => new Date(w.weekEnd) < now)
+    .sort((a, b) => b.year - a.year || b.weekNumber - a.weekNumber);
+  if (completed.length > 0)
+    return { year: completed[0].year, week: completed[0].weekNumber };
+  // No completed weeks yet — fall back to first available
+  const sorted = [...weeks].sort((a, b) => a.year - b.year || a.weekNumber - b.weekNumber);
+  return sorted.length > 0
+    ? { year: sorted[0].year, week: sorted[0].weekNumber }
+    : { year: now.getFullYear(), week: 1 };
+}
+
 export function getCurrentWeek(weeks: AdminDbWeekData[]): CurrentWeek {
   const now = new Date();
 

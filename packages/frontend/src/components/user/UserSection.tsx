@@ -1,10 +1,11 @@
-import { Box, Typography } from '@mui/material';
+import { Box } from '@mui/material';
 import DashboardCard from '../dashboard/DashboardCard';
 import SportsFootballIcon from '@mui/icons-material/SportsFootball';
 import LeaderboardIcon from '@mui/icons-material/Leaderboard';
 import CalendarMonthIcon from '@mui/icons-material/CalendarMonth';
 import UserPicksSection from './UserPicksSection';
 import LeaderboardSection from './LeaderboardSection';
+import WeekResultsSection from './WeekResultsSection';
 
 export default function UserSection() {
   return (
@@ -20,15 +21,7 @@ export default function UserSection() {
         title="Your Picks"
         accentColor="primary"
       >
-        <Typography
-          sx={{
-            fontFamily: '"Work Sans", sans-serif',
-            color: 'text.secondary',
-            fontStyle: 'italic',
-          }}
-        >
-          Coming soon...
-        </Typography>
+        <WeekResultsSection />
       </DashboardCard>
 
       <DashboardCard
