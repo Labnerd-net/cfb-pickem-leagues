@@ -20,7 +20,7 @@ export default function UserWeekSelector({
   loading,
 }: UserWeekSelectorProps) {
   const currentSeason = getCurrentSeason();
-  const yearOptions = [currentSeason - 2, currentSeason - 1, currentSeason];
+  const yearOptions = [currentSeason - 2, currentSeason - 1, currentSeason, currentSeason + 1];
 
   return (
     <Box

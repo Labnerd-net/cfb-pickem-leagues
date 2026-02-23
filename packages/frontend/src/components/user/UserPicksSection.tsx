@@ -33,10 +33,11 @@ export default function UserPicksSection() {
         setInitializing(true);
         const currentSeason = getCurrentSeason();
 
-        // Fetch weeks for previous season and current season (to handle off-season/bowl games)
-        const [prevSeasonResult, currentSeasonResult] = await Promise.all([
+        // Fetch prev, current, and next season weeks so pre-season data is visible before rollover
+        const [prevSeasonResult, currentSeasonResult, nextSeasonResult] = await Promise.all([
           getWeeksForYear(currentSeason - 1),
           getWeeksForYear(currentSeason),
+          getWeeksForYear(currentSeason + 1),
         ]);
 
         const allWeeks: AdminDbWeekData[] = [];
@@ -45,6 +46,9 @@ export default function UserPicksSection() {
         }
         if (currentSeasonResult.success && currentSeasonResult.data) {
           allWeeks.push(...currentSeasonResult.data.weeks);
+        }
+        if (nextSeasonResult.success && nextSeasonResult.data) {
+          allWeeks.push(...nextSeasonResult.data.weeks);
         }
 
         if (allWeeks.length === 0) {

@@ -23,7 +23,7 @@ describe('UserWeekSelector', () => {
     expect(screen.queryByRole('spinbutton')).not.toBeInTheDocument();
   });
 
-  it('renders exactly three season options', async () => {
+  it('renders four season options including next season', async () => {
     const user = userEvent.setup();
     render(<UserWeekSelector {...defaultProps} />);
 
@@ -32,8 +32,9 @@ describe('UserWeekSelector', () => {
     await user.click(yearCombobox);
 
     const options = screen.getAllByRole('option');
-    expect(options).toHaveLength(3);
+    expect(options).toHaveLength(4);
     expect(options.map(o => Number(o.getAttribute('data-value')))).toEqual([
+      currentSeason + 1,
       currentSeason,
       currentSeason - 1,
       currentSeason - 2,

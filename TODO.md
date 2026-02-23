@@ -14,10 +14,9 @@ Deadline checks now run in a separate pre-pass over all picks before any DB writ
 
 Both `UPDATE` statements are now wrapped in `db.transaction()`. If either fails, the whole operation rolls back.
 
-### Frontend never fetches upcoming season's weeks (pre-season data invisible)
-**File:** `packages/frontend/src/components/user/UserPicksSection.tsx`
+### ~~Frontend never fetches upcoming season's weeks (pre-season data invisible)~~ ✓ Fixed
 
-The initialization fetches `currentSeason - 1` and `currentSeason`. If an admin loads next season's data before the season rollover date (March 1 by default), users won't see those weeks. The misnamed `nextYearResult` variable was fixed in PR #23, but fetching `currentSeason + 1` was not added.
+`UserPicksSection`, `WeekResultsSection`, and `UserWeekSelector` now include `currentSeason + 1` so pre-season data loaded by admins is visible before the rollover date.
 
 ## Validation Gaps
 

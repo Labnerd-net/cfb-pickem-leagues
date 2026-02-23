@@ -24,9 +24,10 @@ export default function WeekResultsSection() {
         setInitializing(true);
         const currentSeason = getCurrentSeason();
 
-        const [prevResult, currentSeasonResult] = await Promise.all([
+        const [prevResult, currentSeasonResult, nextSeasonResult] = await Promise.all([
           getWeeksForYear(currentSeason - 1),
           getWeeksForYear(currentSeason),
+          getWeeksForYear(currentSeason + 1),
         ]);
 
         const allWeeks: AdminDbWeekData[] = [];
@@ -35,6 +36,9 @@ export default function WeekResultsSection() {
         }
         if (currentSeasonResult.success && currentSeasonResult.data) {
           allWeeks.push(...currentSeasonResult.data.weeks);
+        }
+        if (nextSeasonResult.success && nextSeasonResult.data) {
+          allWeeks.push(...nextSeasonResult.data.weeks);
         }
 
         if (allWeeks.length === 0) {
