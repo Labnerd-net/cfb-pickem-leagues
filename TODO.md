@@ -47,13 +47,6 @@ This is a core feature of a pick'em game. Without it, there's no way to determin
 
 ## Error Handling
 
-### TOCTTOU: picks deadline not enforced atomically
-**File:** `packages/backend/src/routes/user.ts`
-
-`now` is captured once before the check loop. If a game's startTime passes during the insert loop, the pick is accepted. A test in `picks-deadline.test.ts` documents this behavior. Fix requires wrapping the deadline check and insert in a DB transaction per game.
-
----
-
 ## Code Quality / Tech Debt
 
 _(none currently open)_

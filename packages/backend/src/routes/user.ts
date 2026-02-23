@@ -80,9 +80,8 @@ const user = new Hono<{ Variables: Variables }>()
     if (new Set(gameIds).size !== gameIds.length)
       throw new HTTPException(400, { message: 'Duplicate game IDs in picks request' });
 
-    if (!ignorePickDeadline) {
-      const now = new Date();
-      for (const pick of userPicks.games) {
+    for (const pick of userPicks.games) {
+      if (!ignorePickDeadline) {
         const gameRows = await returnGame(pick.game);
         if (!gameRows || gameRows.length === 0) {
           throw new HTTPException(404, { message: `Game ${pick.game} not found` });
@@ -93,15 +92,12 @@ const user = new Hono<{ Variables: Variables }>()
             message: `Game ${pick.game} has no start time set and cannot accept picks.`,
           });
         }
-        if (now >= game.startTime) {
+        if (new Date() >= game.startTime) {
           throw new HTTPException(422, {
             message: `Game ${pick.game} (${game.awayTeam} @ ${game.homeTeam}) is locked — kickoff has passed. Check your other picks too.`,
           });
         }
       }
-    }
-
-    for (const pick of userPicks.games) {
       await dbUserFunctions.addPickedGame(pick, userIdString);
     }
     return c.json({ status: 'updated picked games' });
