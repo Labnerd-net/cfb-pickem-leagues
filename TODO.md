@@ -58,10 +58,9 @@ Nothing from this spec exists in the codebase: no Resend integration, no `notifi
 
 ## Code Quality / Tech Debt
 
-### Zod body schemas don't validate year/week value ranges
-**File:** `packages/backend/src/utils/zValidate.ts`
+### ~~Zod body schemas don't validate year/week value ranges~~ ✓ Fixed
 
-`weekIdentifierSchema` accepts any number for `year` and `week` (e.g. `year: -9999`). Range validation exists for URL params but not JSON bodies. Should add `.min()/.max()` constraints to match the URL param guards already in place.
+Added shared `yearSchema` (int, 1900–2100) and `weekSchema` (int, 1–52) constants applied to all four body schemas in `zValidate.ts`. Game IDs also constrained to positive integers.
 
 ---
 
