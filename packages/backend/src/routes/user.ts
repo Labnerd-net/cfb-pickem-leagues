@@ -94,8 +94,9 @@ const user = new Hono<{ Variables: Variables }>()
     if (new Set(gameIds).size !== gameIds.length)
       throw new HTTPException(400, { message: 'Duplicate game IDs in picks request' });
 
-    for (const pick of userPicks.games) {
-      if (!ignorePickDeadline) {
+    // Validate all deadlines before writing anything — prevents partial commits
+    if (!ignorePickDeadline) {
+      for (const pick of userPicks.games) {
         const gameRows = await returnGame(pick.game);
         if (!gameRows || gameRows.length === 0) {
           throw new HTTPException(404, { message: `Game ${pick.game} not found` });
@@ -112,6 +113,9 @@ const user = new Hono<{ Variables: Variables }>()
           });
         }
       }
+    }
+
+    for (const pick of userPicks.games) {
       await dbUserFunctions.addPickedGame(pick, userIdString);
     }
     return c.json({ status: 'updated picked games' });

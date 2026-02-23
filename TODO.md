@@ -6,10 +6,9 @@ Roughly priority-ordered within each section.
 
 ## Bugs
 
-### `POST /user/picks` partially commits picks before a deadline error
-**File:** `packages/backend/src/routes/user.ts:97-116`
+### ~~`POST /user/picks` partially commits picks before a deadline error~~ ✓ Fixed
 
-The loop interleaves deadline validation with DB writes. If picks `[A, B, C]` are submitted and C is locked, A and B are already upserted before the 422 is thrown. The user sees an error but picks A and B are silently saved. All deadline checks should run in a pre-pass before any writes.
+Deadline checks now run in a separate pre-pass over all picks before any DB writes begin. A locked game in the middle of the list no longer silently saves the picks that preceded it.
 
 ### `setPickedGames` two-statement update is not atomic
 **File:** `packages/backend/src/db/dbAdminFunctions.ts:195-214`
