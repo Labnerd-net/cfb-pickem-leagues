@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import {
   Box,
+  Button,
   CircularProgress,
   Alert,
   Table,
@@ -13,12 +14,16 @@ import {
 import PeopleIcon from '@mui/icons-material/People';
 import type { ProfileData } from '@shared/types/cfb-pickem-api';
 import DashboardCard from '../dashboard/DashboardCard';
-import { getUsers } from '../../apis/adminRequests';
+import { getUsers, updateUserRoles } from '../../apis/adminRequests';
+import { useAuth } from '../../contexts/auth/AuthContext';
 
 export default function UsersSection() {
+  const { user: currentUser } = useAuth();
   const [users, setUsers] = useState<ProfileData[]>([]);
   const [loading, setLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [updatingId, setUpdatingId] = useState<number | null>(null);
+  const [updateError, setUpdateError] = useState<string | null>(null);
 
   useEffect(() => {
     const loadUsers = async () => {
@@ -33,6 +38,20 @@ export default function UsersSection() {
     };
     loadUsers();
   }, []);
+
+  const handleRoleToggle = async (user: ProfileData) => {
+    setUpdatingId(user.userId);
+    setUpdateError(null);
+    const isAdmin = user.roles.includes('admin');
+    const newRoles: ProfileData['roles'] = isAdmin ? ['user'] : ['user', 'admin'];
+    const result = await updateUserRoles(user.userId, newRoles);
+    if (result.success && result.data) {
+      setUsers(prev => prev.map(u => (u.userId === user.userId ? result.data! : u)));
+    } else {
+      setUpdateError(result.error || 'Failed to update roles');
+    }
+    setUpdatingId(null);
+  };
 
   return (
     <DashboardCard
@@ -59,24 +78,55 @@ export default function UsersSection() {
           No users found
         </Typography>
       ) : (
-        <Table>
-          <TableHead>
-            <TableRow>
-              <TableCell>Display Name</TableCell>
-              <TableCell>Email</TableCell>
-              <TableCell>Roles</TableCell>
-            </TableRow>
-          </TableHead>
-          <TableBody>
-            {users.map(user => (
-              <TableRow key={user.userId}>
-                <TableCell>{user.displayName}</TableCell>
-                <TableCell>{user.email}</TableCell>
-                <TableCell>{user.roles.join(', ')}</TableCell>
+        <>
+          {updateError && (
+            <Alert severity="error" sx={{ mb: 1 }}>
+              {updateError}
+            </Alert>
+          )}
+          <Table>
+            <TableHead>
+              <TableRow>
+                <TableCell>Display Name</TableCell>
+                <TableCell>Email</TableCell>
+                <TableCell>Roles</TableCell>
+                <TableCell />
               </TableRow>
-            ))}
-          </TableBody>
-        </Table>
+            </TableHead>
+            <TableBody>
+              {users.map(user => {
+                const isCurrentUser = user.userId === currentUser?.userId;
+                const isAdmin = user.roles.includes('admin');
+                return (
+                  <TableRow key={user.userId}>
+                    <TableCell>{user.displayName}</TableCell>
+                    <TableCell>{user.email}</TableCell>
+                    <TableCell>{user.roles.join(', ')}</TableCell>
+                    <TableCell align="right">
+                      {!isCurrentUser && (
+                        <Button
+                          size="small"
+                          variant="outlined"
+                          color={isAdmin ? 'warning' : 'primary'}
+                          disabled={updatingId === user.userId}
+                          onClick={() => handleRoleToggle(user)}
+                        >
+                          {updatingId === user.userId ? (
+                            <CircularProgress size={16} />
+                          ) : isAdmin ? (
+                            'Remove Admin'
+                          ) : (
+                            'Make Admin'
+                          )}
+                        </Button>
+                      )}
+                    </TableCell>
+                  </TableRow>
+                );
+              })}
+            </TableBody>
+          </Table>
+        </>
       )}
     </DashboardCard>
   );

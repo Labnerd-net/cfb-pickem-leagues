@@ -7,6 +7,7 @@ import * as dbAdminFunctions from './dbAdminFunctions.js';
 import logger from '../utils/logger.js';
 import type {
   ProfileData,
+  Role,
   UserData,
   UserDbData,
   UserDbGameData,
@@ -46,6 +47,28 @@ export async function returnUserByEmail(email: string): Promise<UserDbData[]> {
     return await db.select().from(users).where(eq(users.email, email));
   } catch (e) {
     logger.error({ err: e }, 'returnUserByEmail failed');
+    throw e;
+  }
+}
+
+// ------------------------------------------------------------------
+// Update user roles
+// ------------------------------------------------------------------
+export async function updateUserRoles(userId: number, roles: Role[]): Promise<ProfileData[]> {
+  logger.debug({ userId, roles }, 'updateUserRoles');
+  try {
+    return await db
+      .update(users)
+      .set({ roles })
+      .where(eq(users.userId, userId))
+      .returning({
+        userId: users.userId,
+        email: users.email,
+        displayName: users.displayName,
+        roles: users.roles,
+      });
+  } catch (e) {
+    logger.error({ err: e }, 'updateUserRoles failed');
     throw e;
   }
 }

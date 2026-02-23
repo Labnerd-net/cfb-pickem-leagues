@@ -1,12 +1,12 @@
 import { Hono } from 'hono';
 import { HTTPException } from 'hono/http-exception';
 import * as dbAdminFunctions from '../db/dbAdminFunctions.js';
-import { returnUsers } from '../db/dbUserFunctions.js';
+import { returnUsers, updateUserRoles } from '../db/dbUserFunctions.js';
 import { getGameData, getWeekData } from '../api/index.js';
 import type { JwtData, WeekIdentifier } from '@shared/types/cfb-pickem-api.js';
 import { authMiddleware, requireRole } from '../utils/middleware.js';
 import { apiRateLimit } from '../utils/rateLimiter.js';
-import { weekIdentifierValidator, pickedGameRequestValidator } from '../utils/zValidate.js';
+import { weekIdentifierValidator, pickedGameRequestValidator, updateUserRolesValidator } from '../utils/zValidate.js';
 
 type Variables = {
   jwtPayload: JwtData;
@@ -18,6 +18,26 @@ const admin = new Hono<{ Variables: Variables }>()
     const allUserProfiles = await returnUsers();
     return c.json({ allUserProfiles });
   })
+  // Update a user's roles
+  .patch(
+    '/users/:id/roles',
+    apiRateLimit,
+    updateUserRolesValidator,
+    authMiddleware,
+    requireRole('admin'),
+    async c => {
+      const targetId = Number(c.req.param('id'));
+      if (isNaN(targetId) || targetId < 1)
+        throw new HTTPException(400, { message: 'id must be a positive integer' });
+      const jwtPayload = c.get('jwtPayload');
+      if (jwtPayload.sub === targetId)
+        throw new HTTPException(403, { message: 'Cannot modify your own roles' });
+      const { roles } = c.req.valid('json');
+      const updated = await updateUserRoles(targetId, roles);
+      if (updated.length === 0) throw new HTTPException(404, { message: 'User not found' });
+      return c.json({ user: updated[0] });
+    }
+  )
   // Add Weeks to Year
   .post('/year/:year', apiRateLimit, authMiddleware, requireRole('admin'), async c => {
     const yearNumber = Number(c.req.param('year'));

@@ -117,6 +117,32 @@ export interface SetPicksResponse {
   error?: string;
 }
 
+export interface UpdateUserRolesResponse {
+  success: boolean;
+  data?: ProfileData;
+  error?: string;
+}
+
+export async function updateUserRoles(
+  userId: number,
+  roles: ProfileData['roles']
+): Promise<UpdateUserRolesResponse> {
+  try {
+    const res = await client.api.admin.users[':id'].roles.$patch({
+      param: { id: String(userId) },
+      json: { roles },
+    });
+    if (!res.ok) {
+      const body = (await res.json()) as unknown as { error: string };
+      return { success: false, error: body.error };
+    }
+    const body = await res.json();
+    return { success: true, data: (body as unknown as { user: ProfileData }).user };
+  } catch {
+    return { success: false, error: 'Request failed' };
+  }
+}
+
 export async function setPickedGames(pickedData: PickedGamesRequest): Promise<SetPicksResponse> {
   try {
     const res = await client.api.admin.picks.$post({ json: pickedData });

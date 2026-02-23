@@ -7,6 +7,10 @@ import type {
   PickedGamesRequest,
 } from '@shared/types/cfb-pickem-api.js';
 
+const updateUserRolesSchema = z.object({
+  roles: z.array(z.enum(['user', 'admin'])).min(1),
+});
+
 const yearSchema = z.number().int().min(1900).max(2100);
 const weekSchema = z.number().int().min(1).max(52);
 
@@ -35,3 +39,4 @@ const allUserPickedRequestSchema: z.ZodType<AllUserGamePicksRequest> = z.object(
 export const weekIdentifierValidator = zValidator('json', weekIdentifierSchema);
 export const pickedGameRequestValidator = zValidator('json', pickedGameRequestSchema);
 export const allUserPickedRequestValidator = zValidator('json', allUserPickedRequestSchema);
+export const updateUserRolesValidator = zValidator('json', updateUserRolesSchema);
