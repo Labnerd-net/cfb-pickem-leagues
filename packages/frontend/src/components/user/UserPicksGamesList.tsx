@@ -34,7 +34,7 @@ export default function UserPicksGamesList({
           mb: 3,
         }}
       >
-        {games.map((game) => (
+        {games.map(game => (
           <UserPicksGameCard
             key={game.gameId}
             game={game}

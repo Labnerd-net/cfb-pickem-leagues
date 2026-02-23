@@ -49,11 +49,13 @@ export default function LeaderboardSection() {
         <Select
           value={year}
           label="Year"
-          onChange={(e) => setYear(Number(e.target.value))}
+          onChange={e => setYear(Number(e.target.value))}
           disabled={loading}
         >
           {yearOptions.map(y => (
-            <MenuItem key={y} value={y}>{y}</MenuItem>
+            <MenuItem key={y} value={y}>
+              {y}
+            </MenuItem>
           ))}
         </Select>
       </FormControl>
@@ -92,7 +94,11 @@ export default function LeaderboardSection() {
               {entries.map((entry, index) => (
                 <TableRow
                   key={entry.userId}
-                  sx={entry.userId === user?.userId ? { backgroundColor: 'action.selected' } : undefined}
+                  sx={
+                    entry.userId === user?.userId
+                      ? { backgroundColor: 'action.selected' }
+                      : undefined
+                  }
                 >
                   <TableCell>{index + 1}</TableCell>
                   <TableCell>{entry.displayName}</TableCell>

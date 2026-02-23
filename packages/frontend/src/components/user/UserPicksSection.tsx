@@ -1,12 +1,16 @@
 import { useState, useEffect } from 'react';
 import { Box, Typography, CircularProgress, Snackbar, Alert } from '@mui/material';
 import type { AdminDbWeekData, AdminDbGameData } from '@shared/types/cfb-pickem-api';
-import { getPickedGames, getUserPicks, getWeeksForYear, postUserPicks } from '../../apis/userRequests';
+import {
+  getPickedGames,
+  getUserPicks,
+  getWeeksForYear,
+  postUserPicks,
+} from '../../apis/userRequests';
 import { getCurrentWeek } from '../../utils/weekCalculation';
 import { logger } from '../../utils/logger';
 import UserWeekSelector from './UserWeekSelector';
 import UserPicksGamesList from './UserPicksGamesList';
-
 
 export default function UserPicksSection() {
   const [selectedYear, setSelectedYear] = useState<number>(0);

@@ -24,7 +24,7 @@ export default function GamesList({
 }: GamesListProps) {
   return (
     <Box>
-      <GameListControl 
+      <GameListControl
         numOfGames={games.length}
         selectedGameIds={selectedGameIds}
         onSelectAll={onSelectAll}
@@ -42,17 +42,17 @@ export default function GamesList({
           mb: 3,
         }}
       >
-        {games.map((game) => (
+        {games.map(game => (
           <GameCard
             key={game.gameId}
             game={game}
             selected={selectedGameIds.includes(game.gameId)}
-            onSelect={(selected) => onGameSelect(game.gameId, selected)}
+            onSelect={selected => onGameSelect(game.gameId, selected)}
           />
         ))}
       </Box>
 
-      <GameListControl 
+      <GameListControl
         numOfGames={games.length}
         selectedGameIds={selectedGameIds}
         onSelectAll={onSelectAll}

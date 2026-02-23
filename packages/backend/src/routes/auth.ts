@@ -42,8 +42,7 @@ const auth = new Hono<{ Variables: Variables }>()
       throw new HTTPException(400, { message: 'Display name must be less than 50 characters' });
 
     const emailValidation = validateEmail(email);
-    if (!emailValidation.valid)
-      throw new HTTPException(400, { message: emailValidation.error! });
+    if (!emailValidation.valid) throw new HTTPException(400, { message: emailValidation.error! });
 
     const passwordValidation = validatePassword(password);
     if (!passwordValidation.valid)
@@ -111,8 +110,7 @@ const auth = new Hono<{ Variables: Variables }>()
   .delete('/deleteUser', authRateLimit, authMiddleware, async c => {
     const payload = c.get('jwtPayload');
     const user = await dbUserFunctions.returnUserById(payload.sub);
-    if (!user || user.length === 0)
-      throw new HTTPException(404, { message: 'User not found' });
+    if (!user || user.length === 0) throw new HTTPException(404, { message: 'User not found' });
     await dbUserFunctions.deleteUserWithAudit(user[0]);
     return c.json({ status: 'deleted' });
   });

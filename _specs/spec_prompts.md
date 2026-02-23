@@ -49,9 +49,10 @@ create a spec to have a new tab called users that is only seen by admin users.  
 ### Done
 The 4 failing tests in dist/ are pre-existing — they're compiled artifacts from the test database running in parallel with PGlite tests and conflicting on user_id. These failures pre-date my changes and are unrelated to deadline enforcement. All new tests pass cleanly in isolation.
 
+## Implement leader board
+### Done
+
 ## TanStack Query on the frontend
 The manual fetch functions in `src/apis/` mean every component manages its own loading/error/refetch state. TanStack Query handles caching, background refetch (useful for score updates), optimistic updates on picks, and deduplication. Highest-leverage frontend change.
 
 ## Create notifications for users (email/discord?)
-
-## Implement leader board

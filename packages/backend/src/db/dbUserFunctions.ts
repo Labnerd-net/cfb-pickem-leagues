@@ -87,7 +87,7 @@ export async function addUser(user: UserData) {
 export async function deleteUserWithAudit(user: UserDbData): Promise<void> {
   logger.debug({ userId: user.userId }, 'deleteUserWithAudit');
   try {
-    await db.transaction(async (tx) => {
+    await db.transaction(async tx => {
       await tx.insert(deletedUsers).values({
         userId: user.userId,
         email: user.email,
@@ -235,7 +235,11 @@ export async function returnWeekScores(year: number, week: number): Promise<Week
       .from(games)
       .innerJoin(
         adminGames,
-        and(eq(games.gameId, adminGames.gameId), eq(adminGames.year, year), eq(adminGames.weekNumber, week))
+        and(
+          eq(games.gameId, adminGames.gameId),
+          eq(adminGames.year, year),
+          eq(adminGames.weekNumber, week)
+        )
       )
       .innerJoin(users, eq(games.userId, users.userId))
       .groupBy(users.userId, users.displayName);

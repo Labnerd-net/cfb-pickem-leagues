@@ -3,7 +3,7 @@
     "build": "pnpm -r run build",
     "lint": "pnpm -r run lint",
     "lint:fix": "pnpm -r run lint:fix",
-    "format": "pnpm -r run prettier",
+    "format": "pnpm -r run format",
     "dev:backend": "pnpm --filter cfb-pickem-api dev",
     "dev:frontend": "pnpm --filter cfb-pickem-ui dev",
     "test": "pnpm -r run test",

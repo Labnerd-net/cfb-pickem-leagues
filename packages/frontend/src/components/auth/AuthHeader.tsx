@@ -12,15 +12,13 @@ export default function AuthHeader({
   icon,
   title,
   subtitle,
-  iconColor = 'primary'
+  iconColor = 'primary',
 }: AuthHeaderProps) {
   const theme = useTheme();
-  const mainColor = iconColor === 'primary'
-    ? theme.palette.primary.main
-    : theme.palette.secondary.main;
-  const accentColor = iconColor === 'primary'
-    ? theme.palette.secondary.main
-    : theme.palette.primary.main;
+  const mainColor =
+    iconColor === 'primary' ? theme.palette.primary.main : theme.palette.secondary.main;
+  const accentColor =
+    iconColor === 'primary' ? theme.palette.secondary.main : theme.palette.primary.main;
 
   return (
     <Box sx={{ textAlign: 'center', mb: 4, position: 'relative' }}>

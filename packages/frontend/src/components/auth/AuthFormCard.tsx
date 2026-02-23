@@ -6,14 +6,10 @@ interface AuthFormCardProps {
   accentColor?: 'primary' | 'secondary';
 }
 
-export default function AuthFormCard({
-  children,
-  accentColor = 'primary'
-}: AuthFormCardProps) {
+export default function AuthFormCard({ children, accentColor = 'primary' }: AuthFormCardProps) {
   const theme = useTheme();
-  const color = accentColor === 'primary'
-    ? theme.palette.primary.main
-    : theme.palette.secondary.main;
+  const color =
+    accentColor === 'primary' ? theme.palette.primary.main : theme.palette.secondary.main;
 
   return (
     <Paper

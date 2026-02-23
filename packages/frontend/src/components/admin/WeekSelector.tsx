@@ -1,11 +1,4 @@
-import {
-  Box,
-  Stack,
-  Select,
-  MenuItem,
-  FormControl,
-  InputLabel,
-} from '@mui/material';
+import { Box, Stack, Select, MenuItem, FormControl, InputLabel } from '@mui/material';
 import type { AdminDbWeekData } from '@shared/types/cfb-pickem-api';
 
 interface WeekSelectorProps {
@@ -40,21 +33,35 @@ export default function WeekSelector({
       >
         <FormControl fullWidth disabled={loading}>
           <InputLabel>Year</InputLabel>
-          <Select value={selectedYear} label="Year" onChange={(e) => onYearChange(Number(e.target.value))}>
-            {yearOptions.sort((a, b) => b - a).map(year => (
-              <MenuItem key={year} value={year}>{year}</MenuItem>
-            ))}
+          <Select
+            value={selectedYear}
+            label="Year"
+            onChange={e => onYearChange(Number(e.target.value))}
+          >
+            {yearOptions
+              .sort((a, b) => b - a)
+              .map(year => (
+                <MenuItem key={year} value={year}>
+                  {year}
+                </MenuItem>
+              ))}
           </Select>
         </FormControl>
 
         <FormControl fullWidth disabled={loading}>
           <InputLabel>Week</InputLabel>
-          <Select value={selectedWeek} label="Week" onChange={(e) => onWeekChange(Number(e.target.value))}>
-            {[...weeks].sort((a, b) => a.weekNumber - b.weekNumber).map(week => (
-              <MenuItem key={week.weekNumber} value={week.weekNumber}>
-                Week {week.weekNumber}
-              </MenuItem>
-            ))}
+          <Select
+            value={selectedWeek}
+            label="Week"
+            onChange={e => onWeekChange(Number(e.target.value))}
+          >
+            {[...weeks]
+              .sort((a, b) => a.weekNumber - b.weekNumber)
+              .map(week => (
+                <MenuItem key={week.weekNumber} value={week.weekNumber}>
+                  Week {week.weekNumber}
+                </MenuItem>
+              ))}
           </Select>
         </FormControl>
       </Box>

@@ -1,4 +1,4 @@
-import type { ProfileData } from "@shared/types/cfb-pickem-api";
+import type { ProfileData } from '@shared/types/cfb-pickem-api';
 
 export interface AuthResponse {
   success: boolean;

@@ -39,29 +39,28 @@ export default function Dashboard() {
                   },
                 }}
               >
-                <Tab
-                  icon={<SportsFootballIcon />}
-                  iconPosition="start"
-                  label="My Dashboard"
-                />
+                <Tab icon={<SportsFootballIcon />} iconPosition="start" label="My Dashboard" />
                 <Tab
                   icon={<AdminPanelSettingsIcon />}
                   iconPosition="start"
                   label="Admin Controls"
                 />
-                <Tab
-                  icon={<PeopleIcon />}
-                  iconPosition="start"
-                  label="Users"
-                />
+                <Tab icon={<PeopleIcon />} iconPosition="start" label="Users" />
               </Tabs>
             </Box>
 
             {/* Tab Content */}
-            {currentTab === 0 ? <UserSection /> : currentTab === 1 ? <AdminSection /> : <UsersSection />}
+            {currentTab === 0 ? (
+              <UserSection />
+            ) : currentTab === 1 ? (
+              <AdminSection />
+            ) : (
+              <UsersSection />
+            )}
           </>
-        ) : <UserSection />
-        }
+        ) : (
+          <UserSection />
+        )}
       </Box>
     </Container>
   );

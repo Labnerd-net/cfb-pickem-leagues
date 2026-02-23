@@ -44,7 +44,7 @@ const LoginForm: React.FC = () => {
     mode: 'onBlur',
   });
 
-  const onSubmit: SubmitHandler<Credentials> = async (credentials) => {
+  const onSubmit: SubmitHandler<Credentials> = async credentials => {
     setLoading(true);
     setError(null);
 
@@ -83,7 +83,7 @@ const LoginForm: React.FC = () => {
               sx={{
                 mb: 3,
                 fontFamily: '"Work Sans", sans-serif',
-                borderLeft: (theme) => `4px solid ${theme.palette.error.main}`,
+                borderLeft: theme => `4px solid ${theme.palette.error.main}`,
               }}
             >
               {error}
@@ -120,7 +120,7 @@ const LoginForm: React.FC = () => {
                 control={
                   <Checkbox
                     checked={rememberMe}
-                    onChange={(e) => setRememberMe(e.target.checked)}
+                    onChange={e => setRememberMe(e.target.checked)}
                     sx={{
                       '&.Mui-checked': {
                         color: 'primary.main',

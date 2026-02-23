@@ -57,8 +57,7 @@ export default function FinalCTA() {
               fontWeight: 500,
             }}
           >
-            Join the competition. Make your picks. Show everyone who runs the
-            board.
+            Join the competition. Make your picks. Show everyone who runs the board.
           </Typography>
           <Button
             variant="contained"

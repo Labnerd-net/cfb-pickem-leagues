@@ -1,6 +1,10 @@
 import { useEffect, useState } from 'react';
 import { Box, Alert, Snackbar, Typography, Button, CircularProgress } from '@mui/material';
-import type { AdminDbWeekData, AdminDbGameData, WeekIdentifier } from '@shared/types/cfb-pickem-api';
+import type {
+  AdminDbWeekData,
+  AdminDbGameData,
+  WeekIdentifier,
+} from '@shared/types/cfb-pickem-api';
 import DashboardCard from '../dashboard/DashboardCard';
 import GamesList from './GamesList';
 import AdminPanelSettingsIcon from '@mui/icons-material/AdminPanelSettings';
@@ -14,7 +18,7 @@ import {
 import WeekSelector from './WeekSelector';
 
 export default function AdminSection() {
-  const currentDate = new Date()
+  const currentDate = new Date();
   const currentYear = currentDate.getFullYear();
 
   // State
@@ -28,7 +32,10 @@ export default function AdminSection() {
   const [weeksChecked, setWeeksChecked] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
-  const [importFeedback, setImportFeedback] = useState<{ severity: 'success' | 'error'; message: string } | null>(null);
+  const [importFeedback, setImportFeedback] = useState<{
+    severity: 'success' | 'error';
+    message: string;
+  } | null>(null);
 
   // API Handlers
   const handleLoadGames = async () => {
@@ -47,7 +54,7 @@ export default function AdminSection() {
       if (result.success && result.data) {
         setGames(result.data);
         // Pre-select games that are already marked as picked
-        const pickedGameIds = result.data.filter((game) => game.picked).map((game) => game.gameId);
+        const pickedGameIds = result.data.filter(game => game.picked).map(game => game.gameId);
         setSelectedGameIds(pickedGameIds);
         setSuccessMessage(`Loaded ${result.data.length} games`);
       } else {
@@ -122,10 +129,13 @@ export default function AdminSection() {
         const gamesResult = await getGamesForWeek({ year: selectedYear, week: selectedWeek });
         if (gamesResult.success && gamesResult.data) {
           setGames(gamesResult.data);
-          const pickedIds = gamesResult.data.filter((g) => g.picked).map((g) => g.gameId);
+          const pickedIds = gamesResult.data.filter(g => g.picked).map(g => g.gameId);
           setSelectedGameIds(pickedIds);
         }
-        setImportFeedback({ severity: 'success', message: result.data?.status || 'Games imported' });
+        setImportFeedback({
+          severity: 'success',
+          message: result.data?.status || 'Games imported',
+        });
       } else {
         setImportFeedback({ severity: 'error', message: result.error || 'Failed to import games' });
       }
@@ -137,13 +147,11 @@ export default function AdminSection() {
   };
 
   const handleGameSelection = (gameId: number, selected: boolean) => {
-    setSelectedGameIds((prev) =>
-      selected ? [...prev, gameId] : prev.filter((id) => id !== gameId)
-    );
+    setSelectedGameIds(prev => (selected ? [...prev, gameId] : prev.filter(id => id !== gameId)));
   };
 
   const handleSelectAll = () => {
-    setSelectedGameIds(games.map((game) => game.gameId));
+    setSelectedGameIds(games.map(game => game.gameId));
   };
 
   const handleDeselectAll = () => {
@@ -204,7 +212,7 @@ export default function AdminSection() {
         if (result.success && result.data) {
           setGames(result.data);
           // Pre-select games that are already marked as picked
-          const pickedGameIds = result.data.filter((game) => game.picked).map((game) => game.gameId);
+          const pickedGameIds = result.data.filter(game => game.picked).map(game => game.gameId);
           setSelectedGameIds(pickedGameIds);
         } else {
           setErrorMessage(result.error || 'Failed to load games');
@@ -256,7 +264,9 @@ export default function AdminSection() {
 
           {/* Empty weeks state */}
           {weeksChecked && !loading && weeks.length === 0 && (
-            <Box sx={{ mt: 3, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2 }}>
+            <Box
+              sx={{ mt: 3, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2 }}
+            >
               <Typography
                 sx={{
                   fontFamily: '"Work Sans", sans-serif',
@@ -305,7 +315,9 @@ export default function AdminSection() {
                 </>
               ) : (
                 !loading && (
-                  <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2 }}>
+                  <Box
+                    sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2 }}
+                  >
                     <Typography
                       sx={{
                         fontFamily: '"Work Sans", sans-serif',

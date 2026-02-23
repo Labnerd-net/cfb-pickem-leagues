@@ -14,7 +14,7 @@ export default function SubmitButton({
   disabled,
   children,
   onClick,
-  type = 'submit'
+  type = 'submit',
 }: SubmitButtonProps) {
   const theme = useTheme();
 

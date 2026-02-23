@@ -45,24 +45,31 @@ const admin = new Hono<{ Variables: Variables }>()
     return c.json({ weeks });
   })
   // Add Games to Week
-  .post('/week', apiRateLimit, weekIdentifierValidator, authMiddleware, requireRole('admin'), async c => {
-    const weekIdentifier = c.req.valid('json');
-    const weekQuery = await dbAdminFunctions.enrichWeekIdentifier(weekIdentifier);
-    let gameData;
-    try {
-      gameData = await getGameData(weekQuery);
-    } catch (e) {
-      const msg = e instanceof Error ? e.message : String(e);
-      throw new HTTPException(502, { message: `External API error: ${msg}` });
+  .post(
+    '/week',
+    apiRateLimit,
+    weekIdentifierValidator,
+    authMiddleware,
+    requireRole('admin'),
+    async c => {
+      const weekIdentifier = c.req.valid('json');
+      const weekQuery = await dbAdminFunctions.enrichWeekIdentifier(weekIdentifier);
+      let gameData;
+      try {
+        gameData = await getGameData(weekQuery);
+      } catch (e) {
+        const msg = e instanceof Error ? e.message : String(e);
+        throw new HTTPException(502, { message: `External API error: ${msg}` });
+      }
+      if (!gameData?.length) {
+        throw new HTTPException(422, {
+          message: 'No games returned from external API for this week',
+        });
+      }
+      await Promise.all(gameData.map(game => dbAdminFunctions.upsertGameForWeek(game)));
+      return c.json({ status: `imported ${gameData.length} games` });
     }
-    if (!gameData?.length) {
-      throw new HTTPException(422, {
-        message: 'No games returned from external API for this week',
-      });
-    }
-    await Promise.all(gameData.map(game => dbAdminFunctions.upsertGameForWeek(game)));
-    return c.json({ status: `imported ${gameData.length} games` });
-  })
+  )
   // Get Games for Week
   .get('/games', apiRateLimit, authMiddleware, requireRole('admin'), async c => {
     const weekIdentifier: WeekIdentifier = {
@@ -77,12 +84,19 @@ const admin = new Hono<{ Variables: Variables }>()
     return c.json({ weekGames });
   })
   // Set picked games
-  .post('/picks', apiRateLimit, pickedGameRequestValidator, authMiddleware, requireRole('admin'), async c => {
-    const pickedData = c.req.valid('json');
-    if (pickedData.games.length === 0)
-      throw new HTTPException(422, { message: 'games array must not be empty' });
-    await dbAdminFunctions.setPickedGames(pickedData);
-    return c.json({ status: 'updated picked games' });
-  });
+  .post(
+    '/picks',
+    apiRateLimit,
+    pickedGameRequestValidator,
+    authMiddleware,
+    requireRole('admin'),
+    async c => {
+      const pickedData = c.req.valid('json');
+      if (pickedData.games.length === 0)
+        throw new HTTPException(422, { message: 'games array must not be empty' });
+      await dbAdminFunctions.setPickedGames(pickedData);
+      return c.json({ status: 'updated picked games' });
+    }
+  );
 
 export default admin;

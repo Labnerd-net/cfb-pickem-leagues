@@ -10,24 +10,21 @@ export default function FeaturesSection() {
     {
       icon: <SportsFootballIcon sx={{ fontSize: 50 }} />,
       title: 'Make Your Picks',
-      description:
-        'Choose winners for every game each week. Lock in before kickoff.',
+      description: 'Choose winners for every game each week. Lock in before kickoff.',
       color: theme.palette.primary.main,
       step: '01',
     },
     {
       icon: <TrendingUpIcon sx={{ fontSize: 50 }} />,
       title: 'Track Performance',
-      description:
-        'Watch your record grow. Monitor streaks. Analyze your predictions.',
+      description: 'Watch your record grow. Monitor streaks. Analyze your predictions.',
       color: theme.palette.secondary.main,
       step: '02',
     },
     {
       icon: <EmojiEventsIcon sx={{ fontSize: 50 }} />,
       title: 'Claim Victory',
-      description:
-        'Rise up the rankings. Prove your football knowledge. Own the season.',
+      description: 'Rise up the rankings. Prove your football knowledge. Own the season.',
       color: theme.palette.primary.main,
       step: '03',
     },

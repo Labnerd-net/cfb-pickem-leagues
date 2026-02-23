@@ -14,12 +14,11 @@ export default function DashboardCard({
   title,
   children,
   accentColor = 'primary',
-  gridColumn
+  gridColumn,
 }: DashboardCardProps) {
   const theme = useTheme();
-  const color = accentColor === 'primary'
-    ? theme.palette.primary.main
-    : theme.palette.secondary.main;
+  const color =
+    accentColor === 'primary' ? theme.palette.primary.main : theme.palette.secondary.main;
 
   return (
     <Paper

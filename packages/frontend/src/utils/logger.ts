@@ -17,8 +17,16 @@ function isEnabled(messageLevel: LogLevel): boolean {
 }
 
 export const logger = {
-  error: (...args: unknown[]) => { if (isEnabled('error')) console.error(...args); },
-  warn:  (...args: unknown[]) => { if (isEnabled('warn'))  console.warn(...args); },
-  info:  (...args: unknown[]) => { if (isEnabled('info'))  console.info(...args); },
-  debug: (...args: unknown[]) => { if (isEnabled('debug')) console.debug(...args); },
+  error: (...args: unknown[]) => {
+    if (isEnabled('error')) console.error(...args);
+  },
+  warn: (...args: unknown[]) => {
+    if (isEnabled('warn')) console.warn(...args);
+  },
+  info: (...args: unknown[]) => {
+    if (isEnabled('info')) console.info(...args);
+  },
+  debug: (...args: unknown[]) => {
+    if (isEnabled('debug')) console.debug(...args);
+  },
 };

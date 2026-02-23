@@ -14,10 +14,11 @@ export default function UserPicksGameCard({
   game,
   selectedTeam,
   onPickChange,
-  hasSavedPick
+  hasSavedPick,
 }: UserPicksGameCardProps) {
   const ignoreDeadline = import.meta.env.VITE_IGNORE_PICK_DEADLINE === 'true';
-  const isLocked = !ignoreDeadline && game.startTime !== null && new Date() >= new Date(game.startTime);
+  const isLocked =
+    !ignoreDeadline && game.startTime !== null && new Date() >= new Date(game.startTime);
 
   const handleChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     if (isLocked) return;
@@ -75,7 +76,10 @@ export default function UserPicksGameCard({
           }}
         >
           <CheckCircleIcon fontSize="small" />
-          <Typography variant="caption" sx={{ fontFamily: '"Work Sans", sans-serif', fontWeight: 600 }}>
+          <Typography
+            variant="caption"
+            sx={{ fontFamily: '"Work Sans", sans-serif', fontWeight: 600 }}
+          >
             SAVED
           </Typography>
         </Box>
@@ -129,11 +133,7 @@ export default function UserPicksGameCard({
         )}
       </Box>
 
-      <RadioGroup
-        value={selectedTeam || ''}
-        onChange={handleChange}
-        sx={{ gap: 1 }}
-      >
+      <RadioGroup value={selectedTeam || ''} onChange={handleChange} sx={{ gap: 1 }}>
         <FormControlLabel
           value="away_team"
           disabled={isLocked}

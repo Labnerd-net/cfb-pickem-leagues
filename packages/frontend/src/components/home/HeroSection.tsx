@@ -70,10 +70,7 @@ export default function HeroSection({ isVisible }: HeroSectionProps) {
           </Box>
 
           {/* Headline - Bold Athletic Typography */}
-          <Box
-            className={isVisible ? 'animate-in animate-delay-1' : ''}
-            sx={{ maxWidth: '900px' }}
-          >
+          <Box className={isVisible ? 'animate-in animate-delay-1' : ''} sx={{ maxWidth: '900px' }}>
             <Typography
               component="h1"
               sx={{
@@ -117,8 +114,8 @@ export default function HeroSection({ isVisible }: HeroSectionProps) {
               lineHeight: 1.6,
             }}
           >
-            Predict game winners. Track your performance. Dominate the
-            leaderboard. Every pick counts.
+            Predict game winners. Track your performance. Dominate the leaderboard. Every pick
+            counts.
           </Typography>
 
           {/* CTA Buttons */}

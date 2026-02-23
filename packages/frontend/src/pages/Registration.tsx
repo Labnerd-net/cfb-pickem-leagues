@@ -3,15 +3,7 @@ import { useNavigate, Link as RouterLink } from 'react-router';
 import { useForm, type SubmitHandler } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import {
-  Container,
-  Box,
-  TextField,
-  Typography,
-  Link,
-  Alert,
-  Stack,
-} from '@mui/material';
+import { Container, Box, TextField, Typography, Link, Alert, Stack } from '@mui/material';
 import EmojiEventsIcon from '@mui/icons-material/EmojiEvents';
 import type { RegistrationFormData } from '@shared/types/cfb-pickem-api';
 import { registerUser } from '../apis/authRequests';
@@ -31,7 +23,7 @@ const RegistrationSchema = z
     password: z.string().min(6, 'Password must be at least 6 characters long'),
     confirmPassword: z.string().min(6, 'Please repeat the password'),
   })
-  .refine((data) => data.password === data.confirmPassword, {
+  .refine(data => data.password === data.confirmPassword, {
     path: ['confirmPassword'],
     message: 'Passwords do not match',
   });
@@ -51,7 +43,7 @@ const RegistrationForm: React.FC = () => {
     mode: 'onBlur',
   });
 
-  const onSubmit: SubmitHandler<RegistrationFormData> = async (data) => {
+  const onSubmit: SubmitHandler<RegistrationFormData> = async data => {
     setLoading(true);
     setError(null);
 
@@ -88,7 +80,7 @@ const RegistrationForm: React.FC = () => {
               sx={{
                 mb: 3,
                 fontFamily: '"Work Sans", sans-serif',
-                borderLeft: (theme) => `4px solid ${theme.palette.error.main}`,
+                borderLeft: theme => `4px solid ${theme.palette.error.main}`,
               }}
             >
               {error}

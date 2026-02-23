@@ -1,4 +1,10 @@
-import type { AdminDbGameData, AdminDbWeekData, WeekIdentifier, PickedGamesRequest, ProfileData } from '@shared/types/cfb-pickem-api';
+import type {
+  AdminDbGameData,
+  AdminDbWeekData,
+  WeekIdentifier,
+  PickedGamesRequest,
+  ProfileData,
+} from '@shared/types/cfb-pickem-api';
 import { client } from '../lib/api';
 
 export interface AddWeeksResponse {
@@ -13,7 +19,7 @@ export async function addWeeksToYear(year: number): Promise<AddWeeksResponse> {
       param: { year: String(year) },
     });
     if (!res.ok) {
-      const body = await res.json() as unknown as { error: string };
+      const body = (await res.json()) as unknown as { error: string };
       return { success: false, error: body.error };
     }
     const data = await res.json();
@@ -33,7 +39,7 @@ export async function getWeeksForYear(year: number): Promise<GetWeeksResponse> {
   try {
     const res = await client.api.admin.weeks.$get({ query: { year: String(year) } });
     if (!res.ok) {
-      const body = await res.json() as unknown as { error: string };
+      const body = (await res.json()) as unknown as { error: string };
       return { success: false, error: body.error };
     }
     const body = await res.json();
@@ -53,7 +59,7 @@ export async function addGamesToWeek(weekData: WeekIdentifier): Promise<AddGames
   try {
     const res = await client.api.admin.week.$post({ json: weekData });
     if (!res.ok) {
-      const body = await res.json() as unknown as { error: string };
+      const body = (await res.json()) as unknown as { error: string };
       return { success: false, error: body.error };
     }
     const data = await res.json();
@@ -75,7 +81,7 @@ export async function getGamesForWeek(weekData: WeekIdentifier): Promise<GetGame
       query: { year: String(weekData.year), week: String(weekData.week) },
     });
     if (!res.ok) {
-      const body = await res.json() as unknown as { error: string };
+      const body = (await res.json()) as unknown as { error: string };
       return { success: false, error: body.error };
     }
     const body = await res.json();
@@ -95,7 +101,7 @@ export async function getUsers(): Promise<GetUsersResponse> {
   try {
     const res = await client.api.admin.users.$get();
     if (!res.ok) {
-      const body = await res.json() as unknown as { error: string };
+      const body = (await res.json()) as unknown as { error: string };
       return { success: false, error: body.error };
     }
     const body = await res.json();
@@ -115,7 +121,7 @@ export async function setPickedGames(pickedData: PickedGamesRequest): Promise<Se
   try {
     const res = await client.api.admin.picks.$post({ json: pickedData });
     if (!res.ok) {
-      const body = await res.json() as unknown as { error: string };
+      const body = (await res.json()) as unknown as { error: string };
       return { success: false, error: body.error };
     }
     const data = await res.json();

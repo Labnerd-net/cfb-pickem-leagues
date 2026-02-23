@@ -1,4 +1,12 @@
-import type { AdminDbGameData, AdminDbWeekData, AllUserGamePicksRequest, ProfileData, UserDbGameData, UserPickHistoryResponse, WeekIdentifier } from '@shared/types/cfb-pickem-api.js';
+import type {
+  AdminDbGameData,
+  AdminDbWeekData,
+  AllUserGamePicksRequest,
+  ProfileData,
+  UserDbGameData,
+  UserPickHistoryResponse,
+  WeekIdentifier,
+} from '@shared/types/cfb-pickem-api.js';
 import { client } from '../lib/api';
 
 export interface ProfileResponse {
@@ -11,7 +19,7 @@ export async function getUserProfile(): Promise<ProfileResponse> {
   try {
     const res = await client.api.user.profile.$get();
     if (!res.ok) {
-      const body = await res.json() as unknown as { error: string };
+      const body = (await res.json()) as unknown as { error: string };
       return { success: false, error: body.error };
     }
     const data = await res.json();
@@ -31,7 +39,7 @@ export async function getWeeksForYear(year: number): Promise<GetWeeksResponse> {
   try {
     const res = await client.api.user.weeks.$get({ query: { year: String(year) } });
     if (!res.ok) {
-      const body = await res.json() as unknown as { error: string };
+      const body = (await res.json()) as unknown as { error: string };
       return { success: false, error: body.error };
     }
     const body = await res.json();
@@ -53,7 +61,7 @@ export async function getUserPicks(weekData: WeekIdentifier): Promise<UserGameRe
       query: { year: String(weekData.year), week: String(weekData.week) },
     });
     if (!res.ok) {
-      const body = await res.json() as unknown as { error: string };
+      const body = (await res.json()) as unknown as { error: string };
       return { success: false, error: body.error };
     }
     const body = await res.json();
@@ -75,7 +83,7 @@ export async function getPickedGames(weekData: WeekIdentifier): Promise<AdminGam
       query: { year: String(weekData.year), week: String(weekData.week) },
     });
     if (!res.ok) {
-      const body = await res.json() as unknown as { error: string };
+      const body = (await res.json()) as unknown as { error: string };
       return { success: false, error: body.error };
     }
     const body = await res.json();
@@ -95,7 +103,7 @@ export async function getUserPickHistory(year: number): Promise<PickHistoryRespo
   try {
     const res = await client.api.user.history.$get({ query: { year: String(year) } });
     if (!res.ok) {
-      const body = await res.json() as unknown as { error: string };
+      const body = (await res.json()) as unknown as { error: string };
       return { success: false, error: body.error };
     }
     const data = await res.json();
@@ -115,7 +123,7 @@ export async function postUserPicks(picks: AllUserGamePicksRequest): Promise<Pic
   try {
     const res = await client.api.user.picks.$post({ json: picks });
     if (!res.ok) {
-      const body = await res.json() as unknown as { error: string };
+      const body = (await res.json()) as unknown as { error: string };
       return { success: false, error: body.error };
     }
     const data = await res.json();

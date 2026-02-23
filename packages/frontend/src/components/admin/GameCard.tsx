@@ -38,7 +38,10 @@ export default function GameCard({ game, selected, onSelect }: GameCardProps) {
           }}
         >
           <CheckCircleIcon fontSize="small" />
-          <Typography variant="caption" sx={{ fontFamily: '"Work Sans", sans-serif', fontWeight: 600 }}>
+          <Typography
+            variant="caption"
+            sx={{ fontFamily: '"Work Sans", sans-serif', fontWeight: 600 }}
+          >
             PICKED
           </Typography>
         </Box>
@@ -48,7 +51,7 @@ export default function GameCard({ game, selected, onSelect }: GameCardProps) {
         control={
           <Checkbox
             checked={selected}
-            onChange={(e) => onSelect(e.target.checked)}
+            onChange={e => onSelect(e.target.checked)}
             sx={{
               '& .MuiSvgIcon-root': { fontSize: 28 },
             }}
