@@ -2,11 +2,12 @@ import { describe, it, expect, vi } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import UserWeekSelector from '../../../src/components/user/UserWeekSelector.js';
+import { getCurrentSeason } from '../../../src/utils/weekCalculation.js';
 
-const currentYear = new Date().getFullYear();
+const currentSeason = getCurrentSeason();
 
 const defaultProps = {
-  selectedYear: currentYear,
+  selectedYear: currentSeason,
   selectedWeek: 1,
   weeks: [],
   onYearChange: vi.fn(),
@@ -22,20 +23,20 @@ describe('UserWeekSelector', () => {
     expect(screen.queryByRole('spinbutton')).not.toBeInTheDocument();
   });
 
-  it('renders exactly three year options', async () => {
+  it('renders exactly three season options', async () => {
     const user = userEvent.setup();
     render(<UserWeekSelector {...defaultProps} />);
 
-    // Year select is the first combobox in the DOM
+    // Season select is the first combobox in the DOM
     const yearCombobox = screen.getAllByRole('combobox')[0];
     await user.click(yearCombobox);
 
     const options = screen.getAllByRole('option');
     expect(options).toHaveLength(3);
-    expect(options.map(o => Number(o.textContent))).toEqual([
-      currentYear,
-      currentYear - 1,
-      currentYear - 2,
+    expect(options.map(o => Number(o.getAttribute('data-value')))).toEqual([
+      currentSeason,
+      currentSeason - 1,
+      currentSeason - 2,
     ]);
   });
 
@@ -46,8 +47,8 @@ describe('UserWeekSelector', () => {
 
     const yearCombobox = screen.getAllByRole('combobox')[0];
     await user.click(yearCombobox);
-    await user.click(screen.getByRole('option', { name: String(currentYear - 2) }));
+    await user.click(screen.getByRole('option', { name: `${currentSeason - 2} Season` }));
 
-    expect(onYearChange).toHaveBeenCalledWith(currentYear - 2);
+    expect(onYearChange).toHaveBeenCalledWith(currentSeason - 2);
   });
 });

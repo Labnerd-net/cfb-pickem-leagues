@@ -16,13 +16,11 @@ import {
   addGamesToWeek,
 } from '../../apis/adminRequests';
 import WeekSelector from './WeekSelector';
+import { getCurrentSeason } from '../../utils/weekCalculation';
 
 export default function AdminSection() {
-  const currentDate = new Date();
-  const currentYear = currentDate.getFullYear();
-
   // State
-  const [selectedYear, setSelectedYear] = useState(currentYear);
+  const [selectedYear, setSelectedYear] = useState(() => getCurrentSeason());
   const [selectedWeek, setSelectedWeek] = useState(1);
   const [weeks, setWeeks] = useState<AdminDbWeekData[]>([]);
   const [games, setGames] = useState<AdminDbGameData[]>([]);
@@ -274,7 +272,7 @@ export default function AdminSection() {
                   fontStyle: 'italic',
                 }}
               >
-                No weeks loaded for {selectedYear}
+                No weeks loaded for {selectedYear} Season
               </Typography>
               <Button
                 variant="contained"

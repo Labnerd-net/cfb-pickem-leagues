@@ -7,7 +7,7 @@ import {
   getWeeksForYear,
   postUserPicks,
 } from '../../apis/userRequests';
-import { getCurrentWeek } from '../../utils/weekCalculation';
+import { getCurrentWeek, getCurrentSeason } from '../../utils/weekCalculation';
 import { logger } from '../../utils/logger';
 import UserWeekSelector from './UserWeekSelector';
 import UserPicksGamesList from './UserPicksGamesList';
@@ -31,20 +31,20 @@ export default function UserPicksSection() {
     async function initialize() {
       try {
         setInitializing(true);
-        const currentYear = new Date().getFullYear();
+        const currentSeason = getCurrentSeason();
 
-        // Fetch weeks for previous year and current year (to handle off-season)
-        const [currentYearResult, nextYearResult] = await Promise.all([
-          getWeeksForYear(currentYear - 1),
-          getWeeksForYear(currentYear),
+        // Fetch weeks for previous season and current season (to handle off-season/bowl games)
+        const [prevSeasonResult, currentSeasonResult] = await Promise.all([
+          getWeeksForYear(currentSeason - 1),
+          getWeeksForYear(currentSeason),
         ]);
 
         const allWeeks: AdminDbWeekData[] = [];
-        if (currentYearResult.success && currentYearResult.data) {
-          allWeeks.push(...currentYearResult.data.weeks);
+        if (prevSeasonResult.success && prevSeasonResult.data) {
+          allWeeks.push(...prevSeasonResult.data.weeks);
         }
-        if (nextYearResult.success && nextYearResult.data) {
-          allWeeks.push(...nextYearResult.data.weeks);
+        if (currentSeasonResult.success && currentSeasonResult.data) {
+          allWeeks.push(...currentSeasonResult.data.weeks);
         }
 
         if (allWeeks.length === 0) {

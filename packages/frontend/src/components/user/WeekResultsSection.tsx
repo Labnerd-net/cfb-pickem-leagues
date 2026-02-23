@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { Box, Typography, CircularProgress } from '@mui/material';
 import type { AdminDbWeekData } from '@shared/types/cfb-pickem-api';
 import { getPickedGames, getUserPicks, getWeeksForYear } from '../../apis/userRequests';
-import { getMostRecentCompletedWeek } from '../../utils/weekCalculation';
+import { getMostRecentCompletedWeek, getCurrentSeason } from '../../utils/weekCalculation';
 import { logger } from '../../utils/logger';
 import UserWeekSelector from './UserWeekSelector';
 import WeekResultsGameRow from './WeekResultsGameRow';
@@ -22,19 +22,19 @@ export default function WeekResultsSection() {
     async function initialize() {
       try {
         setInitializing(true);
-        const currentYear = new Date().getFullYear();
+        const currentSeason = getCurrentSeason();
 
-        const [prevResult, currResult] = await Promise.all([
-          getWeeksForYear(currentYear - 1),
-          getWeeksForYear(currentYear),
+        const [prevResult, currentSeasonResult] = await Promise.all([
+          getWeeksForYear(currentSeason - 1),
+          getWeeksForYear(currentSeason),
         ]);
 
         const allWeeks: AdminDbWeekData[] = [];
         if (prevResult.success && prevResult.data) {
           allWeeks.push(...prevResult.data.weeks);
         }
-        if (currResult.success && currResult.data) {
-          allWeeks.push(...currResult.data.weeks);
+        if (currentSeasonResult.success && currentSeasonResult.data) {
+          allWeeks.push(...currentSeasonResult.data.weeks);
         }
 
         if (allWeeks.length === 0) {

@@ -16,6 +16,7 @@ vi.mock('../../../src/contexts/auth/AuthContext', async (importOriginal) => {
 
 import { getLeaderboard } from '../../../src/apis/leaderboardRequests.js';
 import { useAuth } from '../../../src/contexts/auth/AuthContext';
+import { getCurrentSeason } from '../../../src/utils/weekCalculation.js';
 
 const mockGetLeaderboard = vi.mocked(getLeaderboard);
 const mockUseAuth = vi.mocked(useAuth);
@@ -26,7 +27,7 @@ const mockEntries: LeaderboardEntry[] = [
 	{ userId: 3, displayName: 'Carol', total: 0, correct: 0, incorrect: 0, pending: 0, percentage: null },
 ];
 
-const currentYear = new Date().getFullYear();
+const currentSeason = getCurrentSeason();
 
 beforeEach(() => {
 	mockUseAuth.mockReturnValue({
@@ -106,18 +107,18 @@ describe('LeaderboardSection', () => {
 		});
 	});
 
-	it('renders year selector defaulting to current year', async () => {
+	it('renders season selector defaulting to current season', async () => {
 		mockGetLeaderboard.mockResolvedValue({ success: true, data: [] });
 
 		renderWithProviders(<LeaderboardSection />);
 
 		expect(screen.getByRole('combobox')).toBeInTheDocument();
 		await waitFor(() => {
-			expect(mockGetLeaderboard).toHaveBeenCalledWith(currentYear);
+			expect(mockGetLeaderboard).toHaveBeenCalledWith(currentSeason);
 		});
 	});
 
-	it('re-fetches when year is changed', async () => {
+	it('re-fetches when season is changed', async () => {
 		mockGetLeaderboard.mockResolvedValue({ success: true, data: [] });
 		const user = userEvent.setup();
 
@@ -126,10 +127,10 @@ describe('LeaderboardSection', () => {
 		await waitFor(() => expect(screen.getByRole('combobox')).toBeInTheDocument());
 
 		await user.click(screen.getByRole('combobox'));
-		await user.click(screen.getByRole('option', { name: String(currentYear - 1) }));
+		await user.click(screen.getByRole('option', { name: `${currentSeason - 1} Season` }));
 
 		await waitFor(() => {
-			expect(mockGetLeaderboard).toHaveBeenCalledWith(currentYear - 1);
+			expect(mockGetLeaderboard).toHaveBeenCalledWith(currentSeason - 1);
 		});
 	});
 });

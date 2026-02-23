@@ -16,13 +16,13 @@ import {
 import type { LeaderboardEntry } from '@shared/types/cfb-pickem-api.js';
 import { useAuth } from '../../contexts/auth/AuthContext';
 import { getLeaderboard } from '../../apis/leaderboardRequests';
-
-const currentYear = new Date().getFullYear();
-const yearOptions = [currentYear, currentYear - 1, currentYear - 2];
+import { getCurrentSeason } from '../../utils/weekCalculation';
 
 export default function LeaderboardSection() {
   const { user } = useAuth();
-  const [year, setYear] = useState(currentYear);
+  const [year, setYear] = useState(() => getCurrentSeason());
+  const currentSeason = getCurrentSeason();
+  const yearOptions = [currentSeason, currentSeason - 1, currentSeason - 2];
   const [entries, setEntries] = useState<LeaderboardEntry[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -44,17 +44,17 @@ export default function LeaderboardSection() {
 
   return (
     <Box>
-      <FormControl size="small" sx={{ mb: 2, minWidth: 100 }}>
-        <InputLabel>Year</InputLabel>
+      <FormControl size="small" sx={{ mb: 2, minWidth: 140 }}>
+        <InputLabel>Season</InputLabel>
         <Select
           value={year}
-          label="Year"
+          label="Season"
           onChange={e => setYear(Number(e.target.value))}
           disabled={loading}
         >
           {yearOptions.map(y => (
             <MenuItem key={y} value={y}>
-              {y}
+              {y} Season
             </MenuItem>
           ))}
         </Select>
