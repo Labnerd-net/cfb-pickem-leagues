@@ -1,11 +1,9 @@
 import { Box } from '@mui/material';
 import DashboardCard from '../dashboard/DashboardCard';
-import SportsFootballIcon from '@mui/icons-material/SportsFootball';
 import LeaderboardIcon from '@mui/icons-material/Leaderboard';
 import CalendarMonthIcon from '@mui/icons-material/CalendarMonth';
-import UserPicksSection from './UserPicksSection';
+import WeekGameSection from './WeekGameSection';
 import LeaderboardSection from './LeaderboardSection';
-import WeekResultsSection from './WeekResultsSection';
 
 export default function UserSection() {
   return (
@@ -17,11 +15,12 @@ export default function UserSection() {
       }}
     >
       <DashboardCard
-        icon={<SportsFootballIcon sx={{ fontSize: 32, color: 'primary.main', mr: 2 }} />}
-        title="Your Picks"
+        icon={<CalendarMonthIcon sx={{ fontSize: 32, color: 'primary.main', mr: 2 }} />}
+        title="Weekly Games"
         accentColor="primary"
+        gridColumn={{ xs: '1', md: 'span 2' }}
       >
-        <WeekResultsSection />
+        <WeekGameSection />
       </DashboardCard>
 
       <DashboardCard
@@ -30,15 +29,6 @@ export default function UserSection() {
         accentColor="secondary"
       >
         <LeaderboardSection />
-      </DashboardCard>
-
-      <DashboardCard
-        icon={<CalendarMonthIcon sx={{ fontSize: 32, color: 'primary.main', mr: 2 }} />}
-        title="This Week's Games"
-        accentColor="primary"
-        gridColumn={{ xs: '1', md: 'span 2' }}
-      >
-        <UserPicksSection />
       </DashboardCard>
     </Box>
   );

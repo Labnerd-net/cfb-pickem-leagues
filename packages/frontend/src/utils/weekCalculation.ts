@@ -1,4 +1,4 @@
-import type { AdminDbWeekData } from '@shared/types/cfb-pickem-api.js';
+import type { AdminDbWeekData, AdminDbGameData } from '@shared/types/cfb-pickem-api.js';
 
 export interface CurrentWeek {
   year: number;
@@ -30,6 +30,12 @@ export function getMostRecentCompletedWeek(weeks: AdminDbWeekData[]): CurrentWee
   return sorted.length > 0
     ? { year: sorted[0].year, week: sorted[0].weekNumber }
     : { year: getCurrentSeason(now), week: 1 };
+}
+
+export function isResultsMode(games: AdminDbGameData[]): boolean {
+  return games.some(
+    g => g.completed || (g.startTime !== null && new Date() >= new Date(g.startTime)),
+  );
 }
 
 export function getCurrentWeek(weeks: AdminDbWeekData[]): CurrentWeek {

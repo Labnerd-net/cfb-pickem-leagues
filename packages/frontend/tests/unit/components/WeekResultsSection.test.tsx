@@ -2,7 +2,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { renderWithProviders } from '../../test-utils.js';
-import WeekResultsSection from '../../../src/components/user/WeekResultsSection.js';
+import WeekGameSection from '../../../src/components/user/WeekGameSection.js';
 import type { AdminDbGameData, AdminDbWeekData, UserDbGameData } from '@shared/types/cfb-pickem-api';
 
 vi.mock('../../../src/apis/userRequests.js', () => ({
@@ -102,11 +102,11 @@ beforeEach(() => {
 	mockGetUserPicks.mockResolvedValue({ success: true, data: [] });
 });
 
-describe('WeekResultsSection', () => {
+describe('WeekGameSection (results mode)', () => {
 	it('shows CircularProgress while initializing', () => {
 		mockGetWeeksForYear.mockReturnValue(new Promise(() => {}));
 
-		renderWithProviders(<WeekResultsSection />);
+		renderWithProviders(<WeekGameSection />);
 
 		expect(screen.getByRole('progressbar')).toBeInTheDocument();
 	});
@@ -115,7 +115,7 @@ describe('WeekResultsSection', () => {
 		mockGetPickedGames.mockResolvedValue({ success: true, data: [makeGame()] });
 		mockGetUserPicks.mockResolvedValue({ success: true, data: [makeUserPick()] });
 
-		renderWithProviders(<WeekResultsSection />);
+		renderWithProviders(<WeekGameSection />);
 
 		await waitFor(() => {
 			expect(screen.getByText('Away Team @ Home Team')).toBeInTheDocument();
@@ -132,7 +132,7 @@ describe('WeekResultsSection', () => {
 			data: [makeUserPick({ teamChosen: 'home_team' })],
 		});
 
-		renderWithProviders(<WeekResultsSection />);
+		renderWithProviders(<WeekGameSection />);
 
 		await waitFor(() => {
 			expect(screen.getByText('Correct')).toBeInTheDocument();
@@ -149,24 +149,25 @@ describe('WeekResultsSection', () => {
 			data: [makeUserPick({ teamChosen: 'away_team' })],
 		});
 
-		renderWithProviders(<WeekResultsSection />);
+		renderWithProviders(<WeekGameSection />);
 
 		await waitFor(() => {
 			expect(screen.getByText('Incorrect')).toBeInTheDocument();
 		});
 	});
 
-	it('shows "Pending" chip when winningTeam is pending', async () => {
+	it('shows "Pending" chip when winningTeam is pending and game has started', async () => {
+		// startTime in the past triggers results mode even when completed: false
 		mockGetPickedGames.mockResolvedValue({
 			success: true,
-			data: [makeGame({ completed: false, winningTeam: 'pending', homePoints: null, awayPoints: null })],
+			data: [makeGame({ completed: false, winningTeam: 'pending', homePoints: null, awayPoints: null, startTime: new Date(pastDate(1)) })],
 		});
 		mockGetUserPicks.mockResolvedValue({
 			success: true,
 			data: [makeUserPick({ teamChosen: 'home_team', winningTeam: 'pending' })],
 		});
 
-		renderWithProviders(<WeekResultsSection />);
+		renderWithProviders(<WeekGameSection />);
 
 		await waitFor(() => {
 			expect(screen.getByText('Pending')).toBeInTheDocument();
@@ -180,7 +181,7 @@ describe('WeekResultsSection', () => {
 		});
 		mockGetUserPicks.mockResolvedValue({ success: true, data: [] });
 
-		renderWithProviders(<WeekResultsSection />);
+		renderWithProviders(<WeekGameSection />);
 
 		await waitFor(() => {
 			expect(screen.getByText('No Pick')).toBeInTheDocument();
@@ -192,10 +193,10 @@ describe('WeekResultsSection', () => {
 		mockGetPickedGames.mockResolvedValue({ success: true, data: [] });
 		mockGetUserPicks.mockResolvedValue({ success: true, data: [] });
 
-		renderWithProviders(<WeekResultsSection />);
+		renderWithProviders(<WeekGameSection />);
 
 		await waitFor(() => {
-			expect(screen.getByText('No games available for this week.')).toBeInTheDocument();
+			expect(screen.getByText('No games available for this week. Check back later!')).toBeInTheDocument();
 		});
 	});
 
@@ -203,7 +204,7 @@ describe('WeekResultsSection', () => {
 		mockGetPickedGames.mockResolvedValue({ success: false, error: 'Server error' });
 		mockGetUserPicks.mockResolvedValue({ success: true, data: [] });
 
-		renderWithProviders(<WeekResultsSection />);
+		renderWithProviders(<WeekGameSection />);
 
 		await waitFor(() => {
 			expect(screen.getByText('Server error')).toBeInTheDocument();
@@ -220,7 +221,7 @@ describe('WeekResultsSection', () => {
 		mockGetUserPicks.mockResolvedValue({ success: true, data: [] });
 
 		const user = userEvent.setup();
-		renderWithProviders(<WeekResultsSection />);
+		renderWithProviders(<WeekGameSection />);
 
 		// Wait for initialization
 		await waitFor(() => expect(screen.getAllByRole('combobox').length).toBeGreaterThan(0));
