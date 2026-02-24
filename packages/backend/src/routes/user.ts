@@ -7,6 +7,11 @@ import {
   returnWeekByQuery,
   returnGame,
 } from '../db/dbAdminFunctions.js';
+import {
+  returnNotificationSettings,
+  upsertNotificationPreference,
+  updateUserNtfyUrl,
+} from '../db/dbNotificationFunctions.js';
 import type {
   AdminDbGameData,
   AdminWeekData,
@@ -18,7 +23,12 @@ import type {
 import { authMiddleware } from '../utils/middleware.js';
 import { ignorePickDeadline } from '../utils/envVars.js';
 import { apiRateLimit } from '../utils/rateLimiter.js';
-import { allUserPickedRequestValidator } from '../utils/zValidate.js';
+import {
+  allUserPickedRequestValidator,
+  notificationPreferenceValidator,
+  ntfyUrlValidator,
+} from '../utils/zValidate.js';
+import { sendNtfyNotification } from '../notifications/ntfySender.js';
 
 type Variables = {
   jwtPayload: JwtData;
@@ -119,6 +129,41 @@ const user = new Hono<{ Variables: Variables }>()
       await dbUserFunctions.addPickedGame(pick, userIdString);
     }
     return c.json({ status: 'updated picked games' });
+  })
+  // Get notification settings
+  .get('/notifications/preferences', apiRateLimit, authMiddleware, async c => {
+    const payload = c.get('jwtPayload');
+    const settings = await returnNotificationSettings(payload.sub);
+    return c.json(settings);
+  })
+  // Update a notification preference
+  .patch('/notifications/preferences', apiRateLimit, notificationPreferenceValidator, authMiddleware, async c => {
+    const payload = c.get('jwtPayload');
+    const { notificationType, channel, enabled } = c.req.valid('json');
+    await upsertNotificationPreference(payload.sub, notificationType, channel, enabled);
+    return c.json({ status: 'updated' });
+  })
+  // Update NTFY server URL
+  .patch('/notifications/ntfy-url', apiRateLimit, ntfyUrlValidator, authMiddleware, async c => {
+    const payload = c.get('jwtPayload');
+    const { ntfyServerUrl } = c.req.valid('json');
+    await updateUserNtfyUrl(payload.sub, ntfyServerUrl);
+    return c.json({ status: 'updated' });
+  })
+  // Send test NTFY notification
+  .post('/notifications/test-ntfy', apiRateLimit, authMiddleware, async c => {
+    const payload = c.get('jwtPayload');
+    const userData = await dbUserFunctions.returnUserById(payload.sub);
+    if (!userData || userData.length === 0) throw new HTTPException(404, { message: 'User not found' });
+    const ntfyServerUrl = userData[0].ntfyServerUrl;
+    if (!ntfyServerUrl) throw new HTTPException(400, { message: 'No NTFY server URL configured' });
+    const sent = await sendNtfyNotification({
+      ntfyServerUrl,
+      userId: payload.sub,
+      title: "CFB Pick'em test notification",
+      message: 'Your NTFY notifications are working!',
+    });
+    return c.json({ status: sent ? 'sent' : 'failed' });
   });
 
 export default user;

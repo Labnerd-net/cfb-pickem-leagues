@@ -1,4 +1,6 @@
 export type Role = "user" | "admin";
+export type NotificationType = "games_ready" | "picks_reminder" | "rankings_updated";
+export type NotificationChannel = "email" | "ntfy";
 export type Team = "home_team" | "away_team" | "pending";
 export type Classification = "fbs" | "fcs" | "d1" | "d2" | "d3";
 export type DataSource = "ncaa" | "cfbd" | "sdv";
@@ -28,7 +30,21 @@ export interface JwtData {
   email: string;
   displayName: string;
   roles: Role[];
+  emailVerified: boolean;
   exp: number;
+}
+
+export interface NotificationPreference {
+  userId: number;
+  notificationType: NotificationType;
+  channel: NotificationChannel;
+  enabled: boolean;
+}
+
+export interface NotificationSettings {
+  preferences: NotificationPreference[];
+  ntfyServerUrl: string | null;
+  emailVerified: boolean;
 }
 
 export interface ProfileData {
@@ -36,6 +52,7 @@ export interface ProfileData {
   email: string;
   displayName: string;
   roles: Role[];
+  emailVerified: boolean;
 }
 
 export interface UserData extends ProfileData {
@@ -44,6 +61,9 @@ export interface UserData extends ProfileData {
 
 export interface UserDbData extends UserData {
   createdAt: Date;
+  emailVerificationToken: string | null;
+  emailVerificationSentAt: Date | null;
+  ntfyServerUrl: string | null;
 }
 
 export interface UserGameData {

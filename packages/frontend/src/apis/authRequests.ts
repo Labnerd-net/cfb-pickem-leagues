@@ -72,3 +72,29 @@ export async function deleteUser(): Promise<AuthResponse> {
     return { success: false, error: 'Request failed' };
   }
 }
+
+export async function verifyEmailToken(token: string): Promise<AuthResponse> {
+  try {
+    const res = await client.api.auth['verify-email'].$get({ query: { token } });
+    if (!res.ok) {
+      const body = (await res.json()) as unknown as { error: string };
+      return { success: false, error: body.error };
+    }
+    return { success: true };
+  } catch {
+    return { success: false, error: 'Request failed' };
+  }
+}
+
+export async function resendVerificationEmail(): Promise<AuthResponse> {
+  try {
+    const res = await client.api.auth['resend-verification'].$post();
+    if (!res.ok) {
+      const body = (await res.json()) as unknown as { error: string };
+      return { success: false, error: body.error };
+    }
+    return { success: true };
+  } catch {
+    return { success: false, error: 'Request failed' };
+  }
+}

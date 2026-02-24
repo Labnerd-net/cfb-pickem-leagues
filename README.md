@@ -65,6 +65,13 @@ CLIENT_URL=http://localhost:5173,http://localhost:4173
 JWT_SECRET=your-secret-here
 JWT_EXPIRATION_DAYS=7
 DATA_SOURCE=ncaa
+
+# Notifications (optional — omit to disable)
+NOTIFICATION_FROM_EMAIL=noreply@yourdomain.com
+AWS_REGION=us-east-1
+AWS_ACCESS_KEY_ID=
+AWS_SECRET_ACCESS_KEY=
+SKIP_EMAIL_SEND=true   # set in dev to skip SES (SES sandbox only allows verified addresses)
 ```
 
 Create a `.env` file in `packages/frontend/`:
@@ -160,3 +167,25 @@ The test database is automatically seeded and cleaned between tests.
 2. Admins import weekly schedules from an external data source (NCAA, CFBD, or SportsDataverse) and select which games are available for picking.
 3. Authenticated users view the curated games for a given week and submit their predictions (home or away team).
 4. As games complete, results are updated and users can see how their picks performed.
+
+## Notifications
+
+The app supports two notification channels: **email** (via AWS SES) and **push** (via [ntfy](https://ntfy.sh)).
+
+Three notification types are sent automatically:
+
+| Type | Trigger |
+|------|---------|
+| `games_ready` | Admin imports games for a week |
+| `picks_reminder` | 60–75 minutes before the first kickoff of a week |
+| `rankings_updated` | All games in a week are complete and scores are final |
+
+Users configure their preferences on the `/settings` page. Each type × channel combination can be toggled independently. Email notifications require email verification. NTFY notifications require saving an ntfy server URL in settings.
+
+### Cron
+
+Score refresh and picks reminders run on a 15-minute cron inside the Hono process (`node-cron`). No external scheduler is required. The cron uses in-memory state and the `notificationLog` table to avoid duplicate sends.
+
+### Development without SES
+
+Set `SKIP_EMAIL_SEND=true` to bypass SES entirely. Verification tokens are still written to the DB — you can retrieve them directly via Drizzle Studio (`pnpm studio`) to test the verify-email flow locally.
