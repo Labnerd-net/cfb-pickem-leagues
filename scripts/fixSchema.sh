@@ -9,9 +9,9 @@ usersSchemaFile="${backend}/src/db/schema/users.ts"
 # change $backend/src/db/schema files
 # Comment line
 sed -i '17s/^/\/\//' ${adminSchemaFile}
-sed -i '13s/^/\/\//' ${usersSchemaFile}
 sed -i '15s/^/\/\//' ${usersSchemaFile}
+sed -i '17s/^/\/\//' ${usersSchemaFile}
 # Uncomment line
 sed -i '16s/^\/\///' ${adminSchemaFile}
-sed -i '12s/^\/\///' ${usersSchemaFile}
 sed -i '14s/^\/\///' ${usersSchemaFile}
+sed -i '16s/^\/\///' ${usersSchemaFile}

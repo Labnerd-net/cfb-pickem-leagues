@@ -44,10 +44,9 @@ Six characters is below modern standards. Recommend 10–12 minimum, or use a st
 
 ## Missing Features / Spec Gaps
 
-### Email notifications not implemented
-**Spec:** `_specs/email-notifications.md`
+### ~~Email notifications not implemented~~ ✓ Implemented
 
-Nothing from this spec exists in the codebase: no Resend integration, no `notificationPreferences` column, no `PATCH /user/notifications` endpoint, no `POST /admin/week/finalize` endpoint, no cron job.
+Notification system shipped in `claude/feature/notification-system`. Implemented with AWS SES (not Resend) and NTFY push as a second channel. Three types: `games_ready` (event-driven from admin import), `picks_reminder` (cron, 60–75 min before first kickoff), `rankings_updated` (cron, after score refresh detects week complete). Per-user opt-in preferences, email verification flow, ntfy URL configuration, and deduplication via `notificationLog` table. See `_specs/notification-system.md` and `_plans/notification-system.md`.
 
 ---
 
