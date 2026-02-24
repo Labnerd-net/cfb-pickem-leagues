@@ -80,10 +80,11 @@ NODE_ENV=test pnpm migrate
 - **packages/shared** — TypeScript types only (`types/cfb-pickem-api.ts`). Imported as `@shared/*` via tsconfig path alias.
 
 ### Backend Layers
-1. **Routes** (`src/routes/`) — Hono route handlers. `auth.ts` is public; `user.ts` requires auth; `admin.ts` requires admin role.
-2. **DB Functions** (`src/db/dbAdminFunctions.ts`, `dbUserFunctions.ts`) — Drizzle queries. Two PostgreSQL schemas: `admin` (reference data: weeks/games) and `user` (accounts and picks).
+1. **Routes** (`src/routes/`) — Hono route handlers. `auth.ts` is public; `user.ts` and `leaderboard.ts` require auth; `admin.ts` requires admin role.
+2. **DB Functions** (`src/db/dbAdminFunctions.ts`, `dbUserFunctions.ts`, `dbNotificationFunctions.ts`) — Drizzle queries. Two PostgreSQL schemas: `admin` (reference data: weeks/games) and `user` (accounts and picks).
 3. **API Adapters** (`src/api/`) — External data sources (NCAA, CFBD, SportsDataverse). Configurable via `DATA_SOURCE` env var. Converters in `src/api/index.ts` normalize data into shared types.
 4. **Middleware** (`src/utils/middleware.ts`) — JWT auth middleware and `requireRole()` guard.
+5. **Notifications** (`src/notifications/`) — `dispatcher.ts` routes events to `emailSender.ts` (AWS SES) and/or `ntfySender.ts` (NTFY push). `templates.ts` holds message content.
 
 ### Auth Flow
 JWT-based. Token is set as an **httpOnly cookie** by the backend (`auth_token`). The frontend Hono RPC client is initialized with `credentials: 'include'` so the cookie is sent automatically. `AuthProvider` determines auth state on mount by calling `GET /api/auth/me`. First registered user is auto-assigned admin role.
@@ -104,6 +105,7 @@ All frontend API functions in `src/apis/` (`authRequests.ts`, `userRequests.ts`,
 - Backend POST/PATCH endpoints accept JSON bodies.
 - Route handlers respond with `c.json()` directly — there is no `ok()`/`err()` wrapper utility.
 - Route-level input validation uses `src/utils/zValidate.ts` with Zod schemas.
+- Rate limiting is applied per-route via `src/utils/rateLimiter.ts` (`apiRateLimit` middleware).
 - Frontend API functions are organized by domain in `src/apis/` — `authRequests.ts` for auth, `userRequests.ts` for user endpoints, `adminRequests.ts` for admin-only.
 
 ### Database Key Strategy
