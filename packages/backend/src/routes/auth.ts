@@ -3,7 +3,12 @@ import { HTTPException } from 'hono/http-exception';
 import { sign } from 'hono/jwt';
 import { setCookie, deleteCookie } from 'hono/cookie';
 import * as bcrypt from 'bcryptjs';
+import { randomBytes } from 'crypto';
 import * as dbUserFunctions from '../db/dbUserFunctions.js';
+import {
+  setEmailVerificationToken,
+  markEmailVerified,
+} from '../db/dbNotificationFunctions.js';
 import type { Credentials, JwtData, UserData } from '@shared/types/cfb-pickem-api.js';
 import {
   bcryptSaltRounds,
@@ -17,6 +22,9 @@ import { authMiddleware } from '../utils/middleware.js';
 import { validatePassword } from '../utils/passwordValidation.js';
 import { validateEmail } from '../utils/emailValidation.js';
 import { authRateLimit } from '../utils/rateLimiter.js';
+import { sendEmail } from '../notifications/emailSender.js';
+import { verifyEmailQueryValidator } from '../utils/zValidate.js';
+import logger from '../utils/logger.js';
 
 type Variables = {
   jwtPayload: JwtData;
@@ -59,11 +67,29 @@ const auth = new Hono<{ Variables: Variables }>()
     if (!result || !(result.length > 0)) {
       throw new Error(`Could not add new user with email=${email}`);
     }
+
+    // Send verification email (fire-and-forget)
+    const verificationToken = randomBytes(32).toString('hex');
+    setEmailVerificationToken(result[0].userId, verificationToken, new Date())
+      .then(() => {
+        const verifyUrl = `${process.env.CLIENT_URL?.split(',')[0] ?? ''}/verify-email?token=${verificationToken}`;
+        return sendEmail({
+          to: email,
+          subject: "Verify your CFB Pick'em email",
+          htmlBody: `<p>Click <a href="${verifyUrl}">here</a> to verify your email address.</p>`,
+          textBody: `Verify your email: ${verifyUrl}`,
+        });
+      })
+      .catch(err => {
+        logger.error({ err, email }, 'Failed to send verification email');
+      });
+
     const payload = {
       sub: result[0].userId,
       email: result[0].email,
       displayName: result[0].displayName,
       roles: result[0].roles,
+      emailVerified: false,
       exp: getJwtExpirationSeconds(),
     };
     const token = await sign(payload, jwtSecret, jwtAlgorithm);
@@ -85,6 +111,7 @@ const auth = new Hono<{ Variables: Variables }>()
       email: user[0].email,
       displayName: user[0].displayName,
       roles: user[0].roles,
+      emailVerified: user[0].emailVerified,
       exp: getJwtExpirationSeconds(),
     };
     const token = await sign(payload, jwtSecret, jwtAlgorithm);
@@ -104,6 +131,7 @@ const auth = new Hono<{ Variables: Variables }>()
       email: payload.email,
       displayName: payload.displayName,
       roles: payload.roles,
+      emailVerified: payload.emailVerified,
     });
   })
   // Delete a user by ID
@@ -113,6 +141,27 @@ const auth = new Hono<{ Variables: Variables }>()
     if (!user || user.length === 0) throw new HTTPException(404, { message: 'User not found' });
     await dbUserFunctions.deleteUserWithAudit(user[0]);
     return c.json({ status: 'deleted' });
+  })
+  // Verify email via token
+  .get('/verify-email', verifyEmailQueryValidator, async c => {
+    const { token } = c.req.valid('query');
+    const result = await markEmailVerified(token);
+    if (!result) throw new HTTPException(400, { message: 'Invalid or expired verification token' });
+    return c.json({ status: 'verified' });
+  })
+  // Resend verification email
+  .post('/resend-verification', authRateLimit, authMiddleware, async c => {
+    const payload = c.get('jwtPayload');
+    const verificationToken = randomBytes(32).toString('hex');
+    await setEmailVerificationToken(payload.sub, verificationToken, new Date());
+    const verifyUrl = `${process.env.CLIENT_URL?.split(',')[0] ?? ''}/verify-email?token=${verificationToken}`;
+    sendEmail({
+      to: payload.email,
+      subject: "Verify your CFB Pick'em email",
+      htmlBody: `<p>Click <a href="${verifyUrl}">here</a> to verify your email address.</p>`,
+      textBody: `Verify your email: ${verifyUrl}`,
+    }).catch(err => logger.error({ err }, 'Failed to resend verification email'));
+    return c.json({ status: 'sent' });
   });
 
 export default auth;

@@ -3,6 +3,7 @@ import { Hono } from 'hono';
 import { HTTPException } from 'hono/http-exception';
 import { cors } from 'hono/cors';
 import { prettyJSON } from 'hono/pretty-json';
+import cron from 'node-cron';
 import { clientURLs, serverPort, dataSource } from './utils/envVars.js';
 import authRoutes from './routes/auth.js';
 import adminRoutes from './routes/admin.js';
@@ -10,6 +11,7 @@ import userRoutes from './routes/user.js';
 import leaderboardRoutes from './routes/leaderboard.js';
 import { logger } from './utils/middleware.js';
 import pinoLogger from './utils/logger.js';
+import { runCronTick } from './cron/cronTick.js';
 
 const app = new Hono();
 
@@ -18,7 +20,7 @@ app.use(
   cors({
     origin: clientURLs,
     allowHeaders: ['Content-Type', 'Authorization'],
-    allowMethods: ['GET', 'POST', 'PATCH', 'DELETE'],
+    allowMethods: ['GET', 'POST', 'PATCH', 'DELETE', 'PUT'],
     exposeHeaders: ['Content-Length', 'Set-Cookie'],
     maxAge: 600,
     credentials: true,
@@ -59,6 +61,9 @@ serve(
       { port: info.port, dataSource, dbHost: process.env.DB_HOST ?? 'localhost' },
       'Server started'
     );
+    cron.schedule('*/15 * * * *', () => {
+      runCronTick().catch(err => pinoLogger.error(err, 'cron tick failed'));
+    });
   }
 );
 

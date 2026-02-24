@@ -1,5 +1,6 @@
-import { AppBar, Toolbar, Typography, Button, Box, alpha, useTheme } from '@mui/material';
+import { AppBar, Toolbar, Typography, Button, Box, IconButton, alpha, useTheme } from '@mui/material';
 import SportsFootballIcon from '@mui/icons-material/SportsFootball';
+import SettingsIcon from '@mui/icons-material/Settings';
 import { useNavigate } from 'react-router';
 import ThemeToggle from '../theme/ThemeToggle';
 import { useAuth } from '../../contexts/auth/AuthContext';
@@ -96,6 +97,17 @@ export default function Navbar() {
           >
             {user.displayName}
           </Typography>
+        )}
+
+        {/* Settings Icon */}
+        {user && (
+          <IconButton
+            onClick={() => navigate('/settings')}
+            sx={{ ml: 1, color: 'text.secondary' }}
+            aria-label="Settings"
+          >
+            <SettingsIcon />
+          </IconButton>
         )}
 
         {/* Theme Toggle */}

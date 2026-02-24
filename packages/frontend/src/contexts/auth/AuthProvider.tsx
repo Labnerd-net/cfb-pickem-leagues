@@ -13,12 +13,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       try {
         const result = await getMe();
         if (result.success && result.data) {
-          setUser({
-            userId: result.data.userId,
-            email: result.data.email,
-            displayName: result.data.displayName,
-            roles: result.data.roles,
-          });
+          setUser(result.data);
         }
       } catch {
         // No valid cookie — user is not authenticated
@@ -32,12 +27,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const login = async () => {
     const result = await getMe();
     if (result.success && result.data) {
-      setUser({
-        userId: result.data.userId,
-        email: result.data.email,
-        displayName: result.data.displayName,
-        roles: result.data.roles,
-      });
+      setUser(result.data);
     } else {
       throw new Error(result.error || 'Failed to fetch user profile');
     }

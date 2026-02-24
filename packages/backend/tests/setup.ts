@@ -67,7 +67,11 @@ vi.mock('../src/db/index.ts', async () => {
 			display_name TEXT NOT NULL DEFAULT '',
 			password_hash TEXT NOT NULL,
 			roles TEXT[] NOT NULL,
-			created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL
+			created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,
+			email_verified BOOLEAN DEFAULT FALSE,
+			email_verification_token TEXT,
+			email_verification_sent_at TIMESTAMP,
+			ntfy_server_url TEXT
 		);
 
 		-- User schema: deleted_users audit table
@@ -90,6 +94,27 @@ vi.mock('../src/db/index.ts', async () => {
 			PRIMARY KEY (user_id, game_id),
 			CONSTRAINT user_games_admin_games_fk FOREIGN KEY (game_id)
 				REFERENCES admin.games (game_id) ON DELETE CASCADE
+		);
+
+		-- User schema: notification preferences
+		CREATE TABLE "user".notification_preferences (
+			user_id INTEGER NOT NULL REFERENCES "user".users (user_id) ON DELETE CASCADE,
+			notification_type TEXT NOT NULL,
+			channel TEXT NOT NULL,
+			enabled BOOLEAN NOT NULL DEFAULT TRUE,
+			PRIMARY KEY (user_id, notification_type, channel)
+		);
+
+		-- User schema: notification log (deduplication)
+		CREATE TABLE "user".notification_log (
+			id SERIAL PRIMARY KEY,
+			user_id INTEGER NOT NULL REFERENCES "user".users (user_id) ON DELETE CASCADE,
+			year INTEGER NOT NULL,
+			week_number INTEGER NOT NULL,
+			notification_type TEXT NOT NULL,
+			channel TEXT NOT NULL,
+			sent_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,
+			CONSTRAINT notification_log_unique UNIQUE (user_id, year, week_number, notification_type, channel)
 		);
 	`);
 

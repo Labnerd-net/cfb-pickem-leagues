@@ -114,8 +114,39 @@ export const handlers = [
 					email: 'test@example.com',
 					displayName: 'Test User',
 					roles: ['user'],
+					emailVerified: false,
 				},
 			],
 		});
+	}),
+
+	// Notification endpoints
+	http.get(`${API_URL}/api/user/notifications/preferences`, () => {
+		return HttpResponse.json({
+			preferences: [],
+			ntfyServerUrl: null,
+			emailVerified: false,
+		});
+	}),
+
+	http.patch(`${API_URL}/api/user/notifications/preferences`, () => {
+		return HttpResponse.json({ status: 'updated' });
+	}),
+
+	http.patch(`${API_URL}/api/user/notifications/ntfy-url`, () => {
+		return HttpResponse.json({ status: 'updated' });
+	}),
+
+	http.post(`${API_URL}/api/user/notifications/test-ntfy`, () => {
+		return HttpResponse.json({ status: 'sent' });
+	}),
+
+	// Auth verification endpoints
+	http.get(`${API_URL}/api/auth/verify-email`, () => {
+		return HttpResponse.json({ status: 'verified' });
+	}),
+
+	http.post(`${API_URL}/api/auth/resend-verification`, () => {
+		return HttpResponse.json({ status: 'sent' });
 	}),
 ];

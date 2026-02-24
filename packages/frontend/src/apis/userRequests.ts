@@ -2,6 +2,9 @@ import type {
   AdminDbGameData,
   AdminDbWeekData,
   AllUserGamePicksRequest,
+  NotificationChannel,
+  NotificationSettings,
+  NotificationType,
   ProfileData,
   UserDbGameData,
   UserPickHistoryResponse,
@@ -128,6 +131,72 @@ export async function postUserPicks(picks: AllUserGamePicksRequest): Promise<Pic
     }
     const data = await res.json();
     return { success: true, data };
+  } catch {
+    return { success: false, error: 'Request failed' };
+  }
+}
+
+export interface NotificationSettingsResponse {
+  success: boolean;
+  data?: NotificationSettings;
+  error?: string;
+}
+
+export async function getNotificationSettings(): Promise<NotificationSettingsResponse> {
+  try {
+    const res = await client.api.user.notifications.preferences.$get();
+    if (!res.ok) {
+      const body = (await res.json()) as unknown as { error: string };
+      return { success: false, error: body.error };
+    }
+    const data = (await res.json()) as unknown as NotificationSettings;
+    return { success: true, data };
+  } catch {
+    return { success: false, error: 'Request failed' };
+  }
+}
+
+export async function updateNotificationPreference(pref: {
+  notificationType: NotificationType;
+  channel: NotificationChannel;
+  enabled: boolean;
+}): Promise<{ success: boolean; error?: string }> {
+  try {
+    const res = await client.api.user.notifications.preferences.$patch({ json: pref });
+    if (!res.ok) {
+      const body = (await res.json()) as unknown as { error: string };
+      return { success: false, error: body.error };
+    }
+    return { success: true };
+  } catch {
+    return { success: false, error: 'Request failed' };
+  }
+}
+
+export async function updateNtfyUrl(
+  ntfyServerUrl: string | null
+): Promise<{ success: boolean; error?: string }> {
+  try {
+    const res = await client.api.user.notifications['ntfy-url'].$patch({ json: { ntfyServerUrl } });
+    if (!res.ok) {
+      const body = (await res.json()) as unknown as { error: string };
+      return { success: false, error: body.error };
+    }
+    return { success: true };
+  } catch {
+    return { success: false, error: 'Request failed' };
+  }
+}
+
+export async function sendTestNtfy(): Promise<{ success: boolean; status?: string; error?: string }> {
+  try {
+    const res = await client.api.user.notifications['test-ntfy'].$post();
+    if (!res.ok) {
+      const body = (await res.json()) as unknown as { error: string };
+      return { success: false, error: body.error };
+    }
+    const data = (await res.json()) as unknown as { status: string };
+    return { success: true, status: data.status };
   } catch {
     return { success: false, error: 'Request failed' };
   }

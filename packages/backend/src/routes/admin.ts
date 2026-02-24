@@ -7,6 +7,8 @@ import type { JwtData, WeekIdentifier } from '@shared/types/cfb-pickem-api.js';
 import { authMiddleware, requireRole } from '../utils/middleware.js';
 import { apiRateLimit } from '../utils/rateLimiter.js';
 import { weekIdentifierValidator, pickedGameRequestValidator, updateUserRolesValidator } from '../utils/zValidate.js';
+import { dispatchNotification } from '../notifications/dispatcher.js';
+import logger from '../utils/logger.js';
 
 type Variables = {
   jwtPayload: JwtData;
@@ -86,6 +88,11 @@ const admin = new Hono<{ Variables: Variables }>()
         });
       }
       await Promise.all(gameData.map(game => dbAdminFunctions.upsertGameForWeek(game)));
+      dispatchNotification({
+        notificationType: 'games_ready',
+        year: weekIdentifier.year,
+        weekNumber: weekIdentifier.week,
+      }).catch(err => logger.error({ err }, 'games_ready dispatch failed'));
       return c.json({ status: `imported ${gameData.length} games` });
     }
   )

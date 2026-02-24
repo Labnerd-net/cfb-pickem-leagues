@@ -4,6 +4,8 @@ import RegistrationForm from './pages/Registration';
 import LoginForm from './pages/Login';
 import Home from './pages/Home';
 import Dashboard from './pages/Dashboard';
+import Settings from './pages/Settings';
+import VerifyEmail from './pages/VerifyEmail';
 import { ThemeProvider } from './contexts/theme/ThemeProvider';
 import { AuthProvider } from './contexts/auth/AuthProvider';
 import Navbar from './components/navbar/Navbar';
@@ -30,6 +32,15 @@ function App() {
                   </PrivateRoute>
                 }
               />
+              <Route
+                path="settings"
+                element={
+                  <PrivateRoute>
+                    <Settings />
+                  </PrivateRoute>
+                }
+              />
+              <Route path="verify-email" element={<VerifyEmail />} />
               <Route path="*" element={<Navigate to="/" replace />} />
             </Routes>
           </Box>

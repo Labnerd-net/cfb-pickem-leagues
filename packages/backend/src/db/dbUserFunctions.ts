@@ -24,14 +24,16 @@ import type {
 export async function returnUsers(): Promise<ProfileData[]> {
   logger.debug('returnUsers');
   try {
-    return await db
+    const rows = await db
       .select({
         userId: users.userId,
         email: users.email,
         displayName: users.displayName,
         roles: users.roles,
+        emailVerified: users.emailVerified,
       })
       .from(users);
+    return rows.map(r => ({ ...r, emailVerified: r.emailVerified ?? false }));
   } catch (e) {
     logger.error({ err: e }, 'returnUsers failed');
     throw e;
@@ -44,7 +46,8 @@ export async function returnUsers(): Promise<ProfileData[]> {
 export async function returnUserByEmail(email: string): Promise<UserDbData[]> {
   logger.debug({ email }, 'returnUserByEmail');
   try {
-    return await db.select().from(users).where(eq(users.email, email));
+    const rows = await db.select().from(users).where(eq(users.email, email));
+    return rows.map(r => ({ ...r, emailVerified: r.emailVerified ?? false }));
   } catch (e) {
     logger.error({ err: e }, 'returnUserByEmail failed');
     throw e;
@@ -57,7 +60,7 @@ export async function returnUserByEmail(email: string): Promise<UserDbData[]> {
 export async function updateUserRoles(userId: number, roles: Role[]): Promise<ProfileData[]> {
   logger.debug({ userId, roles }, 'updateUserRoles');
   try {
-    return await db
+    const rows = await db
       .update(users)
       .set({ roles })
       .where(eq(users.userId, userId))
@@ -66,7 +69,9 @@ export async function updateUserRoles(userId: number, roles: Role[]): Promise<Pr
         email: users.email,
         displayName: users.displayName,
         roles: users.roles,
+        emailVerified: users.emailVerified,
       });
+    return rows.map(r => ({ ...r, emailVerified: r.emailVerified ?? false }));
   } catch (e) {
     logger.error({ err: e }, 'updateUserRoles failed');
     throw e;
@@ -79,7 +84,8 @@ export async function updateUserRoles(userId: number, roles: Role[]): Promise<Pr
 export async function returnUserById(userId: number): Promise<UserDbData[]> {
   logger.debug({ userId }, 'returnUserById');
   try {
-    return await db.select().from(users).where(eq(users.userId, userId));
+    const rows = await db.select().from(users).where(eq(users.userId, userId));
+    return rows.map(r => ({ ...r, emailVerified: r.emailVerified ?? false }));
   } catch (e) {
     logger.error({ err: e }, 'returnUserById failed');
     throw e;
@@ -284,6 +290,35 @@ export async function returnWeekScores(year: number, week: number): Promise<Week
     }));
   } catch (e) {
     logger.error({ err: e }, 'returnWeekScores failed');
+    throw e;
+  }
+}
+
+// ------------------------------------------------------------------
+// Return count of picks a user has made for a given week
+// ------------------------------------------------------------------
+export async function returnUserPickCount(
+  userId: number,
+  year: number,
+  weekNumber: number
+): Promise<number> {
+  logger.debug({ userId, year, weekNumber }, 'returnUserPickCount');
+  try {
+    const rows = await db
+      .select({ count: sql<number>`COUNT(*)` })
+      .from(games)
+      .innerJoin(
+        adminGames,
+        and(
+          eq(games.gameId, adminGames.gameId),
+          eq(adminGames.year, year),
+          eq(adminGames.weekNumber, weekNumber)
+        )
+      )
+      .where(eq(games.userId, userId));
+    return Number(rows[0]?.count ?? 0);
+  } catch (e) {
+    logger.error({ err: e }, 'returnUserPickCount failed');
     throw e;
   }
 }

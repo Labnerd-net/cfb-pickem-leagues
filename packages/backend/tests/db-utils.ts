@@ -1,5 +1,5 @@
 import { sql } from 'drizzle-orm';
-import type { Role } from '@shared/types/cfb-pickem-api.js';
+import type { NotificationChannel, NotificationType, Role } from '@shared/types/cfb-pickem-api.js';
 import bcrypt from 'bcryptjs';
 import { db } from '../src/db/index.js';
 
@@ -12,6 +12,7 @@ export { db as testDb };
  * Note: With PGlite, each test file gets a fresh DB, so this is rarely needed
  */
 export async function cleanDatabase() {
+	await db.execute(sql`TRUNCATE TABLE "user"."notification_log", "user"."notification_preferences" CASCADE`);
 	await db.execute(sql`TRUNCATE TABLE "user"."games" CASCADE`);
 	await db.execute(sql`TRUNCATE TABLE "user"."users" RESTART IDENTITY CASCADE`);
 	await db.execute(sql`TRUNCATE TABLE "admin"."games" RESTART IDENTITY CASCADE`);
@@ -113,4 +114,37 @@ export async function createTestGame(
 		RETURNING game_id
 	`);
 	return result.rows[0];
+}
+
+/**
+ * Helper to create a test notification preference
+ */
+export async function createTestNotificationPreference(
+	userId: number,
+	notificationType: NotificationType,
+	channel: NotificationChannel,
+	enabled = true,
+) {
+	await db.execute(sql`
+		INSERT INTO "user"."notification_preferences" (user_id, notification_type, channel, enabled)
+		VALUES (${userId}, ${notificationType}, ${channel}, ${enabled})
+		ON CONFLICT (user_id, notification_type, channel) DO UPDATE SET enabled = ${enabled}
+	`);
+}
+
+/**
+ * Helper to create a test notification log entry
+ */
+export async function createTestNotificationLog(
+	userId: number,
+	year: number,
+	weekNumber: number,
+	notificationType: NotificationType,
+	channel: NotificationChannel,
+) {
+	await db.execute(sql`
+		INSERT INTO "user"."notification_log" (user_id, year, week_number, notification_type, channel)
+		VALUES (${userId}, ${year}, ${weekNumber}, ${notificationType}, ${channel})
+		ON CONFLICT (user_id, year, week_number, notification_type, channel) DO NOTHING
+	`);
 }

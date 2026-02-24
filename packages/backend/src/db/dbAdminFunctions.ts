@@ -1,4 +1,4 @@
-import { eq, and, inArray, notInArray } from 'drizzle-orm';
+import { eq, and, inArray, notInArray, lte, gte } from 'drizzle-orm';
 import { adminWeeks, adminGames } from './schema/admin.js';
 import { db } from './index.js';
 import logger from '../utils/logger.js';
@@ -257,6 +257,25 @@ export async function getSeasonTypeForWeek(year: number, week: number): Promise<
     return weekData.length > 0 ? weekData[0].seasonType : null;
   } catch (e) {
     logger.error({ err: e }, 'getSeasonTypeForWeek failed');
+    throw e;
+  }
+}
+
+// ------------------------------------------------------------------
+// Return the current week based on today's date
+// ------------------------------------------------------------------
+export async function returnCurrentWeek(today: Date): Promise<AdminWeekData | null> {
+  const dateStr = today.toISOString().slice(0, 10); // YYYY-MM-DD
+  logger.debug({ today: dateStr }, 'returnCurrentWeek');
+  try {
+    const rows = await db
+      .select()
+      .from(adminWeeks)
+      .where(and(lte(adminWeeks.weekStart, dateStr), gte(adminWeeks.weekEnd, dateStr)))
+      .limit(1);
+    return rows.length > 0 ? rows[0] : null;
+  } catch (e) {
+    logger.error({ err: e }, 'returnCurrentWeek failed');
     throw e;
   }
 }
