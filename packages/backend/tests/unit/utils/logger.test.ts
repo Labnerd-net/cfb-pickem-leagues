@@ -55,6 +55,7 @@ describe('Backend logger', () => {
       const mockContext = {
         req: { method: 'GET', path: '/api/user/profile' },
         res: { status: 200 },
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       } as any;
 
       await httpLogger(mockContext, vi.fn().mockResolvedValue(undefined));

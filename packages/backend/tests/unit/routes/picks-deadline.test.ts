@@ -2,8 +2,6 @@ import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { Hono } from 'hono';
 import { HTTPException } from 'hono/http-exception';
 import { seedTestData, createTestWeek, createTestGame, cleanDatabase } from '../../db-utils.js';
-import * as dbUserFunctions from '../../../src/db/dbUserFunctions.js';
-import { returnGame } from '../../../src/db/dbAdminFunctions.js';
 
 // Mock auth middleware to bypass JWT validation
 vi.mock('../../../src/utils/middleware.js', () => ({

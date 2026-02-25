@@ -16,11 +16,6 @@ _(none currently open)_
 
 ## Security
 
-### First-user admin assignment has a TOCTOU race condition
-**File:** `packages/backend/src/routes/auth.ts:55-56`
-
-Two concurrent registrations both call `returnUsers()`, both see `length === 0`, and both become admins. The check and insert are not in a transaction. Should be made atomic (e.g. wrap in a transaction, or use a DB-level mechanism).
-
 ### Weak password minimum (6 characters)
 **File:** `packages/backend/src/utils/passwordValidation.ts:15`
 
@@ -35,6 +30,10 @@ _(none currently open)_
 ---
 
 ## Error Handling
+
+_(none currently open)_
+
+---
 
 ## Code Quality / Tech Debt
 

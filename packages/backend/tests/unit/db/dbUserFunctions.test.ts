@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeAll, afterEach } from 'vitest';
 import { sql } from 'drizzle-orm';
-import { seedTestData, createTestWeek, createTestGame, createTestUser, cleanDatabase } from '../../db-utils.js';
+import { seedTestData, createTestWeek, createTestGame, cleanDatabase } from '../../db-utils.js';
 import {
 	returnUsers,
 	returnUserByEmail,

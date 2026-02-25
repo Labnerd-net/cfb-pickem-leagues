@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+import { describe, it, expect, vi } from 'vitest';
 
 // Mock import.meta.env before importing the module
 vi.stubGlobal('import', { meta: { env: { VITE_SEASON_ROLLOVER_MONTH: undefined } } });
@@ -114,7 +114,7 @@ describe('getMostRecentCompletedWeek', () => {
 
 describe('getCurrentWeek', () => {
   it('returns the week that spans today', () => {
-    const week = makeFutureWeek(2025, 5, -3); // started 3 days ago, ends 4 days from now
+    makeFutureWeek(2025, 5, -3); // started 3 days ago, ends 4 days from now
     // Override end to be in the future
     const start = new Date();
     start.setDate(start.getDate() - 3);

@@ -126,6 +126,7 @@ describe('API Converters', () => {
 					homePoints: 42,
 					awayPoints: 0,
 					startDate: '2025-09-06T17:00:00.000Z',
+				// eslint-disable-next-line @typescript-eslint/no-explicit-any
 				} as any,
 			]);
 
@@ -154,6 +155,7 @@ describe('API Converters', () => {
 					homePoints: null,
 					awayPoints: null,
 					startDate: '2025-11-29T19:00:00.000Z',
+				// eslint-disable-next-line @typescript-eslint/no-explicit-any
 				} as any,
 			]);
 

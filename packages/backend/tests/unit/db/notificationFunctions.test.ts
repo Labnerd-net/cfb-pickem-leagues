@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeAll, afterEach } from 'vitest';
-import { seedTestData, cleanDatabase, createTestNotificationPreference, createTestNotificationLog } from '../../db-utils.js';
+import { seedTestData, cleanDatabase, createTestNotificationPreference } from '../../db-utils.js';
 import {
 	upsertNotificationPreference,
 	addNotificationLog,
