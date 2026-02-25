@@ -26,14 +26,7 @@ export default function UserPicksGamesList({
   return (
     <Box>
       {/* Games Grid */}
-      <Box
-        sx={{
-          display: 'grid',
-          gridTemplateColumns: { xs: '1fr', sm: 'repeat(2, 1fr)', md: 'repeat(3, 1fr)' },
-          gap: 2,
-          mb: 3,
-        }}
-      >
+      <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, mb: 3 }}>
         {games.map(game => (
           <UserPicksGameCard
             key={game.gameId}

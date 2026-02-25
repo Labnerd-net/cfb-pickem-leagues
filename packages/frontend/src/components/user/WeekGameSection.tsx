@@ -7,33 +7,37 @@ import {
   getWeeksForYear,
   postUserPicks,
 } from '../../apis/userRequests';
-import { getCurrentWeek, getCurrentSeason } from '../../utils/weekCalculation';
+import { getCurrentWeek, getCurrentSeason, isResultsMode } from '../../utils/weekCalculation';
 import { logger } from '../../utils/logger';
 import UserWeekSelector from './UserWeekSelector';
 import UserPicksGamesList from './UserPicksGamesList';
+import WeekResultsGameRow from './WeekResultsGameRow';
+import type { WeekResultRow } from './WeekResultsGameRow';
 
-export default function UserPicksSection() {
+export default function WeekGameSection() {
   const [selectedYear, setSelectedYear] = useState<number>(0);
   const [selectedWeek, setSelectedWeek] = useState<number>(0);
   const [weeks, setWeeks] = useState<AdminDbWeekData[]>([]);
-  const [availableGames, setAvailableGames] = useState<AdminDbGameData[]>([]);
+  const [games, setGames] = useState<AdminDbGameData[]>([]);
   const [userPicks, setUserPicks] = useState<Map<number, 'home_team' | 'away_team'>>(new Map());
   const [savedPickIds, setSavedPickIds] = useState<Set<number>>(new Set());
   const [loading, setLoading] = useState<boolean>(false);
   const [submitting, setSubmitting] = useState<boolean>(false);
+  const [initializing, setInitializing] = useState<boolean>(true);
+  const [error, setError] = useState<string | null>(null);
   const [snackbarMessage, setSnackbarMessage] = useState<string>('');
   const [snackbarSeverity, setSnackbarSeverity] = useState<'success' | 'error'>('success');
   const [snackbarOpen, setSnackbarOpen] = useState<boolean>(false);
-  const [initializing, setInitializing] = useState<boolean>(true);
 
-  // Initial load: fetch weeks and determine current week
+  const resultsMode = isResultsMode(games);
+
+  // Initial load: fetch weeks for prev/current/next season, default to current week
   useEffect(() => {
     async function initialize() {
       try {
         setInitializing(true);
         const currentSeason = getCurrentSeason();
 
-        // Fetch prev, current, and next season weeks so pre-season data is visible before rollover
         const [prevSeasonResult, currentSeasonResult, nextSeasonResult] = await Promise.all([
           getWeeksForYear(currentSeason - 1),
           getWeeksForYear(currentSeason),
@@ -52,26 +56,18 @@ export default function UserPicksSection() {
         }
 
         if (allWeeks.length === 0) {
-          setSnackbarMessage('No weeks available. Please contact admin.');
-          setSnackbarSeverity('error');
-          setSnackbarOpen(true);
+          setError('No weeks available. Please contact admin.');
           setInitializing(false);
           return;
         }
 
-        // Calculate current week
         const current = getCurrentWeek(allWeeks);
         setSelectedYear(current.year);
         setSelectedWeek(current.week);
-
-        // Set weeks for the current year
-        const weeksForYear = allWeeks.filter(w => w.year === current.year);
-        setWeeks(weeksForYear);
-      } catch (error) {
-        logger.error('Error initializing:', error);
-        setSnackbarMessage('Failed to initialize. Please try again.');
-        setSnackbarSeverity('error');
-        setSnackbarOpen(true);
+        setWeeks(allWeeks.filter(w => w.year === current.year));
+      } catch (err) {
+        logger.error('Error initializing WeekGameSection:', err);
+        setError('Failed to initialize. Please try again.');
       } finally {
         setInitializing(false);
       }
@@ -82,23 +78,20 @@ export default function UserPicksSection() {
 
   // Load weeks when year changes
   useEffect(() => {
-    if (selectedYear === 0) return; // Skip initial render
+    if (selectedYear === 0) return;
 
     async function loadWeeks() {
       const result = await getWeeksForYear(selectedYear);
       if (result.success && result.data) {
         const weeksData = result.data.weeks;
         setWeeks(weeksData);
-        // Reset to week 1 when year changes
         if (weeksData.length > 0) {
           const firstWeek = [...weeksData].sort((a, b) => a.weekNumber - b.weekNumber)[0];
           setSelectedWeek(firstWeek.weekNumber);
         }
       } else {
         setWeeks([]);
-        setSnackbarMessage(result.error || 'Failed to load weeks');
-        setSnackbarSeverity('error');
-        setSnackbarOpen(true);
+        setError(result.error || 'Failed to load weeks');
       }
     }
 
@@ -107,11 +100,12 @@ export default function UserPicksSection() {
 
   // Load games and picks when week changes
   useEffect(() => {
-    if (selectedYear === 0 || selectedWeek === 0) return; // Skip initial render
+    if (selectedYear === 0 || selectedWeek === 0) return;
 
     async function loadGamesAndPicks() {
       try {
         setLoading(true);
+        setError(null);
         const weekIdentifier = { year: selectedYear, week: selectedWeek };
 
         const [gamesResult, picksResult] = await Promise.all([
@@ -119,28 +113,20 @@ export default function UserPicksSection() {
           getUserPicks(weekIdentifier),
         ]);
 
-        // Handle games
         if (gamesResult.success && gamesResult.data) {
-          setAvailableGames(gamesResult.data);
+          setGames(gamesResult.data);
         } else {
-          setAvailableGames([]);
-          if (gamesResult.error) {
-            // Don't show error for "no games found" - it's a normal state
-            if (!gamesResult.error.includes('No picked games found')) {
-              setSnackbarMessage(gamesResult.error);
-              setSnackbarSeverity('error');
-              setSnackbarOpen(true);
-            }
+          setGames([]);
+          if (gamesResult.error && !gamesResult.error.includes('No picked games found')) {
+            setError(gamesResult.error);
           }
         }
 
-        // Handle existing picks
         if (picksResult.success && picksResult.data) {
-          const picks = picksResult.data;
           const picksMap = new Map<number, 'home_team' | 'away_team'>();
           const savedIds = new Set<number>();
 
-          picks.forEach(pick => {
+          picksResult.data.forEach(pick => {
             if (pick.teamChosen !== 'pending') {
               picksMap.set(pick.gameId, pick.teamChosen);
               savedIds.add(pick.gameId);
@@ -153,11 +139,9 @@ export default function UserPicksSection() {
           setUserPicks(new Map());
           setSavedPickIds(new Set());
         }
-      } catch (error) {
-        logger.error('Error loading games and picks:', error);
-        setSnackbarMessage('Failed to load data. Please try again.');
-        setSnackbarSeverity('error');
-        setSnackbarOpen(true);
+      } catch (err) {
+        logger.error('Error loading games and picks:', err);
+        setError('Failed to load data. Please try again.');
       } finally {
         setLoading(false);
       }
@@ -185,22 +169,18 @@ export default function UserPicksSection() {
     try {
       setSubmitting(true);
 
-      // Transform Map to request format
       const picksArray = Array.from(userPicks.entries()).map(([gameId, pick]) => ({
         game: gameId,
         pick,
       }));
 
-      const request = {
+      const result = await postUserPicks({
         year: selectedYear,
         week: selectedWeek,
         games: picksArray,
-      };
-
-      const result = await postUserPicks(request);
+      });
 
       if (result.success) {
-        // Update saved picks to include all current picks
         setSavedPickIds(new Set(userPicks.keys()));
         setSnackbarMessage('Picks saved successfully!');
         setSnackbarSeverity('success');
@@ -210,8 +190,8 @@ export default function UserPicksSection() {
         setSnackbarSeverity('error');
         setSnackbarOpen(true);
       }
-    } catch (error) {
-      logger.error('Error submitting picks:', error);
+    } catch (err) {
+      logger.error('Error submitting picks:', err);
       setSnackbarMessage('An error occurred while saving picks');
       setSnackbarSeverity('error');
       setSnackbarOpen(true);
@@ -232,6 +212,17 @@ export default function UserPicksSection() {
     );
   }
 
+  const resultRows: WeekResultRow[] = games.map(game => ({
+    gameId: game.gameId,
+    homeTeam: game.homeTeam,
+    awayTeam: game.awayTeam,
+    homePoints: game.homePoints,
+    awayPoints: game.awayPoints,
+    winningTeam: game.winningTeam,
+    completed: game.completed,
+    teamChosen: userPicks.get(game.gameId) ?? null,
+  }));
+
   return (
     <Box>
       <UserWeekSelector
@@ -243,13 +234,21 @@ export default function UserPicksSection() {
         loading={loading}
       />
 
-      {loading && (
+      {error && (
+        <Box sx={{ textAlign: 'center', py: 4 }}>
+          <Typography sx={{ fontFamily: '"Work Sans", sans-serif', color: 'error.main' }}>
+            {error}
+          </Typography>
+        </Box>
+      )}
+
+      {loading && !error && (
         <Box sx={{ display: 'flex', justifyContent: 'center', py: 4 }}>
           <CircularProgress />
         </Box>
       )}
 
-      {!loading && availableGames.length === 0 && (
+      {!loading && !error && games.length === 0 && (
         <Box sx={{ textAlign: 'center', py: 8 }}>
           <Typography
             sx={{
@@ -263,9 +262,17 @@ export default function UserPicksSection() {
         </Box>
       )}
 
-      {!loading && availableGames.length > 0 && (
+      {!loading && !error && games.length > 0 && resultsMode && (
+        <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+          {resultRows.map(row => (
+            <WeekResultsGameRow key={row.gameId} row={row} />
+          ))}
+        </Box>
+      )}
+
+      {!loading && !error && games.length > 0 && !resultsMode && (
         <UserPicksGamesList
-          games={availableGames}
+          games={games}
           picks={userPicks}
           savedPicks={savedPickIds}
           onPickChange={handlePickChange}

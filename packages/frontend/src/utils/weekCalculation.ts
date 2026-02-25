@@ -1,4 +1,4 @@
-import type { AdminDbWeekData } from '@shared/types/cfb-pickem-api.js';
+import type { AdminDbWeekData, AdminDbGameData } from '@shared/types/cfb-pickem-api.js';
 
 export interface CurrentWeek {
   year: number;
@@ -8,18 +8,22 @@ export interface CurrentWeek {
 // VITE_SEASON_ROLLOVER_MONTH: 1-based month (e.g. 3 = March). Converted to 0-based for JS Date.
 const SEASON_ROLLOVER_MONTH = (Number(import.meta.env.VITE_SEASON_ROLLOVER_MONTH) || 3) - 1;
 
+export function getNow(): Date {
+  return new Date();
+}
+
 /**
  * Returns the current CFB season year. Before the rollover month, returns the prior calendar
  * year so that January–February still show the previous season (e.g. bowl games / natty).
  */
-export function getCurrentSeason(date: Date = new Date()): number {
+export function getCurrentSeason(date: Date = getNow()): number {
   return date.getMonth() < SEASON_ROLLOVER_MONTH
     ? date.getFullYear() - 1
     : date.getFullYear();
 }
 
 export function getMostRecentCompletedWeek(weeks: AdminDbWeekData[]): CurrentWeek {
-  const now = new Date();
+  const now = getNow();
   const completed = weeks
     .filter(w => new Date(w.weekEnd) < now)
     .sort((a, b) => b.year - a.year || b.weekNumber - a.weekNumber);
@@ -32,8 +36,14 @@ export function getMostRecentCompletedWeek(weeks: AdminDbWeekData[]): CurrentWee
     : { year: getCurrentSeason(now), week: 1 };
 }
 
+export function isResultsMode(games: AdminDbGameData[]): boolean {
+  return games.some(
+    g => g.completed || (g.startTime !== null && getNow() >= new Date(g.startTime)),
+  );
+}
+
 export function getCurrentWeek(weeks: AdminDbWeekData[]): CurrentWeek {
-  const now = new Date();
+  const now = getNow();
 
   // Find week where current date is between weekStart and weekEnd
   const currentWeek = weeks.find(week => {
