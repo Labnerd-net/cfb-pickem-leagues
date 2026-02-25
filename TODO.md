@@ -6,17 +6,7 @@ Roughly priority-ordered within each section.
 
 ## Bugs
 
-### ~~`POST /user/picks` partially commits picks before a deadline error~~ ✓ Fixed
-
-Deadline checks now run in a separate pre-pass over all picks before any DB writes begin. A locked game in the middle of the list no longer silently saves the picks that preceded it.
-
-### ~~`setPickedGames` two-statement update is not atomic~~ ✓ Fixed
-
-Both `UPDATE` statements are now wrapped in `db.transaction()`. If either fails, the whole operation rolls back.
-
-### ~~Frontend never fetches upcoming season's weeks (pre-season data invisible)~~ ✓ Fixed
-
-`UserPicksSection`, `WeekResultsSection`, and `UserWeekSelector` now include `currentSeason + 1` so pre-season data loaded by admins is visible before the rollover date.
+_(none currently open)_
 
 ## Validation Gaps
 
@@ -25,10 +15,6 @@ _(none currently open)_
 ---
 
 ## Security
-
-### ~~`GET /admin/users` returns `passwordHash` in the response body~~ ✓ Fixed
-
-`returnUsers()` now selects only `userId`, `email`, `displayName`, `roles` explicitly. The bogus `ProfileData[]` type assertion in the route was removed.
 
 ### First-user admin assignment has a TOCTOU race condition
 **File:** `packages/backend/src/routes/auth.ts:55-56`
@@ -44,9 +30,7 @@ Six characters is below modern standards. Recommend 10–12 minimum, or use a st
 
 ## Missing Features / Spec Gaps
 
-### ~~Email notifications not implemented~~ ✓ Implemented
-
-Notification system shipped in `claude/feature/notification-system`. Implemented with AWS SES (not Resend) and NTFY push as a second channel. Three types: `games_ready` (event-driven from admin import), `picks_reminder` (cron, 60–75 min before first kickoff), `rankings_updated` (cron, after score refresh detects week complete). Per-user opt-in preferences, email verification flow, ntfy URL configuration, and deduplication via `notificationLog` table. See `_specs/notification-system.md` and `_plans/notification-system.md`.
+_(none currently open)_
 
 ---
 
@@ -54,18 +38,10 @@ Notification system shipped in `claude/feature/notification-system`. Implemented
 
 ## Code Quality / Tech Debt
 
-### ~~Zod body schemas don't validate year/week value ranges~~ ✓ Fixed
-
-Added shared `yearSchema` (int, 1900–2100) and `weekSchema` (int, 1–52) constants applied to all four body schemas in `zValidate.ts`. Game IDs also constrained to positive integers.
+_(none currently open)_
 
 ---
 
 ## Tests
 
-### ~~No tests for `returnLeaderboard` — most complex SQL in the codebase~~ ✓ Fixed
-
-Six tests added to `dbUserFunctions.test.ts` covering: correct/incorrect/pending counts, percentage calculation, null percentage for zero-pick users, descending sort on correct count, year isolation, and empty-year behavior.
-
-### ~~No tests for `weekCalculation.ts`~~ ✓ Fixed in PR #23
-
-`getCurrentWeek`, `getMostRecentCompletedWeek`, and the new `getCurrentSeason` utility are now covered in `packages/frontend/tests/unit/utils/weekCalculation.test.ts`.
+_(none currently open)_

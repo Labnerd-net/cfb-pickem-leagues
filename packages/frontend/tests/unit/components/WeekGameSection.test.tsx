@@ -9,17 +9,20 @@ vi.mock('../../../src/apis/userRequests.js', () => ({
 	getPickedGames: vi.fn(),
 	getUserPicks: vi.fn(),
 	getWeeksForYear: vi.fn(),
+	postUserPicks: vi.fn(),
 }));
 
 import {
 	getPickedGames,
 	getUserPicks,
 	getWeeksForYear,
+	postUserPicks,
 } from '../../../src/apis/userRequests.js';
 
 const mockGetPickedGames = vi.mocked(getPickedGames);
 const mockGetUserPicks = vi.mocked(getUserPicks);
 const mockGetWeeksForYear = vi.mocked(getWeeksForYear);
+const mockPostUserPicks = vi.mocked(postUserPicks);
 
 const currentYear = new Date().getFullYear();
 
@@ -102,6 +105,10 @@ beforeEach(() => {
 	mockGetUserPicks.mockResolvedValue({ success: true, data: [] });
 });
 
+// ---------------------------------------------------------------------------
+// Results mode
+// ---------------------------------------------------------------------------
+
 describe('WeekGameSection (results mode)', () => {
 	it('shows CircularProgress while initializing', () => {
 		mockGetWeeksForYear.mockReturnValue(new Promise(() => {}));
@@ -157,7 +164,6 @@ describe('WeekGameSection (results mode)', () => {
 	});
 
 	it('shows "Pending" chip when winningTeam is pending and game has started', async () => {
-		// startTime in the past triggers results mode even when completed: false
 		mockGetPickedGames.mockResolvedValue({
 			success: true,
 			data: [makeGame({ completed: false, winningTeam: 'pending', homePoints: null, awayPoints: null, startTime: new Date(pastDate(1)) })],
@@ -223,10 +229,8 @@ describe('WeekGameSection (results mode)', () => {
 		const user = userEvent.setup();
 		renderWithProviders(<WeekGameSection />);
 
-		// Wait for initialization
 		await waitFor(() => expect(screen.getAllByRole('combobox').length).toBeGreaterThan(0));
 
-		// Find and change the Week selector (second combobox)
 		const combos = screen.getAllByRole('combobox');
 		const weekCombo = combos[1];
 		await user.click(weekCombo);
@@ -237,6 +241,150 @@ describe('WeekGameSection (results mode)', () => {
 		await waitFor(() => {
 			const calls = mockGetPickedGames.mock.calls;
 			expect(calls.some(c => c[0].week === 2)).toBe(true);
+		});
+	});
+});
+
+// ---------------------------------------------------------------------------
+// Picks mode
+// ---------------------------------------------------------------------------
+
+describe('WeekGameSection (picks mode)', () => {
+	const openGame = makeGame({
+		completed: false,
+		winningTeam: 'pending',
+		homePoints: null,
+		awayPoints: null,
+		startTime: new Date(futureDate(3)),
+	});
+
+	it('renders radio buttons for team selection when games have not started', async () => {
+		mockGetPickedGames.mockResolvedValue({ success: true, data: [openGame] });
+		mockGetUserPicks.mockResolvedValue({ success: true, data: [] });
+
+		renderWithProviders(<WeekGameSection />);
+
+		await waitFor(() => {
+			expect(screen.getByRole('radio', { name: 'Away Team' })).toBeInTheDocument();
+			expect(screen.getByRole('radio', { name: 'Home Team' })).toBeInTheDocument();
+		});
+	});
+
+	it('pre-selects a saved pick', async () => {
+		mockGetPickedGames.mockResolvedValue({ success: true, data: [openGame] });
+		mockGetUserPicks.mockResolvedValue({
+			success: true,
+			data: [makeUserPick({ teamChosen: 'home_team', completed: false, winningTeam: 'pending', homePoints: null, awayPoints: null })],
+		});
+
+		renderWithProviders(<WeekGameSection />);
+
+		await waitFor(() => {
+			expect(screen.getByRole('radio', { name: 'Home Team' })).toBeChecked();
+		});
+	});
+
+	it('calls postUserPicks and shows success snackbar on submit', async () => {
+		mockGetPickedGames.mockResolvedValue({ success: true, data: [openGame] });
+		mockGetUserPicks.mockResolvedValue({ success: true, data: [] });
+		mockPostUserPicks.mockResolvedValue({ success: true, data: { message: 'ok' } });
+
+		const user = userEvent.setup();
+		renderWithProviders(<WeekGameSection />);
+
+		await waitFor(() => expect(screen.getByRole('radio', { name: 'Away Team' })).toBeInTheDocument());
+
+		await user.click(screen.getByRole('radio', { name: 'Away Team' }));
+		await user.click(screen.getByRole('button', { name: /submit all picks/i }));
+
+		await waitFor(() => {
+			expect(mockPostUserPicks).toHaveBeenCalled();
+			expect(screen.getByText('Picks saved successfully!')).toBeInTheDocument();
+		});
+	});
+
+	it('shows error snackbar when submit fails', async () => {
+		mockGetPickedGames.mockResolvedValue({ success: true, data: [openGame] });
+		mockGetUserPicks.mockResolvedValue({ success: true, data: [] });
+		mockPostUserPicks.mockResolvedValue({ success: false, error: 'Failed to save picks' });
+
+		const user = userEvent.setup();
+		renderWithProviders(<WeekGameSection />);
+
+		await waitFor(() => expect(screen.getByRole('radio', { name: 'Away Team' })).toBeInTheDocument());
+
+		await user.click(screen.getByRole('radio', { name: 'Away Team' }));
+		await user.click(screen.getByRole('button', { name: /submit all picks/i }));
+
+		await waitFor(() => {
+			expect(screen.getByText('Failed to save picks')).toBeInTheDocument();
+		});
+	});
+});
+
+// ---------------------------------------------------------------------------
+// Mode switching
+// ---------------------------------------------------------------------------
+
+describe('WeekGameSection (mode switching)', () => {
+	const completedGame = makeGame({ weekNumber: 1 });
+	const openGame = makeGame({
+		gameId: 2,
+		weekNumber: 2,
+		completed: false,
+		winningTeam: 'pending',
+		homePoints: null,
+		awayPoints: null,
+		startTime: new Date(futureDate(3)),
+	});
+
+	it('transitions from results mode to picks mode when switching to an open week', async () => {
+		const week1 = makeWeek({ weekNumber: 1 });
+		const week2 = makeWeek({ weekNumber: 2, weekStart: pastDate(3), weekEnd: pastDate(1) });
+
+		mockGetWeeksForYear.mockResolvedValue({ success: true, data: { weeks: [week1, week2] } });
+		mockGetPickedGames
+			.mockResolvedValueOnce({ success: true, data: [completedGame] })
+			.mockResolvedValueOnce({ success: true, data: [openGame] });
+		mockGetUserPicks.mockResolvedValue({ success: true, data: [] });
+
+		const user = userEvent.setup();
+		renderWithProviders(<WeekGameSection />);
+
+		await waitFor(() => expect(screen.getByText('No Pick')).toBeInTheDocument());
+
+		const combos = screen.getAllByRole('combobox');
+		await user.click(combos[1]);
+		await waitFor(() => expect(screen.getByRole('option', { name: 'Week 2' })).toBeInTheDocument());
+		await user.click(screen.getByRole('option', { name: 'Week 2' }));
+
+		await waitFor(() => {
+			expect(screen.getByRole('radio', { name: 'Away Team' })).toBeInTheDocument();
+		});
+	});
+
+	it('transitions from picks mode to results mode when switching to a completed week', async () => {
+		const week1 = makeWeek({ weekNumber: 1, weekStart: pastDate(3), weekEnd: futureDate(4) });
+		const week2 = makeWeek({ weekNumber: 2, weekStart: pastDate(14), weekEnd: pastDate(7) });
+
+		mockGetWeeksForYear.mockResolvedValue({ success: true, data: { weeks: [week1, week2] } });
+		mockGetPickedGames
+			.mockResolvedValueOnce({ success: true, data: [openGame] })
+			.mockResolvedValueOnce({ success: true, data: [completedGame] });
+		mockGetUserPicks.mockResolvedValue({ success: true, data: [] });
+
+		const user = userEvent.setup();
+		renderWithProviders(<WeekGameSection />);
+
+		await waitFor(() => expect(screen.getByRole('radio', { name: 'Away Team' })).toBeInTheDocument());
+
+		const combos = screen.getAllByRole('combobox');
+		await user.click(combos[1]);
+		await waitFor(() => expect(screen.getByRole('option', { name: 'Week 2' })).toBeInTheDocument());
+		await user.click(screen.getByRole('option', { name: 'Week 2' }));
+
+		await waitFor(() => {
+			expect(screen.getByText('No Pick')).toBeInTheDocument();
 		});
 	});
 });

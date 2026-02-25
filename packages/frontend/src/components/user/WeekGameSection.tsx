@@ -102,6 +102,8 @@ export default function WeekGameSection() {
   useEffect(() => {
     if (selectedYear === 0 || selectedWeek === 0) return;
 
+    let cancelled = false;
+
     async function loadGamesAndPicks() {
       try {
         setLoading(true);
@@ -112,6 +114,8 @@ export default function WeekGameSection() {
           getPickedGames(weekIdentifier),
           getUserPicks(weekIdentifier),
         ]);
+
+        if (cancelled) return;
 
         if (gamesResult.success && gamesResult.data) {
           setGames(gamesResult.data);
@@ -140,14 +144,19 @@ export default function WeekGameSection() {
           setSavedPickIds(new Set());
         }
       } catch (err) {
+        if (cancelled) return;
         logger.error('Error loading games and picks:', err);
         setError('Failed to load data. Please try again.');
       } finally {
-        setLoading(false);
+        if (!cancelled) setLoading(false);
       }
     }
 
     loadGamesAndPicks();
+
+    return () => {
+      cancelled = true;
+    };
   }, [selectedYear, selectedWeek]);
 
   const handlePickChange = (gameId: number, pick: 'home_team' | 'away_team') => {
