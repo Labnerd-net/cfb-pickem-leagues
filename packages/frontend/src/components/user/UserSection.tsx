@@ -10,15 +10,15 @@ export default function UserSection() {
     <Box
       sx={{
         display: 'grid',
-        gridTemplateColumns: { xs: '1fr', md: 'repeat(2, 1fr)' },
+        gridTemplateColumns: { xs: '1fr', md: '1fr 1fr' },
         gap: 3,
+        alignItems: 'start',
       }}
     >
       <DashboardCard
         icon={<CalendarMonthIcon sx={{ fontSize: 32, color: 'primary.main', mr: 2 }} />}
         title="Weekly Games"
         accentColor="primary"
-        gridColumn={{ xs: '1', md: 'span 2' }}
       >
         <WeekGameSection />
       </DashboardCard>
