@@ -1,89 +1,125 @@
 # Dokploy Deployment Guide
 
-This guide explains how to deploy the CFB Pick'em backend to Dokploy with automatic database migrations.
+This guide covers deploying the full CFB Pick'em stack to Dokploy: PostgreSQL database, backend API, and frontend.
 
 ## Prerequisites
 
 - Dokploy instance running
-- PostgreSQL database created in Dokploy
-- Database credentials ready
+- Git repository accessible to Dokploy (GitHub, GitLab, etc.)
+- Domain names (or Dokploy-generated subdomains) ready for backend and frontend
 
-## Migration Strategy
+---
 
-The application uses a **custom migration script** (`src/scripts/migrate-prod.ts`) that runs automatically on each deployment before the app starts. This ensures your database schema is always up-to-date.
+## 1. Deploy the Database
 
-The migration script:
-- Uses `drizzle-orm`'s `migrate()` function (more reliable than CLI in production)
-- Handles SSL connections with self-signed certificates
-- Limits concurrent connections during migration
-- Includes proper error handling and logging
+### Create PostgreSQL Service
 
-## Dokploy Configuration
+1. In Dokploy, go to your project and click **Create Service → Database → PostgreSQL**
+2. Give it a name (e.g. `cfb-pickem-db`)
+3. Set:
+   - **Database name**: `cfb-pickem`
+   - **Username**: `postgres`
+   - **Password**: a strong password (save this — you'll need it for the backend)
+4. Click **Create**
 
-### 1. Create Application
+### Note the Internal Hostname
 
-1. In Dokploy, create a new **Docker** application
-2. Connect your Git repository
-3. Set the **Dockerfile path**: `./Dockerfile`
+Once created, go to the database's **General** tab. Note the **Internal hostname** — it looks like `cfb-pickem-db.dokploy-network` (or similar). Use this as `DB_HOST` in the backend environment variables. Do not expose the database port externally.
 
-### 2. Environment Variables
+### Verify Connection (Optional)
 
-Configure these environment variables in Dokploy:
+Use the **Terminal** tab in the Dokploy database panel to confirm the database is running:
+
+```sql
+\l   -- list databases
+```
+
+You should see `cfb-pickem` listed.
+
+---
+
+## 2. Deploy the Backend
+
+The backend uses `Dockerfile` at the repo root. On startup it automatically creates the `admin` and `user` schemas and runs any pending Drizzle migrations before starting the Hono server.
+
+### Create the Application
+
+1. In Dokploy, click **Create Service → Application**
+2. Connect your Git repository and select the branch to deploy (e.g. `main`)
+3. Under **Build**, set:
+   - **Build type**: `Dockerfile`
+   - **Dockerfile path**: `./Dockerfile`
+   - **Build context**: `.` (repo root)
+4. Set **Port**: `3000`
+
+### Environment Variables
+
+In the **Environment** tab, add:
 
 ```bash
-# Database Configuration
+# Database
 DB_USER=postgres
 DB_PASSWORD=your_db_password_here
-DB_HOST=your_dokploy_postgres_host
+DB_HOST=cfb-pickem-db.dokploy-network   # internal hostname from step 1
 DB_PORT=5432
 DB_NAME=cfb-pickem
 
-# Server Configuration
+# Server
 SERVER_PORT=3000
 NODE_ENV=production
 
-# JWT Configuration (CRITICAL: Generate a secure secret!)
+# JWT — generate with: openssl rand -base64 32
 JWT_SECRET=your_secure_random_secret_here
 JWT_ALGORITHM=HS256
 JWT_EXPIRATION_DAYS=7
 
-# CORS Configuration
+# CORS — set after frontend is deployed
 CLIENT_URL=https://your-frontend-domain.com
 
-# Data Source
+# Data source
 DATA_SOURCE=ncaa
-# CFBD_API_KEY=your_key_here  # Only if using DATA_SOURCE=cfbd
+# CFBD_API_KEY=your_key_here   # only needed if DATA_SOURCE=cfbd
+
+# Notifications (optional)
+# NTFY_URL=https://ntfy.sh/your-topic
+# SES_FROM_EMAIL=noreply@yourdomain.com
 ```
 
-**Important:**
-- Generate a strong `JWT_SECRET`: `openssl rand -base64 32`
-- Update `CLIENT_URL` with your actual frontend domain
-- If using an external database, set `DB_HOST` to the database hostname
+### Domain / Port Binding
 
-### 3. Build Configuration
+1. Go to the **Domains** tab and add your backend domain (e.g. `api.yourdomain.com`)
+2. Dokploy will provision a Traefik reverse proxy entry automatically
 
-- **Build Command**: `pnpm install && pnpm build`
-- **Start Command**: `pnpm start:prod` (this runs migrations then starts the app)
-- **Port**: 3000
+### Deploy
 
-### 4. Automatic Deployments
+Click **Deploy**. Watch the logs — a successful startup looks like:
 
-Two options for triggering deploys on every push to `main`:
+```
+Creating database schemas...
+Schemas ready
+Starting database migrations...
+Migrations completed successfully
+Server running on port 3000
+```
 
-**Option A: GitHub webhook (recommended)**
+If migrations fail the container exits immediately (by design) — check the logs for DB connection or credential issues.
 
-1. In Dokploy, open your application → **General** tab
-2. Enable the **Auto Deploy** toggle
-3. Copy the **Webhook URL** from the **General → Refresh Token** section
-4. In GitHub → repo **Settings → Webhooks → Add webhook**
-   - Payload URL: paste the Dokploy webhook URL
+### Automatic Deploys
+
+To trigger a deploy on every push to `main`:
+
+**Option A: Dokploy webhook (recommended)**
+
+1. In the application's **General** tab, enable **Auto Deploy**
+2. Copy the **Webhook URL**
+3. In GitHub → repo **Settings → Webhooks → Add webhook**:
+   - Payload URL: the Dokploy webhook URL
    - Content type: `application/json`
-   - Which events: "Just the push event"
-5. Save — pushes to the configured branch now trigger deploys automatically
+   - Trigger: "Just the push event"
 
 **Option B: GitHub Actions**
 
-Store the Dokploy webhook URL as a GitHub secret (`DOKPLOY_DEPLOY_WEBHOOK`), then add a workflow:
+Store the webhook URL as `DOKPLOY_DEPLOY_WEBHOOK` in GitHub secrets, then:
 
 ```yaml
 # .github/workflows/deploy.yml
@@ -97,139 +133,123 @@ jobs:
       - run: curl -X POST "${{ secrets.DOKPLOY_DEPLOY_WEBHOOK }}"
 ```
 
-### 5. Deploy
+---
 
-Click **Deploy** in Dokploy. The deployment will:
-1. Build the Docker image
-2. Install dependencies
-3. Compile TypeScript
-4. **Automatically create database schemas** (`admin` and `user`)
-5. Run migrations automatically (`pnpm migrate:prod`)
-6. Start the application
+## 3. Deploy the Frontend
 
-Watch the Dokploy logs to confirm everything runs successfully. You should see:
+The frontend uses `Dockerfile.frontend`. `VITE_API_URL` is baked into the bundle at build time — it must be provided as a Docker build argument, not a runtime env var.
+
+### Create the Application
+
+1. In Dokploy, click **Create Service → Application**
+2. Connect the same Git repository, same branch
+3. Under **Build**, set:
+   - **Build type**: `Dockerfile`
+   - **Dockerfile path**: `./Dockerfile.frontend`
+   - **Build context**: `.` (repo root)
+4. Set **Port**: `80`
+
+### Build Arguments
+
+In the **Build Arguments** (not environment variables) tab, add:
+
 ```
-Creating database schemas...
-✅ Schemas ready
-Starting database migrations...
-✅ Migrations completed successfully
+VITE_API_URL=https://api.yourdomain.com
 ```
 
-**Note:** Schema creation is now automatic! The migration script creates the `admin` and `user` schemas if they don't exist, so no manual SQL commands are needed.
+This must match the domain you set for the backend. If you change the backend domain later, you must update this build arg and redeploy the frontend.
 
-## How It Works
+### Domain / Port Binding
+
+1. Go to the **Domains** tab and add your frontend domain (e.g. `yourdomain.com` or `picks.yourdomain.com`)
+2. Dokploy/Traefik handles SSL termination
+
+### Update Backend CORS
+
+Once the frontend domain is confirmed, go back to the **backend** service's environment variables and update:
+
+```bash
+CLIENT_URL=https://your-frontend-domain.com
+```
+
+Then redeploy the backend.
+
+### Deploy
+
+Click **Deploy**. The frontend serves static files via nginx. It has no runtime dependencies other than the browser being able to reach the backend URL.
+
+---
+
+## How Migrations Work
 
 The `start:prod` script in `packages/backend/package.json`:
+
 ```json
 "start:prod": "pnpm migrate:prod && node dist/src/index.js"
 ```
 
-This runs:
-1. `migrate:prod` → Executes `src/scripts/migrate-prod.ts` with `NODE_ENV=production`
-2. `node dist/src/index.js` → Starts the Hono server (only if migrations succeed)
-
-The migration script (`src/scripts/migrate-prod.ts`):
-- Uses a dedicated PostgreSQL connection pool
-- Applies all pending migrations from `./drizzle` folder
-- Handles SSL connections (required for most managed databases)
-- Exits with code 1 if migration fails (prevents app startup)
-
-## Troubleshooting
-
-### Manual Schema Creation (if needed)
-
-Schemas are created automatically by the migration script. If you need to create them manually:
-
-**Option 1: Dokploy Database Terminal**
-1. Go to your PostgreSQL database in Dokploy dashboard
-2. Open the **Terminal** or **SQL Editor**
-3. Run:
-```sql
-CREATE SCHEMA IF NOT EXISTS admin;
-CREATE SCHEMA IF NOT EXISTS "user";
-```
-
-**Option 2: Using psql command-line**
-```bash
-psql -U postgres -h your_dokploy_host -d cfb-pickem -c "CREATE SCHEMA IF NOT EXISTS admin; CREATE SCHEMA IF NOT EXISTS \"user\";"
-```
-
-**Option 3: Docker exec (if you have container access)**
-```bash
-docker exec -it <postgres-container-name> psql -U postgres -d cfb-pickem -c "CREATE SCHEMA IF NOT EXISTS admin; CREATE SCHEMA IF NOT EXISTS \"user\";"
-```
-
-### SSL/TLS Connection Issues
-
-If you see SSL-related errors, the migration script automatically handles this for production by setting:
-```typescript
-ssl: { rejectUnauthorized: false }
-```
-
-This allows connections to databases with self-signed certificates (common in Dokploy).
-
-### Migration Files Missing
-
-Ensure the Dockerfile copies the `drizzle` folder:
-```dockerfile
-COPY --from=build /app/packages/backend/drizzle ./packages/backend/drizzle
-```
-
-### Migrations Not Running
-
-Check Dokploy logs for:
-- Environment variable issues (DB credentials)
-- Network connectivity to database
-- Schema permissions
-
-## Local Testing
-
-Test the production migration script locally:
-
-```bash
-cd packages/backend
-
-# Set production environment
-NODE_ENV=production DB_HOST=localhost pnpm migrate:prod
-
-# Or test the full production start command
-pnpm start:prod
-```
-
-## Database Management
-
-### Generating New Migrations
+On each deploy this:
+1. Connects to PostgreSQL using the DB env vars
+2. Creates the `admin` and `user` schemas if they don't exist
+3. Applies all pending Drizzle migrations from the `./drizzle` folder
+4. Starts the Hono server only if migrations succeed (exits with code 1 otherwise)
 
 When you modify the schema locally:
 
 ```bash
 cd packages/backend
-pnpm generate  # Creates new migration files in ./drizzle
+pnpm generate   # generates new migration files in ./drizzle
 ```
 
-Commit the new migration files to Git. On next deploy, they'll run automatically.
+Commit the generated files to Git. They run automatically on next deploy.
 
-### Accessing Drizzle Studio in Production
+---
 
-For production database inspection, you can temporarily run Drizzle Studio locally against the production database:
+## Troubleshooting
 
-```bash
-# Set production DB credentials
-DB_HOST=your_dokploy_db_host DB_USER=postgres DB_PASSWORD=xxx pnpm studio
+### Backend can't connect to database
+
+- Confirm `DB_HOST` uses the internal Dokploy hostname (not `localhost` or an external IP)
+- Check that both services are in the same Dokploy project/network
+- Verify `DB_PASSWORD` matches what was set when creating the database
+
+### Manual schema creation (if needed)
+
+Use the **Terminal** tab in the Dokploy database panel:
+
+```sql
+CREATE SCHEMA IF NOT EXISTS admin;
+CREATE SCHEMA IF NOT EXISTS "user";
 ```
 
-**Warning:** Be careful when modifying production data.
+### SSL/TLS connection errors
+
+The migration script sets `ssl: { rejectUnauthorized: false }` for production, which handles self-signed certificates common in Dokploy-managed databases.
+
+### Migration files missing from image
+
+Confirm the backend Dockerfile includes:
+
+```dockerfile
+COPY --from=build /app/packages/backend/drizzle ./packages/backend/drizzle
+```
+
+### Frontend shows blank page or 404 on refresh
+
+nginx is configured with a React Router fallback (`try_files $uri $uri/ /index.html`). If this is missing, check `nginx.conf` at the repo root.
+
+### CORS errors in the browser
+
+Ensure:
+- `CLIENT_URL` in the backend env matches the exact frontend origin (including `https://`, no trailing slash)
+- The backend was redeployed after updating `CLIENT_URL`
+
+---
 
 ## Security Notes
 
-1. **Never commit** `.env` files with production credentials
-2. Use Dokploy's environment variable management
-3. Rotate `JWT_SECRET` regularly
-4. Restrict database access to Dokploy network only
-5. Use strong passwords for `DB_PASSWORD`
-
-## Frontend Deployment
-
-The frontend should be deployed separately (Vercel, Netlify, or Dokploy static site):
-1. Set `VITE_API_URL=https://your-backend-domain.com`
-2. Add frontend URL to backend's `CLIENT_URL` env var for CORS
+1. Never commit `.env` files with production credentials
+2. Use Dokploy's environment variable management for all secrets
+3. Generate a strong `JWT_SECRET`: `openssl rand -base64 32`
+4. Keep the database port internal — do not expose it outside the Dokploy network
+5. Use strong, unique passwords for `DB_PASSWORD`
