@@ -122,15 +122,37 @@ All frontend API functions in `src/apis/` (`authRequests.ts`, `userRequests.ts`,
 
 Backend expects these (defaults work for local dev with Docker):
 ```
+# Database
 DB_USER=postgres  DB_PASSWORD=postgres  DB_HOST=localhost  DB_PORT=5432  DB_NAME=cfb-pickem
+DB_SSL=true                   # set in production for SSL connections
+
+# Server
 SERVER_PORT=3000
 CLIENT_URL=http://localhost:5173,http://localhost:4173
+NODE_ENV=production           # enables secure cookies
+
+# Auth
 JWT_SECRET=<must set in production>
 JWT_ALGORITHM=HS256
 JWT_EXPIRATION_DAYS=7
-DATA_SOURCE=ncaa          # or cfbd, sdv
+JWT_SALT_ROUNDS=10            # bcrypt rounds for password hashing
+
+# Data source
+DATA_SOURCE=ncaa              # or cfbd, sdv
 CFBD_API_KEY=<required if DATA_SOURCE=cfbd>
-NODE_ENV=production       # enables secure cookies
+
+# Logging
+LOG_LEVEL=info                # trace | debug | info | warn | error | fatal | silent
+
+# Picks
+PICKS_IGNORE_DEADLINE=false   # set true to bypass deadline enforcement (off-season testing)
+
+# Notifications (AWS SES email)
+NOTIFICATION_FROM_EMAIL=      # leave blank to disable email notifications
+AWS_REGION=us-east-1
+AWS_ACCESS_KEY_ID=
+AWS_SECRET_ACCESS_KEY=
+SKIP_EMAIL_SEND=false         # set true in dev to log instead of sending via SES
 ```
 
 Frontend: `VITE_API_URL=http://localhost:3000`

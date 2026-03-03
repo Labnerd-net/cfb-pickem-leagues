@@ -63,10 +63,13 @@ DB_NAME=cfb-pickem
 SERVER_PORT=3000
 CLIENT_URL=http://localhost:5173,http://localhost:4173
 JWT_SECRET=your-secret-here
+JWT_ALGORITHM=HS256
 JWT_EXPIRATION_DAYS=7
 DATA_SOURCE=ncaa
+LOG_LEVEL=info
+PICKS_IGNORE_DEADLINE=false
 
-# Notifications (optional — omit to disable)
+# Notifications (optional — omit NOTIFICATION_FROM_EMAIL to disable email)
 NOTIFICATION_FROM_EMAIL=noreply@yourdomain.com
 AWS_REGION=us-east-1
 AWS_ACCESS_KEY_ID=
@@ -159,7 +162,7 @@ The test database is automatically seeded and cleaned between tests.
 **Frontend Tests** (`packages/frontend/tests/`):
 - Form validation tests (Zod schemas)
 - API request tests with MSW mocks
-- Component tests with React Testing Library (coming soon)
+- Component tests with React Testing Library
 
 ## How It Works
 
@@ -167,6 +170,7 @@ The test database is automatically seeded and cleaned between tests.
 2. Admins import weekly schedules from an external data source (NCAA, CFBD, or SportsDataverse) and select which games are available for picking.
 3. Authenticated users view the curated games for a given week and submit their predictions (home or away team).
 4. As games complete, results are updated and users can see how their picks performed.
+5. Admins can promote or demote other users' roles via the admin panel.
 
 ## Notifications
 
