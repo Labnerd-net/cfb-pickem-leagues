@@ -207,6 +207,34 @@ Commit the generated files to Git. They run automatically on next deploy.
 
 ## Troubleshooting
 
+### Docker build fails: DNS resolution error / can't reach registry.npmjs.org
+
+If the build fails with `bad address 'registry.npmjs.org'` or a similar fetch error during pnpm install, Docker containers on the host can't resolve DNS. This is caused by UFW's default `deny (routed)` policy blocking container traffic.
+
+Fix: add explicit DNS servers to the Docker daemon config on the Dokploy host:
+
+```bash
+sudo nano /etc/docker/daemon.json
+```
+
+```json
+{
+  "dns": ["8.8.8.8", "1.1.1.1"]
+}
+```
+
+```bash
+sudo systemctl restart docker
+```
+
+Verify it works before redeploying:
+
+```bash
+docker run --rm node:20-alpine sh -c "wget -q -O- https://registry.npmjs.org/pnpm | head -c 100"
+```
+
+You should see a JSON response. Then redeploy in Dokploy.
+
 ### Backend can't connect to database
 
 - Confirm `DB_HOST` uses the internal Dokploy hostname (not `localhost` or an external IP)

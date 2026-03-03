@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" fill="none">
+  <!-- Football body -->
+  <ellipse cx="32" cy="32" rx="26" ry="16" fill="#8B4513" transform="rotate(-30 32 32)"/>
+  <!-- Football highlight -->
+  <ellipse cx="30" cy="30" rx="22" ry="12" fill="#A0522D" transform="rotate(-30 32 32)"/>
+  <!-- Laces -->
+  <line x1="32" y1="22" x2="32" y2="42" stroke="white" stroke-width="2" stroke-linecap="round" transform="rotate(-30 32 32)"/>
+  <line x1="27" y1="28" x2="37" y2="28" stroke="white" stroke-width="1.5" stroke-linecap="round" transform="rotate(-30 32 32)"/>
+  <line x1="27" y1="32" x2="37" y2="32" stroke="white" stroke-width="1.5" stroke-linecap="round" transform="rotate(-30 32 32)"/>
+  <line x1="27" y1="36" x2="37" y2="36" stroke="white" stroke-width="1.5" stroke-linecap="round" transform="rotate(-30 32 32)"/>
+  <!-- Checkmark overlay -->
+  <circle cx="46" cy="46" r="12" fill="#1565C0"/>
+  <polyline points="40,46 44,51 52,41" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+</svg>
