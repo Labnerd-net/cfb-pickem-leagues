@@ -51,9 +51,9 @@ export const isProduction = process.env.NODE_ENV === 'production';
 // Set to 'true' to bypass pick deadline enforcement (useful for off-season testing)
 export const ignorePickDeadline = process.env.PICKS_IGNORE_DEADLINE === 'true';
 
-// Notification / SES configuration
+// Notification / Resend configuration
 export const notificationFromEmail = process.env.NOTIFICATION_FROM_EMAIL || '';
-export const awsRegion = process.env.AWS_REGION || 'us-east-1';
-export const notificationsEnabled = notificationFromEmail !== '';
-// Set to 'true' in dev to skip SES sandbox restrictions
+export const resendApiKey = process.env.RESEND_API_KEY || '';
+export const notificationsEnabled = notificationFromEmail !== '' && resendApiKey !== '';
+// Set to 'true' in dev to skip sending emails
 export const skipEmailSend = process.env.SKIP_EMAIL_SEND === 'true';

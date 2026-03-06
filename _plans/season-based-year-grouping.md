@@ -80,8 +80,6 @@ Tests for `getCurrentSeason()`:
 - December → returns current year
 - Custom `VITE_SEASON_ROLLOVER_MONTH` (e.g. 4 for April) — verify cutoff shifts
 
-Also add tests for the existing `getCurrentWeek` and `getMostRecentCompletedWeek` fallback paths (which are currently untested — noted in TODO.md).
-
 ---
 
 ## Verification

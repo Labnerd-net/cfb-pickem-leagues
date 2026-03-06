@@ -84,7 +84,7 @@ NODE_ENV=test pnpm migrate
 2. **DB Functions** (`src/db/dbAdminFunctions.ts`, `dbUserFunctions.ts`, `dbNotificationFunctions.ts`) — Drizzle queries. Two PostgreSQL schemas: `admin` (reference data: weeks/games) and `user` (accounts and picks).
 3. **API Adapters** (`src/api/`) — External data sources (NCAA, CFBD, SportsDataverse). Configurable via `DATA_SOURCE` env var. Converters in `src/api/index.ts` normalize data into shared types.
 4. **Middleware** (`src/utils/middleware.ts`) — JWT auth middleware and `requireRole()` guard.
-5. **Notifications** (`src/notifications/`) — `dispatcher.ts` routes events to `emailSender.ts` (AWS SES) and/or `ntfySender.ts` (NTFY push). `templates.ts` holds message content.
+5. **Notifications** (`src/notifications/`) — `dispatcher.ts` routes events to `emailSender.ts` (Resend) and/or `ntfySender.ts` (NTFY push). `templates.ts` holds message content.
 
 ### Auth Flow
 JWT-based. Token is set as an **httpOnly cookie** by the backend (`auth_token`). The frontend Hono RPC client is initialized with `credentials: 'include'` so the cookie is sent automatically. `AuthProvider` determines auth state on mount by calling `GET /api/auth/me`. First registered user is auto-assigned admin role.
@@ -147,12 +147,10 @@ LOG_LEVEL=info                # trace | debug | info | warn | error | fatal | si
 # Picks
 PICKS_IGNORE_DEADLINE=false   # set true to bypass deadline enforcement (off-season testing)
 
-# Notifications (AWS SES email)
+# Notifications (Resend email)
 NOTIFICATION_FROM_EMAIL=      # leave blank to disable email notifications
-AWS_REGION=us-east-1
-AWS_ACCESS_KEY_ID=
-AWS_SECRET_ACCESS_KEY=
-SKIP_EMAIL_SEND=false         # set true in dev to log instead of sending via SES
+RESEND_API_KEY=               # get from resend.com
+SKIP_EMAIL_SEND=false         # set true in dev to log instead of sending
 ```
 
 Frontend: `VITE_API_URL=http://localhost:3000`

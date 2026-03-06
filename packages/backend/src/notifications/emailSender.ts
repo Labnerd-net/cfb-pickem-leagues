@@ -1,5 +1,5 @@
-import { SESClient, SendEmailCommand } from '@aws-sdk/client-ses';
-import { awsRegion, notificationFromEmail, notificationsEnabled, skipEmailSend } from '../utils/envVars.js';
+import { Resend } from 'resend';
+import { resendApiKey, notificationFromEmail, notificationsEnabled, skipEmailSend } from '../utils/envVars.js';
 import logger from '../utils/logger.js';
 
 interface SendEmailParams {
@@ -16,19 +16,15 @@ export async function sendEmail(params: SendEmailParams): Promise<boolean> {
   }
 
   try {
-    const sesClient = new SESClient({ region: awsRegion });
-    const command = new SendEmailCommand({
-      Source: `CFB Pick'em <${notificationFromEmail}>`,
-      Destination: { ToAddresses: [params.to] },
-      Message: {
-        Subject: { Data: params.subject, Charset: 'UTF-8' },
-        Body: {
-          Html: { Data: params.htmlBody, Charset: 'UTF-8' },
-          Text: { Data: params.textBody, Charset: 'UTF-8' },
-        },
-      },
+    const resend = new Resend(resendApiKey);
+    const { error } = await resend.emails.send({
+      from: `CFB Pick'em <${notificationFromEmail}>`,
+      to: params.to,
+      subject: params.subject,
+      html: params.htmlBody,
+      text: params.textBody,
     });
-    await sesClient.send(command);
+    if (error) throw error;
     logger.info({ to: params.to, subject: params.subject }, 'Email sent');
     return true;
   } catch (e) {
