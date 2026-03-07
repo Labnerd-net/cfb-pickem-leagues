@@ -1,36 +1,32 @@
 import { describe, it, expect, vi, afterEach } from 'vitest';
 
 // vi.hoisted() variables are accessible inside vi.mock() factories
-const mockSend = vi.hoisted(() => vi.fn().mockResolvedValue({}));
+const mockEmailsSend = vi.hoisted(() => vi.fn().mockResolvedValue({ data: {}, error: null }));
 
 vi.mock('../../../src/utils/envVars.js', async importOriginal => {
 	const actual = await importOriginal<typeof import('../../../src/utils/envVars.js')>();
 	return {
 		...actual,
 		notificationFromEmail: 'from@example.com',
-		awsRegion: 'us-east-1',
+		resendApiKey: 'test-api-key',
 		notificationsEnabled: true,
 		skipEmailSend: false,
 	};
 });
 
-vi.mock('@aws-sdk/client-ses', () => {
-	class SESClientMock {
-		send = mockSend;
+vi.mock('resend', () => {
+	class ResendMock {
+		emails = { send: mockEmailsSend };
 	}
-	return {
-		SESClient: SESClientMock,
-		SendEmailCommand: vi.fn(function (input: unknown) { return input; }),
-	};
+	return { Resend: ResendMock };
 });
 
 import { sendEmail } from '../../../src/notifications/emailSender.js';
 import { sendNtfyNotification } from '../../../src/notifications/ntfySender.js';
-import { SendEmailCommand } from '@aws-sdk/client-ses';
 
 describe('emailSender', () => {
-	it('calls SendEmailCommand with correct parameters and returns true', async () => {
-		mockSend.mockResolvedValue({});
+	it('calls resend.emails.send with correct parameters and returns true', async () => {
+		mockEmailsSend.mockResolvedValue({ data: {}, error: null });
 		const result = await sendEmail({
 			to: 'user@example.com',
 			subject: 'Test subject',
@@ -38,15 +34,14 @@ describe('emailSender', () => {
 			textBody: 'Hello',
 		});
 		expect(result).toBe(true);
-		expect(SendEmailCommand).toHaveBeenCalledWith(
+		expect(mockEmailsSend).toHaveBeenCalledWith(
 			expect.objectContaining({
-				Destination: { ToAddresses: ['user@example.com'] },
-				Message: expect.objectContaining({
-					Subject: { Data: 'Test subject', Charset: 'UTF-8' },
-				}),
+				to: 'user@example.com',
+				subject: 'Test subject',
+				html: '<p>Hello</p>',
+				text: 'Hello',
 			})
 		);
-		expect(mockSend).toHaveBeenCalled();
 	});
 });
 
