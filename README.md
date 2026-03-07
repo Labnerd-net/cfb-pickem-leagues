@@ -71,10 +71,8 @@ PICKS_IGNORE_DEADLINE=false
 
 # Notifications (optional — omit NOTIFICATION_FROM_EMAIL to disable email)
 NOTIFICATION_FROM_EMAIL=noreply@yourdomain.com
-AWS_REGION=us-east-1
-AWS_ACCESS_KEY_ID=
-AWS_SECRET_ACCESS_KEY=
-SKIP_EMAIL_SEND=true   # set in dev to skip SES (SES sandbox only allows verified addresses)
+RESEND_API_KEY=your-resend-api-key
+SKIP_EMAIL_SEND=true   # set true in dev to log emails instead of sending
 ```
 
 Create a `.env` file in `packages/frontend/`:
@@ -90,6 +88,52 @@ VITE_API_URL=http://localhost:3000
 pnpm dev:backend     # API server on http://localhost:3000
 pnpm dev:frontend    # Frontend on http://localhost:5173
 ```
+
+## Self-Hosting with Docker Compose
+
+Pre-built images are published to GitHub Container Registry on every push to `main`.
+
+### 1. Create a `.env` file
+
+```env
+# Database
+DB_PASSWORD=your-db-password
+
+# Backend
+JWT_SECRET=your-jwt-secret          # generate with: openssl rand -base64 32
+CLIENT_URL=https://yourdomain.com
+
+# Internal backend URL — how nginx reaches the backend container
+# Default (http://backend:3000) matches the docker-compose service name
+BACKEND_URL=http://backend:3000
+
+# Notifications (optional — omit NOTIFICATION_FROM_EMAIL to disable email)
+NOTIFICATION_FROM_EMAIL=noreply@yourdomain.com
+RESEND_API_KEY=your-resend-api-key
+```
+
+### 2. Download the compose file
+
+```bash
+curl -o docker-compose.yml https://raw.githubusercontent.com/Labnerd-net/cfb-pickem/main/docker/docker-compose.yml
+```
+
+### 3. Start the stack
+
+```bash
+docker compose up -d
+```
+
+The backend automatically runs database migrations on startup. The first user to register is assigned the admin role.
+
+### Updating
+
+```bash
+docker compose pull
+docker compose up -d
+```
+
+---
 
 ## Scripts
 
@@ -174,7 +218,7 @@ The test database is automatically seeded and cleaned between tests.
 
 ## Notifications
 
-The app supports two notification channels: **email** (via AWS SES) and **push** (via [ntfy](https://ntfy.sh)).
+The app supports two notification channels: **email** (via [Resend](https://resend.com)) and **push** (via [ntfy](https://ntfy.sh)).
 
 Three notification types are sent automatically:
 
@@ -190,6 +234,6 @@ Users configure their preferences on the `/settings` page. Each type × channel 
 
 Score refresh and picks reminders run on a 15-minute cron inside the Hono process (`node-cron`). No external scheduler is required. The cron uses in-memory state and the `notificationLog` table to avoid duplicate sends.
 
-### Development without SES
+### Development without Resend
 
-Set `SKIP_EMAIL_SEND=true` to bypass SES entirely. Verification tokens are still written to the DB — you can retrieve them directly via Drizzle Studio (`pnpm studio`) to test the verify-email flow locally.
+Set `SKIP_EMAIL_SEND=true` to bypass Resend entirely. Verification tokens are still written to the DB — you can retrieve them directly via Drizzle Studio (`pnpm studio`) to test the verify-email flow locally.
