@@ -1,12 +1,13 @@
 services:
-  backend:
+  cfb-backend:
     image: ghcr.io/labnerd-net/cfb-pickem/backend:latest
+    container_name: cfb-backend
     restart: unless-stopped
     ports:
       - "3000:3000"
     environment:
       NODE_ENV: production
-      DB_HOST: db
+      DB_HOST: cfb-db
       DB_PORT: 5432
       DB_NAME: cfb-pickem
       DB_USER: ${DB_USER:-postgres}
@@ -17,19 +18,21 @@ services:
       RESEND_API_KEY: ${RESEND_API_KEY:-}
       NOTIFICATION_FROM_EMAIL: ${NOTIFICATION_FROM_EMAIL:-}
     depends_on:
-      db:
+      cfb-db:
         condition: service_healthy
 
-  frontend:
+  cfb-frontend:
     image: ghcr.io/labnerd-net/cfb-pickem/frontend:latest
+    container_name: cfb-frontend
     restart: unless-stopped
     ports:
       - "80:80"
     environment:
-      BACKEND_URL: ${BACKEND_URL:-http://backend:3000}
+      BACKEND_URL: ${BACKEND_URL:-http://cfb-backend:3000}
 
-  db:
+  cfb-db:
     image: postgres:16-alpine
+    container_name: cfb-db
     restart: unless-stopped
     environment:
       POSTGRES_DB: cfb-pickem
