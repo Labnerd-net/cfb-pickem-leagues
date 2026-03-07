@@ -6,6 +6,8 @@
 #   or
 #   ./scripts/reset-db.sh postgresql://...
 
+# postgresql://postgres:postgres@100.67.203.88:5432/cfb-pickem
+
 set -euo pipefail
 
 DATABASE_URL="${1:-${DATABASE_URL:-}}"
