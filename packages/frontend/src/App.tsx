@@ -20,29 +20,31 @@ function App() {
             <Navbar />
 
             {/* Main Content */}
-            <Routes>
-              <Route index element={<Home />} />
-              <Route path="login" element={<LoginForm />} />
-              <Route path="register" element={<RegistrationForm />} />
-              <Route
-                path="dashboard"
-                element={
-                  <PrivateRoute>
-                    <Dashboard />
-                  </PrivateRoute>
-                }
-              />
-              <Route
-                path="settings"
-                element={
-                  <PrivateRoute>
-                    <Settings />
-                  </PrivateRoute>
-                }
-              />
-              <Route path="verify-email" element={<VerifyEmail />} />
-              <Route path="*" element={<Navigate to="/" replace />} />
-            </Routes>
+            <Box component="main">
+              <Routes>
+                <Route index element={<Home />} />
+                <Route path="login" element={<LoginForm />} />
+                <Route path="register" element={<RegistrationForm />} />
+                <Route
+                  path="dashboard"
+                  element={
+                    <PrivateRoute>
+                      <Dashboard />
+                    </PrivateRoute>
+                  }
+                />
+                <Route
+                  path="settings"
+                  element={
+                    <PrivateRoute>
+                      <Settings />
+                    </PrivateRoute>
+                  }
+                />
+                <Route path="verify-email" element={<VerifyEmail />} />
+                <Route path="*" element={<Navigate to="/" replace />} />
+              </Routes>
+            </Box>
           </Box>
         </BrowserRouter>
       </AuthProvider>
