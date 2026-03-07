@@ -125,12 +125,12 @@ export default function Navbar() {
               letterSpacing: '0.05em',
               px: 3,
               py: 1,
-              border: `2px solid ${theme.palette.primary.main}`,
-              color: 'primary.main',
+              border: `2px solid ${theme.palette.secondary.main}`,
+              color: 'secondary.main',
               transition: 'all 0.2s ease',
               '&:hover': {
-                borderColor: theme.palette.secondary.main,
-                color: 'secondary.main',
+                borderColor: theme.palette.secondary.light,
+                color: 'secondary.light',
                 backgroundColor: alpha(theme.palette.secondary.main, 0.1),
               },
             }}

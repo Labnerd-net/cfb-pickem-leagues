@@ -51,6 +51,7 @@ export default function DashboardCard({
         {icon}
         <Typography
           variant="h5"
+          component="h4"
           sx={{
             fontFamily: '"Work Sans", sans-serif',
             fontWeight: 700,

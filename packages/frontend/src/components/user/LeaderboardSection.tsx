@@ -45,8 +45,10 @@ export default function LeaderboardSection() {
   return (
     <Box>
       <FormControl size="small" sx={{ mb: 2, minWidth: 140 }}>
-        <InputLabel>Season</InputLabel>
+        <InputLabel id="leaderboard-season-label">Season</InputLabel>
         <Select
+          labelId="leaderboard-season-label"
+          id="leaderboard-season-select"
           value={year}
           label="Season"
           onChange={e => setYear(Number(e.target.value))}

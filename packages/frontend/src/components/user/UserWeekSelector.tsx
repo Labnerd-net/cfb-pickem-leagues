@@ -32,8 +32,10 @@ export default function UserWeekSelector({
       }}
     >
       <FormControl fullWidth disabled={loading}>
-        <InputLabel>Season</InputLabel>
+        <InputLabel id="user-season-label">Season</InputLabel>
         <Select
+          labelId="user-season-label"
+          id="user-season-select"
           value={selectedYear}
           label="Season"
           onChange={e => onYearChange(Number(e.target.value))}
@@ -49,8 +51,10 @@ export default function UserWeekSelector({
       </FormControl>
 
       <FormControl fullWidth disabled={loading || weeks.length === 0}>
-        <InputLabel>Week</InputLabel>
+        <InputLabel id="user-week-label">Week</InputLabel>
         <Select
+          labelId="user-week-label"
+          id="user-week-select"
           value={selectedWeek}
           label="Week"
           onChange={e => onWeekChange(Number(e.target.value))}
