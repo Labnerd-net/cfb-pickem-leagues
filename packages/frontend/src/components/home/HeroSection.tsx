@@ -154,7 +154,7 @@ export default function HeroSection({ isVisible }: HeroSectionProps) {
                 },
               }}
             >
-              Start Playing Free
+              Get Started
             </Button>
             <Button
               variant="outlined"

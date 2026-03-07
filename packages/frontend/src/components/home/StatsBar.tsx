@@ -10,7 +10,7 @@ export default function StatsBar({ isVisible }: StatsBarProps) {
   const stats = [
     { number: '100+', label: 'Games Per Season' },
     { number: '∞', label: 'Bragging Rights' },
-    { number: '0$', label: 'To Get Started' },
+    { number: '#1', label: 'Spot on the Board' },
   ];
 
   return (
