@@ -26,8 +26,8 @@ function ResultChip({ row }: { row: WeekResultRow }) {
           fontFamily: '"Work Sans", sans-serif',
           fontWeight: 600,
           fontSize: '0.7rem',
-          backgroundColor: 'grey.300',
-          color: 'text.primary',
+          backgroundColor: 'grey.600',
+          color: '#fff',
         }}
       />
     );
@@ -41,8 +41,8 @@ function ResultChip({ row }: { row: WeekResultRow }) {
           fontFamily: '"Work Sans", sans-serif',
           fontWeight: 600,
           fontSize: '0.7rem',
-          backgroundColor: 'grey.300',
-          color: 'text.primary',
+          backgroundColor: 'grey.600',
+          color: '#fff',
         }}
       />
     );
