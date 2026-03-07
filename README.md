@@ -104,7 +104,7 @@ JWT_SECRET=your-jwt-secret          # generate with: openssl rand -base64 32
 CLIENT_URL=https://yourdomain.com
 
 # Internal backend URL — how nginx reaches the backend container
-# Default (http://backend:3000) matches the docker-compose service name
+# Default (http://cfb-backend:3000) matches the docker-compose service name
 BACKEND_URL=http://cfb-backend:3000
 
 # Notifications (optional — omit NOTIFICATION_FROM_EMAIL to disable email)
