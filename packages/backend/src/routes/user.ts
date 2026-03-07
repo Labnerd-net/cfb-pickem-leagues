@@ -22,6 +22,7 @@ import type {
 } from '@shared/types/cfb-pickem-api.js';
 import { authMiddleware } from '../utils/middleware.js';
 import { ignorePickDeadline } from '../utils/envVars.js';
+import { getNow } from '../utils/clock.js';
 import { apiRateLimit } from '../utils/rateLimiter.js';
 import {
   allUserPickedRequestValidator,
@@ -117,7 +118,7 @@ const user = new Hono<{ Variables: Variables }>()
             message: `Game ${pick.game} has no start time set and cannot accept picks.`,
           });
         }
-        if (new Date() >= game.startTime) {
+        if (getNow() >= game.startTime) {
           throw new HTTPException(422, {
             message: `Game ${pick.game} (${game.awayTeam} @ ${game.homeTeam}) is locked — kickoff has passed. Check your other picks too.`,
           });

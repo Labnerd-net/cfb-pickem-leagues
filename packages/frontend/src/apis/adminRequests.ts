@@ -4,6 +4,7 @@ import type {
   WeekIdentifier,
   PickedGamesRequest,
   ProfileData,
+  MarkGameCompleteRequest,
 } from '@shared/types/cfb-pickem-api';
 import { client } from '../lib/api';
 
@@ -138,6 +139,28 @@ export async function updateUserRoles(
     }
     const body = await res.json();
     return { success: true, data: (body as unknown as { user: ProfileData }).user };
+  } catch {
+    return { success: false, error: 'Request failed' };
+  }
+}
+
+export interface MarkGameCompleteResponse {
+  success: boolean;
+  data?: AdminDbGameData;
+  error?: string;
+}
+
+export async function markGameComplete(
+  request: MarkGameCompleteRequest
+): Promise<MarkGameCompleteResponse> {
+  try {
+    const res = await client.api.admin.games.complete.$post({ json: request });
+    if (!res.ok) {
+      const body = (await res.json()) as unknown as { error: string };
+      return { success: false, error: body.error };
+    }
+    const body = await res.json();
+    return { success: true, data: (body as unknown as { game: AdminDbGameData }).game };
   } catch {
     return { success: false, error: 'Request failed' };
   }

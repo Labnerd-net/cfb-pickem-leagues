@@ -281,6 +281,34 @@ export async function returnCurrentWeek(today: Date): Promise<AdminWeekData | nu
 }
 
 // ------------------------------------------------------------------
+// Mark a game as complete with final scores
+// ------------------------------------------------------------------
+export async function markGameComplete(
+  gameId: number,
+  homePoints: number,
+  awayPoints: number
+): Promise<AdminDbGameData | null> {
+  logger.debug({ gameId, homePoints, awayPoints }, 'markGameComplete');
+  try {
+    let winningTeam: Team = 'pending';
+    if (homePoints > awayPoints) {
+      winningTeam = 'home_team';
+    } else if (awayPoints > homePoints) {
+      winningTeam = 'away_team';
+    }
+    const updated = await db
+      .update(adminGames)
+      .set({ completed: true, homePoints, awayPoints, winningTeam })
+      .where(eq(adminGames.gameId, gameId))
+      .returning();
+    return updated.length > 0 ? updated[0] : null;
+  } catch (e) {
+    logger.error({ err: e }, 'markGameComplete failed');
+    throw e;
+  }
+}
+
+// ------------------------------------------------------------------
 // Convert WeekIdentifier to WeekQuery by looking up seasonType
 // ------------------------------------------------------------------
 export async function enrichWeekIdentifier(identifier: WeekIdentifier): Promise<WeekQuery> {

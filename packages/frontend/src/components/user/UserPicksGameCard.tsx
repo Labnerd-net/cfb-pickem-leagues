@@ -2,6 +2,7 @@ import { Paper, RadioGroup, FormControlLabel, Radio, Box, Typography, Chip } fro
 import type { AdminDbGameData } from '@shared/types/cfb-pickem-api';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import LockIcon from '@mui/icons-material/Lock';
+import { getNow } from '../../utils/clock';
 
 interface UserPicksGameCardProps {
   game: AdminDbGameData;
@@ -18,7 +19,7 @@ export default function UserPicksGameCard({
 }: UserPicksGameCardProps) {
   const ignoreDeadline = import.meta.env.VITE_IGNORE_PICK_DEADLINE === 'true';
   const isLocked =
-    !ignoreDeadline && game.startTime !== null && new Date() >= new Date(game.startTime);
+    !ignoreDeadline && game.startTime !== null && getNow() >= new Date(game.startTime);
 
   const handleChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     if (isLocked) return;

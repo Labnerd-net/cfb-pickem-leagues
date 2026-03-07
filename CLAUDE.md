@@ -16,6 +16,15 @@ cd packages/frontend
 pnpm preview              # Preview production build locally (port 4173)
 ```
 
+### Season Simulation (dev only)
+```bash
+cd packages/backend
+NODE_ENV=development pnpm seed:dev       # Insert 3 weeks of 2024 CFB data and mark all picked
+NODE_ENV=development pnpm teardown:dev   # Remove seeded weeks/games/notification logs
+```
+
+Full simulation walkthrough in [DEVELOPMENT.md](./DEVELOPMENT.md).
+
 ### Build & Lint
 ```bash
 pnpm build                # Build all packages
@@ -147,13 +156,20 @@ LOG_LEVEL=info                # trace | debug | info | warn | error | fatal | si
 # Picks
 PICKS_IGNORE_DEADLINE=false   # set true to bypass deadline enforcement (off-season testing)
 
+# Season simulation (dev only — ignored in production)
+DEV_CURRENT_TIME=             # ISO 8601 string to pin the backend clock, e.g. 2024-08-31T10:00:00Z
+
 # Notifications (Resend email)
 NOTIFICATION_FROM_EMAIL=      # leave blank to disable email notifications
 RESEND_API_KEY=               # get from resend.com
 SKIP_EMAIL_SEND=false         # set true in dev to log instead of sending
 ```
 
-Frontend: `VITE_API_URL=http://localhost:3000`
+Frontend:
+```
+VITE_API_URL=http://localhost:3000
+VITE_DEV_CURRENT_TIME=        # ISO 8601 string to pin the frontend clock (mirrors DEV_CURRENT_TIME)
+```
 
 ## Checking Documentation
 

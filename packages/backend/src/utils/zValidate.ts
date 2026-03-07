@@ -5,6 +5,7 @@ import type {
   UserGamePicks,
   WeekIdentifier,
   PickedGamesRequest,
+  MarkGameCompleteRequest,
 } from '@shared/types/cfb-pickem-api.js';
 
 const notificationTypeEnum = z.enum(['games_ready', 'picks_reminder', 'rankings_updated']);
@@ -53,6 +54,13 @@ const allUserPickedRequestSchema: z.ZodType<AllUserGamePicksRequest> = z.object(
   games: userPickedGameSchema.array(),
 });
 
+const markGameCompleteSchema: z.ZodType<MarkGameCompleteRequest> = z.object({
+  gameId: z.number().int().positive(),
+  homePoints: z.number().int().min(0),
+  awayPoints: z.number().int().min(0),
+});
+
+export const markGameCompleteValidator = zValidator('json', markGameCompleteSchema);
 export const weekIdentifierValidator = zValidator('json', weekIdentifierSchema);
 export const pickedGameRequestValidator = zValidator('json', pickedGameRequestSchema);
 export const allUserPickedRequestValidator = zValidator('json', allUserPickedRequestSchema);
