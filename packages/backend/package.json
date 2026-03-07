@@ -15,6 +15,8 @@
     "migrate": "npx drizzle-kit migrate",
     "migrate:prod": "NODE_ENV=production node dist/backend/src/scripts/migrate-prod.js",
     "studio": "npx drizzle-kit studio",
+    "seed:dev": "tsx src/scripts/seed-dev.ts",
+    "teardown:dev": "tsx src/scripts/teardown-dev.ts",
     "test": "vitest run",
     "test:watch": "vitest",
     "test:ui": "vitest --ui",

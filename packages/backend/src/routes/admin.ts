@@ -6,7 +6,7 @@ import { getGameData, getWeekData } from '../api/index.js';
 import type { JwtData, WeekIdentifier } from '@shared/types/cfb-pickem-api.js';
 import { authMiddleware, requireRole } from '../utils/middleware.js';
 import { apiRateLimit } from '../utils/rateLimiter.js';
-import { weekIdentifierValidator, pickedGameRequestValidator, updateUserRolesValidator } from '../utils/zValidate.js';
+import { weekIdentifierValidator, pickedGameRequestValidator, updateUserRolesValidator, markGameCompleteValidator } from '../utils/zValidate.js';
 import { dispatchNotification } from '../notifications/dispatcher.js';
 import logger from '../utils/logger.js';
 
@@ -122,6 +122,41 @@ const admin = new Hono<{ Variables: Variables }>()
         throw new HTTPException(422, { message: 'games array must not be empty' });
       await dbAdminFunctions.setPickedGames(pickedData);
       return c.json({ status: 'updated picked games' });
+    }
+  )
+  // Mark a game complete with final scores (dev/test only — blocked in production)
+  .post(
+    '/games/complete',
+    apiRateLimit,
+    markGameCompleteValidator,
+    authMiddleware,
+    requireRole('admin'),
+    async c => {
+      if (process.env.NODE_ENV === 'production') {
+        throw new HTTPException(403, { message: 'Not available in production' });
+      }
+      const { gameId, homePoints, awayPoints } = c.req.valid('json');
+      const gameRows = await dbAdminFunctions.returnGame(gameId);
+      if (!gameRows || gameRows.length === 0)
+        throw new HTTPException(404, { message: 'Game not found' });
+      const game = gameRows[0];
+      const updated = await dbAdminFunctions.markGameComplete(gameId, homePoints, awayPoints);
+      if (!updated) throw new HTTPException(404, { message: 'Game not found' });
+
+      // Dispatch rankings_updated if all picked games for the week are now complete
+      const weekGames = await dbAdminFunctions.returnPickedGames({
+        year: game.year,
+        week: game.weekNumber,
+      });
+      if (weekGames.length > 0 && weekGames.every(g => g.completed)) {
+        dispatchNotification({
+          notificationType: 'rankings_updated',
+          year: game.year,
+          weekNumber: game.weekNumber,
+        }).catch(err => logger.error({ err }, 'rankings_updated dispatch failed'));
+      }
+
+      return c.json({ game: updated });
     }
   );
 

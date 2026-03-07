@@ -3,6 +3,7 @@ import { returnPickedGames, upsertGameForWeek } from '../db/dbAdminFunctions.js'
 import { dispatchNotification } from '../notifications/dispatcher.js';
 import { getGameData } from '../api/index.js';
 import logger from '../utils/logger.js';
+import { getNow } from '../utils/clock.js';
 import {
   shouldSendPicksReminder,
   shouldRefreshScores,
@@ -17,7 +18,7 @@ let hardCapStart: Date | null = null;
 let scoresCompletedForWeek: string | null = null; // key: "year-week"
 
 export async function runCronTick(): Promise<void> {
-  const now = new Date();
+  const now = getNow();
   logger.debug('runCronTick');
 
   // 1. Find the current week
@@ -61,7 +62,7 @@ export async function runCronTick(): Promise<void> {
       if (gameData?.length) {
         await Promise.all(gameData.map(g => upsertGameForWeek(g)));
       }
-      lastRefreshAt = new Date();
+      lastRefreshAt = getNow();
 
       // Re-fetch to check completion
       const updatedGames = await returnPickedGames(identifier);

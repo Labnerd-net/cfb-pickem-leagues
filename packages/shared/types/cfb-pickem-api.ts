@@ -183,3 +183,9 @@ export interface WeekScoresEntry {
   incorrect: number;
   pending: number;
 }
+
+export interface MarkGameCompleteRequest {
+  gameId: number;
+  homePoints: number;
+  awayPoints: number;
+}

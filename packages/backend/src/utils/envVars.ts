@@ -48,6 +48,11 @@ export const logLevel = process.env.LOG_LEVEL ?? 'info';
 
 export const isProduction = process.env.NODE_ENV === 'production';
 
+// Dev-only: override the current time for simulation (ignored in production).
+// Set to an ISO 8601 string, e.g. DEV_CURRENT_TIME=2024-08-31T10:00:00Z
+// Used by getNow() in src/utils/clock.ts
+export const devCurrentTime = isProduction ? undefined : process.env.DEV_CURRENT_TIME;
+
 // Set to 'true' to bypass pick deadline enforcement (useful for off-season testing)
 export const ignorePickDeadline = process.env.PICKS_IGNORE_DEADLINE === 'true';
 

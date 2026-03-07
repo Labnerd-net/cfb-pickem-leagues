@@ -1,4 +1,7 @@
 import type { AdminDbWeekData, AdminDbGameData } from '@shared/types/cfb-pickem-api.js';
+import { getNow } from './clock.js';
+
+export { getNow };
 
 export interface CurrentWeek {
   year: number;
@@ -7,10 +10,6 @@ export interface CurrentWeek {
 
 // VITE_SEASON_ROLLOVER_MONTH: 1-based month (e.g. 3 = March). Converted to 0-based for JS Date.
 const SEASON_ROLLOVER_MONTH = (Number(import.meta.env.VITE_SEASON_ROLLOVER_MONTH) || 3) - 1;
-
-export function getNow(): Date {
-  return new Date();
-}
 
 /**
  * Returns the current CFB season year. Before the rollover month, returns the prior calendar

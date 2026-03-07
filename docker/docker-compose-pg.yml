@@ -1,0 +1,12 @@
+services:
+  cfb-pickem-db:
+    image: postgres
+    container_name: cfb-pickem-db
+    user: 1000:1000
+    environment:
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: cfb-pickem
+    ports:
+      - 5432:5432
+    volumes:
+      - ../data:/var/lib/postgresql

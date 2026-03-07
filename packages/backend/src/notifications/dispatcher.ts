@@ -11,6 +11,7 @@ import {
   rankingsUpdatedTemplate,
 } from './templates.js';
 import logger from '../utils/logger.js';
+import { getNow } from '../utils/clock.js';
 import type { NotificationChannel, NotificationType } from '@shared/types/cfb-pickem-api.js';
 
 interface DispatchParams {
@@ -97,7 +98,7 @@ function buildTemplate(
       return picksReminderTemplate({
         year: params.year,
         weekNumber: params.weekNumber,
-        firstKickoffTime: params.firstKickoffTime ?? new Date(),
+        firstKickoffTime: params.firstKickoffTime ?? getNow(),
       });
     case 'rankings_updated':
       return rankingsUpdatedTemplate({ year: params.year, weekNumber: params.weekNumber });

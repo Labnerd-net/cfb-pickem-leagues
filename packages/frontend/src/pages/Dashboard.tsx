@@ -4,10 +4,14 @@ import { useAuth } from '../contexts/auth/AuthContext';
 import SportsFootballIcon from '@mui/icons-material/SportsFootball';
 import AdminPanelSettingsIcon from '@mui/icons-material/AdminPanelSettings';
 import PeopleIcon from '@mui/icons-material/People';
+import BugReportIcon from '@mui/icons-material/BugReport';
 import WelcomeBanner from '../components/dashboard/WelcomeBanner';
 import AdminSection from '../components/admin/AdminSection';
 import UsersSection from '../components/admin/UsersSection';
 import UserSection from '../components/user/UserSection';
+import DevSection from '../components/admin/DevSection';
+
+const IS_DEV = import.meta.env.DEV;
 
 export default function Dashboard() {
   const { user } = useAuth();
@@ -46,6 +50,14 @@ export default function Dashboard() {
                   label="Admin Controls"
                 />
                 <Tab icon={<PeopleIcon />} iconPosition="start" label="Users" />
+                {IS_DEV && (
+                  <Tab
+                    icon={<BugReportIcon />}
+                    iconPosition="start"
+                    label="Dev Tools"
+                    sx={{ color: 'warning.main' }}
+                  />
+                )}
               </Tabs>
             </Box>
 
@@ -54,8 +66,10 @@ export default function Dashboard() {
               <UserSection />
             ) : currentTab === 1 ? (
               <AdminSection />
-            ) : (
+            ) : currentTab === 2 ? (
               <UsersSection />
+            ) : (
+              <DevSection />
             )}
           </>
         ) : (
