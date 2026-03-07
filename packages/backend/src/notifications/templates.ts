@@ -1,3 +1,5 @@
+import type { LeaderboardEntry } from '@shared/types/cfb-pickem-api.js';
+
 interface EmailTemplate {
   subject: string;
   htmlBody: string;
@@ -44,13 +46,42 @@ export function picksReminderTemplate({
   return { subject, htmlBody, textBody };
 }
 
-export function rankingsUpdatedTemplate({ year, weekNumber }: { year: number; weekNumber: number }): EmailTemplate {
+export function rankingsUpdatedTemplate({
+  year,
+  weekNumber,
+  leaderboard,
+}: {
+  year: number;
+  weekNumber: number;
+  leaderboard: LeaderboardEntry[];
+}): EmailTemplate {
   const subject = `CFB Pick'em — Week ${weekNumber} results are in`;
-  const textBody = `All games for Week ${weekNumber} of the ${year} season are complete. Check the leaderboard to see how you did!`;
+
+  const leaderboardTextLines = leaderboard.map((e, i) => {
+    const pct = e.percentage !== null ? ` (${Math.round(e.percentage * 100)}%)` : '';
+    return `${i + 1}. ${e.displayName}: ${e.correct}/${e.total}${pct}`;
+  });
+  const textBody = [
+    `All games for Week ${weekNumber} of the ${year} season are complete.`,
+    '',
+    'Standings:',
+    ...leaderboardTextLines,
+  ].join('\n');
+
+  const leaderboardRows = leaderboard
+    .map((e, i) => {
+      const pct = e.percentage !== null ? Math.round(e.percentage * 100) + '%' : '—';
+      return `<tr><td>${i + 1}</td><td>${e.displayName}</td><td>${e.correct}/${e.total}</td><td>${pct}</td></tr>`;
+    })
+    .join('');
+
   const htmlBody = `
     <h2>Week ${weekNumber} Results Are In</h2>
     <p>All games for Week ${weekNumber} of the ${year} CFB season are now complete.</p>
-    <p>Check the leaderboard to see where you stand!</p>
+    <table border="1" cellpadding="6" cellspacing="0" style="border-collapse:collapse;font-family:sans-serif;font-size:14px;">
+      <thead><tr><th>#</th><th>Name</th><th>Correct/Finished</th><th>%</th></tr></thead>
+      <tbody>${leaderboardRows}</tbody>
+    </table>
   `.trim();
 
   return { subject, htmlBody, textBody };

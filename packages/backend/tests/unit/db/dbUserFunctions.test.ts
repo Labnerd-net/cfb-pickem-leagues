@@ -203,7 +203,7 @@ describe('User Database Functions', () => {
 			expect(user1.correct).toBe(1);
 			expect(user1.incorrect).toBe(1);
 			expect(user1.pending).toBe(1);
-			expect(user1.total).toBe(3);
+			expect(user1.total).toBe(2); // total = finished games (correct + incorrect), not all picked
 		});
 
 		it('calculates percentage correctly', async () => {

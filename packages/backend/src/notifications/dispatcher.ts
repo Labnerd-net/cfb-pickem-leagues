@@ -3,6 +3,7 @@ import {
   hasNotificationBeenSent,
   returnOptedInUsers,
 } from '../db/dbNotificationFunctions.js';
+import { returnLeaderboard } from '../db/dbUserFunctions.js';
 import { sendEmail } from './emailSender.js';
 import { sendNtfyNotification } from './ntfySender.js';
 import {
@@ -12,7 +13,7 @@ import {
 } from './templates.js';
 import logger from '../utils/logger.js';
 import { getNow } from '../utils/clock.js';
-import type { NotificationChannel, NotificationType } from '@shared/types/cfb-pickem-api.js';
+import type { LeaderboardEntry, NotificationChannel, NotificationType } from '@shared/types/cfb-pickem-api.js';
 
 interface DispatchParams {
   notificationType: NotificationType;
@@ -26,6 +27,15 @@ const CHANNELS: NotificationChannel[] = ['email', 'ntfy'];
 export async function dispatchNotification(params: DispatchParams): Promise<void> {
   const { notificationType, year, weekNumber, firstKickoffTime } = params;
   logger.info({ notificationType, year, weekNumber }, 'dispatchNotification started');
+
+  let leaderboard: LeaderboardEntry[] = [];
+  if (notificationType === 'rankings_updated') {
+    try {
+      leaderboard = await returnLeaderboard(year);
+    } catch (e) {
+      logger.error({ err: e }, 'Failed to fetch leaderboard for rankings_updated notification');
+    }
+  }
 
   for (const channel of CHANNELS) {
     let users;
@@ -56,7 +66,7 @@ export async function dispatchNotification(params: DispatchParams): Promise<void
           if (!user.ntfyServerUrl) continue;
         }
 
-        const template = buildTemplate(notificationType, { year, weekNumber, firstKickoffTime });
+        const template = buildTemplate(notificationType, { year, weekNumber, firstKickoffTime, leaderboard });
         let sent = false;
 
         if (channel === 'email') {
@@ -89,7 +99,7 @@ export async function dispatchNotification(params: DispatchParams): Promise<void
 
 function buildTemplate(
   notificationType: NotificationType,
-  params: { year: number; weekNumber: number; firstKickoffTime?: Date }
+  params: { year: number; weekNumber: number; firstKickoffTime?: Date; leaderboard: LeaderboardEntry[] }
 ) {
   switch (notificationType) {
     case 'games_ready':
@@ -101,6 +111,6 @@ function buildTemplate(
         firstKickoffTime: params.firstKickoffTime ?? getNow(),
       });
     case 'rankings_updated':
-      return rankingsUpdatedTemplate({ year: params.year, weekNumber: params.weekNumber });
+      return rankingsUpdatedTemplate({ year: params.year, weekNumber: params.weekNumber, leaderboard: params.leaderboard });
   }
 }

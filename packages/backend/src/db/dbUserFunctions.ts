@@ -236,16 +236,17 @@ export async function returnLeaderboard(year: number): Promise<LeaderboardEntry[
         sql`COUNT(CASE WHEN ${adminGames.winningTeam} != 'pending' AND ${adminGames.winningTeam} = ${userGames.teamChosen} THEN 1 END) DESC`
       );
     return rows.map(r => {
-      const total = Number(r.total);
       const correct = Number(r.correct);
+      const incorrect = Number(r.incorrect);
+      const finished = correct + incorrect;
       return {
         userId: r.userId,
         displayName: r.displayName,
-        total,
+        total: finished,
         correct,
-        incorrect: Number(r.incorrect),
+        incorrect,
         pending: Number(r.pending),
-        percentage: total === 0 ? null : correct / total,
+        percentage: finished === 0 ? null : correct / finished,
       };
     });
   } catch (e) {
