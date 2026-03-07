@@ -36,6 +36,7 @@ Dockerfile
 .dockerignore
 docker
 **/docker
+!docker/frontend-entrypoint.sh
 
 # Testing
 **/*.test.ts
