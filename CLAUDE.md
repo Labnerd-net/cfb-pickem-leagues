@@ -93,7 +93,7 @@ NODE_ENV=test pnpm migrate
 2. **DB Functions** (`src/db/dbAdminFunctions.ts`, `dbUserFunctions.ts`, `dbNotificationFunctions.ts`) — Drizzle queries. Two PostgreSQL schemas: `admin` (reference data: weeks/games) and `user` (accounts and picks).
 3. **API Adapters** (`src/api/`) — External data sources (NCAA, CFBD, SportsDataverse). Configurable via `DATA_SOURCE` env var. Converters in `src/api/index.ts` normalize data into shared types.
 4. **Middleware** (`src/utils/middleware.ts`) — JWT auth middleware and `requireRole()` guard.
-5. **Notifications** (`src/notifications/`) — `dispatcher.ts` routes events to `emailSender.ts` (Resend) and/or `ntfySender.ts` (NTFY push). `templates.ts` holds message content.
+5. **Notifications** (`src/notifications/`) — `dispatcher.ts` routes events to `emailSender.ts` (SMTP via nodemailer) and/or `ntfySender.ts` (NTFY push). `templates.ts` holds message content.
 
 ### Auth Flow
 JWT-based. Token is set as an **httpOnly cookie** by the backend (`auth_token`). The frontend Hono RPC client is initialized with `credentials: 'include'` so the cookie is sent automatically. `AuthProvider` determines auth state on mount by calling `GET /api/auth/me`. First registered user is auto-assigned admin role.
@@ -159,9 +159,13 @@ PICKS_IGNORE_DEADLINE=false   # set true to bypass deadline enforcement (off-sea
 # Season simulation (dev only — ignored in production)
 DEV_CURRENT_TIME=             # ISO 8601 string to pin the backend clock, e.g. 2024-08-31T10:00:00Z
 
-# Notifications (Resend email)
+# Notifications (SMTP email)
 NOTIFICATION_FROM_EMAIL=      # leave blank to disable email notifications
-RESEND_API_KEY=               # get from resend.com
+SMTP_HOST=                    # e.g. smtp.fastmail.com, smtp.gmail.com, or localhost (Mailpit)
+SMTP_PORT=587                 # 587 for STARTTLS, 465 for TLS, 1025 for Mailpit
+SMTP_USER=                    # leave blank if no auth (e.g. local Mailpit)
+SMTP_PASS=
+SMTP_SECURE=false             # set true only for port 465
 SKIP_EMAIL_SEND=false         # set true in dev to log instead of sending
 ```
 

@@ -1,5 +1,5 @@
-import { Resend } from 'resend';
-import { resendApiKey, notificationFromEmail, notificationsEnabled, skipEmailSend } from '../utils/envVars.js';
+import nodemailer from 'nodemailer';
+import { smtpHost, smtpPort, smtpUser, smtpPass, smtpSecure, notificationFromEmail, notificationsEnabled, skipEmailSend } from '../utils/envVars.js';
 import logger from '../utils/logger.js';
 
 interface SendEmailParams {
@@ -16,15 +16,21 @@ export async function sendEmail(params: SendEmailParams): Promise<boolean> {
   }
 
   try {
-    const resend = new Resend(resendApiKey);
-    const { error } = await resend.emails.send({
+    const transporter = nodemailer.createTransport({
+      host: smtpHost,
+      port: smtpPort,
+      secure: smtpSecure,
+      auth: smtpUser ? { user: smtpUser, pass: smtpPass } : undefined,
+    });
+
+    await transporter.sendMail({
       from: `CFB Pick'em <${notificationFromEmail}>`,
       to: params.to,
       subject: params.subject,
       html: params.htmlBody,
       text: params.textBody,
     });
-    if (error) throw error;
+
     logger.info({ to: params.to, subject: params.subject }, 'Email sent');
     return true;
   } catch (e) {

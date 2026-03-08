@@ -71,8 +71,12 @@ PICKS_IGNORE_DEADLINE=false
 
 # Notifications (optional — omit NOTIFICATION_FROM_EMAIL to disable email)
 NOTIFICATION_FROM_EMAIL=noreply@yourdomain.com
-RESEND_API_KEY=your-resend-api-key
-SKIP_EMAIL_SEND=true   # set true in dev to log emails instead of sending
+SMTP_HOST=localhost          # e.g. localhost for Mailpit, smtp.fastmail.com, smtp.gmail.com
+SMTP_PORT=1025               # 1025 for Mailpit, 587 for STARTTLS, 465 for TLS
+SMTP_USER=                   # leave blank if no auth (e.g. Mailpit)
+SMTP_PASS=
+SMTP_SECURE=false            # set true only for port 465
+SKIP_EMAIL_SEND=true         # set true in dev to log emails instead of sending
 ```
 
 Create a `.env` file in `packages/frontend/`:
@@ -111,7 +115,11 @@ BACKEND_URL=http://cfb-backend:3000
 
 # Notifications (optional — omit NOTIFICATION_FROM_EMAIL to disable email)
 NOTIFICATION_FROM_EMAIL=noreply@yourdomain.com
-RESEND_API_KEY=your-resend-api-key
+SMTP_HOST=smtp.yourdomain.com
+SMTP_PORT=587
+SMTP_USER=noreply@yourdomain.com
+SMTP_PASS=your-smtp-password
+SMTP_SECURE=false
 ```
 
 ### 2. Download the compose file
@@ -147,7 +155,7 @@ docker compose up -d
 
 ## Notifications
 
-The app supports two notification channels: **email** (via [Resend](https://resend.com)) and **push** (via [ntfy](https://ntfy.sh)).
+The app supports two notification channels: **email** (via SMTP) and **push** (via [ntfy](https://ntfy.sh)).
 
 Three notification types are sent automatically:
 
@@ -163,6 +171,8 @@ Users configure their preferences on the `/settings` page. Each type × channel 
 
 Score refresh and picks reminders run on a 15-minute cron inside the Hono process (`node-cron`). No external scheduler is required. The cron uses in-memory state and the `notificationLog` table to avoid duplicate sends.
 
-### Development without Resend
+### Development without a mail server
 
-Set `SKIP_EMAIL_SEND=true` to bypass Resend entirely. Verification tokens are still written to the DB — you can retrieve them directly via Drizzle Studio (`pnpm studio`) to test the verify-email flow locally.
+Set `SKIP_EMAIL_SEND=true` to skip sending entirely. Verification tokens are still written to the DB — you can retrieve them directly via Drizzle Studio (`pnpm studio`) to test the verify-email flow locally.
+
+Alternatively, run [Mailpit](https://mailpit.axllent.org/) locally (`docker run -p 1025:1025 -p 8025:8025 axllent/mailpit`) and point `SMTP_HOST=localhost SMTP_PORT=1025` at it. Mailpit catches all outgoing email and provides a web UI at `http://localhost:8025`.

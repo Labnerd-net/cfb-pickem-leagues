@@ -56,9 +56,13 @@ export const devCurrentTime = isProduction ? undefined : process.env.DEV_CURRENT
 // Set to 'true' to bypass pick deadline enforcement (useful for off-season testing)
 export const ignorePickDeadline = process.env.PICKS_IGNORE_DEADLINE === 'true';
 
-// Notification / Resend configuration
+// Notification / SMTP configuration
 export const notificationFromEmail = process.env.NOTIFICATION_FROM_EMAIL || '';
-export const resendApiKey = process.env.RESEND_API_KEY || '';
-export const notificationsEnabled = notificationFromEmail !== '' && resendApiKey !== '';
+export const smtpHost = process.env.SMTP_HOST || '';
+export const smtpPort = Number(process.env.SMTP_PORT) || 587;
+export const smtpUser = process.env.SMTP_USER || '';
+export const smtpPass = process.env.SMTP_PASS || '';
+export const smtpSecure = process.env.SMTP_SECURE === 'true';
+export const notificationsEnabled = notificationFromEmail !== '' && smtpHost !== '';
 // Set to 'true' in dev to skip sending emails
 export const skipEmailSend = process.env.SKIP_EMAIL_SEND === 'true';
