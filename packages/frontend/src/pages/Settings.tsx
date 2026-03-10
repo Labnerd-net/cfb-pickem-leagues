@@ -57,6 +57,7 @@ export default function Settings() {
   const {
     register,
     handleSubmit,
+    reset,
     formState: { errors, isSubmitting },
   } = useForm<NtfyFormValues>({
     resolver: zodResolver(ntfySchema),
@@ -68,10 +69,11 @@ export default function Settings() {
     getNotificationSettings().then(res => {
       if (res.success && res.data) {
         setSettings(res.data);
+        reset({ ntfyServerUrl: res.data.ntfyServerUrl ?? '' });
       }
       setLoading(false);
     });
-  }, []);
+  }, [reset]);
 
   const handleResend = async () => {
     const res = await resendVerificationEmail();
@@ -83,6 +85,7 @@ export default function Settings() {
     const res = await updateNtfyUrl(url);
     if (res.success) {
       setSettings(prev => prev ? { ...prev, ntfyServerUrl: url } : prev);
+      reset({ ntfyServerUrl: url ?? '' });
       setNtfySaveStatus('saved');
     } else {
       setNtfySaveStatus('error');
@@ -172,7 +175,6 @@ export default function Settings() {
             {...register('ntfyServerUrl')}
             label="NTFY Server URL"
             placeholder="https://ntfy.sh  or  https://:TOKEN@ntfy.example.com/my-topic"
-            defaultValue={settings?.ntfyServerUrl ?? ''}
             error={!!errors.ntfyServerUrl}
             helperText={errors.ntfyServerUrl?.message}
             fullWidth
