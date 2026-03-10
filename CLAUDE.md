@@ -23,7 +23,7 @@ NODE_ENV=development pnpm seed:dev       # Insert 3 weeks of 2024 CFB data and m
 NODE_ENV=development pnpm teardown:dev   # Remove seeded weeks/games/notification logs
 ```
 
-Full simulation walkthrough in [DEVELOPMENT.md](./DEVELOPMENT.md).
+Full simulation walkthrough in [DEVELOPMENT.md](./docs/DEVELOPMENT.md).
 
 ### Build & Lint
 ```bash
