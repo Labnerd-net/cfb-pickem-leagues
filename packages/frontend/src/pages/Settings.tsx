@@ -161,15 +161,17 @@ export default function Settings() {
         NTFY Notifications
       </Typography>
       <Typography variant="body2" color="text.secondary" mb={2}>
-        Enter your NTFY server URL to receive push notifications. Your topic will be{' '}
-        <code>cfb-pickem-{user?.userId}</code>.
+        Enter your NTFY server URL to receive push notifications. Include a topic path to use your
+        own topic (e.g. <code>https://ntfy.example.com/my-topic</code>), or just the server URL to
+        use the default topic <code>cfb-pickem-{user?.userId}</code>. For authenticated servers,
+        include the token in the URL (e.g. <code>https://:TOKEN@ntfy.example.com/my-topic</code>).
       </Typography>
       <form onSubmit={handleSubmit(handleNtfySave)}>
         <Stack spacing={2}>
           <TextField
             {...register('ntfyServerUrl')}
             label="NTFY Server URL"
-            placeholder="https://ntfy.sh"
+            placeholder="https://ntfy.sh  or  https://:TOKEN@ntfy.example.com/my-topic"
             defaultValue={settings?.ntfyServerUrl ?? ''}
             error={!!errors.ntfyServerUrl}
             helperText={errors.ntfyServerUrl?.message}
