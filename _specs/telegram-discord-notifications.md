@@ -40,10 +40,10 @@ Add Telegram and Discord as notification channels alongside the existing email a
 
 ## Open Questions
 
-- Should Discord use a bot (requires bot token + users sharing a server) or per-server webhooks? Bot DMs are per-user and match the model of the other channels; webhooks are broadcast-only. This spec assumes bot DMs.
-- Does the Telegram bot need a `/start` flow or onboarding message? Users need to message the bot first before it can DM them. Should the Settings page link to the bot and explain this?
-- Should the Discord user ID field accept a username (e.g. `username`) or require a numeric user ID? Numeric IDs are unambiguous but less user-friendly.
-- Should channel availability (i.e. bot token is configured) be surfaced to the frontend so that Telegram/Discord sections are hidden entirely when not configured by the admin?
+- Should Discord use a bot (requires bot token + users sharing a server) or per-server webhooks? Bot DMs are per-user and match the model of the other channels; webhooks are broadcast-only. This spec assumes bot DMs. - lets just do webhooks
+- Does the Telegram bot need a `/start` flow or onboarding message? Users need to message the bot first before it can DM them. Should the Settings page link to the bot and explain this? - that sounds good.  whatever you think is best.
+- Should the Discord user ID field accept a username (e.g. `username`) or require a numeric user ID? Numeric IDs are unambiguous but less user-friendly. - I guess usernames
+- Should channel availability (i.e. bot token is configured) be surfaced to the frontend so that Telegram/Discord sections are hidden entirely when not configured by the admin? - yes, hide if not set up.
 
 ## Testing Guidelines
 
