@@ -16,10 +16,21 @@ export async function sendNtfyNotification(params: SendNtfyParams): Promise<bool
     return false;
   }
 
-  // Extract auth token from URL credentials (e.g. https://:TOKEN@host/topic)
-  const token = parsed.password || parsed.username || null;
+  // Extract auth credentials from URL and build Authorization header
+  // https://USER:TOKEN@host  → Basic auth
+  // https://:TOKEN@host      → Bearer token
+  const { username, password } = parsed;
   parsed.username = '';
   parsed.password = '';
+
+  let authHeader: string | null = null;
+  if (username && password) {
+    authHeader = `Basic ${Buffer.from(`${username}:${password}`).toString('base64')}`;
+  } else if (password) {
+    authHeader = `Bearer ${password}`;
+  } else if (username) {
+    authHeader = `Bearer ${username}`;
+  }
 
   // If the URL already includes a topic path, use it as-is; otherwise append a per-user topic
   const hasPath = parsed.pathname !== '/' && parsed.pathname !== '';
@@ -32,8 +43,8 @@ export async function sendNtfyNotification(params: SendNtfyParams): Promise<bool
     'Content-Type': 'text/plain',
     Title: params.title,
   };
-  if (token) {
-    headers['Authorization'] = `Bearer ${token}`;
+  if (authHeader) {
+    headers['Authorization'] = authHeader;
   }
 
   try {
