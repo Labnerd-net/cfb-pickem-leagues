@@ -4,14 +4,14 @@ Spec: `_specs/telegram-discord-notifications.md`
 
 ## Architecture decision
 
-All notification channels (email, ntfy, Telegram, Discord) are now **broadcast**: the admin configures endpoints via env vars, and the backend sends once per event. Per-user channel configuration and opt-outs are removed entirely.
+Broadcast channels (ntfy, Telegram, Discord) are admin-configured via env vars; the backend sends once per event. Per-user configuration for these channels is removed.
 
-- **Email**: still per-user (individual addresses required), but sent to all users with verified emails — no opt-out.
+Email remains per-user (individual addresses required) and retains per-notification-type opt-outs. Users control their own subscription on broadcast channels by leaving/muting the ntfy topic, Discord channel, or Telegram group.
+
+- **Email**: sent to all verified users who have not opted out of that notification type.
 - **ntfy**: admin configures one topic URL; backend POSTs once per event.
 - **Telegram**: admin configures bot token + group/channel chat ID; backend sends once per event.
 - **Discord**: admin configures one webhook URL; backend POSTs once per event.
-
-**Note on email opt-outs:** Removing opt-outs means every verified user receives every notification. For a small friend-group app this is fine, but worth keeping in mind if the user base grows.
 
 ---
 
@@ -19,11 +19,11 @@ All notification channels (email, ntfy, Telegram, Discord) are now **broadcast**
 
 **Remove** the `ntfy_server_url` column from the `users` table — it is no longer used.
 
-**Drop** the `notification_preferences` table entirely — per-user opt-outs are gone.
+The `notification_preferences` table **stays**, but is now email-only. Existing rows for `ntfy` channel can be ignored by the dispatcher; a follow-up migration to clean them up is optional.
 
-The `notification_log` table stays for broadcast deduplication. Since broadcasts are not per-user, use `userId = 0` as a sentinel value when logging a broadcast send. This reuses the existing unique constraint `(userId, year, weekNumber, notificationType, channel)` to prevent duplicate broadcasts.
+The `notification_log` table stays for deduplication. For broadcast channels (ntfy, Telegram, Discord), use `userId = 0` as a sentinel value. This reuses the existing unique constraint `(userId, year, weekNumber, notificationType, channel)` to prevent duplicate broadcasts.
 
-Run `pnpm generate` then `pnpm migrate` to apply both changes.
+Run `pnpm generate` then `pnpm migrate` to apply.
 
 ---
 
@@ -31,8 +31,8 @@ Run `pnpm generate` then `pnpm migrate` to apply both changes.
 
 - Add `"telegram"` and `"discord"` to the `NotificationChannel` union.
 - Remove `ntfyServerUrl` from `NotificationSettings` and `UserDbData`.
-- Remove the `preferences` array from `NotificationSettings` — opt-outs are gone. The interface may be removed entirely if nothing else uses it; otherwise slim it down to just `emailVerified`.
-- `NotificationChannel` stays (still used by the notification log).
+- `NotificationSettings.preferences` stays — it now only reflects email preferences.
+- `NotificationChannel` stays (still used by the notification log and email preferences).
 
 ---
 
@@ -84,22 +84,20 @@ The existing sender is built around a per-user URL. Simplify it:
 
 ## Step 6 — DB functions (`packages/backend/src/db/dbNotificationFunctions.ts`)
 
-- **Remove** `returnOptedInUsers` — no longer needed.
 - **Remove** `updateUserNtfyUrl` — no longer needed.
-- **Remove** `upsertNotificationPreference` — no longer needed.
-- **Add** `returnVerifiedEmailUsers(): Promise<{ userId: number, email: string }[]>` — returns all users with `emailVerified = true`. Used by the email channel in the dispatcher.
+- **Update** `returnOptedInUsers` to only query `email` channel preferences. Remove the `ntfyServerUrl` select and return. Rename to `returnEmailOptedInUsers` for clarity.
 - **Update** `hasNotificationBeenSent` / `addNotificationLog` to support `userId = 0` as the broadcast sentinel for non-email channels.
-- **Update** `getUserNotificationSettings` (used by `GET /notifications/preferences`) to only return `emailVerified` — or remove the route entirely if the Settings page no longer needs it (see Step 9).
+- `getUserNotificationSettings` stays and continues to serve the Settings page; it no longer needs to return `ntfyServerUrl`.
 
 ---
 
 ## Step 7 — Dispatcher (`packages/backend/src/notifications/dispatcher.ts`)
 
-Rewrite to reflect the broadcast model:
+Rewrite to reflect the mixed model:
 
 ```
 For email channel:
-  - Fetch all verified-email users
+  - Fetch opted-in verified users (existing logic, email channel only)
   - For each user: check deduplication log, send, log if sent
 
 For ntfy, telegram, discord channels:
@@ -118,8 +116,10 @@ Remove the outer `for (const channel of CHANNELS)` + inner `for (const user of u
 ### Remove from `user.ts`
 - `PATCH /notifications/ntfy-url`
 - `POST /notifications/test-ntfy`
-- `PATCH /notifications/preferences`
-- `GET /notifications/preferences` — remove if Settings page no longer needs notification data (it won't after Step 9). Otherwise keep and slim the response to just `{ emailVerified }`.
+
+### Keep in `user.ts`
+- `PATCH /notifications/preferences` — still needed for email opt-outs.
+- `GET /notifications/preferences` — still needed for the Settings page; response no longer includes `ntfyServerUrl`.
 
 ### Add to `admin.ts` (admin-only test routes)
 - `POST /admin/notifications/test` — triggers a test dispatch to all configured broadcast channels. Useful for verifying bot/webhook config after setup. Does not log to the notification log (or uses a distinct `notificationType` like `'test'` that the dedup check ignores).
@@ -128,20 +128,16 @@ Remove the outer `for (const channel of CHANNELS)` + inner `for (const user of u
 
 ## Step 9 — Frontend Settings page (`packages/frontend/src/pages/Settings.tsx`)
 
-**Remove entirely:**
+**Remove:**
 - NTFY section (text field, save button, test button)
-- Notification preferences grid (channels × notification types checkboxes)
 
-**What remains:**
+**Keep:**
 - Account section (email + verified/unverified chip + resend verification button)
-
-The Settings page becomes minimal. If it feels too bare, it can be renamed or merged into a profile page later — that is out of scope here.
+- Notification preferences grid, but email column only — remove ntfy column. The grid now shows a single column of checkboxes (one per notification type) rather than a channels × types matrix.
 
 **Remove from `userRequests.ts`:**
 - `updateNtfyUrl`
 - `sendTestNtfy`
-- `updateNotificationPreference`
-- `getNotificationSettings` (if the route is removed)
 
 ---
 
@@ -149,9 +145,9 @@ The Settings page becomes minimal. If it feels too bare, it can be renamed or me
 
 **Remove:**
 - `ntfyUrlValidator`
-- `notificationPreferenceValidator`
 
-No new per-user validators needed — broadcast channels are admin-configured via env vars.
+**Keep:**
+- `notificationPreferenceValidator` — still used for email opt-outs. Update its `channel` enum to only accept `'email'`.
 
 ---
 
@@ -171,14 +167,14 @@ No new per-user validators needed — broadcast channels are admin-configured vi
 - Keep: returns `true` on 200, `false` on non-OK, `false` on network error.
 
 ### `packages/backend/tests/dispatcher.test.ts` (update)
-- Remove opted-in user / per-user eligibility tests.
+- Remove per-user ntfy eligibility tests.
 - Add: broadcast channels skip send when env var not configured.
 - Add: broadcast channels use `userId = 0` for deduplication.
-- Add: email channel still loops over verified users only.
+- Keep: email channel loops over opted-in verified users.
 
 ### Frontend tests
 - Remove: ntfy URL validation tests.
-- Remove: notification preference toggle tests.
+- Keep: email notification preference toggle tests.
 
 ---
 
@@ -193,22 +189,22 @@ No new per-user validators needed — broadcast channels are admin-configured vi
 
 | File | Change |
 |---|---|
-| `packages/shared/types/cfb-pickem-api.ts` | Add channel values; remove per-user notification fields |
-| `packages/backend/src/db/schema/users.ts` | Drop `ntfy_server_url`; drop `notification_preferences` table |
-| `packages/backend/src/db/dbNotificationFunctions.ts` | Remove per-user functions; add `returnVerifiedEmailUsers`; update log sentinel |
+| `packages/shared/types/cfb-pickem-api.ts` | Add channel values; remove `ntfyServerUrl` from interfaces |
+| `packages/backend/src/db/schema/users.ts` | Drop `ntfy_server_url` column |
+| `packages/backend/src/db/dbNotificationFunctions.ts` | Remove `updateUserNtfyUrl`; rename/update `returnOptedInUsers` to email-only; update log sentinel |
 | `packages/backend/src/utils/envVars.ts` | Add 4 new env vars + enabled flags |
 | `packages/backend/src/notifications/ntfySender.ts` | Remove userId / per-user URL; read from env vars |
 | `packages/backend/src/notifications/telegramSender.ts` | New file |
 | `packages/backend/src/notifications/discordSender.ts` | New file |
-| `packages/backend/src/notifications/dispatcher.ts` | Rewrite for broadcast model |
-| `packages/backend/src/routes/user.ts` | Remove ntfy + preferences routes |
+| `packages/backend/src/notifications/dispatcher.ts` | Rewrite for mixed model |
+| `packages/backend/src/routes/user.ts` | Remove ntfy routes; keep preferences routes |
 | `packages/backend/src/routes/admin.ts` | Add test broadcast route |
-| `packages/backend/src/utils/validators.ts` | Remove ntfy + preference validators |
-| `packages/frontend/src/apis/userRequests.ts` | Remove ntfy + preference API functions |
-| `packages/frontend/src/pages/Settings.tsx` | Remove ntfy section and preferences grid |
+| `packages/backend/src/utils/validators.ts` | Remove `ntfyUrlValidator`; restrict preference validator to email channel |
+| `packages/frontend/src/apis/userRequests.ts` | Remove ntfy API functions |
+| `packages/frontend/src/pages/Settings.tsx` | Remove ntfy section; slim preferences grid to email column only |
 | `packages/backend/tests/ntfySender.test.ts` | Update for env-var model |
 | `packages/backend/tests/telegramSender.test.ts` | New file |
 | `packages/backend/tests/discordSender.test.ts` | New file |
-| `packages/backend/tests/dispatcher.test.ts` | Update for broadcast model |
+| `packages/backend/tests/dispatcher.test.ts` | Update for mixed model |
 | `CLAUDE.md` | Update env var docs |
 | `docs/NOTIFICATIONS.md` | Reflect broadcast model; mark as implemented |
