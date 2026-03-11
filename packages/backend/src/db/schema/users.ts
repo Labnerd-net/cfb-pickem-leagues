@@ -11,10 +11,10 @@ import {
   unique,
 } from 'drizzle-orm/pg-core';
 import { relations } from 'drizzle-orm';
-//import { columnRole, columnTeam } from '../index.js';
- import { columnRole, columnTeam } from '../index'; // for drizzle-kit generate
-//import { adminGames } from '../schema/admin.js';
- import { adminGames } from '../schema/admin'; // for drizzle-kit generate
+import { columnRole, columnTeam } from '../index.js';
+// import { columnRole, columnTeam } from '../index'; // for drizzle-kit generate
+import { adminGames } from '../schema/admin.js';
+// import { adminGames } from '../schema/admin'; // for drizzle-kit generate
 
 const userSchema = pgSchema('user');
 

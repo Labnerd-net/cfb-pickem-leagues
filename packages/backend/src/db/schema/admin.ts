@@ -13,8 +13,8 @@ import {
   unique,
 } from 'drizzle-orm/pg-core';
 import { relations } from 'drizzle-orm';
-//import { columnSeason, columnTeam } from '../index.js';
- import { columnSeason, columnTeam } from '../index'; // for drizzle-kit generate
+import { columnSeason, columnTeam } from '../index.js';
+// import { columnSeason, columnTeam } from '../index'; // for drizzle-kit generate
 
 const adminSchema = pgSchema('admin');
 
