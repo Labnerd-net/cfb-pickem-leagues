@@ -5,9 +5,11 @@ import SportsFootballIcon from '@mui/icons-material/SportsFootball';
 import AdminPanelSettingsIcon from '@mui/icons-material/AdminPanelSettings';
 import PeopleIcon from '@mui/icons-material/People';
 import BugReportIcon from '@mui/icons-material/BugReport';
+import NotificationsIcon from '@mui/icons-material/Notifications';
 import WelcomeBanner from '../components/dashboard/WelcomeBanner';
 import AdminSection from '../components/admin/AdminSection';
 import UsersSection from '../components/admin/UsersSection';
+import NotificationLogSection from '../components/admin/NotificationLogSection';
 import UserSection from '../components/user/UserSection';
 import DevSection from '../components/admin/DevSection';
 
@@ -50,6 +52,7 @@ export default function Dashboard() {
                   label="Admin Controls"
                 />
                 <Tab icon={<PeopleIcon />} iconPosition="start" label="Users" />
+                <Tab icon={<NotificationsIcon />} iconPosition="start" label="Notification Log" />
                 {IS_DEV && (
                   <Tab
                     icon={<BugReportIcon />}
@@ -68,6 +71,8 @@ export default function Dashboard() {
               <AdminSection />
             ) : currentTab === 2 ? (
               <UsersSection />
+            ) : currentTab === 3 ? (
+              <NotificationLogSection />
             ) : (
               <DevSection />
             )}

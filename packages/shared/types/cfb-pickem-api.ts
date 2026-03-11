@@ -187,3 +187,14 @@ export interface MarkGameCompleteRequest {
   homePoints: number;
   awayPoints: number;
 }
+
+export interface NotificationLogEntry {
+  id: number;
+  userId: number;
+  year: number;
+  weekNumber: number;
+  notificationType: NotificationType;
+  channel: NotificationChannel;
+  sentAt: string; // ISO string
+  recipient: string; // "Broadcast" | displayName | "Deleted user"
+}

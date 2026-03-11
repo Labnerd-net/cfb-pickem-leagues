@@ -2,6 +2,7 @@ import 'dotenv/config';
 import {
   boolean,
   foreignKey,
+  index,
   integer,
   pgSchema,
   primaryKey,
@@ -107,6 +108,7 @@ export const notificationLog = userSchema.table(
       table.notificationType,
       table.channel
     ),
+    index('notification_log_sent_at_idx').on(table.sentAt),
   ]
 );
 

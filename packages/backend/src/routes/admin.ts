@@ -2,6 +2,7 @@ import { Hono } from 'hono';
 import { HTTPException } from 'hono/http-exception';
 import * as dbAdminFunctions from '../db/dbAdminFunctions.js';
 import { returnUsers, updateUserRoles } from '../db/dbUserFunctions.js';
+import { returnNotificationLogs } from '../db/dbNotificationFunctions.js';
 import { getGameData, getWeekData } from '../api/index.js';
 import type { JwtData, WeekIdentifier } from '@shared/types/cfb-pickem-api.js';
 import { authMiddleware, requireRole } from '../utils/middleware.js';
@@ -163,6 +164,11 @@ const admin = new Hono<{ Variables: Variables }>()
       return c.json({ game: updated });
     }
   )
+  // Return notification log entries (most recent 500)
+  .get('/notification-logs', apiRateLimit, authMiddleware, requireRole('admin'), async c => {
+    const { entries, total } = await returnNotificationLogs(500);
+    return c.json({ entries, total });
+  })
   // Test broadcast notifications (admin only — does not log to notification_log)
   .post('/notifications/test', apiRateLimit, authMiddleware, requireRole('admin'), async c => {
     const title = "CFB Pick'em test notification";
