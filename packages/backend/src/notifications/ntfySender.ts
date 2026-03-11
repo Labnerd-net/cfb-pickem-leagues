@@ -1,18 +1,22 @@
 import logger from '../utils/logger.js';
+import { ntfyEnabled, ntfyTopicUrl } from '../utils/envVars.js';
 
 interface SendNtfyParams {
-  ntfyServerUrl: string;
-  userId: number;
   title: string;
   message: string;
 }
 
 export async function sendNtfyNotification(params: SendNtfyParams): Promise<boolean> {
+  if (!ntfyEnabled) {
+    logger.warn('ntfy notification skipped: NTFY_TOPIC_URL not configured');
+    return false;
+  }
+
   let parsed: URL;
   try {
-    parsed = new URL(params.ntfyServerUrl);
+    parsed = new URL(ntfyTopicUrl);
   } catch {
-    logger.error({ userId: params.userId, ntfyServerUrl: params.ntfyServerUrl }, 'Invalid ntfy URL');
+    logger.error({ ntfyTopicUrl }, 'Invalid NTFY_TOPIC_URL');
     return false;
   }
 
@@ -32,12 +36,6 @@ export async function sendNtfyNotification(params: SendNtfyParams): Promise<bool
     authHeader = `Bearer ${username}`;
   }
 
-  // If the URL already includes a topic path, use it as-is; otherwise append a per-user topic
-  const hasPath = parsed.pathname !== '/' && parsed.pathname !== '';
-  if (!hasPath) {
-    parsed.pathname = `/cfb-pickem-${params.userId}`;
-  }
-
   const url = parsed.toString();
   const headers: Record<string, string> = {
     'Content-Type': 'text/plain',
@@ -55,14 +53,14 @@ export async function sendNtfyNotification(params: SendNtfyParams): Promise<bool
     });
 
     if (!res.ok) {
-      logger.warn({ userId: params.userId, status: res.status }, 'ntfy notification returned non-OK status');
+      logger.warn({ status: res.status }, 'ntfy notification returned non-OK status');
       return false;
     }
 
-    logger.info({ userId: params.userId, url }, 'ntfy notification sent');
+    logger.info({ url }, 'ntfy notification sent');
     return true;
   } catch (e) {
-    logger.error({ err: e, userId: params.userId }, 'sendNtfyNotification failed');
+    logger.error({ err: e }, 'sendNtfyNotification failed');
     return false;
   }
 }

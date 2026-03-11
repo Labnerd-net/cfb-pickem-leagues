@@ -70,8 +70,7 @@ vi.mock('../src/db/index.ts', async () => {
 			created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,
 			email_verified BOOLEAN DEFAULT FALSE,
 			email_verification_token TEXT,
-			email_verification_sent_at TIMESTAMP,
-			ntfy_server_url TEXT
+			email_verification_sent_at TIMESTAMP
 		);
 
 		-- User schema: deleted_users audit table
@@ -106,9 +105,10 @@ vi.mock('../src/db/index.ts', async () => {
 		);
 
 		-- User schema: notification log (deduplication)
+		-- user_id = 0 is used as a sentinel for broadcast channel entries (no FK)
 		CREATE TABLE "user".notification_log (
 			id SERIAL PRIMARY KEY,
-			user_id INTEGER NOT NULL REFERENCES "user".users (user_id) ON DELETE CASCADE,
+			user_id INTEGER NOT NULL,
 			year INTEGER NOT NULL,
 			week_number INTEGER NOT NULL,
 			notification_type TEXT NOT NULL,

@@ -8,6 +8,10 @@ import { authMiddleware, requireRole } from '../utils/middleware.js';
 import { apiRateLimit } from '../utils/rateLimiter.js';
 import { weekIdentifierValidator, pickedGameRequestValidator, updateUserRolesValidator, markGameCompleteValidator } from '../utils/zValidate.js';
 import { dispatchNotification } from '../notifications/dispatcher.js';
+import { sendNtfyNotification } from '../notifications/ntfySender.js';
+import { sendTelegramNotification } from '../notifications/telegramSender.js';
+import { sendDiscordNotification } from '../notifications/discordSender.js';
+import { ntfyEnabled, telegramEnabled, discordEnabled } from '../utils/envVars.js';
 import logger from '../utils/logger.js';
 
 type Variables = {
@@ -158,6 +162,24 @@ const admin = new Hono<{ Variables: Variables }>()
 
       return c.json({ game: updated });
     }
-  );
+  )
+  // Test broadcast notifications (admin only — does not log to notification_log)
+  .post('/notifications/test', apiRateLimit, authMiddleware, requireRole('admin'), async c => {
+    const title = "CFB Pick'em test notification";
+    const message = 'This is a test broadcast from your CFB Pick\'em admin panel.';
+    const results: Record<string, boolean> = {};
+
+    if (ntfyEnabled) {
+      results.ntfy = await sendNtfyNotification({ title, message });
+    }
+    if (telegramEnabled) {
+      results.telegram = await sendTelegramNotification({ title, message });
+    }
+    if (discordEnabled) {
+      results.discord = await sendDiscordNotification({ title, message });
+    }
+
+    return c.json({ results });
+  });
 
 export default admin;

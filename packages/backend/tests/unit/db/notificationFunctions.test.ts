@@ -5,7 +5,6 @@ import {
 	addNotificationLog,
 	hasNotificationBeenSent,
 	markEmailVerified,
-	updateUserNtfyUrl,
 	returnNotificationSettings,
 	returnNotificationPreferences,
 } from '../../../src/db/dbNotificationFunctions.js';
@@ -55,8 +54,19 @@ describe('Notification Database Functions', () => {
 		});
 
 		it('should not error on duplicate log entry', async () => {
-			await addNotificationLog(1, 2024, 1, 'games_ready', 'ntfy');
-			await expect(addNotificationLog(1, 2024, 1, 'games_ready', 'ntfy')).resolves.not.toThrow();
+			await addNotificationLog(1, 2024, 1, 'games_ready', 'email');
+			await expect(addNotificationLog(1, 2024, 1, 'games_ready', 'email')).resolves.not.toThrow();
+		});
+
+		it('should support userId = 0 as broadcast sentinel', async () => {
+			await addNotificationLog(0, 2024, 1, 'games_ready', 'ntfy');
+			const sent = await hasNotificationBeenSent(0, 2024, 1, 'games_ready', 'ntfy');
+			expect(sent).toBe(true);
+		});
+
+		it('should deduplicate broadcast entries (no error on duplicate)', async () => {
+			await addNotificationLog(0, 2024, 1, 'games_ready', 'telegram');
+			await expect(addNotificationLog(0, 2024, 1, 'games_ready', 'telegram')).resolves.not.toThrow();
 		});
 	});
 
@@ -87,26 +97,11 @@ describe('Notification Database Functions', () => {
 		});
 	});
 
-	describe('updateUserNtfyUrl', () => {
-		it('should set the ntfy server URL', async () => {
-			await updateUserNtfyUrl(1, 'https://ntfy.sh');
-			const rows = await db.execute(sql`SELECT ntfy_server_url FROM "user".users WHERE user_id = 1`);
-			expect(rows.rows[0]?.ntfy_server_url).toBe('https://ntfy.sh');
-		});
-
-		it('should clear the ntfy server URL when null is passed', async () => {
-			await updateUserNtfyUrl(1, 'https://ntfy.sh');
-			await updateUserNtfyUrl(1, null);
-			const rows = await db.execute(sql`SELECT ntfy_server_url FROM "user".users WHERE user_id = 1`);
-			expect(rows.rows[0]?.ntfy_server_url).toBeNull();
-		});
-	});
-
 	describe('returnNotificationSettings', () => {
 		it('should return defaults for a new user with no preferences', async () => {
 			const settings = await returnNotificationSettings(1);
 			expect(settings.emailVerified).toBe(false);
-			expect(settings.ntfyServerUrl).toBeNull();
+			expect(settings).not.toHaveProperty('ntfyServerUrl');
 			expect(settings.preferences).toEqual([]);
 		});
 

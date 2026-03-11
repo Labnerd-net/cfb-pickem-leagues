@@ -124,21 +124,12 @@ export const handlers = [
 	http.get(`${API_URL}/api/user/notifications/preferences`, () => {
 		return HttpResponse.json({
 			preferences: [],
-			ntfyServerUrl: null,
 			emailVerified: false,
 		});
 	}),
 
 	http.patch(`${API_URL}/api/user/notifications/preferences`, () => {
 		return HttpResponse.json({ status: 'updated' });
-	}),
-
-	http.patch(`${API_URL}/api/user/notifications/ntfy-url`, () => {
-		return HttpResponse.json({ status: 'updated' });
-	}),
-
-	http.post(`${API_URL}/api/user/notifications/test-ntfy`, () => {
-		return HttpResponse.json({ status: 'sent' });
 	}),
 
 	// Auth verification endpoints

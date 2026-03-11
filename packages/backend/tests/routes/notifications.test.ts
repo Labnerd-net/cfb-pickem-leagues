@@ -4,17 +4,23 @@ import { HTTPException } from 'hono/http-exception';
 import { sign } from 'hono/jwt';
 import { seedTestData, cleanDatabase } from '../db-utils.js';
 
-// Mock the senders so no real emails/ntfy are sent
+// Mock the senders so no real emails/ntfy/telegram/discord are sent
 vi.mock('../../src/notifications/emailSender.js', () => ({
 	sendEmail: vi.fn().mockResolvedValue(true),
 }));
 vi.mock('../../src/notifications/ntfySender.js', () => ({
 	sendNtfyNotification: vi.fn().mockResolvedValue(true),
 }));
+vi.mock('../../src/notifications/telegramSender.js', () => ({
+	sendTelegramNotification: vi.fn().mockResolvedValue(true),
+}));
+vi.mock('../../src/notifications/discordSender.js', () => ({
+	sendDiscordNotification: vi.fn().mockResolvedValue(true),
+}));
 
 import userRoutes from '../../src/routes/user.js';
 import authRoutes from '../../src/routes/auth.js';
-import { updateUserNtfyUrl, setEmailVerificationToken } from '../../src/db/dbNotificationFunctions.js';
+import { setEmailVerificationToken } from '../../src/db/dbNotificationFunctions.js';
 
 const TEST_JWT_SECRET = 'test-secret-key-do-not-use-in-production';
 
@@ -58,10 +64,10 @@ describe('Notification routes', () => {
 				headers: { Cookie: `auth_token=${token}` },
 			});
 			expect(res.status).toBe(200);
-			const body = await res.json() as { preferences: unknown[]; emailVerified: boolean; ntfyServerUrl: null };
+			const body = await res.json() as { preferences: unknown[]; emailVerified: boolean };
 			expect(body).toHaveProperty('preferences');
 			expect(body).toHaveProperty('emailVerified');
-			expect(body).toHaveProperty('ntfyServerUrl');
+			expect(body).not.toHaveProperty('ntfyServerUrl');
 		});
 
 		it('returns 401 without auth', async () => {
@@ -71,7 +77,7 @@ describe('Notification routes', () => {
 	});
 
 	describe('PATCH /api/user/notifications/preferences', () => {
-		it('returns 200 on valid preference update', async () => {
+		it('returns 200 on valid email preference update', async () => {
 			const token = await makeToken();
 			const res = await app.request('/api/user/notifications/preferences', {
 				method: 'PATCH',
@@ -97,6 +103,19 @@ describe('Notification routes', () => {
 			expect(res.status).toBe(400);
 		});
 
+		it('returns 400 for ntfy channel (no longer a valid preference)', async () => {
+			const token = await makeToken();
+			const res = await app.request('/api/user/notifications/preferences', {
+				method: 'PATCH',
+				headers: {
+					Cookie: `auth_token=${token}`,
+					'Content-Type': 'application/json',
+				},
+				body: JSON.stringify({ notificationType: 'games_ready', channel: 'ntfy', enabled: true }),
+			});
+			expect(res.status).toBe(400);
+		});
+
 		it('returns 401 without auth', async () => {
 			const res = await app.request('/api/user/notifications/preferences', {
 				method: 'PATCH',
@@ -104,70 +123,6 @@ describe('Notification routes', () => {
 				body: JSON.stringify({ notificationType: 'games_ready', channel: 'email', enabled: false }),
 			});
 			expect(res.status).toBe(401);
-		});
-	});
-
-	describe('PATCH /api/user/notifications/ntfy-url', () => {
-		it('returns 200 on valid URL', async () => {
-			const token = await makeToken();
-			const res = await app.request('/api/user/notifications/ntfy-url', {
-				method: 'PATCH',
-				headers: {
-					Cookie: `auth_token=${token}`,
-					'Content-Type': 'application/json',
-				},
-				body: JSON.stringify({ ntfyServerUrl: 'https://ntfy.sh' }),
-			});
-			expect(res.status).toBe(200);
-		});
-
-		it('returns 400 on invalid URL', async () => {
-			const token = await makeToken();
-			const res = await app.request('/api/user/notifications/ntfy-url', {
-				method: 'PATCH',
-				headers: {
-					Cookie: `auth_token=${token}`,
-					'Content-Type': 'application/json',
-				},
-				body: JSON.stringify({ ntfyServerUrl: 'not-a-url' }),
-			});
-			expect(res.status).toBe(400);
-		});
-
-		it('accepts null to clear the URL', async () => {
-			const token = await makeToken();
-			const res = await app.request('/api/user/notifications/ntfy-url', {
-				method: 'PATCH',
-				headers: {
-					Cookie: `auth_token=${token}`,
-					'Content-Type': 'application/json',
-				},
-				body: JSON.stringify({ ntfyServerUrl: null }),
-			});
-			expect(res.status).toBe(200);
-		});
-	});
-
-	describe('POST /api/user/notifications/test-ntfy', () => {
-		it('returns 400 when no NTFY URL is configured', async () => {
-			const token = await makeToken();
-			const res = await app.request('/api/user/notifications/test-ntfy', {
-				method: 'POST',
-				headers: { Cookie: `auth_token=${token}` },
-			});
-			expect(res.status).toBe(400);
-		});
-
-		it('returns 200 when NTFY URL is configured', async () => {
-			await updateUserNtfyUrl(1, 'https://ntfy.sh');
-			const token = await makeToken();
-			const res = await app.request('/api/user/notifications/test-ntfy', {
-				method: 'POST',
-				headers: { Cookie: `auth_token=${token}` },
-			});
-			expect(res.status).toBe(200);
-			const body = await res.json() as { status: string };
-			expect(['sent', 'failed']).toContain(body.status);
 		});
 	});
 

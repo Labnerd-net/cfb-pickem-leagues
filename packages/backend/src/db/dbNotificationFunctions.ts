@@ -32,13 +32,13 @@ export async function returnNotificationPreferences(userId: number): Promise<Not
 }
 
 // ------------------------------------------------------------------
-// Return full notification settings for a user
+// Return full notification settings for a user (email-only channels)
 // ------------------------------------------------------------------
 export async function returnNotificationSettings(userId: number): Promise<NotificationSettings> {
   logger.debug({ userId }, 'returnNotificationSettings');
   try {
     const [userRow] = await db
-      .select({ ntfyServerUrl: users.ntfyServerUrl, emailVerified: users.emailVerified })
+      .select({ emailVerified: users.emailVerified })
       .from(users)
       .where(eq(users.userId, userId));
 
@@ -46,7 +46,6 @@ export async function returnNotificationSettings(userId: number): Promise<Notifi
 
     return {
       preferences,
-      ntfyServerUrl: userRow?.ntfyServerUrl ?? null,
       emailVerified: userRow?.emailVerified ?? false,
     };
   } catch (e) {
@@ -83,30 +82,25 @@ export async function upsertNotificationPreference(
   }
 }
 
-interface OptedInUser {
+interface EmailOptedInUser {
   userId: number;
   email: string;
-  ntfyServerUrl: string | null;
   emailVerified: boolean;
 }
 
 // ------------------------------------------------------------------
-// Return users opted in to a notification type + channel
+// Return users opted in to an email notification type
 // Users with no preference row are treated as opted-in by default
 // ------------------------------------------------------------------
-export async function returnOptedInUsers(
-  notificationType: NotificationType,
-  channel: NotificationChannel
-): Promise<OptedInUser[]> {
-  logger.debug({ notificationType, channel }, 'returnOptedInUsers');
+export async function returnEmailOptedInUsers(
+  notificationType: NotificationType
+): Promise<EmailOptedInUser[]> {
+  logger.debug({ notificationType }, 'returnEmailOptedInUsers');
   try {
-    // LEFT JOIN so users with no preference row appear with NULL for preference columns.
-    // Include the user if: no preference row (NULL) OR enabled=true.
     const rows = await db
       .select({
         userId: users.userId,
         email: users.email,
-        ntfyServerUrl: users.ntfyServerUrl,
         emailVerified: users.emailVerified,
         prefEnabled: notificationPreferences.enabled,
       })
@@ -116,7 +110,7 @@ export async function returnOptedInUsers(
         and(
           eq(notificationPreferences.userId, users.userId),
           eq(notificationPreferences.notificationType, notificationType),
-          eq(notificationPreferences.channel, channel)
+          eq(notificationPreferences.channel, 'email')
         )
       )
       .where(
@@ -129,17 +123,17 @@ export async function returnOptedInUsers(
     return rows.map(r => ({
       userId: r.userId,
       email: r.email,
-      ntfyServerUrl: r.ntfyServerUrl ?? null,
       emailVerified: r.emailVerified ?? false,
     }));
   } catch (e) {
-    logger.error({ err: e }, 'returnOptedInUsers failed');
+    logger.error({ err: e }, 'returnEmailOptedInUsers failed');
     throw e;
   }
 }
 
 // ------------------------------------------------------------------
 // Log a sent notification (on conflict do nothing = idempotent)
+// For broadcast channels, use userId = 0 as sentinel
 // ------------------------------------------------------------------
 export async function addNotificationLog(
   userId: number,
@@ -162,6 +156,7 @@ export async function addNotificationLog(
 
 // ------------------------------------------------------------------
 // Check whether a notification has already been sent
+// For broadcast channels, pass userId = 0
 // ------------------------------------------------------------------
 export async function hasNotificationBeenSent(
   userId: number,
@@ -188,19 +183,6 @@ export async function hasNotificationBeenSent(
     return rows.length > 0;
   } catch (e) {
     logger.error({ err: e }, 'hasNotificationBeenSent failed');
-    throw e;
-  }
-}
-
-// ------------------------------------------------------------------
-// Update a user's NTFY server URL
-// ------------------------------------------------------------------
-export async function updateUserNtfyUrl(userId: number, ntfyServerUrl: string | null): Promise<void> {
-  logger.debug({ userId, ntfyServerUrl }, 'updateUserNtfyUrl');
-  try {
-    await db.update(users).set({ ntfyServerUrl }).where(eq(users.userId, userId));
-  } catch (e) {
-    logger.error({ err: e }, 'updateUserNtfyUrl failed');
     throw e;
   }
 }

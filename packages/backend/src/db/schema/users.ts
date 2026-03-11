@@ -11,10 +11,10 @@ import {
   unique,
 } from 'drizzle-orm/pg-core';
 import { relations } from 'drizzle-orm';
-import { columnRole, columnTeam } from '../index.js';
-// import { columnRole, columnTeam } from '../index'; // for drizzle-kit generate
-import { adminGames } from '../schema/admin.js';
-// import { adminGames } from '../schema/admin'; // for drizzle-kit generate
+//import { columnRole, columnTeam } from '../index.js';
+ import { columnRole, columnTeam } from '../index'; // for drizzle-kit generate
+//import { adminGames } from '../schema/admin.js';
+ import { adminGames } from '../schema/admin'; // for drizzle-kit generate
 
 const userSchema = pgSchema('user');
 
@@ -31,7 +31,6 @@ export const users = userSchema.table('users', {
   emailVerified: boolean('email_verified').default(false),
   emailVerificationToken: text('email_verification_token'),
   emailVerificationSentAt: timestamp('email_verification_sent_at'),
-  ntfyServerUrl: text('ntfy_server_url'),
 });
 
 // ------------------------------------------------------------------
@@ -93,9 +92,7 @@ export const notificationLog = userSchema.table(
   'notification_log',
   {
     id: serial('id').primaryKey(),
-    userId: integer('user_id')
-      .notNull()
-      .references(() => users.userId, { onDelete: 'cascade' }),
+    userId: integer('user_id').notNull(),
     year: integer('year').notNull(),
     weekNumber: integer('week_number').notNull(),
     notificationType: text('notification_type').notNull(),

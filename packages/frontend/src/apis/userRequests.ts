@@ -2,7 +2,6 @@ import type {
   AdminDbGameData,
   AdminDbWeekData,
   AllUserGamePicksRequest,
-  NotificationChannel,
   NotificationSettings,
   NotificationType,
   ProfileData,
@@ -156,9 +155,35 @@ export async function getNotificationSettings(): Promise<NotificationSettingsRes
   }
 }
 
+export interface BroadcastChannelInfo {
+  ntfy: { topicUrl: string } | null;
+  telegram: { inviteUrl: string | null } | null;
+  discord: { inviteUrl: string | null } | null;
+}
+
+export interface BroadcastChannelsResponse {
+  success: boolean;
+  data?: BroadcastChannelInfo;
+  error?: string;
+}
+
+export async function getBroadcastChannels(): Promise<BroadcastChannelsResponse> {
+  try {
+    const res = await client.api.user.notifications.channels.$get();
+    if (!res.ok) {
+      const body = (await res.json()) as unknown as { error: string };
+      return { success: false, error: body.error };
+    }
+    const data = (await res.json()) as unknown as BroadcastChannelInfo;
+    return { success: true, data };
+  } catch {
+    return { success: false, error: 'Request failed' };
+  }
+}
+
 export async function updateNotificationPreference(pref: {
   notificationType: NotificationType;
-  channel: NotificationChannel;
+  channel: 'email';
   enabled: boolean;
 }): Promise<{ success: boolean; error?: string }> {
   try {
@@ -173,31 +198,3 @@ export async function updateNotificationPreference(pref: {
   }
 }
 
-export async function updateNtfyUrl(
-  ntfyServerUrl: string | null
-): Promise<{ success: boolean; error?: string }> {
-  try {
-    const res = await client.api.user.notifications['ntfy-url'].$patch({ json: { ntfyServerUrl } });
-    if (!res.ok) {
-      const body = (await res.json()) as unknown as { error: string };
-      return { success: false, error: body.error };
-    }
-    return { success: true };
-  } catch {
-    return { success: false, error: 'Request failed' };
-  }
-}
-
-export async function sendTestNtfy(): Promise<{ success: boolean; status?: string; error?: string }> {
-  try {
-    const res = await client.api.user.notifications['test-ntfy'].$post();
-    if (!res.ok) {
-      const body = (await res.json()) as unknown as { error: string };
-      return { success: false, error: body.error };
-    }
-    const data = (await res.json()) as unknown as { status: string };
-    return { success: true, status: data.status };
-  } catch {
-    return { success: false, error: 'Request failed' };
-  }
-}

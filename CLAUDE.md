@@ -167,6 +167,14 @@ SMTP_USER=                    # leave blank if no auth (e.g. local Mailpit)
 SMTP_PASS=
 SMTP_SECURE=false             # set true only for port 465
 SKIP_EMAIL_SEND=false         # set true in dev to log instead of sending
+
+# Notifications (broadcast channels — admin-configured)
+NTFY_TOPIC_URL=               # full ntfy URL including topic, e.g. https://ntfy.sh/cfb-pickem
+TELEGRAM_BOT_TOKEN=           # bot token from BotFather
+TELEGRAM_CHAT_ID=             # group or channel chat ID the bot will post to
+TELEGRAM_INVITE_URL=          # public join link shown to users in Settings (e.g. https://t.me/yourchannel)
+DISCORD_WEBHOOK_URL=          # Discord channel webhook URL
+DISCORD_INVITE_URL=           # public invite link shown to users in Settings (e.g. https://discord.gg/abc123)
 ```
 
 Frontend:
