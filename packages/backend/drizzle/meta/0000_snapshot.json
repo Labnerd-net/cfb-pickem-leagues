@@ -1,5 +1,5 @@
 {
-  "id": "3e80de5e-6035-4edc-948d-22e9f301e99b",
+  "id": "423c5fd3-4077-4173-96bb-908548dbf0e6",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "version": "7",
   "dialect": "postgresql",
@@ -462,22 +462,7 @@
         }
       },
       "indexes": {},
-      "foreignKeys": {
-        "notification_log_user_id_users_user_id_fk": {
-          "name": "notification_log_user_id_users_user_id_fk",
-          "tableFrom": "notification_log",
-          "tableTo": "users",
-          "schemaTo": "user",
-          "columnsFrom": [
-            "user_id"
-          ],
-          "columnsTo": [
-            "user_id"
-          ],
-          "onDelete": "cascade",
-          "onUpdate": "no action"
-        }
-      },
+      "foreignKeys": {},
       "compositePrimaryKeys": {},
       "uniqueConstraints": {
         "notification_log_unique": {
@@ -615,12 +600,6 @@
         "email_verification_sent_at": {
           "name": "email_verification_sent_at",
           "type": "timestamp",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "ntfy_server_url": {
-          "name": "ntfy_server_url",
-          "type": "text",
           "primaryKey": false,
           "notNull": false
         }

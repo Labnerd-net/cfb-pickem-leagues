@@ -9,16 +9,12 @@ import type {
 } from '@shared/types/cfb-pickem-api.js';
 
 const notificationTypeEnum = z.enum(['games_ready', 'picks_reminder', 'rankings_updated']);
-const notificationChannelEnum = z.enum(['email', 'ntfy']);
+const notificationChannelEnum = z.enum(['email']);
 
 const notificationPreferenceSchema = z.object({
   notificationType: notificationTypeEnum,
   channel: notificationChannelEnum,
   enabled: z.boolean(),
-});
-
-const ntfyUrlSchema = z.object({
-  ntfyServerUrl: z.string().url().nullable(),
 });
 
 const verifyEmailQuerySchema = z.object({
@@ -66,5 +62,4 @@ export const pickedGameRequestValidator = zValidator('json', pickedGameRequestSc
 export const allUserPickedRequestValidator = zValidator('json', allUserPickedRequestSchema);
 export const updateUserRolesValidator = zValidator('json', updateUserRolesSchema);
 export const notificationPreferenceValidator = zValidator('json', notificationPreferenceSchema);
-export const ntfyUrlValidator = zValidator('json', ntfyUrlSchema);
 export const verifyEmailQueryValidator = zValidator('query', verifyEmailQuerySchema);

@@ -1,6 +1,6 @@
 export type Role = "user" | "admin";
 export type NotificationType = "games_ready" | "picks_reminder" | "rankings_updated";
-export type NotificationChannel = "email" | "ntfy";
+export type NotificationChannel = "email" | "ntfy" | "telegram" | "discord";
 export type Team = "home_team" | "away_team" | "pending";
 export type Classification = "fbs" | "fcs" | "d1" | "d2" | "d3";
 export type DataSource = "ncaa" | "cfbd" | "sdv";
@@ -43,7 +43,6 @@ export interface NotificationPreference {
 
 export interface NotificationSettings {
   preferences: NotificationPreference[];
-  ntfyServerUrl: string | null;
   emailVerified: boolean;
 }
 
@@ -63,7 +62,6 @@ export interface UserDbData extends UserData {
   createdAt: Date;
   emailVerificationToken: string | null;
   emailVerificationSentAt: Date | null;
-  ntfyServerUrl: string | null;
 }
 
 export interface UserGameData {

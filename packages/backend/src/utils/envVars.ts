@@ -66,3 +66,18 @@ export const smtpSecure = process.env.SMTP_SECURE === 'true';
 export const notificationsEnabled = notificationFromEmail !== '' && smtpHost !== '';
 // Set to 'true' in dev to skip sending emails
 export const skipEmailSend = process.env.SKIP_EMAIL_SEND === 'true';
+
+// Broadcast notification channels (admin-configured)
+export const ntfyTopicUrl = process.env.NTFY_TOPIC_URL || '';
+export const ntfyEnabled = ntfyTopicUrl !== '';
+
+export const telegramBotToken = process.env.TELEGRAM_BOT_TOKEN || '';
+export const telegramChatId = process.env.TELEGRAM_CHAT_ID || '';
+export const telegramEnabled = telegramBotToken !== '' && telegramChatId !== '';
+// Public-facing invite link shown to users in Settings (e.g. https://t.me/yourchannel)
+export const telegramInviteUrl = process.env.TELEGRAM_INVITE_URL || '';
+
+export const discordWebhookUrl = process.env.DISCORD_WEBHOOK_URL || '';
+export const discordEnabled = discordWebhookUrl !== '';
+// Public-facing invite link shown to users in Settings (e.g. https://discord.gg/abc123)
+export const discordInviteUrl = process.env.DISCORD_INVITE_URL || '';
