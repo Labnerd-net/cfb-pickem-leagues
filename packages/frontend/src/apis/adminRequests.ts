@@ -5,6 +5,7 @@ import type {
   PickedGamesRequest,
   ProfileData,
   MarkGameCompleteRequest,
+  NotificationLogEntry,
 } from '@shared/types/cfb-pickem-api';
 import { client } from '../lib/api';
 
@@ -161,6 +162,29 @@ export async function markGameComplete(
     }
     const body = await res.json();
     return { success: true, data: (body as unknown as { game: AdminDbGameData }).game };
+  } catch {
+    return { success: false, error: 'Request failed' };
+  }
+}
+
+export interface GetNotificationLogsResponse {
+  success: boolean;
+  data?: { entries: NotificationLogEntry[]; total: number };
+  error?: string;
+}
+
+export async function getNotificationLogs(): Promise<GetNotificationLogsResponse> {
+  try {
+    const res = await client.api.admin['notification-logs'].$get();
+    if (!res.ok) {
+      const body = (await res.json()) as unknown as { error: string };
+      return { success: false, error: body.error };
+    }
+    const body = await res.json();
+    return {
+      success: true,
+      data: body as unknown as { entries: NotificationLogEntry[]; total: number },
+    };
   } catch {
     return { success: false, error: 'Request failed' };
   }

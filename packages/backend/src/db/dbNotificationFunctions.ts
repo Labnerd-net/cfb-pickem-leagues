@@ -1,9 +1,10 @@
-import { and, eq, isNotNull, isNull, or } from 'drizzle-orm';
+import { and, desc, eq, isNotNull, isNull, or, sql } from 'drizzle-orm';
 import { users, notificationPreferences, notificationLog } from './schema/users.js';
 import { db } from './index.js';
 import logger from '../utils/logger.js';
 import type {
   NotificationChannel,
+  NotificationLogEntry,
   NotificationPreference,
   NotificationSettings,
   NotificationType,
@@ -183,6 +184,53 @@ export async function hasNotificationBeenSent(
     return rows.length > 0;
   } catch (e) {
     logger.error({ err: e }, 'hasNotificationBeenSent failed');
+    throw e;
+  }
+}
+
+// ------------------------------------------------------------------
+// Return notification log entries with recipient display names
+// ------------------------------------------------------------------
+export async function returnNotificationLogs(
+  limit: number
+): Promise<{ entries: NotificationLogEntry[]; total: number }> {
+  logger.debug({ limit }, 'returnNotificationLogs');
+  try {
+    const [rows, countRows] = await Promise.all([
+      db
+        .select({
+          id: notificationLog.id,
+          userId: notificationLog.userId,
+          year: notificationLog.year,
+          weekNumber: notificationLog.weekNumber,
+          notificationType: notificationLog.notificationType,
+          channel: notificationLog.channel,
+          sentAt: notificationLog.sentAt,
+          displayName: users.displayName,
+        })
+        .from(notificationLog)
+        .leftJoin(users, eq(notificationLog.userId, users.userId))
+        .orderBy(desc(notificationLog.sentAt))
+        .limit(limit),
+      db.select({ count: sql<number>`count(*)::int` }).from(notificationLog),
+    ]);
+
+    const total = countRows[0]?.count ?? 0;
+    const entries: NotificationLogEntry[] = rows.map(r => ({
+      id: r.id,
+      userId: r.userId,
+      year: r.year,
+      weekNumber: r.weekNumber,
+      notificationType: r.notificationType as NotificationType,
+      channel: r.channel as NotificationChannel,
+      sentAt: r.sentAt.toISOString(),
+      recipient:
+        r.userId === 0 ? 'Broadcast' : r.displayName !== null ? r.displayName : 'Deleted user',
+    }));
+
+    return { entries, total };
+  } catch (e) {
+    logger.error({ err: e }, 'returnNotificationLogs failed');
     throw e;
   }
 }

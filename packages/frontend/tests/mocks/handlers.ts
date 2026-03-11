@@ -120,6 +120,24 @@ export const handlers = [
 		});
 	}),
 
+	http.get(`${API_URL}/api/admin/notification-logs`, () => {
+		return HttpResponse.json({
+			entries: [
+				{
+					id: 1,
+					userId: 0,
+					year: 2024,
+					weekNumber: 1,
+					notificationType: 'games_ready',
+					channel: 'ntfy',
+					sentAt: '2024-09-01T12:00:00.000Z',
+					recipient: 'Broadcast',
+				},
+			],
+			total: 1,
+		});
+	}),
+
 	// Notification endpoints
 	http.get(`${API_URL}/api/user/notifications/preferences`, () => {
 		return HttpResponse.json({

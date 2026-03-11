@@ -1,6 +1,6 @@
 {
-  "id": "423c5fd3-4077-4173-96bb-908548dbf0e6",
-  "prevId": "3e80de5e-6035-4edc-948d-22e9f301e99b",
+  "id": "6d29348a-7ab3-4dd5-9a54-02d1fd812bf3",
+  "prevId": "423c5fd3-4077-4173-96bb-908548dbf0e6",
   "version": "7",
   "dialect": "postgresql",
   "tables": {
@@ -461,7 +461,18 @@
           "default": "now()"
         }
       },
-      "indexes": {},
+      "indexes": {
+        "notification_log_sent_at_idx": {
+          "name": "notification_log_sent_at_idx",
+          "columns": [
+            "sent_at"
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
       "foreignKeys": {},
       "compositePrimaryKeys": {},
       "uniqueConstraints": {

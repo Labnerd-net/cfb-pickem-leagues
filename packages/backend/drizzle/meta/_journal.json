@@ -15,6 +15,13 @@
       "when": 1773200000000,
       "tag": "0001_broadcast_notifications",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1741600000000,
+      "tag": "0002_notification_log_sent_at_idx",
+      "breakpoints": true
     }
   ]
 }
