@@ -76,12 +76,14 @@ CREATE TABLE "user"."users" (
 	"email_verified" boolean DEFAULT false,
 	"email_verification_token" text,
 	"email_verification_sent_at" timestamp,
+	"ntfy_server_url" text,
 	CONSTRAINT "users_email_unique" UNIQUE("email")
 );
 --> statement-breakpoint
 ALTER TABLE "admin"."games" ADD CONSTRAINT "games_week_fk" FOREIGN KEY ("year","week_number") REFERENCES "admin"."weeks"("year","week_number") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "user"."games" ADD CONSTRAINT "games_user_id_users_user_id_fk" FOREIGN KEY ("user_id") REFERENCES "user"."users"("user_id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "user"."games" ADD CONSTRAINT "user_games_admin_games_fk" FOREIGN KEY ("game_id") REFERENCES "admin"."games"("game_id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "user"."notification_log" ADD CONSTRAINT "notification_log_user_id_users_user_id_fk" FOREIGN KEY ("user_id") REFERENCES "user"."users"("user_id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "user"."notification_preferences" ADD CONSTRAINT "notification_preferences_user_id_users_user_id_fk" FOREIGN KEY ("user_id") REFERENCES "user"."users"("user_id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 CREATE INDEX "games_year_week_idx" ON "admin"."games" USING btree ("year","week_number");--> statement-breakpoint
 CREATE INDEX "games_picked_idx" ON "admin"."games" USING btree ("picked");--> statement-breakpoint
