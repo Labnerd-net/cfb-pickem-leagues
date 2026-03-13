@@ -1,0 +1,16 @@
+# Current Feature
+
+## Current Feature Spec File
+
+Title: ...
+Spec file: ...
+Branch: ...
+
+## Current Feature Plan File
+
+Plan File: ...
+
+## History
+
+<!-- Keep this updated. Earliest to latest -->
+- ...
