@@ -1,2 +1,40 @@
-node_modules
-data
+# Dependencies
+node_modules/
+
+# Build output
+dist/
+build/
+
+# Environment variables
+.env
+.env.*
+!.env.example
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+pnpm-debug.log*
+
+# Test coverage
+coverage/
+
+# Editor / OS
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+
+# TypeScript incremental build
+*.tsbuildinfo
+
+# Vite / Rollup cache
+.vite/
+
+# Data / local dev artifacts
+data/
+api-responses/
+
+# Claude Code
+.claude/settings.json
+.claude/settings.local.json
