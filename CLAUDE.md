@@ -124,8 +124,8 @@ All frontend API functions in `src/apis/` (`authRequests.ts`, `userRequests.ts`,
 
 ### Specs and Plans
 
-- `_specs/` — feature specification files. Each spec describes requirements, edge cases, and acceptance criteria for a feature. New specs are created via the `/spec` slash command.
-- `_plans/` — implementation plan files paired with specs.
+- `context/specs/` — feature specification files. Each spec describes requirements, edge cases, and acceptance criteria for a feature. New specs are created via the `/spec` slash command.
+- `context/features/` — implementation plan files paired with specs.
 
 ## Environment Variables
 
