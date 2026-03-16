@@ -2,20 +2,17 @@
 
 > Generated: 2026-03-14
 > Focus: Full audit
+> Last updated: 2026-03-16 — completed [1], [4], [5], [6] (security fixes); admin log viewer UI shipped (partially addresses [28])
 
 ---
 
 ## Security
 
 ### High
-- **[1]** **[packages/backend/src/routes/user.ts:101-134]**: `POST /picks` never checks `game.picked === true`. A user can submit a pick for any game in `admin.games` — including games the admin has excluded from the week's slate — by supplying any valid `gameId` via the API. Fix: add `if (!game.picked) return 422` inside the existing loop that already fetches the game record.
 - **[2]** **[packages/backend/src/notifications/templates.ts:74,83]**: `rankingsUpdatedTemplate` interpolates `e.displayName` directly into an HTML table: `` `<td>${e.displayName}</td>` ``. A display name containing `<script>...` will be embedded raw into the email HTML sent to all opted-in users. Fix: HTML-escape all user-supplied strings before embedding in `htmlBody` (replace `&`, `<`, `>`, `"`, `'` with entities, or use the `he` library).
 - **[3]** **[packages/backend/src/utils/rateLimiter.ts:44-49]**: `x-forwarded-for` is trusted unconditionally. A client can spoof this header to share a rate-limit bucket with any IP or escape their own. Fix: only trust the header from known proxy IPs, or use the socket remote address exclusively.
-- **[4]** **[packages/backend/src/routes/auth.ts:44,101]**: `POST /register` and `POST /login` call `c.req.json()` ad hoc with no Zod validator. Malformed JSON throws and returns a 500 instead of a 400; schema is enforced inconsistently vs. all other mutation routes. Fix: apply `zValidator` middleware to both routes.
-- **[5]** **[packages/backend/src/utils/passwordValidation.ts:17]**: Minimum password length is 6 characters with no complexity requirements and no upper bound. bcrypt silently truncates inputs above 72 bytes, so a user setting a 200-character password gets a weaker hash with no warning. Fix: raise minimum to 8, enforce server-side `maxLength` of 128 and return 400 before hashing.
 
 ### Medium
-- **[6]** **[packages/backend/src/routes/admin.ts:29-47]** and **[packages/backend/src/routes/user.ts:101]**: Zod validators fire before `authMiddleware` on `PATCH /users/:id/roles` and `POST /user/picks`. Unauthenticated requests get 400 (schema error) before 401 (auth), leaking schema detail. Fix: reorder to `authMiddleware → requireRole → validator` consistent with other routes.
 - **[7]** **[packages/backend/src/db/index.ts:14]**: DB connection string assembled via string interpolation. A password with URL-special characters (`@`, `/`, `#`) silently malforms the URL. Fix: pass individual `host/user/password/database` options to Drizzle instead of a connection string.
 - **[8]** **[packages/backend/src/routes/auth.ts:63-64]**: The first registered user is auto-promoted to admin. `returnUsers()` counts only active users, not soft-deleted ones. If the sole admin deletes their account, the next registrant becomes admin. Fix: document the intent; if unintentional, include `deleted_users` in the count or add a separate admin promotion flow.
 
@@ -70,7 +67,7 @@ _None identified._
 - **[27]** **[packages/backend/src/db/schema/users.ts:52-56]**: `user.games` foreign key to `admin.games` uses `.onDelete('cascade')`. If an admin game is ever deleted, all user picks for it silently vanish. Fix: consider soft deletes or a "pick voided" status to maintain audit trail.
 
 ### Low
-- **[28]** **[packages/backend/src/routes/admin.ts:169]** + **[packages/frontend/src/components/admin/NotificationLogSection.tsx:50]**: Notification log limit is hardcoded at 500 with no pagination — a silent data truncation for self-hosters running multiple seasons. Fix: add `limit`/`offset` query params to `GET /admin/notification-logs` and paginate the UI. Add a code comment at the hardcap explaining the limitation.
+- **[28]** **[packages/backend/src/routes/admin.ts:169]** + **[packages/frontend/src/components/admin/NotificationLogSection.tsx:50]**: Notification log limit is hardcoded at 500 with no pagination — a silent data truncation for self-hosters running multiple seasons. Fix: add `limit`/`offset` query params to `GET /admin/notification-logs` and paginate the UI. Add a code comment at the hardcap explaining the limitation. _(UI shipped 2026-03-16; pagination still needed)_
 - **[29]** **[packages/backend/src/routes/leaderboard.ts:14]**: `GET /leaderboard` returns all users on every request with no pagination. Only relevant at meaningful scale (50+ users). Fix: add `?limit=50&offset=0` query params.
 - **[30]** **[packages/backend/src/notifications/templates.ts:30-36]**: `toLocaleString` called without an explicit timezone — kickoff times in reminder emails reflect server timezone, not anything meaningful to recipients. Fix: pass `{ timeZone: 'America/New_York' }` or use UTC with explicit label.
 - **[31]** **[packages/frontend/src/pages/Dashboard.tsx:68-78]**: Tab-to-component mapping uses sequential `currentTab === N` ternaries. Inserting a new tab shifts all subsequent indices. Fix: use an array of `{ label, icon, component }` objects indexed by tab value.
@@ -111,9 +108,9 @@ _None identified._
 
 | Category | High | Medium | Low | Total |
 |----------|------|--------|-----|-------|
-| Security | 5 | 3 | 0 | 8 |
+| Security | 2 | 2 | 0 | 4 |
 | Bugs | 2 | 2 | 2 | 6 |
 | Performance | 1 | 4 | 2 | 7 |
 | Improvements & Refactors | 1 | 5 | 6 | 12 |
 | Feature Ideas | 2 | 6 | 10 | 18 |
-| **Total** | **11** | **22** | **18** | **51** |
+| **Total** | **8** | **19** | **20** | **47** |
