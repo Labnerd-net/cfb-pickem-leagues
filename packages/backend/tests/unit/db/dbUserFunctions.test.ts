@@ -6,6 +6,7 @@ import {
 	returnUserByEmail,
 	returnUserById,
 	addPickedGame,
+	addPickedGamesBatch,
 	returnUserGames,
 	returnLeaderboard,
 } from '../../../src/db/dbUserFunctions.js';
@@ -108,6 +109,58 @@ describe('User Database Functions', () => {
 			await expect(addPickedGame({ game: 99999, pick: 'home_team' }, '1')).rejects.toThrow(
 				"Game Doesn't Exist"
 			);
+		});
+	});
+
+	describe('addPickedGamesBatch', () => {
+		afterEach(async () => {
+			await cleanDatabase();
+			await seedTestData();
+		});
+
+		it('should insert all picks when all games are valid', async () => {
+			await createTestWeek(1, 2024, 'regular');
+			const game1 = await createTestGame(1, 2024, 'Team A', 'Team B', true, false);
+			const game2 = await createTestGame(1, 2024, 'Team C', 'Team D', true, false);
+			const gameId1 = (game1 as { game_id: number }).game_id;
+			const gameId2 = (game2 as { game_id: number }).game_id;
+
+			await addPickedGamesBatch(
+				[
+					{ game: gameId1, pick: 'home_team' },
+					{ game: gameId2, pick: 'away_team' },
+				],
+				'1'
+			);
+
+			const rows = await db.execute(
+				sql`SELECT game_id, team_chosen FROM "user"."games" WHERE user_id = 1 ORDER BY game_id`
+			);
+			expect(rows.rows.length).toBe(2);
+			expect(rows.rows[0]).toMatchObject({ game_id: gameId1, team_chosen: 'home_team' });
+			expect(rows.rows[1]).toMatchObject({ game_id: gameId2, team_chosen: 'away_team' });
+		});
+
+		it('should roll back all picks when one insert fails mid-batch', async () => {
+			await createTestWeek(1, 2024, 'regular');
+			const game1 = await createTestGame(1, 2024, 'Team A', 'Team B', true, false);
+			const gameId1 = (game1 as { game_id: number }).game_id;
+			const nonExistentGameId = 999999;
+
+			await expect(
+				addPickedGamesBatch(
+					[
+						{ game: gameId1, pick: 'home_team' },
+						{ game: nonExistentGameId, pick: 'away_team' },
+					],
+					'1'
+				)
+			).rejects.toThrow();
+
+			const rows = await db.execute(
+				sql`SELECT game_id FROM "user"."games" WHERE user_id = 1`
+			);
+			expect(rows.rows.length).toBe(0);
 		});
 	});
 

@@ -174,6 +174,36 @@ export async function addPickedGame(pick: UserGamePicks, userId: string): Promis
 }
 
 // ------------------------------------------------------------------
+// Add Game Picks to user (batch, transactional)
+// ------------------------------------------------------------------
+export async function addPickedGamesBatch(picks: UserGamePicks[], userId: string): Promise<void> {
+  logger.debug({ count: picks.length, userId }, 'addPickedGamesBatch');
+  try {
+    const userIdNumber = Number(userId);
+    await db.transaction(async tx => {
+      for (const pick of picks) {
+        await tx
+          .insert(games)
+          .values({
+            userId: userIdNumber,
+            gameId: pick.game,
+            teamChosen: pick.pick,
+          })
+          .onConflictDoUpdate({
+            target: [games.userId, games.gameId],
+            set: {
+              teamChosen: pick.pick,
+            },
+          });
+      }
+    });
+  } catch (e) {
+    logger.error({ err: e }, 'addPickedGamesBatch failed');
+    throw e;
+  }
+}
+
+// ------------------------------------------------------------------
 // Return User Pick History (per-week summary for a year)
 // ------------------------------------------------------------------
 export async function returnUserPickHistory(

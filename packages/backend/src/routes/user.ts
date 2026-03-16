@@ -135,9 +135,7 @@ const user = new Hono<{ Variables: Variables }>()
       }
     }
 
-    for (const pick of userPicks.games) {
-      await dbUserFunctions.addPickedGame(pick, userIdString);
-    }
+    await dbUserFunctions.addPickedGamesBatch(userPicks.games, userIdString);
     return c.json({ status: 'updated picked games' });
   })
   // Get notification settings

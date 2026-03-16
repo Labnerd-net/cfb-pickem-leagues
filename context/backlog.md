@@ -29,7 +29,7 @@ _None identified._
 
 ### Medium
 - **[11]** **[packages/frontend/src/pages/Settings.tsx:43-47]**: `Promise.all([getNotificationSettings(), getBroadcastChannels()])` has no `.catch`. If either request throws, the error is silently swallowed and `setLoading(false)` is never called — the spinner runs forever. Fix: wrap in `try/catch` and always call `setLoading(false)` in both paths.
-- **[12]** **[packages/backend/src/db/schema/admin.ts]**: The `admin.weeks` table has no unique constraint on `(year, weekNumber)`. The games table has `games_natural_key` but weeks can be duplicated. Fix: add a unique constraint on the weeks table.
+- ~~**[12]** **[packages/backend/src/db/schema/admin.ts]**: The `admin.weeks` table has no unique constraint on `(year, weekNumber)`. The games table has `games_natural_key` but weeks can be duplicated. Fix: add a unique constraint on the weeks table.~~ **Resolved (false positive):** `CONSTRAINT "weeks_year_week_number_pk" PRIMARY KEY("year","week_number")` already enforces uniqueness in migration `0000_jazzy_jasper_sitwell.sql`.
 
 ### Low
 - **[13]** **[packages/frontend/src/components/ErrorBoundary.tsx]**: `ErrorBoundary` component is defined but never used in `App.tsx`. Render errors from any route component are uncaught. Fix: wrap `<BrowserRouter>` or `<AuthProvider>` in `<ErrorBoundary>`.
