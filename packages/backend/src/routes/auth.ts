@@ -9,7 +9,7 @@ import {
   setEmailVerificationToken,
   markEmailVerified,
 } from '../db/dbNotificationFunctions.js';
-import type { Credentials, JwtData, UserData } from '@shared/types/cfb-pickem-api.js';
+import type { JwtData, UserData } from '@shared/types/cfb-pickem-api.js';
 import {
   bcryptSaltRounds,
   jwtAlgorithm,
@@ -23,7 +23,7 @@ import { validatePassword } from '../utils/passwordValidation.js';
 import { validateEmail } from '../utils/emailValidation.js';
 import { authRateLimit } from '../utils/rateLimiter.js';
 import { sendEmail } from '../notifications/emailSender.js';
-import { verifyEmailQueryValidator } from '../utils/zValidate.js';
+import { verifyEmailQueryValidator, registerRequestValidator, loginRequestValidator } from '../utils/zValidate.js';
 import logger from '../utils/logger.js';
 
 type Variables = {
@@ -40,14 +40,8 @@ const cookieOptions = {
 
 const auth = new Hono<{ Variables: Variables }>()
   // Register a new user
-  .post('/register', authRateLimit, async c => {
-    const { email, password, displayName } = await c.req.json();
-    if (!email || !password)
-      throw new HTTPException(400, { message: 'Email and password required' });
-    if (!displayName || typeof displayName !== 'string' || displayName.trim().length === 0)
-      throw new HTTPException(400, { message: 'Display name is required' });
-    if (displayName.length > 50)
-      throw new HTTPException(400, { message: 'Display name must be less than 50 characters' });
+  .post('/register', authRateLimit, registerRequestValidator, async c => {
+    const { email, password, displayName } = c.req.valid('json');
 
     const emailValidation = validateEmail(email);
     if (!emailValidation.valid) throw new HTTPException(400, { message: emailValidation.error! });
@@ -97,10 +91,8 @@ const auth = new Hono<{ Variables: Variables }>()
     return c.json({});
   })
   // Log in an existing user
-  .post('/login', authRateLimit, async c => {
-    const { email, password }: Credentials = await c.req.json();
-    if (!email || !password)
-      throw new HTTPException(400, { message: 'Email and password required' });
+  .post('/login', authRateLimit, loginRequestValidator, async c => {
+    const { email, password } = c.req.valid('json');
     const user = await dbUserFunctions.returnUserByEmail(email);
     if (!user || user.length === 0)
       throw new HTTPException(401, { message: 'Invalid credentials' });

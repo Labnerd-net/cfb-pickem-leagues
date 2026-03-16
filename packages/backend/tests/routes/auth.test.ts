@@ -61,6 +61,46 @@ describe('POST /api/auth/login', () => {
 	});
 });
 
+describe('POST /api/auth/register — input validation', () => {
+	it('returns 400 when body is missing required fields', async () => {
+		const res = await app.request('/api/auth/register', {
+			method: 'POST',
+			headers: { 'Content-Type': 'application/json' },
+			body: JSON.stringify({}),
+		});
+		expect(res.status).toBe(400);
+	});
+
+	it('returns 400 when email is missing', async () => {
+		const res = await app.request('/api/auth/register', {
+			method: 'POST',
+			headers: { 'Content-Type': 'application/json' },
+			body: JSON.stringify({ password: 'password123', displayName: 'Test' }),
+		});
+		expect(res.status).toBe(400);
+	});
+});
+
+describe('POST /api/auth/login — input validation', () => {
+	it('returns 400 when body is missing required fields', async () => {
+		const res = await app.request('/api/auth/login', {
+			method: 'POST',
+			headers: { 'Content-Type': 'application/json' },
+			body: JSON.stringify({}),
+		});
+		expect(res.status).toBe(400);
+	});
+
+	it('returns 400 when password is missing', async () => {
+		const res = await app.request('/api/auth/login', {
+			method: 'POST',
+			headers: { 'Content-Type': 'application/json' },
+			body: JSON.stringify({ email: 'test@example.com' }),
+		});
+		expect(res.status).toBe(400);
+	});
+});
+
 describe('POST /api/auth/logout', () => {
 	it('clears the auth_token cookie', async () => {
 		const res = await app.request('/api/auth/logout', { method: 'POST' });

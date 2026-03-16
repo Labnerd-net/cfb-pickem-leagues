@@ -30,15 +30,15 @@ describe('Email Validation', () => {
 });
 
 describe('Password Validation', () => {
-	it('should accept passwords with minimum length', () => {
-		expect(validatePassword('123456').valid).toBe(true);
+	it('should accept passwords at minimum length', () => {
+		expect(validatePassword('12345678').valid).toBe(true);
 		expect(validatePassword('password123').valid).toBe(true);
 	});
 
 	it('should reject passwords shorter than minimum', () => {
-		const result1 = validatePassword('12345');
+		const result1 = validatePassword('1234567');
 		expect(result1.valid).toBe(false);
-		expect(result1.error).toContain('at least 6 characters');
+		expect(result1.error).toContain('at least 8 characters');
 
 		const result2 = validatePassword('abc');
 		expect(result2.valid).toBe(false);
@@ -47,10 +47,16 @@ describe('Password Validation', () => {
 	it('should reject empty password', () => {
 		const result = validatePassword('');
 		expect(result.valid).toBe(false);
-		expect(result.error).toContain('at least 6 characters');
+		expect(result.error).toContain('at least 8 characters');
 	});
 
-	it('should accept long passwords', () => {
-		expect(validatePassword('thisIsAVeryLongPasswordWithManyCharacters123!').valid).toBe(true);
+	it('should accept passwords at the bcrypt max length', () => {
+		expect(validatePassword('a'.repeat(72)).valid).toBe(true);
+	});
+
+	it('should reject passwords exceeding bcrypt max length', () => {
+		const result = validatePassword('a'.repeat(73));
+		expect(result.valid).toBe(false);
+		expect(result.error).toContain('72');
 	});
 });

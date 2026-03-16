@@ -56,6 +56,17 @@ const markGameCompleteSchema: z.ZodType<MarkGameCompleteRequest> = z.object({
   awayPoints: z.number().int().min(0),
 });
 
+const registerRequestSchema = z.object({
+  email: z.string().min(1),
+  password: z.string().min(1),
+  displayName: z.string().trim().min(1).max(50),
+});
+
+const loginRequestSchema = z.object({
+  email: z.string().min(1),
+  password: z.string().min(1),
+});
+
 export const markGameCompleteValidator = zValidator('json', markGameCompleteSchema);
 export const weekIdentifierValidator = zValidator('json', weekIdentifierSchema);
 export const pickedGameRequestValidator = zValidator('json', pickedGameRequestSchema);
@@ -63,3 +74,5 @@ export const allUserPickedRequestValidator = zValidator('json', allUserPickedReq
 export const updateUserRolesValidator = zValidator('json', updateUserRolesSchema);
 export const notificationPreferenceValidator = zValidator('json', notificationPreferenceSchema);
 export const verifyEmailQueryValidator = zValidator('query', verifyEmailQuerySchema);
+export const registerRequestValidator = zValidator('json', registerRequestSchema);
+export const loginRequestValidator = zValidator('json', loginRequestSchema);

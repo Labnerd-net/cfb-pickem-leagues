@@ -98,7 +98,7 @@ const user = new Hono<{ Variables: Variables }>()
     return c.json({ pickedGames });
   })
   // Set user game picks
-  .post('/picks', apiRateLimit, allUserPickedRequestValidator, authMiddleware, async c => {
+  .post('/picks', apiRateLimit, authMiddleware, allUserPickedRequestValidator, async c => {
     const payload = c.get('jwtPayload');
     const userIdString = String(payload.sub);
     const userPicks: AllUserGamePicksRequest = c.req.valid('json');
@@ -107,14 +107,21 @@ const user = new Hono<{ Variables: Variables }>()
     if (new Set(gameIds).size !== gameIds.length)
       throw new HTTPException(400, { message: 'Duplicate game IDs in picks request' });
 
-    // Validate all deadlines before writing anything — prevents partial commits
-    if (!ignorePickDeadline) {
-      for (const pick of userPicks.games) {
-        const gameRows = await returnGame(pick.game);
-        if (!gameRows || gameRows.length === 0) {
-          throw new HTTPException(404, { message: `Game ${pick.game} not found` });
-        }
-        const game = gameRows[0];
+    // Validate all games before writing anything — prevents partial commits
+    for (const pick of userPicks.games) {
+      const gameRows = await returnGame(pick.game);
+      if (!gameRows || gameRows.length === 0) {
+        throw new HTTPException(404, { message: `Game ${pick.game} not found` });
+      }
+      const game = gameRows[0];
+
+      if (!game.picked) {
+        throw new HTTPException(422, {
+          message: `Game ${pick.game} is not available for picks this week.`,
+        });
+      }
+
+      if (!ignorePickDeadline) {
         if (game.startTime === null) {
           throw new HTTPException(422, {
             message: `Game ${pick.game} has no start time set and cannot accept picks.`,
@@ -140,7 +147,7 @@ const user = new Hono<{ Variables: Variables }>()
     return c.json(settings);
   })
   // Update a notification preference
-  .patch('/notifications/preferences', apiRateLimit, notificationPreferenceValidator, authMiddleware, async c => {
+  .patch('/notifications/preferences', apiRateLimit, authMiddleware, notificationPreferenceValidator, async c => {
     const payload = c.get('jwtPayload');
     const { notificationType, channel, enabled } = c.req.valid('json');
     await upsertNotificationPreference(payload.sub, notificationType, channel, enabled);

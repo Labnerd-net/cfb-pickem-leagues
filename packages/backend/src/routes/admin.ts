@@ -29,9 +29,9 @@ const admin = new Hono<{ Variables: Variables }>()
   .patch(
     '/users/:id/roles',
     apiRateLimit,
-    updateUserRolesValidator,
     authMiddleware,
     requireRole('admin'),
+    updateUserRolesValidator,
     async c => {
       const targetId = Number(c.req.param('id'));
       if (isNaN(targetId) || targetId < 1)
@@ -74,9 +74,9 @@ const admin = new Hono<{ Variables: Variables }>()
   .post(
     '/week',
     apiRateLimit,
-    weekIdentifierValidator,
     authMiddleware,
     requireRole('admin'),
+    weekIdentifierValidator,
     async c => {
       const weekIdentifier = c.req.valid('json');
       const weekQuery = await dbAdminFunctions.enrichWeekIdentifier(weekIdentifier);
@@ -118,9 +118,9 @@ const admin = new Hono<{ Variables: Variables }>()
   .post(
     '/picks',
     apiRateLimit,
-    pickedGameRequestValidator,
     authMiddleware,
     requireRole('admin'),
+    pickedGameRequestValidator,
     async c => {
       const pickedData = c.req.valid('json');
       if (pickedData.games.length === 0)
@@ -133,9 +133,9 @@ const admin = new Hono<{ Variables: Variables }>()
   .post(
     '/games/complete',
     apiRateLimit,
-    markGameCompleteValidator,
     authMiddleware,
     requireRole('admin'),
+    markGameCompleteValidator,
     async c => {
       if (process.env.NODE_ENV === 'production') {
         throw new HTTPException(403, { message: 'Not available in production' });

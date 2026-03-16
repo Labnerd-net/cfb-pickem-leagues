@@ -20,8 +20,11 @@ const RegistrationSchema = z
       .string()
       .min(1, 'Display name is required')
       .max(50, 'Display name must be less than 50 characters'),
-    password: z.string().min(6, 'Password must be at least 6 characters long'),
-    confirmPassword: z.string().min(6, 'Please repeat the password'),
+    password: z
+      .string()
+      .min(8, 'Password must be at least 8 characters long')
+      .max(72, 'Password must be 72 characters or fewer'),
+    confirmPassword: z.string().min(8, 'Please repeat the password'),
   })
   .refine(data => data.password === data.confirmPassword, {
     path: ['confirmPassword'],
