@@ -287,7 +287,7 @@ describe('WeekGameSection (picks mode)', () => {
 	it('calls postUserPicks and shows success snackbar on submit', async () => {
 		mockGetPickedGames.mockResolvedValue({ success: true, data: [openGame] });
 		mockGetUserPicks.mockResolvedValue({ success: true, data: [] });
-		mockPostUserPicks.mockResolvedValue({ success: true, data: { message: 'ok' } });
+		mockPostUserPicks.mockResolvedValue({ success: true, data: { status: 'ok' } });
 
 		const user = userEvent.setup();
 		renderWithProviders(<WeekGameSection />);

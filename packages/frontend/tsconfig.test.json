@@ -21,7 +21,13 @@
     "noUnusedParameters": true,
     "erasableSyntaxOnly": true,
     "noFallthroughCasesInSwitch": true,
-    "noUncheckedSideEffectImports": true
+    "noUncheckedSideEffectImports": true,
+
+    /* Path aliases */
+    "paths": {
+      "@shared/*": ["packages/shared/*"],
+      "@backend/*": ["packages/backend/src/*"]
+    }
   },
   "include": ["src", "tests"]
 }

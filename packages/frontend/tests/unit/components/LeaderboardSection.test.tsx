@@ -31,7 +31,7 @@ const currentSeason = getCurrentSeason();
 
 beforeEach(() => {
 	mockUseAuth.mockReturnValue({
-		user: { userId: 1, email: 'alice@example.com', displayName: 'Alice', roles: ['user'] },
+		user: { userId: 1, email: 'alice@example.com', displayName: 'Alice', roles: ['user'], emailVerified: false },
 		isLoading: false,
 		login: vi.fn(),
 		logout: vi.fn(),
