@@ -2,7 +2,7 @@
 
 > Generated: 2026-03-14
 > Focus: Full audit
-> Last updated: 2026-03-16 — completed [1], [4], [5], [6] (security fixes); admin log viewer UI shipped (partially addresses [28])
+> Last updated: 2026-03-16 — completed [1], [4], [5], [6] (security fixes); admin log viewer UI shipped (partially addresses [28]); completed [9] (picks transaction), closed [12] (false positive)
 
 ---
 
@@ -24,12 +24,10 @@ _None identified._
 ## Bugs
 
 ### High
-- **[9]** **[packages/backend/src/routes/user.ts:101-134]**: `POST /user/picks` validates all games then inserts individually in a loop. If one insert fails mid-loop, some picks are saved and others aren't — no rollback. Fix: wrap the entire picks submission in `db.transaction()` (pattern already used in `deleteUserWithAudit()`).
 - **[10]** **[packages/backend/src/cron/cronTick.ts:16-18]**: `hardCapStart` and `lastRefreshAt` are module-level state that never reset when the active week changes. If the process spans a week boundary without restart, `hardCapStart` from the prior week prevents score refreshes for the first 12 hours of the new week. Fix: track `lastWeekKey` and reset both variables when `weekKey` changes.
 
 ### Medium
 - **[11]** **[packages/frontend/src/pages/Settings.tsx:43-47]**: `Promise.all([getNotificationSettings(), getBroadcastChannels()])` has no `.catch`. If either request throws, the error is silently swallowed and `setLoading(false)` is never called — the spinner runs forever. Fix: wrap in `try/catch` and always call `setLoading(false)` in both paths.
-- ~~**[12]** **[packages/backend/src/db/schema/admin.ts]**: The `admin.weeks` table has no unique constraint on `(year, weekNumber)`. The games table has `games_natural_key` but weeks can be duplicated. Fix: add a unique constraint on the weeks table.~~ **Resolved (false positive):** `CONSTRAINT "weeks_year_week_number_pk" PRIMARY KEY("year","week_number")` already enforces uniqueness in migration `0000_jazzy_jasper_sitwell.sql`.
 
 ### Low
 - **[13]** **[packages/frontend/src/components/ErrorBoundary.tsx]**: `ErrorBoundary` component is defined but never used in `App.tsx`. Render errors from any route component are uncaught. Fix: wrap `<BrowserRouter>` or `<AuthProvider>` in `<ErrorBoundary>`.
@@ -109,8 +107,8 @@ _None identified._
 | Category | High | Medium | Low | Total |
 |----------|------|--------|-----|-------|
 | Security | 2 | 2 | 0 | 4 |
-| Bugs | 2 | 2 | 2 | 6 |
+| Bugs | 1 | 1 | 2 | 4 |
 | Performance | 1 | 4 | 2 | 7 |
 | Improvements & Refactors | 1 | 5 | 6 | 12 |
 | Feature Ideas | 2 | 6 | 10 | 18 |
-| **Total** | **8** | **19** | **20** | **47** |
+| **Total** | **7** | **18** | **20** | **45** |
