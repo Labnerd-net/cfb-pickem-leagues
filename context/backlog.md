@@ -2,7 +2,7 @@
 
 > Generated: 2026-03-14
 > Focus: Full audit
-> Last updated: 2026-03-16 — completed [1], [4], [5], [6] (security fixes); admin log viewer UI shipped (partially addresses [28]); completed [9] (picks transaction), closed [12] (false positive)
+> Last updated: 2026-03-16 — completed [1], [4], [5], [6] (security fixes); admin log viewer UI shipped (partially addresses [28]); completed [9] (picks transaction), closed [12] (false positive); completed [10], [11], [17] (cron week reset, settings error handling, email transporter singleton)
 
 ---
 
@@ -24,10 +24,10 @@ _None identified._
 ## Bugs
 
 ### High
-- **[10]** **[packages/backend/src/cron/cronTick.ts:16-18]**: `hardCapStart` and `lastRefreshAt` are module-level state that never reset when the active week changes. If the process spans a week boundary without restart, `hardCapStart` from the prior week prevents score refreshes for the first 12 hours of the new week. Fix: track `lastWeekKey` and reset both variables when `weekKey` changes.
+_None identified._
 
 ### Medium
-- **[11]** **[packages/frontend/src/pages/Settings.tsx:43-47]**: `Promise.all([getNotificationSettings(), getBroadcastChannels()])` has no `.catch`. If either request throws, the error is silently swallowed and `setLoading(false)` is never called — the spinner runs forever. Fix: wrap in `try/catch` and always call `setLoading(false)` in both paths.
+_None identified._
 
 ### Low
 - **[13]** **[packages/frontend/src/components/ErrorBoundary.tsx]**: `ErrorBoundary` component is defined but never used in `App.tsx`. Render errors from any route component are uncaught. Fix: wrap `<BrowserRouter>` or `<AuthProvider>` in `<ErrorBoundary>`.
@@ -42,7 +42,6 @@ _None identified._
 
 ### Medium
 - **[16]** **[packages/backend/src/notifications/dispatcher.ts:55]** + **[packages/backend/src/db/dbNotificationFunctions.ts:96-133]**: `hasNotificationBeenSent` is called per-user in a sequential loop — 50 users = 50 queries per notification event. Fix: bulk-fetch already-sent log entries for the `(year, weekNumber, notificationType, channel)` tuple; build a userId Set; one query replaces N.
-- **[17]** **[packages/backend/src/notifications/emailSender.ts:19-24]**: A new Nodemailer transporter is created on every `sendEmail` call. During bulk dispatch (e.g., rankings update with 30 users), 30 separate SMTP connections are established. Fix: initialize the transporter once at module load and reuse it.
 - **[18]** **[packages/backend/src/utils/rateLimiter.ts:14-17]**: The cleanup `setInterval` is registered at module load and never cleared. Prevents graceful shutdown and leaks the interval across test suites. Fix: export a `clearRateLimitStore()` function that calls `clearInterval` for use in tests and shutdown hooks.
 - **[19]** **[packages/backend/src/db/schema/admin.ts:43]**: No index on `games.startTime`. Deadline enforcement in `user.ts` and cron refresh query this column. Fix: add `index('games_start_time_idx').on(table.startTime)`.
 
@@ -107,8 +106,8 @@ _None identified._
 | Category | High | Medium | Low | Total |
 |----------|------|--------|-----|-------|
 | Security | 2 | 2 | 0 | 4 |
-| Bugs | 1 | 1 | 2 | 4 |
-| Performance | 1 | 4 | 2 | 7 |
+| Bugs | 0 | 0 | 2 | 2 |
+| Performance | 1 | 3 | 2 | 6 |
 | Improvements & Refactors | 1 | 5 | 6 | 12 |
 | Feature Ideas | 2 | 6 | 10 | 18 |
-| **Total** | **7** | **18** | **20** | **45** |
+| **Total** | **6** | **16** | **20** | **42** |
