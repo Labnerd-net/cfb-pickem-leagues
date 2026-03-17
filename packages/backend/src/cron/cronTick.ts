@@ -16,6 +16,7 @@ import {
 let lastRefreshAt: Date | null = null;
 let hardCapStart: Date | null = null;
 let scoresCompletedForWeek: string | null = null; // key: "year-week"
+let lastWeekKey: string | null = null;
 
 export async function runCronTick(): Promise<void> {
   const now = getNow();
@@ -30,6 +31,14 @@ export async function runCronTick(): Promise<void> {
 
   const weekKey = `${week.year}-${week.weekNumber}`;
   const identifier = { year: week.year, week: week.weekNumber };
+
+  // Reset per-week state when the active week changes
+  if (weekKey !== lastWeekKey) {
+    hardCapStart = null;
+    lastRefreshAt = null;
+    lastWeekKey = weekKey;
+    logger.info({ weekKey }, 'Week changed, resetting cron state');
+  }
 
   // 2. Get picked games for the current week
   const games = await returnPickedGames(identifier);

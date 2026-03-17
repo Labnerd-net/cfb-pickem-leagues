@@ -37,14 +37,25 @@ export default function Settings() {
   const [settings, setSettings] = useState<NotificationSettings | null>(null);
   const [channels, setChannels] = useState<BroadcastChannelInfo | null>(null);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
   const [resendStatus, setResendStatus] = useState<'idle' | 'sent' | 'error'>('idle');
 
   useEffect(() => {
-    Promise.all([getNotificationSettings(), getBroadcastChannels()]).then(([settingsRes, channelsRes]) => {
-      if (settingsRes.success && settingsRes.data) setSettings(settingsRes.data);
-      if (channelsRes.success && channelsRes.data) setChannels(channelsRes.data);
-      setLoading(false);
-    });
+    async function load() {
+      try {
+        const [settingsRes, channelsRes] = await Promise.all([
+          getNotificationSettings(),
+          getBroadcastChannels(),
+        ]);
+        if (settingsRes.success && settingsRes.data) setSettings(settingsRes.data);
+        if (channelsRes.success && channelsRes.data) setChannels(channelsRes.data);
+      } catch {
+        setLoadError('Failed to load settings. Please refresh the page.');
+      } finally {
+        setLoading(false);
+      }
+    }
+    load();
   }, []);
 
   const handleResend = async () => {
@@ -78,6 +89,14 @@ export default function Settings() {
     return (
       <Box display="flex" justifyContent="center" mt={8}>
         <CircularProgress />
+      </Box>
+    );
+  }
+
+  if (loadError) {
+    return (
+      <Box display="flex" justifyContent="center" mt={8}>
+        <Typography color="error">{loadError}</Typography>
       </Box>
     );
   }

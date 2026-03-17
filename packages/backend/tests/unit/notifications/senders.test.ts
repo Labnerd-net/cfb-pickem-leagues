@@ -52,6 +52,17 @@ describe('emailSender', () => {
 			})
 		);
 	});
+
+	it('creates the nodemailer transporter only once (singleton), not per sendEmail call', async () => {
+		const nodemailer = await import('nodemailer');
+		const createTransport = vi.mocked(nodemailer.default.createTransport);
+
+		await sendEmail({ to: 'a@example.com', subject: 'S1', htmlBody: '<p>1</p>', textBody: '1' });
+		await sendEmail({ to: 'b@example.com', subject: 'S2', htmlBody: '<p>2</p>', textBody: '2' });
+
+		// createTransport is called at module load, never inside sendEmail
+		expect(createTransport).toHaveBeenCalledTimes(1);
+	});
 });
 
 describe('ntfySender', () => {

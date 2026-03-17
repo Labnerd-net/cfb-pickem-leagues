@@ -9,20 +9,24 @@ interface SendEmailParams {
   textBody: string;
 }
 
+const transporter = notificationsEnabled
+  ? nodemailer.createTransport({
+      host: smtpHost,
+      port: smtpPort,
+      secure: smtpSecure,
+      auth: smtpUser ? { user: smtpUser, pass: smtpPass } : undefined,
+    })
+  : null;
+
 export async function sendEmail(params: SendEmailParams): Promise<boolean> {
   if (!notificationsEnabled || skipEmailSend) {
     logger.warn({ to: params.to, subject: params.subject }, 'Email send skipped (notifications disabled or SKIP_EMAIL_SEND=true)');
     return false;
   }
 
-  try {
-    const transporter = nodemailer.createTransport({
-      host: smtpHost,
-      port: smtpPort,
-      secure: smtpSecure,
-      auth: smtpUser ? { user: smtpUser, pass: smtpPass } : undefined,
-    });
+  if (!transporter) return false;
 
+  try {
     await transporter.sendMail({
       from: `CFB Pick'em <${notificationFromEmail}>`,
       to: params.to,

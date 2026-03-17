@@ -146,6 +146,10 @@ export const handlers = [
 		});
 	}),
 
+	http.get(`${API_URL}/api/user/notifications/channels`, () => {
+		return HttpResponse.json({ ntfy: null, telegram: null, discord: null });
+	}),
+
 	http.patch(`${API_URL}/api/user/notifications/preferences`, () => {
 		return HttpResponse.json({ status: 'updated' });
 	}),
