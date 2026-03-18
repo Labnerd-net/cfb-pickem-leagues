@@ -2,19 +2,17 @@
 
 > Generated: 2026-03-14
 > Focus: Full audit
-> Last updated: 2026-03-16 — completed [1], [4], [5], [6] (security fixes); admin log viewer UI shipped (partially addresses [28]); completed [9] (picks transaction), closed [12] (false positive); completed [10], [11], [17] (cron week reset, settings error handling, email transporter singleton)
+> Last updated: 2026-03-18 — completed [1], [4], [5], [6] (security fixes); admin log viewer UI shipped (partially addresses [28]); completed [9] (picks transaction), closed [12] (false positive); completed [10], [11], [17] (cron week reset, settings error handling, email transporter singleton); completed [2], [3] (email XSS escape, rate limiter TRUST_PROXY); completed [7], [8] (DB connection options, admin bootstrap fix)
 
 ---
 
 ## Security
 
 ### High
-- **[2]** **[packages/backend/src/notifications/templates.ts:74,83]**: `rankingsUpdatedTemplate` interpolates `e.displayName` directly into an HTML table: `` `<td>${e.displayName}</td>` ``. A display name containing `<script>...` will be embedded raw into the email HTML sent to all opted-in users. Fix: HTML-escape all user-supplied strings before embedding in `htmlBody` (replace `&`, `<`, `>`, `"`, `'` with entities, or use the `he` library).
-- **[3]** **[packages/backend/src/utils/rateLimiter.ts:44-49]**: `x-forwarded-for` is trusted unconditionally. A client can spoof this header to share a rate-limit bucket with any IP or escape their own. Fix: only trust the header from known proxy IPs, or use the socket remote address exclusively.
+_None identified._
 
 ### Medium
-- **[7]** **[packages/backend/src/db/index.ts:14]**: DB connection string assembled via string interpolation. A password with URL-special characters (`@`, `/`, `#`) silently malforms the URL. Fix: pass individual `host/user/password/database` options to Drizzle instead of a connection string.
-- **[8]** **[packages/backend/src/routes/auth.ts:63-64]**: The first registered user is auto-promoted to admin. `returnUsers()` counts only active users, not soft-deleted ones. If the sole admin deletes their account, the next registrant becomes admin. Fix: document the intent; if unintentional, include `deleted_users` in the count or add a separate admin promotion flow.
+_None identified._
 
 ### Low
 _None identified._
@@ -105,9 +103,9 @@ _None identified._
 
 | Category | High | Medium | Low | Total |
 |----------|------|--------|-----|-------|
-| Security | 2 | 2 | 0 | 4 |
+| Security | 0 | 2 | 0 | 2 |
 | Bugs | 0 | 0 | 2 | 2 |
 | Performance | 1 | 3 | 2 | 6 |
 | Improvements & Refactors | 1 | 5 | 6 | 12 |
 | Feature Ideas | 2 | 6 | 10 | 18 |
-| **Total** | **6** | **16** | **20** | **42** |
+| **Total** | **4** | **16** | **20** | **40** |

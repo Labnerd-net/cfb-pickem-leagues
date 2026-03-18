@@ -1,9 +1,11 @@
-import { describe, it, expect, beforeAll } from 'vitest';
+import { describe, it, expect, beforeAll, beforeEach, afterEach } from 'vitest';
+import { sql } from 'drizzle-orm';
 import { Hono } from 'hono';
 import { HTTPException } from 'hono/http-exception';
 import { sign } from 'hono/jwt';
-import { seedTestData } from '../db-utils.js';
+import { seedTestData, cleanDatabase, testDb } from '../db-utils.js';
 import authRoutes from '../../src/routes/auth.js';
+import { clearRateLimitStore } from '../../src/utils/rateLimiter.js';
 
 const TEST_JWT_SECRET = 'test-secret-key-do-not-use-in-production';
 
@@ -179,5 +181,51 @@ describe('Authenticated routes — cookie-based access', () => {
 		const res = await app.request('/api/auth/me');
 
 		expect(res.status).toBe(401);
+	});
+});
+
+describe('POST /api/auth/register — admin bootstrap', () => {
+	beforeEach(async () => {
+		clearRateLimitStore();
+		await cleanDatabase();
+	});
+
+	afterEach(async () => {
+		await cleanDatabase();
+	});
+
+	async function registerAndGetRoles(email: string): Promise<string[]> {
+		const res = await app.request('/api/auth/register', {
+			method: 'POST',
+			headers: { 'Content-Type': 'application/json' },
+			body: JSON.stringify({ email, password: 'password123', displayName: 'Test' }),
+		});
+		expect(res.status).toBe(200);
+		const cookie = res.headers.get('set-cookie')?.match(/auth_token=([^;]+)/)?.[1];
+		const meRes = await app.request('/api/auth/me', {
+			headers: { Cookie: `auth_token=${cookie}` },
+		});
+		const body = await meRes.json() as { roles: string[] };
+		return body.roles;
+	}
+
+	it('first ever registrant gets admin role', async () => {
+		const roles = await registerAndGetRoles('first@test.com');
+		expect(roles).toContain('admin');
+	});
+
+	it('second registrant does not get admin role', async () => {
+		await registerAndGetRoles('first@test.com');
+		const roles = await registerAndGetRoles('second@test.com');
+		expect(roles).not.toContain('admin');
+	});
+
+	it('does not grant admin when deleted_users is non-empty and active users table is empty', async () => {
+		await testDb.execute(sql`
+			INSERT INTO "user"."deleted_users" (user_id, email, display_name, roles, created_at)
+			VALUES (999, 'deleted@test.com', 'Deleted', ARRAY['admin', 'user']::text[], NOW())
+		`);
+		const roles = await registerAndGetRoles('newcomer@test.com');
+		expect(roles).not.toContain('admin');
 	});
 });
