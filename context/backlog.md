@@ -103,9 +103,9 @@ _None identified._
 
 | Category | High | Medium | Low | Total |
 |----------|------|--------|-----|-------|
-| Security | 0 | 2 | 0 | 2 |
+| Security | 0 | 0 | 0 | 0 |
 | Bugs | 0 | 0 | 2 | 2 |
 | Performance | 1 | 3 | 2 | 6 |
 | Improvements & Refactors | 1 | 5 | 6 | 12 |
 | Feature Ideas | 2 | 6 | 10 | 18 |
-| **Total** | **4** | **16** | **20** | **40** |
+| **Total** | **4** | **14** | **20** | **38** |
