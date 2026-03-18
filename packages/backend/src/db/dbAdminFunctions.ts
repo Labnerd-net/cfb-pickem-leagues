@@ -91,41 +91,6 @@ export async function addWeek(week: AdminWeekData): Promise<void> {
 }
 
 // ------------------------------------------------------------------
-// Add single game to a week
-// ------------------------------------------------------------------
-export async function addGameToWeek(game: AdminGameData): Promise<void> {
-  logger.debug({ year: game.year, week: game.weekNumber }, 'addGameToWeek');
-  try {
-    let winningTeam: Team = 'pending';
-    if (game.completed && game.homePoints !== null && game.awayPoints !== null) {
-      if (game.homePoints > game.awayPoints) {
-        winningTeam = 'home_team';
-      } else if (game.awayPoints > game.homePoints) {
-        winningTeam = 'away_team';
-      }
-    }
-    await db.insert(adminGames).values({
-      cfbdGameId: game.cfbdGameId,
-      ncaaGameId: game.ncaaGameId,
-      picked: false,
-      weekNumber: game.weekNumber,
-      year: game.year,
-      seasonType: game.seasonType,
-      completed: game.completed,
-      homeTeam: game.homeTeam,
-      awayTeam: game.awayTeam,
-      homePoints: game.completed ? game.homePoints : null,
-      awayPoints: game.completed ? game.awayPoints : null,
-      winningTeam: winningTeam,
-      startTime: game.startTime,
-    });
-  } catch (e) {
-    logger.error({ err: e }, 'addGameToWeek failed');
-    throw e;
-  }
-}
-
-// ------------------------------------------------------------------
 // Upsert single game for a week (safe to re-import; preserves picked & gameId)
 // ------------------------------------------------------------------
 export async function upsertGameForWeek(game: AdminGameData): Promise<void> {
