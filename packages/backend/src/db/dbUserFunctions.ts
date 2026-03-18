@@ -1,4 +1,4 @@
-import { eq, and, sql } from 'drizzle-orm';
+import { eq, and, sql, count } from 'drizzle-orm';
 import { alias } from 'drizzle-orm/pg-core';
 import { users, games, deletedUsers } from './schema/users.js';
 import { adminGames } from './schema/admin.js';
@@ -36,6 +36,24 @@ export async function returnUsers(): Promise<ProfileData[]> {
     return rows.map(r => ({ ...r, emailVerified: r.emailVerified ?? false }));
   } catch (e) {
     logger.error({ err: e }, 'returnUsers failed');
+    throw e;
+  }
+}
+
+// ------------------------------------------------------------------
+// Return total count of users ever registered (active + deleted)
+// Used to determine first-user admin bootstrap — must include deleted
+// accounts to prevent re-opening the admin window if the sole admin
+// deletes their account.
+// ------------------------------------------------------------------
+export async function returnTotalUserCount(): Promise<number> {
+  logger.debug('returnTotalUserCount');
+  try {
+    const [activeResult] = await db.select({ count: count() }).from(users);
+    const [deletedResult] = await db.select({ count: count() }).from(deletedUsers);
+    return (activeResult?.count ?? 0) + (deletedResult?.count ?? 0);
+  } catch (e) {
+    logger.error({ err: e }, 'returnTotalUserCount failed');
     throw e;
   }
 }

@@ -54,8 +54,10 @@ const auth = new Hono<{ Variables: Variables }>()
     if (existing?.length) throw new HTTPException(409, { message: 'User already exists' });
 
     const passwordHash = await bcrypt.hash(password, bcryptSaltRounds);
-    const totalUsers = await dbUserFunctions.returnUsers();
-    const roles = totalUsers.length === 0 ? ['user', 'admin'] : ['user'];
+    // First user ever (active + soft-deleted) gets admin. Counting both tables
+    // prevents re-opening the bootstrap window if the sole admin deletes their account.
+    const totalEverRegistered = await dbUserFunctions.returnTotalUserCount();
+    const roles = totalEverRegistered === 0 ? ['user', 'admin'] : ['user'];
     const user = { email, passwordHash, roles, displayName: displayName.trim() } as UserData;
     const result = await dbUserFunctions.addUser(user);
     if (!result || !(result.length > 0)) {

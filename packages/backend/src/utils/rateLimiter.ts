@@ -92,6 +92,13 @@ export function rateLimit(config: RateLimitConfig) {
 }
 
 /**
+ * Clear the rate limit store — for use in tests and graceful shutdown hooks.
+ */
+export function clearRateLimitStore(): void {
+  store.clear();
+}
+
+/**
  * Preset: Strict rate limit for authentication endpoints
  * 5 attempts per 15 minutes
  */

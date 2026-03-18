@@ -5,6 +5,7 @@ import {
 	returnUsers,
 	returnUserByEmail,
 	returnUserById,
+	returnTotalUserCount,
 	addPickedGame,
 	addPickedGamesBatch,
 	returnUserGames,
@@ -15,6 +16,41 @@ import { db } from '../../../src/db/index.js';
 describe('User Database Functions', () => {
 	beforeAll(async () => {
 		await seedTestData();
+	});
+
+	describe('returnTotalUserCount', () => {
+		afterEach(async () => {
+			await cleanDatabase();
+			await seedTestData();
+		});
+
+		it('counts only active users when no deleted users exist', async () => {
+			const count = await returnTotalUserCount();
+			expect(count).toBe(2); // seedTestData inserts 2 users
+		});
+
+		it('includes deleted users in the total', async () => {
+			await db.execute(
+				sql`INSERT INTO "user"."deleted_users" (user_id, email, display_name, roles, created_at) VALUES (999, 'deleted@test.com', 'Deleted User', ARRAY['user']::text[], NOW())`
+			);
+			const count = await returnTotalUserCount();
+			expect(count).toBe(3); // 2 active + 1 deleted
+		});
+
+		it('returns 0 when both tables are empty', async () => {
+			await cleanDatabase();
+			const count = await returnTotalUserCount();
+			expect(count).toBe(0);
+		});
+
+		it('returns deleted count when active table is empty', async () => {
+			await cleanDatabase();
+			await db.execute(
+				sql`INSERT INTO "user"."deleted_users" (user_id, email, display_name, roles, created_at) VALUES (1, 'gone@test.com', 'Gone User', ARRAY['admin', 'user']::text[], NOW())`
+			);
+			const count = await returnTotalUserCount();
+			expect(count).toBe(1);
+		});
 	});
 
 	describe('returnUsers', () => {
