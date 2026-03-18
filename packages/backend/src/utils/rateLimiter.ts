@@ -41,12 +41,16 @@ export function rateLimit(config: RateLimitConfig) {
   const { windowMs, maxRequests, message = 'Too many requests, please try again later' } = config;
 
   return async (c: Context, next: Next) => {
-    // Get client IP address (check various headers for proxied requests)
-    const ip =
-      c.req.header('x-forwarded-for')?.split(',')[0] ||
-      c.req.header('x-real-ip') ||
-      c.req.header('cf-connecting-ip') ||
-      'unknown';
+    // Get client IP address. Only trust forwarded headers when TRUST_PROXY=true,
+    // otherwise use the raw socket address to prevent IP spoofing.
+    const trustProxy = process.env.TRUST_PROXY === 'true';
+    const ip = trustProxy
+      ? (c.req.header('x-forwarded-for')?.split(',')[0]?.trim() ||
+         c.req.header('x-real-ip') ||
+         c.req.header('cf-connecting-ip') ||
+         'unknown')
+      : ((c.req.raw as unknown as { socket?: { remoteAddress?: string } }).socket
+           ?.remoteAddress ?? 'unknown');
 
     const now = Date.now();
     const key = `${ip}:${c.req.path}`;

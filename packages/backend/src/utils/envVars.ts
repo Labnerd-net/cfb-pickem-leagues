@@ -56,6 +56,10 @@ export const devCurrentTime = isProduction ? undefined : process.env.DEV_CURRENT
 // Set to 'true' to bypass pick deadline enforcement (useful for off-season testing)
 export const ignorePickDeadline = process.env.PICKS_IGNORE_DEADLINE === 'true';
 
+// Set to 'true' when running behind a trusted reverse proxy (Nginx, Traefik) that sets
+// x-forwarded-for. When false (default), rate limiting uses the raw socket address only.
+export const trustProxy = process.env.TRUST_PROXY === 'true';
+
 // Notification / SMTP configuration
 export const notificationFromEmail = process.env.NOTIFICATION_FROM_EMAIL || '';
 export const smtpHost = process.env.SMTP_HOST || '';

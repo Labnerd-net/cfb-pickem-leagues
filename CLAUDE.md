@@ -124,7 +124,7 @@ All frontend API functions in `src/apis/` (`authRequests.ts`, `userRequests.ts`,
 
 ### Specs and Plans
 
-- `context/specs/` — feature specification files. Each spec describes requirements, edge cases, and acceptance criteria for a feature. New specs are created via the `/spec` slash command.
+- `context/specs/` — feature specification files. Each spec describes requirements, edge cases, and acceptance criteria for a feature. New specs are created via the `/feature spec` command.
 - `context/features/` — implementation plan files paired with specs.
 
 ## Environment Variables
@@ -155,6 +155,7 @@ LOG_LEVEL=info                # trace | debug | info | warn | error | fatal | si
 
 # Picks
 PICKS_IGNORE_DEADLINE=false   # set true to bypass deadline enforcement (off-season testing)
+TRUST_PROXY=false             # set true when behind a trusted reverse proxy (Nginx, Traefik) that sets x-forwarded-for
 
 # Season simulation (dev only — ignored in production)
 DEV_CURRENT_TIME=             # ISO 8601 string to pin the backend clock, e.g. 2024-08-31T10:00:00Z

@@ -1,5 +1,14 @@
 import type { LeaderboardEntry } from '@shared/types/cfb-pickem-api.js';
 
+function escapeHtml(str: string): string {
+  return str
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+
 interface EmailTemplate {
   subject: string;
   htmlBody: string;
@@ -71,7 +80,7 @@ export function rankingsUpdatedTemplate({
   const leaderboardRows = leaderboard
     .map((e, i) => {
       const pct = e.percentage !== null ? Math.round(e.percentage * 100) + '%' : '—';
-      return `<tr><td>${i + 1}</td><td>${e.displayName}</td><td>${e.correct}/${e.total}</td><td>${pct}</td></tr>`;
+      return `<tr><td>${i + 1}</td><td>${escapeHtml(e.displayName)}</td><td>${e.correct}/${e.total}</td><td>${pct}</td></tr>`;
     })
     .join('');
 
