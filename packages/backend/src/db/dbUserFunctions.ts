@@ -3,7 +3,6 @@ import { alias } from 'drizzle-orm/pg-core';
 import { users, games, deletedUsers } from './schema/users.js';
 import { adminGames } from './schema/admin.js';
 import { db } from './index.js';
-import * as dbAdminFunctions from './dbAdminFunctions.js';
 import logger from '../utils/logger.js';
 import type {
   ProfileData,
@@ -165,13 +164,6 @@ export async function addPickedGame(pick: UserGamePicks, userId: string): Promis
   logger.debug({ game: pick.game, userId }, 'addPickedGame');
   try {
     const userIdNumber = Number(userId);
-    const gameInfo = await dbAdminFunctions.returnGame(pick.game);
-    if (!gameInfo || gameInfo.length === 0) {
-      throw new Error("Game Doesn't Exist");
-    }
-    if (gameInfo.length > 1) {
-      throw new Error('Too many games matched');
-    }
     await db
       .insert(games)
       .values({

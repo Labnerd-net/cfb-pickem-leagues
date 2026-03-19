@@ -152,6 +152,20 @@ export async function returnGame(game: number): Promise<AdminDbGameData[]> {
 }
 
 // ------------------------------------------------------------------
+// Return multiple games by ID array (bulk fetch)
+// ------------------------------------------------------------------
+export async function returnGamesBulk(gameIds: number[]): Promise<AdminDbGameData[]> {
+  logger.debug({ count: gameIds.length }, 'returnGamesBulk');
+  if (gameIds.length === 0) return [];
+  try {
+    return await db.select().from(adminGames).where(inArray(adminGames.gameId, gameIds));
+  } catch (e) {
+    logger.error({ err: e }, 'returnGamesBulk failed');
+    throw e;
+  }
+}
+
+// ------------------------------------------------------------------
 // Set all picked games from number array
 // ------------------------------------------------------------------
 export async function setPickedGames(pickedGames: PickedGamesRequest): Promise<void> {

@@ -1,6 +1,6 @@
 {
-  "id": "6d29348a-7ab3-4dd5-9a54-02d1fd812bf3",
-  "prevId": "423c5fd3-4077-4173-96bb-908548dbf0e6",
+  "id": "6b747d4c-5dd3-4440-b859-15900b35ced6",
+  "prevId": "6d29348a-7ab3-4dd5-9a54-02d1fd812bf3",
   "version": "7",
   "dialect": "postgresql",
   "tables": {
@@ -155,6 +155,21 @@
             },
             {
               "expression": "picked",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "games_start_time_idx": {
+          "name": "games_start_time_idx",
+          "columns": [
+            {
+              "expression": "start_time",
               "isExpression": false,
               "asc": true,
               "nulls": "last"

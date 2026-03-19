@@ -142,9 +142,8 @@ describe('User Database Functions', () => {
 		});
 
 		it('should throw when game does not exist', async () => {
-			await expect(addPickedGame({ game: 99999, pick: 'home_team' }, '1')).rejects.toThrow(
-				"Game Doesn't Exist"
-			);
+			// FK constraint violation from DB — caller is responsible for pre-validating game existence
+			await expect(addPickedGame({ game: 99999, pick: 'home_team' }, '1')).rejects.toThrow();
 		});
 	});
 

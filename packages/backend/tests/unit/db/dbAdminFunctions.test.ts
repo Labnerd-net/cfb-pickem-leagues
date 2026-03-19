@@ -5,6 +5,7 @@ import {
   returnWeeksByYear,
 	returnGamesForWeek,
 	returnPickedGames,
+	returnGamesBulk,
 	getSeasonTypeForWeek,
 	enrichWeekIdentifier,
 } from '../../../src/db/dbAdminFunctions.js';
@@ -138,6 +139,39 @@ describe('Admin Database Functions', () => {
 			const seasonType = await getSeasonTypeForWeek(2026, 99);
 
 			expect(seasonType).toBeNull();
+		});
+	});
+
+	describe('returnGamesBulk', () => {
+		it('should return all games for a list of valid IDs', async () => {
+			await createTestWeek(1, 2024, 'regular');
+			const gameA = await createTestGame(1, 2024, 'Team A', 'Team B', true, false);
+			const gameB = await createTestGame(1, 2024, 'Team C', 'Team D', true, false);
+			const idA = (gameA as { game_id: number }).game_id;
+			const idB = (gameB as { game_id: number }).game_id;
+
+			const games = await returnGamesBulk([idA, idB]);
+
+			expect(games.length).toBe(2);
+			expect(games.map(g => g.gameId).sort()).toEqual([idA, idB].sort());
+		});
+
+		it('should return only matched rows when some IDs do not exist', async () => {
+			await createTestWeek(1, 2024, 'regular');
+			const game = await createTestGame(1, 2024, 'Team A', 'Team B', true, false);
+			const id = (game as { game_id: number }).game_id;
+
+			const games = await returnGamesBulk([id, 99998, 99999]);
+
+			expect(games.length).toBe(1);
+			expect(games[0].gameId).toBe(id);
+		});
+
+		it('should return empty array for empty input without error', async () => {
+			const games = await returnGamesBulk([]);
+
+			expect(Array.isArray(games)).toBe(true);
+			expect(games.length).toBe(0);
 		});
 	});
 
