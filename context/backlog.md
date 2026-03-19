@@ -2,7 +2,7 @@
 
 > Generated: 2026-03-14
 > Focus: Full audit
-> Last updated: 2026-03-18 — completed [1], [4], [5], [6] (security fixes); admin log viewer UI shipped (partially addresses [28]); completed [9] (picks transaction), closed [12] (false positive); completed [10], [11], [17] (cron week reset, settings error handling, email transporter singleton); completed [2], [3] (email XSS escape, rate limiter TRUST_PROXY); completed [7], [8] (DB connection options, admin bootstrap fix); completed [13], [14] (ErrorBoundary hookup, addGameToWeek removal); completed [15], [19] (picks N+1 bulk fetch, startTime index)
+> Last updated: 2026-03-18 — completed [1], [4], [5], [6] (security fixes); admin log viewer UI shipped (partially addresses [28]); completed [9] (picks transaction), closed [12] (false positive); completed [10], [11], [17] (cron week reset, settings error handling, email transporter singleton); completed [2], [3] (email XSS escape, rate limiter TRUST_PROXY); completed [7], [8] (DB connection options, admin bootstrap fix); completed [13], [14] (ErrorBoundary hookup, addGameToWeek removal); completed [15], [19] (picks N+1 bulk fetch, startTime index); completed [16], [18] (notification bulk query, rate limiter interval cleanup)
 
 ---
 
@@ -38,8 +38,8 @@ _None identified._
 _None identified._
 
 ### Medium
-- **[16]** **[packages/backend/src/notifications/dispatcher.ts:55]** + **[packages/backend/src/db/dbNotificationFunctions.ts:96-133]**: `hasNotificationBeenSent` is called per-user in a sequential loop — 50 users = 50 queries per notification event. Fix: bulk-fetch already-sent log entries for the `(year, weekNumber, notificationType, channel)` tuple; build a userId Set; one query replaces N.
-- **[18]** **[packages/backend/src/utils/rateLimiter.ts:14-17]**: The cleanup `setInterval` is registered at module load and never cleared. Prevents graceful shutdown and leaks the interval across test suites. Fix: export a `clearRateLimitStore()` function that calls `clearInterval` for use in tests and shutdown hooks.
+_None identified._
+
 ### Low
 - **[20]** **[packages/backend/src/db/dbUserFunctions.ts:217]**: Leaderboard query joins all user picks and groups by user — O(all_picks) complexity. Will degrade noticeably at scale (10K+ users, 100+ weeks). Fix: consider materialized view or short-lived cache invalidated on new picks/score updates.
 - **[21]** **[packages/backend/src/api/index.ts:63]**: External data source (NCAA/CFBD/SportsDataverse) is queried on every admin request with no caching. Fix: in-memory or Redis cache with TTL for game metadata.
@@ -102,7 +102,7 @@ _None identified._
 |----------|------|--------|-----|-------|
 | Security | 0 | 0 | 0 | 0 |
 | Bugs | 0 | 0 | 0 | 0 |
-| Performance | 0 | 3 | 2 | 5 |
+| Performance | 0 | 1 | 2 | 3 |
 | Improvements & Refactors | 1 | 5 | 6 | 12 |
 | Feature Ideas | 2 | 6 | 10 | 18 |
-| **Total** | **3** | **14** | **18** | **35** |
+| **Total** | **1** | **12** | **18** | **31** |
