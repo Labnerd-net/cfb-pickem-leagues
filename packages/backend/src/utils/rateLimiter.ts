@@ -14,7 +14,7 @@ interface RateLimitEntry {
 const store = new Map<string, RateLimitEntry>();
 
 // Cleanup old entries every 5 minutes to prevent memory leaks
-setInterval(
+let cleanupInterval: ReturnType<typeof setInterval> | undefined = setInterval(
   () => {
     const now = Date.now();
     for (const [key, entry] of store.entries()) {
@@ -92,10 +92,13 @@ export function rateLimit(config: RateLimitConfig) {
 }
 
 /**
- * Clear the rate limit store — for use in tests and graceful shutdown hooks.
+ * Clear the rate limit store and stop the cleanup interval.
+ * For use in tests and graceful shutdown hooks.
  */
 export function clearRateLimitStore(): void {
   store.clear();
+  clearInterval(cleanupInterval);
+  cleanupInterval = undefined;
 }
 
 /**

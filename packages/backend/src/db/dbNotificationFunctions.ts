@@ -133,6 +133,37 @@ export async function returnEmailOptedInUsers(
 }
 
 // ------------------------------------------------------------------
+// Bulk-check which users already have a sent log entry for a given
+// (year, weekNumber, notificationType, channel) tuple.
+// Returns a Set of userIds — O(1) lookup for the dispatcher loop.
+// ------------------------------------------------------------------
+export async function returnSentNotificationUserIds(
+  year: number,
+  weekNumber: number,
+  notificationType: NotificationType,
+  channel: NotificationChannel
+): Promise<Set<number>> {
+  logger.debug({ year, weekNumber, notificationType, channel }, 'returnSentNotificationUserIds');
+  try {
+    const rows = await db
+      .select({ userId: notificationLog.userId })
+      .from(notificationLog)
+      .where(
+        and(
+          eq(notificationLog.year, year),
+          eq(notificationLog.weekNumber, weekNumber),
+          eq(notificationLog.notificationType, notificationType),
+          eq(notificationLog.channel, channel)
+        )
+      );
+    return new Set(rows.map(r => r.userId));
+  } catch (e) {
+    logger.error({ err: e }, 'returnSentNotificationUserIds failed');
+    throw e;
+  }
+}
+
+// ------------------------------------------------------------------
 // Log a sent notification (on conflict do nothing = idempotent)
 // For broadcast channels, use userId = 0 as sentinel
 // ------------------------------------------------------------------

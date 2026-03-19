@@ -2,7 +2,7 @@
 
 > Generated: 2026-03-14
 > Focus: Full audit
-> Last updated: 2026-03-18 — completed [1], [4], [5], [6] (security fixes); admin log viewer UI shipped (partially addresses [28]); completed [9] (picks transaction), closed [12] (false positive); completed [10], [11], [17] (cron week reset, settings error handling, email transporter singleton); completed [2], [3] (email XSS escape, rate limiter TRUST_PROXY); completed [7], [8] (DB connection options, admin bootstrap fix)
+> Last updated: 2026-03-18 — completed [1], [4], [5], [6] (security fixes); admin log viewer UI shipped (partially addresses [28]); completed [9] (picks transaction), closed [12] (false positive); completed [10], [11], [17] (cron week reset, settings error handling, email transporter singleton); completed [2], [3] (email XSS escape, rate limiter TRUST_PROXY); completed [7], [8] (DB connection options, admin bootstrap fix); completed [13], [14] (ErrorBoundary hookup, addGameToWeek removal); completed [15], [19] (picks N+1 bulk fetch, startTime index)
 
 ---
 
@@ -28,21 +28,18 @@ _None identified._
 _None identified._
 
 ### Low
-- **[13]** **[packages/frontend/src/components/ErrorBoundary.tsx]**: `ErrorBoundary` component is defined but never used in `App.tsx`. Render errors from any route component are uncaught. Fix: wrap `<BrowserRouter>` or `<AuthProvider>` in `<ErrorBoundary>`.
-- **[14]** **[packages/backend/src/db/dbAdminFunctions.ts:96-126]**: `addGameToWeek` appears to be dead code — all routes and cron use `upsertGameForWeek` exclusively. Fix: verify and remove to avoid confusion.
+_None identified._
 
 ---
 
 ## Performance
 
 ### High
-- **[15]** **[packages/backend/src/routes/user.ts:111-129]** + **[packages/backend/src/db/dbUserFunctions.ts:150-153]**: Two layers of N+1 on picks submission. First, `user.ts` calls `returnGame(pick.game)` sequentially in a `for` loop (one query per pick). Second, `addPickedGame` calls `returnGame` again for every pick. 10 games = 20 SELECT queries before any INSERT. Fix: bulk-fetch all submitted game IDs with a single `WHERE game_id = ANY(...)` query before the loop; remove the redundant fetch inside `addPickedGame`.
+_None identified._
 
 ### Medium
 - **[16]** **[packages/backend/src/notifications/dispatcher.ts:55]** + **[packages/backend/src/db/dbNotificationFunctions.ts:96-133]**: `hasNotificationBeenSent` is called per-user in a sequential loop — 50 users = 50 queries per notification event. Fix: bulk-fetch already-sent log entries for the `(year, weekNumber, notificationType, channel)` tuple; build a userId Set; one query replaces N.
 - **[18]** **[packages/backend/src/utils/rateLimiter.ts:14-17]**: The cleanup `setInterval` is registered at module load and never cleared. Prevents graceful shutdown and leaks the interval across test suites. Fix: export a `clearRateLimitStore()` function that calls `clearInterval` for use in tests and shutdown hooks.
-- **[19]** **[packages/backend/src/db/schema/admin.ts:43]**: No index on `games.startTime`. Deadline enforcement in `user.ts` and cron refresh query this column. Fix: add `index('games_start_time_idx').on(table.startTime)`.
-
 ### Low
 - **[20]** **[packages/backend/src/db/dbUserFunctions.ts:217]**: Leaderboard query joins all user picks and groups by user — O(all_picks) complexity. Will degrade noticeably at scale (10K+ users, 100+ weeks). Fix: consider materialized view or short-lived cache invalidated on new picks/score updates.
 - **[21]** **[packages/backend/src/api/index.ts:63]**: External data source (NCAA/CFBD/SportsDataverse) is queried on every admin request with no caching. Fix: in-memory or Redis cache with TTL for game metadata.
@@ -104,8 +101,8 @@ _None identified._
 | Category | High | Medium | Low | Total |
 |----------|------|--------|-----|-------|
 | Security | 0 | 0 | 0 | 0 |
-| Bugs | 0 | 0 | 2 | 2 |
-| Performance | 1 | 3 | 2 | 6 |
+| Bugs | 0 | 0 | 0 | 0 |
+| Performance | 0 | 3 | 2 | 5 |
 | Improvements & Refactors | 1 | 5 | 6 | 12 |
 | Feature Ideas | 2 | 6 | 10 | 18 |
-| **Total** | **4** | **14** | **20** | **38** |
+| **Total** | **3** | **14** | **18** | **35** |

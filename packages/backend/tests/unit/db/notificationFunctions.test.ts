@@ -4,6 +4,7 @@ import {
 	upsertNotificationPreference,
 	addNotificationLog,
 	hasNotificationBeenSent,
+	returnSentNotificationUserIds,
 	markEmailVerified,
 	returnNotificationSettings,
 	returnNotificationPreferences,
@@ -67,6 +68,27 @@ describe('Notification Database Functions', () => {
 		it('should deduplicate broadcast entries (no error on duplicate)', async () => {
 			await addNotificationLog(0, 2024, 1, 'games_ready', 'telegram');
 			await expect(addNotificationLog(0, 2024, 1, 'games_ready', 'telegram')).resolves.not.toThrow();
+		});
+	});
+
+	describe('returnSentNotificationUserIds', () => {
+		it('should return an empty Set when no log entries exist', async () => {
+			const result = await returnSentNotificationUserIds(2024, 1, 'games_ready', 'email');
+			expect(result).toBeInstanceOf(Set);
+			expect(result.size).toBe(0);
+		});
+
+		it('should return a Set containing IDs of users with log entries for the tuple', async () => {
+			await addNotificationLog(1, 2024, 1, 'games_ready', 'email');
+			await addNotificationLog(2, 2024, 1, 'games_ready', 'email');
+			// Different channel — should not appear
+			await addNotificationLog(3, 2024, 1, 'games_ready', 'ntfy');
+
+			const result = await returnSentNotificationUserIds(2024, 1, 'games_ready', 'email');
+			expect(result.has(1)).toBe(true);
+			expect(result.has(2)).toBe(true);
+			expect(result.has(3)).toBe(false);
+			expect(result.size).toBe(2);
 		});
 	});
 

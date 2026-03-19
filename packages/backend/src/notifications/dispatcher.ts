@@ -2,6 +2,7 @@ import {
   addNotificationLog,
   hasNotificationBeenSent,
   returnEmailOptedInUsers,
+  returnSentNotificationUserIds,
 } from '../db/dbNotificationFunctions.js';
 import { returnLeaderboard } from '../db/dbUserFunctions.js';
 import { sendEmail } from './emailSender.js';
@@ -48,12 +49,12 @@ export async function dispatchNotification(params: DispatchParams): Promise<void
   // ----------------------------------------------------------------
   try {
     const users = await returnEmailOptedInUsers(notificationType);
+    const alreadySentUserIds = await returnSentNotificationUserIds(year, weekNumber, notificationType, 'email');
     for (const user of users) {
       try {
         if (!user.emailVerified || !user.email) continue;
 
-        const alreadySent = await hasNotificationBeenSent(user.userId, year, weekNumber, notificationType, 'email');
-        if (alreadySent) continue;
+        if (alreadySentUserIds.has(user.userId)) continue;
 
         const sent = await sendEmail({
           to: user.email,
