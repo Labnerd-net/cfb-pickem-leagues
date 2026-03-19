@@ -1,7 +1,7 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import type { Context, Next } from 'hono';
 
-import { rateLimit } from '../../../src/utils/rateLimiter.js';
+import { rateLimit, clearRateLimitStore } from '../../../src/utils/rateLimiter.js';
 
 // Build a minimal Hono-like Context with configurable headers and socket address
 function makeContext(opts: {
@@ -34,6 +34,7 @@ describe('rate limiter — TRUST_PROXY=false (default)', () => {
 	});
 
 	afterEach(() => {
+		clearRateLimitStore();
 		if (origTrustProxy === undefined) {
 			delete process.env.TRUST_PROXY;
 		} else {
@@ -79,6 +80,7 @@ describe('rate limiter — TRUST_PROXY=true', () => {
 	});
 
 	afterEach(() => {
+		clearRateLimitStore();
 		if (origTrustProxy === undefined) {
 			delete process.env.TRUST_PROXY;
 		} else {
@@ -122,6 +124,7 @@ describe('rate limiter — general behavior', () => {
 	});
 
 	afterEach(() => {
+		clearRateLimitStore();
 		if (origTrustProxy === undefined) {
 			delete process.env.TRUST_PROXY;
 		} else {
@@ -167,5 +170,12 @@ describe('rate limiter — general behavior', () => {
 		const next = vi.fn().mockResolvedValue(undefined);
 		await middleware(ctx, next);
 		expect(next).toHaveBeenCalled(); // should not crash
+	});
+
+	it('clearRateLimitStore calls clearInterval to stop the cleanup timer', () => {
+		const spy = vi.spyOn(globalThis, 'clearInterval');
+		clearRateLimitStore();
+		expect(spy).toHaveBeenCalled();
+		spy.mockRestore();
 	});
 });
