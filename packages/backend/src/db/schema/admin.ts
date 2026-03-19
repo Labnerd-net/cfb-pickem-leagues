@@ -68,6 +68,7 @@ export const adminGames = adminSchema.table(
     index('games_year_week_idx').on(table.year, table.weekNumber),
     index('games_picked_idx').on(table.picked),
     index('games_year_week_picked_idx').on(table.year, table.weekNumber, table.picked),
+    index('games_start_time_idx').on(table.startTime),
     unique('games_natural_key').on(table.year, table.weekNumber, table.homeTeam, table.awayTeam),
   ]
 );

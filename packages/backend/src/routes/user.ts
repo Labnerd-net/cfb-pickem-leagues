@@ -5,7 +5,7 @@ import {
   returnPickedGames,
   returnWeeksByYear,
   returnWeekByQuery,
-  returnGame,
+  returnGamesBulk,
 } from '../db/dbAdminFunctions.js';
 import {
   returnNotificationSettings,
@@ -108,12 +108,14 @@ const user = new Hono<{ Variables: Variables }>()
       throw new HTTPException(400, { message: 'Duplicate game IDs in picks request' });
 
     // Validate all games before writing anything — prevents partial commits
+    const fetchedGames = await returnGamesBulk(gameIds);
+    const gameMap = new Map(fetchedGames.map(g => [g.gameId, g]));
+
     for (const pick of userPicks.games) {
-      const gameRows = await returnGame(pick.game);
-      if (!gameRows || gameRows.length === 0) {
+      const game = gameMap.get(pick.game);
+      if (!game) {
         throw new HTTPException(404, { message: `Game ${pick.game} not found` });
       }
-      const game = gameRows[0];
 
       if (!game.picked) {
         throw new HTTPException(422, {
