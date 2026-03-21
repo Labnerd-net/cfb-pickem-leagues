@@ -3,7 +3,8 @@ import { screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { renderWithProviders } from '../../test-utils.js';
 import WeekGameSection from '../../../src/components/user/WeekGameSection.js';
-import type { AdminDbGameData, AdminDbWeekData, UserDbGameData } from '@shared/types/cfb-pickem-api';
+import type { AdminWeekData } from '@shared/types/cfb-pickem-api';
+import type { AdminGameWire, UserPickWire } from '../../../src/apis/userRequests.js';
 
 vi.mock('../../../src/apis/userRequests.js', () => ({
 	getPickedGames: vi.fn(),
@@ -38,19 +39,18 @@ const futureDate = (daysAhead: number) => {
 	return d.toISOString();
 };
 
-function makeWeek(overrides: Partial<AdminDbWeekData> = {}): AdminDbWeekData {
+function makeWeek(overrides: Partial<AdminWeekData> = {}): AdminWeekData {
 	return {
 		weekNumber: 1,
 		year: currentYear,
 		seasonType: 'regular',
 		weekStart: pastDate(14),
 		weekEnd: pastDate(7),
-		createdAt: new Date(),
 		...overrides,
 	};
 }
 
-function makeGame(overrides: Partial<AdminDbGameData> = {}): AdminDbGameData {
+function makeGame(overrides: Partial<AdminGameWire> = {}): AdminGameWire {
 	return {
 		gameId: 1,
 		cfbdGameId: null,
@@ -66,12 +66,12 @@ function makeGame(overrides: Partial<AdminDbGameData> = {}): AdminDbGameData {
 		awayPoints: 17,
 		winningTeam: 'home_team',
 		startTime: null,
-		createdAt: new Date(),
+		createdAt: new Date().toISOString(),
 		...overrides,
 	};
 }
 
-function makeUserPick(overrides: Partial<UserDbGameData> = {}): UserDbGameData {
+function makeUserPick(overrides: Partial<UserPickWire> = {}): UserPickWire {
 	return {
 		userId: 1,
 		gameId: 1,
@@ -88,7 +88,7 @@ function makeUserPick(overrides: Partial<UserDbGameData> = {}): UserDbGameData {
 		winningTeam: 'home_team',
 		startTime: null,
 		teamChosen: 'home_team',
-		createdAt: new Date(),
+		createdAt: new Date().toISOString(),
 		...overrides,
 	};
 }
@@ -166,7 +166,7 @@ describe('WeekGameSection (results mode)', () => {
 	it('shows "Pending" chip when winningTeam is pending and game has started', async () => {
 		mockGetPickedGames.mockResolvedValue({
 			success: true,
-			data: [makeGame({ completed: false, winningTeam: 'pending', homePoints: null, awayPoints: null, startTime: new Date(pastDate(1)) })],
+			data: [makeGame({ completed: false, winningTeam: 'pending', homePoints: null, awayPoints: null, startTime: pastDate(1) })],
 		});
 		mockGetUserPicks.mockResolvedValue({
 			success: true,
@@ -255,7 +255,7 @@ describe('WeekGameSection (picks mode)', () => {
 		winningTeam: 'pending',
 		homePoints: null,
 		awayPoints: null,
-		startTime: new Date(futureDate(3)),
+		startTime: futureDate(3),
 	});
 
 	it('renders radio buttons for team selection when games have not started', async () => {
@@ -335,7 +335,7 @@ describe('WeekGameSection (mode switching)', () => {
 		winningTeam: 'pending',
 		homePoints: null,
 		awayPoints: null,
-		startTime: new Date(futureDate(3)),
+		startTime: futureDate(3),
 	});
 
 	it('transitions from results mode to picks mode when switching to an open week', async () => {

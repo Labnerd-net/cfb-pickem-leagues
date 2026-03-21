@@ -1,4 +1,4 @@
-import type { AdminDbWeekData, AdminDbGameData } from '@shared/types/cfb-pickem-api.js';
+import type { AdminWeekData } from '@shared/types/cfb-pickem-api.js';
 import { getNow } from './clock.js';
 
 export { getNow };
@@ -21,7 +21,7 @@ export function getCurrentSeason(date: Date = getNow()): number {
     : date.getFullYear();
 }
 
-export function getMostRecentCompletedWeek(weeks: AdminDbWeekData[]): CurrentWeek {
+export function getMostRecentCompletedWeek(weeks: AdminWeekData[]): CurrentWeek {
   const now = getNow();
   const completed = weeks
     .filter(w => new Date(w.weekEnd) < now)
@@ -35,13 +35,13 @@ export function getMostRecentCompletedWeek(weeks: AdminDbWeekData[]): CurrentWee
     : { year: getCurrentSeason(now), week: 1 };
 }
 
-export function isResultsMode(games: AdminDbGameData[]): boolean {
+export function isResultsMode(games: { completed: boolean; startTime: Date | string | null }[]): boolean {
   return games.some(
-    g => g.completed || (g.startTime !== null && getNow() >= new Date(g.startTime)),
+    g => g.completed || (g.startTime !== null && getNow() >= new Date(g.startTime as string)),
   );
 }
 
-export function getCurrentWeek(weeks: AdminDbWeekData[]): CurrentWeek {
+export function getCurrentWeek(weeks: AdminWeekData[]): CurrentWeek {
   const now = getNow();
 
   // Find week where current date is between weekStart and weekEnd

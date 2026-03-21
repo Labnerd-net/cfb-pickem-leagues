@@ -1,11 +1,12 @@
 import { useState, useEffect } from 'react';
 import { Box, Typography, CircularProgress, Snackbar, Alert } from '@mui/material';
-import type { AdminDbWeekData, AdminDbGameData } from '@shared/types/cfb-pickem-api';
+import type { AdminWeekData } from '@shared/types/cfb-pickem-api';
 import {
   getPickedGames,
   getUserPicks,
   getWeeksForYear,
   postUserPicks,
+  type AdminGameWire,
 } from '../../apis/userRequests';
 import { getCurrentWeek, getCurrentSeason, isResultsMode } from '../../utils/weekCalculation';
 import { logger } from '../../utils/logger';
@@ -17,8 +18,8 @@ import type { WeekResultRow } from './WeekResultsGameRow';
 export default function WeekGameSection() {
   const [selectedYear, setSelectedYear] = useState<number>(0);
   const [selectedWeek, setSelectedWeek] = useState<number>(0);
-  const [weeks, setWeeks] = useState<AdminDbWeekData[]>([]);
-  const [games, setGames] = useState<AdminDbGameData[]>([]);
+  const [weeks, setWeeks] = useState<AdminWeekData[]>([]);
+  const [games, setGames] = useState<AdminGameWire[]>([]);
   const [userPicks, setUserPicks] = useState<Map<number, 'home_team' | 'away_team'>>(new Map());
   const [savedPickIds, setSavedPickIds] = useState<Set<number>>(new Set());
   const [loading, setLoading] = useState<boolean>(false);
@@ -44,7 +45,7 @@ export default function WeekGameSection() {
           getWeeksForYear(currentSeason + 1),
         ]);
 
-        const allWeeks: AdminDbWeekData[] = [];
+        const allWeeks: AdminWeekData[] = [];
         if (prevSeasonResult.success && prevSeasonResult.data) {
           allWeeks.push(...prevSeasonResult.data.weeks);
         }

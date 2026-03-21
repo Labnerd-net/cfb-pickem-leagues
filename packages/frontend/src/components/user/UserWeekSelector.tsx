@@ -1,11 +1,11 @@
 import { Box, Select, MenuItem, FormControl, InputLabel } from '@mui/material';
-import type { AdminDbWeekData } from '@shared/types/cfb-pickem-api';
+import type { AdminWeekData } from '@shared/types/cfb-pickem-api';
 import { getCurrentSeason } from '../../utils/weekCalculation';
 
 interface UserWeekSelectorProps {
   selectedYear: number;
   selectedWeek: number;
-  weeks: AdminDbWeekData[];
+  weeks: AdminWeekData[];
   onYearChange: (year: number) => void;
   onWeekChange: (week: number) => void;
   loading: boolean;

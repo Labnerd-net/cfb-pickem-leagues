@@ -11,8 +11,7 @@ import {
   Tooltip,
   Typography,
 } from '@mui/material';
-import type { NotificationSettings, NotificationType } from '@shared/types/cfb-pickem-api.js';
-import type { BroadcastChannelInfo } from '../apis/userRequests';
+import type { BroadcastChannelInfo, NotificationSettings, NotificationType } from '@shared/types/cfb-pickem-api.js';
 import {
   getNotificationSettings,
   getBroadcastChannels,

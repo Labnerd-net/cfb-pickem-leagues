@@ -1,9 +1,9 @@
 import { describe, it, expect, vi } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import UserPicksGameCard from '../../../src/components/user/UserPicksGameCard.js';
-import type { AdminDbGameData } from '@shared/types/cfb-pickem-api';
+import type { AdminGameWire } from '../../../src/apis/userRequests.js';
 
-function makeGame(overrides: Partial<AdminDbGameData> = {}): AdminDbGameData {
+function makeGame(overrides: Partial<AdminGameWire> = {}): AdminGameWire {
   return {
     gameId: 1,
     cfbdGameId: null,
@@ -19,7 +19,7 @@ function makeGame(overrides: Partial<AdminDbGameData> = {}): AdminDbGameData {
     awayPoints: null,
     winningTeam: 'pending',
     startTime: null,
-    createdAt: new Date('2025-08-01T00:00:00Z'),
+    createdAt: '2025-08-01T00:00:00.000Z',
     ...overrides,
   };
 }
@@ -28,7 +28,7 @@ const noop = vi.fn();
 
 describe('UserPicksGameCard', () => {
   it('renders interactive radios when startTime is in the future', () => {
-    const futureTime = new Date(Date.now() + 60 * 60 * 1000);
+    const futureTime = new Date(Date.now() + 60 * 60 * 1000).toISOString();
     render(
       <UserPicksGameCard
         game={makeGame({ startTime: futureTime })}
@@ -43,7 +43,7 @@ describe('UserPicksGameCard', () => {
   it('renders disabled radios and LOCKED badge when startTime is in the past', () => {
     const original = import.meta.env.VITE_IGNORE_PICK_DEADLINE;
     import.meta.env.VITE_IGNORE_PICK_DEADLINE = 'false';
-    const pastTime = new Date(Date.now() - 60 * 60 * 1000);
+    const pastTime = new Date(Date.now() - 60 * 60 * 1000).toISOString();
     render(
       <UserPicksGameCard
         game={makeGame({ startTime: pastTime })}
@@ -57,7 +57,7 @@ describe('UserPicksGameCard', () => {
   });
 
   it('displays formatted start time when startTime is set', () => {
-    const startTime = new Date('2025-09-06T19:00:00Z');
+    const startTime = '2025-09-06T19:00:00.000Z';
     render(
       <UserPicksGameCard
         game={makeGame({ startTime })}
@@ -79,7 +79,7 @@ describe('UserPicksGameCard', () => {
   });
 
   it('shows SAVED badge for non-locked game with saved pick', () => {
-    const futureTime = new Date(Date.now() + 60 * 60 * 1000);
+    const futureTime = new Date(Date.now() + 60 * 60 * 1000).toISOString();
     render(
       <UserPicksGameCard
         game={makeGame({ startTime: futureTime })}

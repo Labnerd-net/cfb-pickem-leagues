@@ -1,9 +1,9 @@
 import { Box, Button, Typography, CircularProgress } from '@mui/material';
-import type { AdminDbGameData } from '@shared/types/cfb-pickem-api';
+import type { AdminGameWire } from '../../apis/userRequests';
 import UserPicksGameCard from './UserPicksGameCard';
 
 interface UserPicksGamesListProps {
-  games: AdminDbGameData[];
+  games: AdminGameWire[];
   picks: Map<number, 'home_team' | 'away_team'>;
   savedPicks: Set<number>;
   onPickChange: (gameId: number, pick: 'home_team' | 'away_team') => void;

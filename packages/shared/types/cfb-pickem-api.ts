@@ -198,3 +198,9 @@ export interface NotificationLogEntry {
   sentAt: string; // ISO string
   recipient: string; // "Broadcast" | displayName | "Deleted user"
 }
+
+export interface BroadcastChannelInfo {
+  ntfy: { topicUrl: string } | null;
+  telegram: { inviteUrl: string | null } | null;
+  discord: { inviteUrl: string | null } | null;
+}

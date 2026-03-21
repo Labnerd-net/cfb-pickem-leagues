@@ -1,11 +1,11 @@
 import { Paper, RadioGroup, FormControlLabel, Radio, Box, Typography, Chip } from '@mui/material';
-import type { AdminDbGameData } from '@shared/types/cfb-pickem-api';
+import type { AdminGameWire } from '../../apis/userRequests';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import LockIcon from '@mui/icons-material/Lock';
 import { getNow } from '../../utils/clock';
 
 interface UserPicksGameCardProps {
-  game: AdminDbGameData;
+  game: AdminGameWire;
   selectedTeam?: 'home_team' | 'away_team';
   onPickChange: (gameId: number, pick: 'home_team' | 'away_team') => void;
   hasSavedPick?: boolean;
