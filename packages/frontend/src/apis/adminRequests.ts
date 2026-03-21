@@ -80,7 +80,7 @@ export interface GetGamesResponse {
 export async function getGamesForWeek(weekData: WeekIdentifier): Promise<GetGamesResponse> {
   try {
     const res = await client.api.admin.games.$get({
-      query: { year: String(weekData.year), week: String(weekData.week) },
+      query: { year: String(weekData.year), weekNumber: String(weekData.week) },
     });
     if (!res.ok) {
       const body = (await res.json()) as unknown as { error: string };

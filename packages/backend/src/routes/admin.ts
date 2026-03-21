@@ -4,10 +4,10 @@ import * as dbAdminFunctions from '../db/dbAdminFunctions.js';
 import { returnUsers, updateUserRoles } from '../db/dbUserFunctions.js';
 import { returnNotificationLogs } from '../db/dbNotificationFunctions.js';
 import { getGameData, getWeekData } from '../api/index.js';
-import type { JwtData, WeekIdentifier } from '@shared/types/cfb-pickem-api.js';
+import type { JwtData } from '@shared/types/cfb-pickem-api.js';
 import { authMiddleware, requireRole } from '../utils/middleware.js';
 import { apiRateLimit } from '../utils/rateLimiter.js';
-import { weekIdentifierValidator, pickedGameRequestValidator, updateUserRolesValidator, markGameCompleteValidator } from '../utils/zValidate.js';
+import { weekIdentifierValidator, pickedGameRequestValidator, updateUserRolesValidator, markGameCompleteValidator, yearQueryValidator, weekIdentifierQueryValidator } from '../utils/zValidate.js';
 import { dispatchNotification } from '../notifications/dispatcher.js';
 import { sendNtfyNotification } from '../notifications/ntfySender.js';
 import { sendTelegramNotification } from '../notifications/telegramSender.js';
@@ -63,11 +63,9 @@ const admin = new Hono<{ Variables: Variables }>()
     return c.json({ status: 'added all weeks' });
   })
   // Get Weeks for Year
-  .get('/weeks', apiRateLimit, authMiddleware, requireRole('admin'), async c => {
-    const yearNumber = Number(c.req.query('year'));
-    if (isNaN(yearNumber) || yearNumber < 1900 || yearNumber > 2100)
-      throw new HTTPException(400, { message: 'year must be between 1900 and 2100' });
-    const weeks = await dbAdminFunctions.returnWeeksByYear(yearNumber);
+  .get('/weeks', apiRateLimit, authMiddleware, requireRole('admin'), yearQueryValidator, async c => {
+    const { year } = c.req.valid('query');
+    const weeks = await dbAdminFunctions.returnWeeksByYear(year);
     return c.json({ weeks });
   })
   // Add Games to Week
@@ -102,16 +100,9 @@ const admin = new Hono<{ Variables: Variables }>()
     }
   )
   // Get Games for Week
-  .get('/games', apiRateLimit, authMiddleware, requireRole('admin'), async c => {
-    const weekIdentifier: WeekIdentifier = {
-      year: Number(c.req.query('year')),
-      week: Number(c.req.query('week')),
-    };
-    if (isNaN(weekIdentifier.year) || weekIdentifier.year < 1900 || weekIdentifier.year > 2100)
-      throw new HTTPException(400, { message: 'year must be between 1900 and 2100' });
-    if (isNaN(weekIdentifier.week) || weekIdentifier.week < 1 || weekIdentifier.week > 52)
-      throw new HTTPException(400, { message: 'week must be between 1 and 52' });
-    const weekGames = await dbAdminFunctions.returnGamesForWeek(weekIdentifier);
+  .get('/games', apiRateLimit, authMiddleware, requireRole('admin'), weekIdentifierQueryValidator, async c => {
+    const { year, weekNumber } = c.req.valid('query');
+    const weekGames = await dbAdminFunctions.returnGamesForWeek({ year, week: weekNumber });
     return c.json({ weekGames });
   })
   // Set picked games

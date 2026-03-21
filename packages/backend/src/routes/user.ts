@@ -31,6 +31,8 @@ import { apiRateLimit } from '../utils/rateLimiter.js';
 import {
   allUserPickedRequestValidator,
   notificationPreferenceValidator,
+  yearQueryValidator,
+  weekIdentifierQueryValidator,
 } from '../utils/zValidate.js';
 
 type Variables = {
@@ -48,50 +50,33 @@ const user = new Hono<{ Variables: Variables }>()
     return c.json(profile);
   })
   // Get user game picks
-  .get('/picks', apiRateLimit, authMiddleware, async c => {
+  .get('/picks', apiRateLimit, authMiddleware, weekIdentifierQueryValidator, async c => {
     const payload = c.get('jwtPayload');
     const userIdString = String(payload.sub);
-    const weekIdentifier: WeekIdentifier = {
-      year: Number(c.req.query('year')),
-      week: Number(c.req.query('week')),
-    };
-    if (isNaN(weekIdentifier.year) || weekIdentifier.year < 1900 || weekIdentifier.year > 2100)
-      throw new HTTPException(400, { message: 'year must be between 1900 and 2100' });
-    if (isNaN(weekIdentifier.week) || weekIdentifier.week < 1 || weekIdentifier.week > 52)
-      throw new HTTPException(400, { message: 'week must be between 1 and 52' });
-    const picks = await dbUserFunctions.returnUserGames(weekIdentifier, userIdString);
+    const { year, weekNumber } = c.req.valid('query');
+    const picks = await dbUserFunctions.returnUserGames({ year, week: weekNumber }, userIdString);
     return c.json({ picks });
   })
   // Get per-week pick history for a year
-  .get('/history', apiRateLimit, authMiddleware, async c => {
+  .get('/history', apiRateLimit, authMiddleware, yearQueryValidator, async c => {
     const payload = c.get('jwtPayload');
     const userIdString = String(payload.sub);
-    const yearNumber = Number(c.req.query('year'));
-    if (isNaN(yearNumber) || yearNumber < 1900 || yearNumber > 2100)
-      throw new HTTPException(400, { message: 'year must be between 1900 and 2100' });
-    const history = await dbUserFunctions.returnUserPickHistory(yearNumber, userIdString);
+    const { year } = c.req.valid('query');
+    const history = await dbUserFunctions.returnUserPickHistory(year, userIdString);
     return c.json({ history });
   })
   // List weeks in a year with picked games
-  .get('/weeks', apiRateLimit, authMiddleware, async c => {
-    const yearNumber = Number(c.req.query('year'));
-    if (isNaN(yearNumber) || yearNumber < 1900 || yearNumber > 2100)
-      throw new HTTPException(400, { message: 'year must be between 1900 and 2100' });
-    const weeks: AdminWeekData[] = await returnWeeksByYear(yearNumber);
+  .get('/weeks', apiRateLimit, authMiddleware, yearQueryValidator, async c => {
+    const { year } = c.req.valid('query');
+    const weeks: AdminWeekData[] = await returnWeeksByYear(year);
     if (!weeks || weeks.length === 0)
       throw new HTTPException(404, { message: 'No weeks available for this year' });
     return c.json({ weeks });
   })
   // Get admin-picked games for a week
-  .get('/games', apiRateLimit, authMiddleware, async c => {
-    const weekIdentifier: WeekIdentifier = {
-      year: Number(c.req.query('year')),
-      week: Number(c.req.query('week')),
-    };
-    if (isNaN(weekIdentifier.year) || weekIdentifier.year < 1900 || weekIdentifier.year > 2100)
-      throw new HTTPException(400, { message: 'year must be between 1900 and 2100' });
-    if (isNaN(weekIdentifier.week) || weekIdentifier.week < 1 || weekIdentifier.week > 52)
-      throw new HTTPException(400, { message: 'week must be between 1 and 52' });
+  .get('/games', apiRateLimit, authMiddleware, weekIdentifierQueryValidator, async c => {
+    const { year, weekNumber } = c.req.valid('query');
+    const weekIdentifier: WeekIdentifier = { year, week: weekNumber };
     const week = await returnWeekByQuery(weekIdentifier);
     if (!week || week.length === 0) throw new HTTPException(404, { message: 'Week not found' });
     const pickedGames: AdminDbGameData[] = await returnPickedGames(weekIdentifier);

@@ -28,6 +28,15 @@ const updateUserRolesSchema = z.object({
 const yearSchema = z.number().int().min(1900).max(2100);
 const weekSchema = z.number().int().min(1).max(52);
 
+const yearQuerySchema = z.object({
+  year: z.coerce.number().int().min(1900).max(2100),
+});
+
+const weekIdentifierQuerySchema = z.object({
+  year: z.coerce.number().int().min(1900).max(2100),
+  weekNumber: z.coerce.number().int().min(1).max(52),
+});
+
 const weekIdentifierSchema: z.ZodType<WeekIdentifier> = z.object({
   year: yearSchema,
   week: weekSchema,
@@ -67,6 +76,8 @@ const loginRequestSchema = z.object({
   password: z.string().min(1),
 });
 
+export const yearQueryValidator = zValidator('query', yearQuerySchema);
+export const weekIdentifierQueryValidator = zValidator('query', weekIdentifierQuerySchema);
 export const markGameCompleteValidator = zValidator('json', markGameCompleteSchema);
 export const weekIdentifierValidator = zValidator('json', weekIdentifierSchema);
 export const pickedGameRequestValidator = zValidator('json', pickedGameRequestSchema);

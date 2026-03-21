@@ -170,13 +170,13 @@ describe('GET /api/leaderboard', () => {
 
 describe('GET /api/leaderboard/scores', () => {
   it('returns 401 with no auth token', async () => {
-    const res = await app.request('/api/leaderboard/scores?year=2024&week=1');
+    const res = await app.request('/api/leaderboard/scores?year=2024&weekNumber=1');
     expect(res.status).toBe(401);
   });
 
   it('returns 400 for invalid year', async () => {
     const token = await makeToken();
-    const res = await app.request('/api/leaderboard/scores?year=bad&week=1', {
+    const res = await app.request('/api/leaderboard/scores?year=bad&weekNumber=1', {
       headers: { Cookie: `auth_token=${token}` },
     });
     expect(res.status).toBe(400);
@@ -184,7 +184,7 @@ describe('GET /api/leaderboard/scores', () => {
 
   it('returns 400 for invalid week', async () => {
     const token = await makeToken();
-    const res = await app.request('/api/leaderboard/scores?year=2024&week=99', {
+    const res = await app.request('/api/leaderboard/scores?year=2024&weekNumber=99', {
       headers: { Cookie: `auth_token=${token}` },
     });
     expect(res.status).toBe(400);
@@ -192,7 +192,7 @@ describe('GET /api/leaderboard/scores', () => {
 
   it('returns empty array when no picks exist for the week', async () => {
     const token = await makeToken();
-    const res = await app.request('/api/leaderboard/scores?year=2024&week=52', {
+    const res = await app.request('/api/leaderboard/scores?year=2024&weekNumber=52', {
       headers: { Cookie: `auth_token=${token}` },
     });
     expect(res.status).toBe(200);
@@ -224,7 +224,7 @@ describe('GET /api/leaderboard/scores', () => {
     `);
 
     const token = await makeToken();
-    const res = await app.request('/api/leaderboard/scores?year=2024&week=5', {
+    const res = await app.request('/api/leaderboard/scores?year=2024&weekNumber=5', {
       headers: { Cookie: `auth_token=${token}` },
     });
     expect(res.status).toBe(200);

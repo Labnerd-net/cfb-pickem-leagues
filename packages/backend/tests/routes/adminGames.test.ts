@@ -47,7 +47,7 @@ describe('GET /api/admin/games', () => {
 
   it('returns empty array when no games in DB without calling external API', async () => {
     const token = await makeAdminToken();
-    const res = await app.request('/api/admin/games?year=2024&week=1', {
+    const res = await app.request('/api/admin/games?year=2024&weekNumber=1', {
       headers: { Cookie: `auth_token=${token}` },
     });
 
@@ -61,7 +61,7 @@ describe('GET /api/admin/games', () => {
     await createTestGame(1, 2024, 'Alabama', 'Georgia');
 
     const token = await makeAdminToken();
-    const res = await app.request('/api/admin/games?year=2024&week=1', {
+    const res = await app.request('/api/admin/games?year=2024&weekNumber=1', {
       headers: { Cookie: `auth_token=${token}` },
     });
 

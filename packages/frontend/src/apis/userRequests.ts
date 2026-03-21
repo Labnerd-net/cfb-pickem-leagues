@@ -60,7 +60,7 @@ export interface UserGameResponse {
 export async function getUserPicks(weekData: WeekIdentifier): Promise<UserGameResponse> {
   try {
     const res = await client.api.user.picks.$get({
-      query: { year: String(weekData.year), week: String(weekData.week) },
+      query: { year: String(weekData.year), weekNumber: String(weekData.week) },
     });
     if (!res.ok) {
       const body = (await res.json()) as unknown as { error: string };
@@ -82,7 +82,7 @@ export interface AdminGameResponse {
 export async function getPickedGames(weekData: WeekIdentifier): Promise<AdminGameResponse> {
   try {
     const res = await client.api.user.games.$get({
-      query: { year: String(weekData.year), week: String(weekData.week) },
+      query: { year: String(weekData.year), weekNumber: String(weekData.week) },
     });
     if (!res.ok) {
       const body = (await res.json()) as unknown as { error: string };
