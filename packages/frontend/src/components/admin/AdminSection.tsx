@@ -1,229 +1,23 @@
-import { useEffect, useState } from 'react';
 import { Box, Alert, Snackbar, Typography, Button, CircularProgress } from '@mui/material';
-import type {
-  AdminDbWeekData,
-  AdminDbGameData,
-  WeekIdentifier,
-} from '@shared/types/cfb-pickem-api';
 import DashboardCard from '../dashboard/DashboardCard';
 import GamesList from './GamesList';
 import AdminPanelSettingsIcon from '@mui/icons-material/AdminPanelSettings';
-import {
-  getGamesForWeek,
-  getWeeksForYear,
-  setPickedGames,
-  addWeeksToYear,
-  addGamesToWeek,
-} from '../../apis/adminRequests';
 import WeekSelector from './WeekSelector';
-import { getCurrentSeason } from '../../utils/weekCalculation';
+import { useWeekManagement } from './useWeekManagement';
+import { useGameManagement } from './useGameManagement';
 
 export default function AdminSection() {
-  // State
-  const [selectedYear, setSelectedYear] = useState(() => getCurrentSeason());
-  const [selectedWeek, setSelectedWeek] = useState(1);
-  const [weeks, setWeeks] = useState<AdminDbWeekData[]>([]);
-  const [games, setGames] = useState<AdminDbGameData[]>([]);
-  const [selectedGameIds, setSelectedGameIds] = useState<number[]>([]);
-  const [loading, setLoading] = useState(false);
-  const [importing, setImporting] = useState(false);
-  const [weeksChecked, setWeeksChecked] = useState(false);
-  const [errorMessage, setErrorMessage] = useState<string | null>(null);
-  const [successMessage, setSuccessMessage] = useState<string | null>(null);
-  const [importFeedback, setImportFeedback] = useState<{
-    severity: 'success' | 'error';
-    message: string;
-  } | null>(null);
+  const weekHook = useWeekManagement();
+  const gameHook = useGameManagement(weekHook.selectedYear, weekHook.selectedWeek);
 
-  // API Handlers
-  const handleLoadGames = async () => {
-    setLoading(true);
-    setErrorMessage(null);
-    setSuccessMessage(null);
-    setGames([]);
-    setSelectedGameIds([]);
+  const loading = weekHook.weekLoading || gameHook.gameLoading;
+  const importing = gameHook.importing;
 
-    try {
-      const weekData: WeekIdentifier = {
-        year: selectedYear,
-        week: selectedWeek,
-      };
-      const result = await getGamesForWeek(weekData);
-      if (result.success && result.data) {
-        setGames(result.data);
-        // Pre-select games that are already marked as picked
-        const pickedGameIds = result.data.filter(game => game.picked).map(game => game.gameId);
-        setSelectedGameIds(pickedGameIds);
-        setSuccessMessage(`Loaded ${result.data.length} games`);
-      } else {
-        setErrorMessage(result.error || 'Failed to load games');
-      }
-    } catch {
-      setErrorMessage('An unexpected error occurred while loading games');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleSavePickedGames = async () => {
-    if (selectedGameIds.length === 0) {
-      setErrorMessage('Please select at least one game');
-      return;
-    }
-
-    setLoading(true);
-    setErrorMessage(null);
-    setSuccessMessage(null);
-
-    try {
-      const pickedData = {
-        year: selectedYear,
-        week: selectedWeek,
-        games: selectedGameIds,
-      };
-      const result = await setPickedGames(pickedData);
-      if (result.success) {
-        setSuccessMessage(`${selectedGameIds.length} games marked as available for picks`);
-        // Reload games to reflect updated picked status
-        await handleLoadGames();
-      } else {
-        setErrorMessage(result.error || 'Failed to save picked games');
-      }
-    } catch {
-      setErrorMessage('An unexpected error occurred while saving picked games');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleImportWeeks = async () => {
-    setImporting(true);
-    setImportFeedback(null);
-    try {
-      const result = await addWeeksToYear(selectedYear);
-      if (result.success) {
-        const weeksResult = await getWeeksForYear(selectedYear);
-        if (weeksResult.success && weeksResult.data) {
-          setWeeks(weeksResult.data);
-          if (weeksResult.data.length > 0) setSelectedWeek(weeksResult.data[0].weekNumber);
-        }
-        setImportFeedback({ severity: 'success', message: `Weeks loaded for ${selectedYear}` });
-      } else {
-        setImportFeedback({ severity: 'error', message: result.error || 'Failed to load weeks' });
-      }
-    } catch {
-      setImportFeedback({ severity: 'error', message: 'An unexpected error occurred' });
-    } finally {
-      setImporting(false);
-    }
-  };
-
-  const handleImportGames = async () => {
-    setImporting(true);
-    setImportFeedback(null);
-    try {
-      const result = await addGamesToWeek({ year: selectedYear, week: selectedWeek });
-      if (result.success) {
-        const gamesResult = await getGamesForWeek({ year: selectedYear, week: selectedWeek });
-        if (gamesResult.success && gamesResult.data) {
-          setGames(gamesResult.data);
-          const pickedIds = gamesResult.data.filter(g => g.picked).map(g => g.gameId);
-          setSelectedGameIds(pickedIds);
-        }
-        setImportFeedback({
-          severity: 'success',
-          message: result.data?.status || 'Games imported',
-        });
-      } else {
-        setImportFeedback({ severity: 'error', message: result.error || 'Failed to import games' });
-      }
-    } catch {
-      setImportFeedback({ severity: 'error', message: 'An unexpected error occurred' });
-    } finally {
-      setImporting(false);
-    }
-  };
-
-  const handleGameSelection = (gameId: number, selected: boolean) => {
-    setSelectedGameIds(prev => (selected ? [...prev, gameId] : prev.filter(id => id !== gameId)));
-  };
-
-  const handleSelectAll = () => {
-    setSelectedGameIds(games.map(game => game.gameId));
-  };
-
-  const handleDeselectAll = () => {
-    setSelectedGameIds([]);
-  };
-
-  const handleCloseSnackbar = () => {
-    setErrorMessage(null);
-    setSuccessMessage(null);
-  };
-
-  // Load weeks when year changes
-  useEffect(() => {
-    const loadWeeks = async () => {
-      setLoading(true);
-      setWeeksChecked(false);
-      setErrorMessage(null);
-      setSuccessMessage(null);
-      setWeeks([]);
-      setImportFeedback(null);
-
-      try {
-        const result = await getWeeksForYear(selectedYear);
-        if (result.success && result.data) {
-          setWeeks(result.data);
-          // Reset to week 1 when year changes
-          setSelectedWeek(1);
-        } else {
-          setErrorMessage(result.error || 'Failed to load weeks');
-        }
-      } catch {
-        setErrorMessage('An unexpected error occurred while loading weeks');
-      } finally {
-        setWeeksChecked(true);
-        setLoading(false);
-      }
-    };
-
-    loadWeeks();
-  }, [selectedYear]);
-
-  // Load games when year or week changes
-  useEffect(() => {
-    const loadGames = async () => {
-      setLoading(true);
-      setErrorMessage(null);
-      setSuccessMessage(null);
-      setGames([]);
-      setSelectedGameIds([]);
-      setImportFeedback(null);
-
-      try {
-        const weekData: WeekIdentifier = {
-          year: selectedYear,
-          week: selectedWeek,
-        };
-        const result = await getGamesForWeek(weekData);
-        if (result.success && result.data) {
-          setGames(result.data);
-          // Pre-select games that are already marked as picked
-          const pickedGameIds = result.data.filter(game => game.picked).map(game => game.gameId);
-          setSelectedGameIds(pickedGameIds);
-        } else {
-          setErrorMessage(result.error || 'Failed to load games');
-        }
-      } catch {
-        setErrorMessage('An unexpected error occurred while loading games');
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    loadGames();
-  }, [selectedYear, selectedWeek]);
+  const handleImportWeeks = () =>
+    weekHook.importWeeks({
+      setImporting: gameHook.setImporting,
+      setImportFeedback: gameHook.setImportFeedback,
+    });
 
   return (
     <Box
@@ -241,27 +35,27 @@ export default function AdminSection() {
       >
         <Box sx={{ mt: 2 }}>
           <WeekSelector
-            selectedYear={selectedYear}
-            onYearChange={setSelectedYear}
-            weeks={weeks}
-            selectedWeek={selectedWeek}
-            onWeekChange={setSelectedWeek}
+            selectedYear={weekHook.selectedYear}
+            onYearChange={weekHook.setSelectedYear}
+            weeks={weekHook.weeks}
+            selectedWeek={weekHook.selectedWeek}
+            onWeekChange={weekHook.setSelectedWeek}
             loading={loading || importing}
           />
 
           {/* Import feedback alert */}
-          {importFeedback && (
+          {gameHook.importFeedback && (
             <Alert
-              severity={importFeedback.severity}
-              onClose={() => setImportFeedback(null)}
+              severity={gameHook.importFeedback.severity}
+              onClose={() => gameHook.setImportFeedback(null)}
               sx={{ mt: 2 }}
             >
-              {importFeedback.message}
+              {gameHook.importFeedback.message}
             </Alert>
           )}
 
           {/* Empty weeks state */}
-          {weeksChecked && !loading && weeks.length === 0 && (
+          {weekHook.weeksChecked && !loading && weekHook.weeks.length === 0 && (
             <Box
               sx={{ mt: 3, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2 }}
             >
@@ -272,7 +66,7 @@ export default function AdminSection() {
                   fontStyle: 'italic',
                 }}
               >
-                No weeks loaded for {selectedYear} Season
+                No weeks loaded for {weekHook.selectedYear} Season
               </Typography>
               <Button
                 variant="contained"
@@ -286,15 +80,15 @@ export default function AdminSection() {
           )}
 
           {/* Games section — only render when weeks are loaded */}
-          {weeks.length > 0 && (
+          {weekHook.weeks.length > 0 && (
             <Box sx={{ mt: 4, pt: 4, borderTop: 2, borderColor: 'divider' }}>
-              {games.length > 0 ? (
+              {gameHook.games.length > 0 ? (
                 <>
                   <Box sx={{ display: 'flex', justifyContent: 'flex-end', mb: 2 }}>
                     <Button
                       variant="outlined"
                       size="small"
-                      onClick={handleImportGames}
+                      onClick={gameHook.handleImportGames}
                       disabled={importing || loading}
                       startIcon={importing ? <CircularProgress size={16} /> : undefined}
                     >
@@ -302,12 +96,12 @@ export default function AdminSection() {
                     </Button>
                   </Box>
                   <GamesList
-                    games={games}
-                    selectedGameIds={selectedGameIds}
-                    onGameSelect={handleGameSelection}
-                    onSelectAll={handleSelectAll}
-                    onDeselectAll={handleDeselectAll}
-                    onSaveSelection={handleSavePickedGames}
+                    games={gameHook.games}
+                    selectedGameIds={gameHook.selectedGameIds}
+                    onGameSelect={gameHook.handleGameSelection}
+                    onSelectAll={gameHook.handleSelectAll}
+                    onDeselectAll={gameHook.handleDeselectAll}
+                    onSaveSelection={gameHook.handleSavePickedGames}
                     loading={loading}
                   />
                 </>
@@ -324,11 +118,11 @@ export default function AdminSection() {
                         fontStyle: 'italic',
                       }}
                     >
-                      No games imported for week {selectedWeek}
+                      No games imported for week {weekHook.selectedWeek}
                     </Typography>
                     <Button
                       variant="contained"
-                      onClick={handleImportGames}
+                      onClick={gameHook.handleImportGames}
                       disabled={importing}
                       startIcon={importing ? <CircularProgress size={16} /> : undefined}
                     >
@@ -344,24 +138,24 @@ export default function AdminSection() {
 
       {/* Success/Error Messages */}
       <Snackbar
-        open={!!successMessage}
+        open={!!gameHook.successMessage}
         autoHideDuration={6000}
-        onClose={handleCloseSnackbar}
+        onClose={gameHook.clearMessages}
         anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
       >
-        <Alert onClose={handleCloseSnackbar} severity="success" sx={{ width: '100%' }}>
-          {successMessage}
+        <Alert onClose={gameHook.clearMessages} severity="success" sx={{ width: '100%' }}>
+          {gameHook.successMessage}
         </Alert>
       </Snackbar>
 
       <Snackbar
-        open={!!errorMessage}
+        open={!!gameHook.errorMessage}
         autoHideDuration={6000}
-        onClose={handleCloseSnackbar}
+        onClose={gameHook.clearMessages}
         anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
       >
-        <Alert onClose={handleCloseSnackbar} severity="error" sx={{ width: '100%' }}>
-          {errorMessage}
+        <Alert onClose={gameHook.clearMessages} severity="error" sx={{ width: '100%' }}>
+          {gameHook.errorMessage}
         </Alert>
       </Snackbar>
     </Box>
