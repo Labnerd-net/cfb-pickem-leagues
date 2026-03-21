@@ -2,7 +2,7 @@
 
 > Generated: 2026-03-14
 > Focus: Full audit
-> Last updated: 2026-03-18 — completed [1], [4], [5], [6] (security fixes); admin log viewer UI shipped (partially addresses [28]); completed [9] (picks transaction), closed [12] (false positive); completed [10], [11], [17] (cron week reset, settings error handling, email transporter singleton); completed [2], [3] (email XSS escape, rate limiter TRUST_PROXY); completed [7], [8] (DB connection options, admin bootstrap fix); completed [13], [14] (ErrorBoundary hookup, addGameToWeek removal); completed [15], [19] (picks N+1 bulk fetch, startTime index); completed [16], [18] (notification bulk query, rate limiter interval cleanup)
+> Last updated: 2026-03-20 — completed [1], [4], [5], [6] (security fixes); admin log viewer UI shipped (partially addresses [28]); completed [9] (picks transaction), closed [12] (false positive); completed [10], [11], [17] (cron week reset, settings error handling, email transporter singleton); completed [2], [3] (email XSS escape, rate limiter TRUST_PROXY); completed [7], [8] (DB connection options, admin bootstrap fix); completed [13], [14] (ErrorBoundary hookup, addGameToWeek removal); completed [15], [19] (picks N+1 bulk fetch, startTime index); completed [16], [18] (notification bulk query, rate limiter interval cleanup); completed [22], [26], [32] (week query-param validation refactor, weekNumber rename, schema consolidation)
 
 ---
 
@@ -49,13 +49,12 @@ _None identified._
 ## Improvements & Refactors
 
 ### High
-- **[22]** **[packages/backend/src/routes/*.ts]**: Week identifier validation (`isNaN(year)`, `year < 1900`, etc.) is duplicated across `user.ts`, `leaderboard.ts`, and `admin.ts`. Fix: extract to a reusable Zod schema or validator in `zValidate.ts`.
+_None identified._
 
 ### Medium
 - **[23]** **[packages/frontend/src/components/admin/AdminSection.tsx]**: 369 lines, 9 state variables, 7 async handlers — handles week loading, game loading, import, selection, and all state. Fix: extract into `useWeekManagement` and `useGameManagement` hooks; the JSX would drop to ~100 lines.
 - **[24]** **[packages/frontend/src/components/user/WeekGameSection.tsx]**: 305 lines, 10 state variables, 3 `useEffect` hooks, renders both picks-mode and results-mode. Fix: move data-fetching logic into a `useWeekGames` hook; split picks/results render into separate components.
 - **[25]** **[packages/frontend/src/apis/userRequests.ts:48,70,92,112,151,177]**: Multiple API functions cast response bodies with `as unknown as SomeType`, defeating the end-to-end type safety the Hono RPC client is supposed to provide. Fix: align frontend type definitions with actual response shapes so the casts are unnecessary.
-- **[26]** **[packages/backend/src/routes/admin.ts]** vs **[packages/backend/src/routes/user.ts]**: Inconsistent week parameter naming (`week` vs `weekNumber`) across endpoints causes confusion. Fix: standardize all endpoints to `weekNumber`.
 - **[27]** **[packages/backend/src/db/schema/users.ts:52-56]**: `user.games` foreign key to `admin.games` uses `.onDelete('cascade')`. If an admin game is ever deleted, all user picks for it silently vanish. Fix: consider soft deletes or a "pick voided" status to maintain audit trail.
 
 ### Low
@@ -63,7 +62,6 @@ _None identified._
 - **[29]** **[packages/backend/src/routes/leaderboard.ts:14]**: `GET /leaderboard` returns all users on every request with no pagination. Only relevant at meaningful scale (50+ users). Fix: add `?limit=50&offset=0` query params.
 - **[30]** **[packages/backend/src/notifications/templates.ts:30-36]**: `toLocaleString` called without an explicit timezone — kickoff times in reminder emails reflect server timezone, not anything meaningful to recipients. Fix: pass `{ timeZone: 'America/New_York' }` or use UTC with explicit label.
 - **[31]** **[packages/frontend/src/pages/Dashboard.tsx:68-78]**: Tab-to-component mapping uses sequential `currentTab === N` ternaries. Inserting a new tab shifts all subsequent indices. Fix: use an array of `{ label, icon, component }` objects indexed by tab value.
-- **[32]** **[packages/backend/src/utils/zValidate.ts]**: Zod schemas scattered — some in `zValidate.ts`, others inline in route files. Fix: consolidate all request schemas into `zValidate.ts` for discoverability.
 - **[33]** **[packages/backend/src/utils/envVars.js]**: Environment variables validated lazily at runtime when first accessed. Fix: validate all required env vars at startup via Zod and fail fast with a clear error message.
 
 ---
@@ -103,6 +101,6 @@ _None identified._
 | Security | 0 | 0 | 0 | 0 |
 | Bugs | 0 | 0 | 0 | 0 |
 | Performance | 0 | 1 | 2 | 3 |
-| Improvements & Refactors | 1 | 5 | 6 | 12 |
+| Improvements & Refactors | 0 | 4 | 5 | 9 |
 | Feature Ideas | 2 | 6 | 10 | 18 |
-| **Total** | **1** | **12** | **18** | **31** |
+| **Total** | **0** | **11** | **17** | **28** |
