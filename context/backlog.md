@@ -2,7 +2,7 @@
 
 > Generated: 2026-03-14
 > Focus: Full audit
-> Last updated: 2026-03-20 — completed [1], [4], [5], [6] (security fixes); admin log viewer UI shipped (partially addresses [28]); completed [9] (picks transaction), closed [12] (false positive); completed [10], [11], [17] (cron week reset, settings error handling, email transporter singleton); completed [2], [3] (email XSS escape, rate limiter TRUST_PROXY); completed [7], [8] (DB connection options, admin bootstrap fix); completed [13], [14] (ErrorBoundary hookup, addGameToWeek removal); completed [15], [19] (picks N+1 bulk fetch, startTime index); completed [16], [18] (notification bulk query, rate limiter interval cleanup); completed [22], [26], [32] (week query-param validation refactor, weekNumber rename, schema consolidation)
+> Last updated: 2026-03-20 — completed [1], [4], [5], [6] (security fixes); admin log viewer UI shipped (partially addresses [28]); completed [9] (picks transaction), closed [12] (false positive); completed [10], [11], [17] (cron week reset, settings error handling, email transporter singleton); completed [2], [3] (email XSS escape, rate limiter TRUST_PROXY); completed [7], [8] (DB connection options, admin bootstrap fix); completed [13], [14] (ErrorBoundary hookup, addGameToWeek removal); completed [15], [19] (picks N+1 bulk fetch, startTime index); completed [16], [18] (notification bulk query, rate limiter interval cleanup); completed [22], [26], [32] (week query-param validation refactor, weekNumber rename, schema consolidation); completed [25] (Hono RPC type cast removal); completed [23], [24] (AdminSection and WeekGameSection component refactor)
 
 ---
 
@@ -52,9 +52,6 @@ _None identified._
 _None identified._
 
 ### Medium
-- **[23]** **[packages/frontend/src/components/admin/AdminSection.tsx]**: 369 lines, 9 state variables, 7 async handlers — handles week loading, game loading, import, selection, and all state. Fix: extract into `useWeekManagement` and `useGameManagement` hooks; the JSX would drop to ~100 lines.
-- **[24]** **[packages/frontend/src/components/user/WeekGameSection.tsx]**: 305 lines, 10 state variables, 3 `useEffect` hooks, renders both picks-mode and results-mode. Fix: move data-fetching logic into a `useWeekGames` hook; split picks/results render into separate components.
-- **[25]** **[packages/frontend/src/apis/userRequests.ts:48,70,92,112,151,177]**: Multiple API functions cast response bodies with `as unknown as SomeType`, defeating the end-to-end type safety the Hono RPC client is supposed to provide. Fix: align frontend type definitions with actual response shapes so the casts are unnecessary.
 - **[27]** **[packages/backend/src/db/schema/users.ts:52-56]**: `user.games` foreign key to `admin.games` uses `.onDelete('cascade')`. If an admin game is ever deleted, all user picks for it silently vanish. Fix: consider soft deletes or a "pick voided" status to maintain audit trail.
 
 ### Low
@@ -101,6 +98,6 @@ _None identified._
 | Security | 0 | 0 | 0 | 0 |
 | Bugs | 0 | 0 | 0 | 0 |
 | Performance | 0 | 1 | 2 | 3 |
-| Improvements & Refactors | 0 | 4 | 5 | 9 |
+| Improvements & Refactors | 0 | 1 | 5 | 6 |
 | Feature Ideas | 2 | 6 | 10 | 18 |
-| **Total** | **0** | **11** | **17** | **28** |
+| **Total** | **0** | **8** | **17** | **25** |
