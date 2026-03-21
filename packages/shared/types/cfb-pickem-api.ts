@@ -1,7 +1,7 @@
 export type Role = "user" | "admin";
 export type NotificationType = "games_ready" | "picks_reminder" | "rankings_updated";
 export type NotificationChannel = "email" | "ntfy" | "telegram" | "discord";
-export type Team = "home_team" | "away_team" | "pending";
+export type Team = "home_team" | "away_team" | "pending" | "voided";
 export type Classification = "fbs" | "fcs" | "d1" | "d2" | "d3";
 export type DataSource = "ncaa" | "cfbd" | "sdv";
 export type SeasonType =

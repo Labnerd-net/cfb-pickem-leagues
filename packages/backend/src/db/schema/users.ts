@@ -53,7 +53,7 @@ export const games = userSchema.table(
       columns: [table.gameId],
       foreignColumns: [adminGames.gameId],
       name: 'user_games_admin_games_fk',
-    }).onDelete('cascade'),
+    }).onDelete('restrict'),
   ]
 );
 
