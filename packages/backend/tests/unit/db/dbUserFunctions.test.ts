@@ -10,6 +10,9 @@ import {
 	addPickedGamesBatch,
 	returnUserGames,
 	returnLeaderboard,
+	returnWeekScores,
+	returnUserPickCount,
+	returnUserPickHistory,
 } from '../../../src/db/dbUserFunctions.js';
 import { db } from '../../../src/db/index.js';
 
@@ -380,6 +383,148 @@ describe('User Database Functions', () => {
 			// Only the 2024 pick should count
 			expect(user1in2024.total).toBe(1);
 			expect(user1in2024.correct).toBe(1);
+		});
+
+		it('does not count voided picks on pending games as pending', async () => {
+			await createTestWeek(1, 2024, 'regular');
+			const g1 = await createTestGame(1, 2024, 'Home A', 'Away A', true, false);
+			const id1 = (g1 as { game_id: number }).game_id;
+
+			// Game is still pending (winningTeam = 'pending' by default)
+			await db.execute(sql`
+				INSERT INTO "user"."games" (user_id, game_id, team_chosen)
+				VALUES (1, ${id1}, 'voided')
+			`);
+
+			const entries = await returnLeaderboard(2024);
+			const user1 = entries.find(e => e.userId === 1)!;
+
+			expect(user1.pending).toBe(0);
+			expect(user1.correct).toBe(0);
+			expect(user1.incorrect).toBe(0);
+		});
+
+		it('does not count voided picks as incorrect', async () => {
+			await createTestWeek(1, 2024, 'regular');
+			const g1 = await createTestGame(1, 2024, 'Home A', 'Away A', true, true);
+			const g2 = await createTestGame(1, 2024, 'Home B', 'Away B', true, false);
+			const id1 = (g1 as { game_id: number }).game_id;
+			const id2 = (g2 as { game_id: number }).game_id;
+
+			// g1 completed with home_team winning; g2 pending
+			await db.execute(sql`UPDATE "admin"."games" SET winning_team = 'home_team' WHERE game_id = ${id1}`);
+
+			// User 1 has one real correct pick and one voided pick on a completed game
+			await addPickedGame({ game: id1, pick: 'home_team' }, '1');
+			await db.execute(sql`
+				INSERT INTO "user"."games" (user_id, game_id, team_chosen)
+				VALUES (1, ${id2}, 'voided')
+			`);
+
+			const entries = await returnLeaderboard(2024);
+			const user1 = entries.find(e => e.userId === 1)!;
+
+			// Voided pick on g2 should not appear in incorrect count
+			expect(user1.correct).toBe(1);
+			expect(user1.incorrect).toBe(0);
+		});
+	});
+
+	describe('voided pick exclusions', () => {
+		afterEach(async () => {
+			await cleanDatabase();
+			await seedTestData();
+		});
+
+		it('returnUserGames excludes voided picks', async () => {
+			await createTestWeek(1, 2024, 'regular');
+			const g1 = await createTestGame(1, 2024, 'Team A', 'Team B', true, false);
+			const g2 = await createTestGame(1, 2024, 'Team C', 'Team D', true, false);
+			const id1 = (g1 as { game_id: number }).game_id;
+			const id2 = (g2 as { game_id: number }).game_id;
+
+			await addPickedGame({ game: id1, pick: 'home_team' }, '1');
+			await db.execute(sql`
+				INSERT INTO "user"."games" (user_id, game_id, team_chosen)
+				VALUES (1, ${id2}, 'voided')
+			`);
+
+			const picks = await returnUserGames({ year: 2024, week: 1 }, '1');
+
+			expect(picks.length).toBe(1);
+			expect(picks[0].gameId).toBe(id1);
+			expect(picks.every(p => p.teamChosen !== 'voided')).toBe(true);
+		});
+
+		it('returnUserPickCount excludes voided picks', async () => {
+			await createTestWeek(1, 2024, 'regular');
+			const g1 = await createTestGame(1, 2024, 'Team A', 'Team B', true, false);
+			const g2 = await createTestGame(1, 2024, 'Team C', 'Team D', true, false);
+			const id1 = (g1 as { game_id: number }).game_id;
+			const id2 = (g2 as { game_id: number }).game_id;
+
+			await addPickedGame({ game: id1, pick: 'home_team' }, '1');
+			await db.execute(sql`
+				INSERT INTO "user"."games" (user_id, game_id, team_chosen)
+				VALUES (1, ${id2}, 'voided')
+			`);
+
+			const count = await returnUserPickCount(1, 2024, 1);
+
+			// Only 1 non-voided pick should be counted
+			expect(count).toBe(1);
+		});
+
+		it('returnWeekScores excludes voided picks from totals', async () => {
+			await createTestWeek(1, 2024, 'regular');
+			const g1 = await createTestGame(1, 2024, 'Home A', 'Away A', true, true);
+			const g2 = await createTestGame(1, 2024, 'Home B', 'Away B', true, true);
+			const id1 = (g1 as { game_id: number }).game_id;
+			const id2 = (g2 as { game_id: number }).game_id;
+
+			await db.execute(sql`UPDATE "admin"."games" SET winning_team = 'home_team' WHERE game_id = ${id1}`);
+			await db.execute(sql`UPDATE "admin"."games" SET winning_team = 'home_team' WHERE game_id = ${id2}`);
+
+			// User 1: one correct pick and one voided pick on a completed game
+			await addPickedGame({ game: id1, pick: 'home_team' }, '1');
+			await db.execute(sql`
+				INSERT INTO "user"."games" (user_id, game_id, team_chosen)
+				VALUES (1, ${id2}, 'voided')
+			`);
+
+			const scores = await returnWeekScores(2024, 1);
+			const user1 = scores.find(s => s.userId === 1)!;
+
+			expect(user1.correct).toBe(1);
+			expect(user1.incorrect).toBe(0);
+			// total = correct + incorrect only (no voided)
+			expect(user1.total).toBe(1);
+		});
+
+		it('returnUserPickHistory excludes voided picks from total and incorrect counts', async () => {
+			await createTestWeek(1, 2024, 'regular');
+			const g1 = await createTestGame(1, 2024, 'Home A', 'Away A', true, true);
+			const g2 = await createTestGame(1, 2024, 'Home B', 'Away B', true, true);
+			const id1 = (g1 as { game_id: number }).game_id;
+			const id2 = (g2 as { game_id: number }).game_id;
+
+			await db.execute(sql`UPDATE "admin"."games" SET winning_team = 'home_team' WHERE game_id = ${id1}`);
+			await db.execute(sql`UPDATE "admin"."games" SET winning_team = 'home_team' WHERE game_id = ${id2}`);
+
+			// User 1: one correct pick and one voided pick on a completed game
+			await addPickedGame({ game: id1, pick: 'home_team' }, '1');
+			await db.execute(sql`
+				INSERT INTO "user"."games" (user_id, game_id, team_chosen)
+				VALUES (1, ${id2}, 'voided')
+			`);
+
+			const history = await returnUserPickHistory(2024, '1');
+			expect(history.length).toBe(1);
+			const week1 = history[0];
+
+			expect(week1.total).toBe(1);
+			expect(week1.correct).toBe(1);
+			expect(week1.incorrect).toBe(0);
 		});
 	});
 });

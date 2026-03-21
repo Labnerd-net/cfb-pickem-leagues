@@ -1,4 +1,4 @@
-import { eq, and, sql, count } from 'drizzle-orm';
+import { eq, and, ne, sql, count } from 'drizzle-orm';
 import { alias } from 'drizzle-orm/pg-core';
 import { users, games, deletedUsers } from './schema/users.js';
 import { adminGames } from './schema/admin.js';
@@ -229,12 +229,12 @@ export async function returnUserPickHistory(
         weekNumber: adminGames.weekNumber,
         total: sql<number>`COUNT(*)`,
         correct: sql<number>`COUNT(CASE WHEN ${adminGames.winningTeam} != 'pending' AND ${adminGames.winningTeam} = ${games.teamChosen} THEN 1 END)`,
-        incorrect: sql<number>`COUNT(CASE WHEN ${adminGames.winningTeam} != 'pending' AND ${adminGames.winningTeam} != ${games.teamChosen} THEN 1 END)`,
+        incorrect: sql<number>`COUNT(CASE WHEN ${adminGames.winningTeam} != 'pending' AND ${adminGames.winningTeam} != ${games.teamChosen} AND ${games.teamChosen} != 'voided' THEN 1 END)`,
         pending: sql<number>`COUNT(CASE WHEN ${adminGames.winningTeam} = 'pending' THEN 1 END)`,
       })
       .from(games)
       .innerJoin(adminGames, eq(games.gameId, adminGames.gameId))
-      .where(and(eq(adminGames.year, year), eq(games.userId, userIdNumber)))
+      .where(and(eq(adminGames.year, year), eq(games.userId, userIdNumber), ne(games.teamChosen, 'voided')))
       .groupBy(adminGames.year, adminGames.weekNumber)
       .orderBy(sql`${adminGames.weekNumber} DESC`);
     return rows.map(r => ({
@@ -265,8 +265,8 @@ export async function returnLeaderboard(year: number): Promise<LeaderboardEntry[
         displayName: users.displayName,
         total: sql<number>`COUNT(${adminGames.gameId})`,
         correct: sql<number>`COUNT(CASE WHEN ${adminGames.winningTeam} != 'pending' AND ${adminGames.winningTeam} = ${userGames.teamChosen} THEN 1 END)`,
-        incorrect: sql<number>`COUNT(CASE WHEN ${adminGames.winningTeam} != 'pending' AND ${adminGames.winningTeam} != ${userGames.teamChosen} THEN 1 END)`,
-        pending: sql<number>`COUNT(CASE WHEN ${adminGames.winningTeam} = 'pending' THEN 1 END)`,
+        incorrect: sql<number>`COUNT(CASE WHEN ${adminGames.winningTeam} != 'pending' AND ${adminGames.winningTeam} != ${userGames.teamChosen} AND ${userGames.teamChosen} != 'voided' THEN 1 END)`,
+        pending: sql<number>`COUNT(CASE WHEN ${adminGames.winningTeam} = 'pending' AND ${userGames.teamChosen} != 'voided' THEN 1 END)`,
       })
       .from(users)
       .leftJoin(userGames, eq(users.userId, userGames.userId))
@@ -307,7 +307,7 @@ export async function returnWeekScores(year: number, week: number): Promise<Week
         displayName: users.displayName,
         total: sql<number>`COUNT(*)`,
         correct: sql<number>`COUNT(CASE WHEN ${adminGames.winningTeam} != 'pending' AND ${adminGames.winningTeam} = ${games.teamChosen} THEN 1 END)`,
-        incorrect: sql<number>`COUNT(CASE WHEN ${adminGames.winningTeam} != 'pending' AND ${adminGames.winningTeam} != ${games.teamChosen} THEN 1 END)`,
+        incorrect: sql<number>`COUNT(CASE WHEN ${adminGames.winningTeam} != 'pending' AND ${adminGames.winningTeam} != ${games.teamChosen} AND ${games.teamChosen} != 'voided' THEN 1 END)`,
         pending: sql<number>`COUNT(CASE WHEN ${adminGames.winningTeam} = 'pending' THEN 1 END)`,
       })
       .from(games)
@@ -320,6 +320,7 @@ export async function returnWeekScores(year: number, week: number): Promise<Week
         )
       )
       .innerJoin(users, eq(games.userId, users.userId))
+      .where(ne(games.teamChosen, 'voided'))
       .groupBy(users.userId, users.displayName);
     return rows.map(r => ({
       userId: r.userId,
@@ -356,7 +357,7 @@ export async function returnUserPickCount(
           eq(adminGames.weekNumber, weekNumber)
         )
       )
-      .where(eq(games.userId, userId));
+      .where(and(eq(games.userId, userId), ne(games.teamChosen, 'voided')));
     return Number(rows[0]?.count ?? 0);
   } catch (e) {
     logger.error({ err: e }, 'returnUserPickCount failed');
@@ -399,7 +400,8 @@ export async function returnUserGames(
         and(
           eq(adminGames.year, identifier.year),
           eq(adminGames.weekNumber, identifier.week),
-          eq(games.userId, userIdNumber)
+          eq(games.userId, userIdNumber),
+          ne(games.teamChosen, 'voided')
         )
       );
   } catch (e) {

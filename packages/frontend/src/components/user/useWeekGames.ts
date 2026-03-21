@@ -179,7 +179,7 @@ export function useWeekGames(): UseWeekGamesReturn {
           const savedIds = new Set<number>();
 
           picksResult.data.forEach(pick => {
-            if (pick.teamChosen !== 'pending') {
+            if (pick.teamChosen === 'home_team' || pick.teamChosen === 'away_team') {
               picksMap.set(pick.gameId, pick.teamChosen);
               savedIds.add(pick.gameId);
             }
