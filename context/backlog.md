@@ -2,7 +2,7 @@
 
 > Generated: 2026-03-14
 > Focus: Full audit
-> Last updated: 2026-03-20 — completed [1], [4], [5], [6] (security fixes); admin log viewer UI shipped (partially addresses [28]); completed [9] (picks transaction), closed [12] (false positive); completed [10], [11], [17] (cron week reset, settings error handling, email transporter singleton); completed [2], [3] (email XSS escape, rate limiter TRUST_PROXY); completed [7], [8] (DB connection options, admin bootstrap fix); completed [13], [14] (ErrorBoundary hookup, addGameToWeek removal); completed [15], [19] (picks N+1 bulk fetch, startTime index); completed [16], [18] (notification bulk query, rate limiter interval cleanup); completed [22], [26], [32] (week query-param validation refactor, weekNumber rename, schema consolidation); completed [25] (Hono RPC type cast removal); completed [23], [24] (AdminSection and WeekGameSection component refactor)
+> Last updated: 2026-03-21 — completed [1], [4], [5], [6] (security fixes); admin log viewer UI shipped (partially addresses [28]); completed [9] (picks transaction), closed [12] (false positive); completed [10], [11], [17] (cron week reset, settings error handling, email transporter singleton); completed [2], [3] (email XSS escape, rate limiter TRUST_PROXY); completed [7], [8] (DB connection options, admin bootstrap fix); completed [13], [14] (ErrorBoundary hookup, addGameToWeek removal); completed [15], [19] (picks N+1 bulk fetch, startTime index); completed [16], [18] (notification bulk query, rate limiter interval cleanup); completed [22], [26], [32] (week query-param validation refactor, weekNumber rename, schema consolidation); completed [25] (Hono RPC type cast removal); completed [23], [24] (AdminSection and WeekGameSection component refactor); completed [27] (pick voided status, FK cascade → restrict)
 
 ---
 
@@ -52,7 +52,7 @@ _None identified._
 _None identified._
 
 ### Medium
-- **[27]** **[packages/backend/src/db/schema/users.ts:52-56]**: `user.games` foreign key to `admin.games` uses `.onDelete('cascade')`. If an admin game is ever deleted, all user picks for it silently vanish. Fix: consider soft deletes or a "pick voided" status to maintain audit trail.
+_None identified._
 
 ### Low
 - **[28]** **[packages/backend/src/routes/admin.ts:169]** + **[packages/frontend/src/components/admin/NotificationLogSection.tsx:50]**: Notification log limit is hardcoded at 500 with no pagination — a silent data truncation for self-hosters running multiple seasons. Fix: add `limit`/`offset` query params to `GET /admin/notification-logs` and paginate the UI. Add a code comment at the hardcap explaining the limitation. _(UI shipped 2026-03-16; pagination still needed)_
@@ -98,6 +98,6 @@ _None identified._
 | Security | 0 | 0 | 0 | 0 |
 | Bugs | 0 | 0 | 0 | 0 |
 | Performance | 0 | 1 | 2 | 3 |
-| Improvements & Refactors | 0 | 1 | 5 | 6 |
+| Improvements & Refactors | 0 | 0 | 5 | 5 |
 | Feature Ideas | 2 | 6 | 10 | 18 |
-| **Total** | **0** | **8** | **17** | **25** |
+| **Total** | **0** | **7** | **17** | **24** |
