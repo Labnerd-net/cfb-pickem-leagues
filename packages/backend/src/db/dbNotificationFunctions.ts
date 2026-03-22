@@ -223,9 +223,10 @@ export async function hasNotificationBeenSent(
 // Return notification log entries with recipient display names
 // ------------------------------------------------------------------
 export async function returnNotificationLogs(
-  limit: number
+  limit: number,
+  offset: number
 ): Promise<{ entries: NotificationLogEntry[]; total: number }> {
-  logger.debug({ limit }, 'returnNotificationLogs');
+  logger.debug({ limit, offset }, 'returnNotificationLogs');
   try {
     const [rows, countRows] = await Promise.all([
       db
@@ -242,7 +243,8 @@ export async function returnNotificationLogs(
         .from(notificationLog)
         .leftJoin(users, eq(notificationLog.userId, users.userId))
         .orderBy(desc(notificationLog.sentAt))
-        .limit(limit),
+        .limit(limit)
+        .offset(offset),
       db.select({ count: sql<number>`count(*)::int` }).from(notificationLog),
     ]);
 
