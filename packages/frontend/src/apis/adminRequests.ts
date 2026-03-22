@@ -5,7 +5,9 @@ import type {
   PickedGamesRequest,
   ProfileData,
   MarkGameCompleteRequest,
+  NotificationChannel,
   NotificationLogEntry,
+  NotificationType,
 } from '@shared/types/cfb-pickem-api';
 import { client } from '../lib/api';
 
@@ -174,13 +176,15 @@ export interface GetNotificationLogsResponse {
 }
 
 export async function getNotificationLogs(
-  params: { limit?: number; offset?: number } = {}
+  params: { limit?: number; offset?: number; channel?: NotificationChannel; notificationType?: NotificationType } = {}
 ): Promise<GetNotificationLogsResponse> {
   try {
     const res = await client.api.admin['notification-logs'].$get({
       query: {
         limit: params.limit !== undefined ? String(params.limit) : undefined,
         offset: params.offset !== undefined ? String(params.offset) : undefined,
+        channel: params.channel,
+        notificationType: params.notificationType,
       },
     });
     if (!res.ok) {

@@ -224,10 +224,17 @@ export async function hasNotificationBeenSent(
 // ------------------------------------------------------------------
 export async function returnNotificationLogs(
   limit: number,
-  offset: number
+  offset: number,
+  channel?: string,
+  notificationType?: string
 ): Promise<{ entries: NotificationLogEntry[]; total: number }> {
-  logger.debug({ limit, offset }, 'returnNotificationLogs');
+  logger.debug({ limit, offset, channel, notificationType }, 'returnNotificationLogs');
   try {
+    const conditions = [];
+    if (channel) conditions.push(eq(notificationLog.channel, channel));
+    if (notificationType) conditions.push(eq(notificationLog.notificationType, notificationType));
+    const whereClause = conditions.length > 0 ? and(...conditions) : undefined;
+
     const [rows, countRows] = await Promise.all([
       db
         .select({
@@ -242,10 +249,11 @@ export async function returnNotificationLogs(
         })
         .from(notificationLog)
         .leftJoin(users, eq(notificationLog.userId, users.userId))
+        .where(whereClause)
         .orderBy(desc(notificationLog.sentAt))
         .limit(limit)
         .offset(offset),
-      db.select({ count: sql<number>`count(*)::int` }).from(notificationLog),
+      db.select({ count: sql<number>`count(*)::int` }).from(notificationLog).where(whereClause),
     ]);
 
     const total = countRows[0]?.count ?? 0;

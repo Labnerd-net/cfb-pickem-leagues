@@ -51,7 +51,12 @@ export default function NotificationLogSection() {
     const loadLogs = async () => {
       setLoading(true);
       setError(null);
-      const result = await getNotificationLogs({ limit: PAGE_SIZE, offset: (page - 1) * PAGE_SIZE });
+      const result = await getNotificationLogs({
+        limit: PAGE_SIZE,
+        offset: (page - 1) * PAGE_SIZE,
+        channel: channelFilter || undefined,
+        notificationType: typeFilter || undefined,
+      });
       if (result.success && result.data) {
         setEntries(result.data.entries);
         setTotal(result.data.total);
@@ -61,13 +66,7 @@ export default function NotificationLogSection() {
       setLoading(false);
     };
     loadLogs();
-  }, [refreshKey, page]);
-
-  const filtered = entries.filter(e => {
-    if (channelFilter && e.channel !== channelFilter) return false;
-    if (typeFilter && e.notificationType !== typeFilter) return false;
-    return true;
-  });
+  }, [refreshKey, page, channelFilter, typeFilter]);
 
   return (
     <DashboardCard
@@ -166,7 +165,7 @@ export default function NotificationLogSection() {
             </TableRow>
           </TableHead>
           <TableBody>
-            {filtered.map(entry => (
+            {entries.map(entry => (
               <TableRow key={entry.id}>
                 <TableCell>{new Date(entry.sentAt).toLocaleString()}</TableCell>
                 <TableCell>

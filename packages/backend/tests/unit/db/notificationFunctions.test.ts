@@ -8,6 +8,7 @@ import {
 	markEmailVerified,
 	returnNotificationSettings,
 	returnNotificationPreferences,
+	returnNotificationLogs,
 } from '../../../src/db/dbNotificationFunctions.js';
 import { setEmailVerificationToken } from '../../../src/db/dbNotificationFunctions.js';
 import { db } from '../../../src/db/index.js';
@@ -116,6 +117,52 @@ describe('Notification Database Functions', () => {
 			await markEmailVerified(token);
 			const rows = await db.execute(sql`SELECT email_verification_token FROM "user".users WHERE user_id = 1`);
 			expect(rows.rows[0]?.email_verification_token).toBeNull();
+		});
+	});
+
+	describe('returnNotificationLogs', () => {
+		it('returns all entries and correct total with no filters', async () => {
+			await addNotificationLog(1, 2024, 1, 'games_ready', 'email');
+			await addNotificationLog(1, 2024, 1, 'picks_reminder', 'ntfy');
+			const { entries, total } = await returnNotificationLogs(50, 0);
+			expect(total).toBe(2);
+			expect(entries).toHaveLength(2);
+		});
+
+		it('filters by channel and returns correct total', async () => {
+			await addNotificationLog(1, 2024, 1, 'games_ready', 'email');
+			await addNotificationLog(1, 2024, 1, 'picks_reminder', 'ntfy');
+			const { entries, total } = await returnNotificationLogs(50, 0, 'email');
+			expect(total).toBe(1);
+			expect(entries).toHaveLength(1);
+			expect(entries[0].channel).toBe('email');
+		});
+
+		it('filters by notificationType and returns correct total', async () => {
+			await addNotificationLog(1, 2024, 1, 'games_ready', 'email');
+			await addNotificationLog(1, 2024, 1, 'picks_reminder', 'email');
+			const { entries, total } = await returnNotificationLogs(50, 0, undefined, 'games_ready');
+			expect(total).toBe(1);
+			expect(entries).toHaveLength(1);
+			expect(entries[0].notificationType).toBe('games_ready');
+		});
+
+		it('ANDs channel and notificationType filters', async () => {
+			await addNotificationLog(1, 2024, 1, 'games_ready', 'email');
+			await addNotificationLog(1, 2024, 1, 'games_ready', 'ntfy');
+			await addNotificationLog(1, 2024, 1, 'picks_reminder', 'email');
+			const { entries, total } = await returnNotificationLogs(50, 0, 'email', 'games_ready');
+			expect(total).toBe(1);
+			expect(entries).toHaveLength(1);
+			expect(entries[0].channel).toBe('email');
+			expect(entries[0].notificationType).toBe('games_ready');
+		});
+
+		it('returns empty entries and total 0 when filter matches nothing', async () => {
+			await addNotificationLog(1, 2024, 1, 'games_ready', 'email');
+			const { entries, total } = await returnNotificationLogs(50, 0, 'discord');
+			expect(total).toBe(0);
+			expect(entries).toHaveLength(0);
 		});
 	});
 
