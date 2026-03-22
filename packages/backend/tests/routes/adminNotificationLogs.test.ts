@@ -140,4 +140,53 @@ describe('GET /api/admin/notification-logs', () => {
 		});
 		expect(res.status).toBe(400);
 	});
+
+	it('filters by channel and total reflects filtered count', async () => {
+		const token = await makeToken(['admin', 'user'], 1);
+		const res = await app.request('/api/admin/notification-logs?channel=email', {
+			headers: { Cookie: `auth_token=${token}` },
+		});
+		expect(res.status).toBe(200);
+		const body = await res.json() as { entries: { channel: string }[]; total: number };
+		expect(body.entries.every(e => e.channel === 'email')).toBe(true);
+		expect(body.total).toBe(body.entries.length);
+	});
+
+	it('filters by notificationType and total reflects filtered count', async () => {
+		const token = await makeToken(['admin', 'user'], 1);
+		const res = await app.request('/api/admin/notification-logs?notificationType=games_ready', {
+			headers: { Cookie: `auth_token=${token}` },
+		});
+		expect(res.status).toBe(200);
+		const body = await res.json() as { entries: { notificationType: string }[]; total: number };
+		expect(body.entries.every(e => e.notificationType === 'games_ready')).toBe(true);
+		expect(body.total).toBe(body.entries.length);
+	});
+
+	it('ANDs channel and notificationType filters', async () => {
+		const token = await makeToken(['admin', 'user'], 1);
+		const res = await app.request('/api/admin/notification-logs?channel=email&notificationType=games_ready', {
+			headers: { Cookie: `auth_token=${token}` },
+		});
+		expect(res.status).toBe(200);
+		const body = await res.json() as { entries: { channel: string; notificationType: string }[]; total: number };
+		expect(body.entries.every(e => e.channel === 'email' && e.notificationType === 'games_ready')).toBe(true);
+		expect(body.total).toBe(body.entries.length);
+	});
+
+	it('returns 400 for invalid channel param', async () => {
+		const token = await makeToken(['admin', 'user'], 1);
+		const res = await app.request('/api/admin/notification-logs?channel=invalid', {
+			headers: { Cookie: `auth_token=${token}` },
+		});
+		expect(res.status).toBe(400);
+	});
+
+	it('returns 400 for invalid notificationType param', async () => {
+		const token = await makeToken(['admin', 'user'], 1);
+		const res = await app.request('/api/admin/notification-logs?notificationType=invalid', {
+			headers: { Cookie: `auth_token=${token}` },
+		});
+		expect(res.status).toBe(400);
+	});
 });

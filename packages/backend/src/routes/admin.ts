@@ -169,11 +169,13 @@ const admin = new Hono<{ Variables: Variables }>()
       z.object({
         limit: z.coerce.number().min(1).max(500).default(50),
         offset: z.coerce.number().min(0).default(0),
+        channel: z.enum(['email', 'ntfy', 'telegram', 'discord']).optional(),
+        notificationType: z.enum(['games_ready', 'picks_reminder', 'rankings_updated']).optional(),
       })
     ),
     async c => {
-      const { limit, offset } = c.req.valid('query');
-      const { entries, total } = await returnNotificationLogs(limit, offset);
+      const { limit, offset, channel, notificationType } = c.req.valid('query');
+      const { entries, total } = await returnNotificationLogs(limit, offset, channel, notificationType);
       return c.json({ entries, total });
     }
   )
