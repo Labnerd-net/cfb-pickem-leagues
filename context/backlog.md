@@ -2,7 +2,7 @@
 
 > Generated: 2026-03-14
 > Focus: Full audit
-> Last updated: 2026-03-21 — completed [1], [4], [5], [6] (security fixes); admin log viewer UI shipped (partially addresses [28]); completed [9] (picks transaction), closed [12] (false positive); completed [10], [11], [17] (cron week reset, settings error handling, email transporter singleton); completed [2], [3] (email XSS escape, rate limiter TRUST_PROXY); completed [7], [8] (DB connection options, admin bootstrap fix); completed [13], [14] (ErrorBoundary hookup, addGameToWeek removal); completed [15], [19] (picks N+1 bulk fetch, startTime index); completed [16], [18] (notification bulk query, rate limiter interval cleanup); completed [22], [26], [32] (week query-param validation refactor, weekNumber rename, schema consolidation); completed [25] (Hono RPC type cast removal); completed [23], [24] (AdminSection and WeekGameSection component refactor); completed [27] (pick voided status, FK cascade → restrict)
+> Last updated: 2026-03-21 — closed [20], [21] (leaderboard cache, external API cache — not warranted at target scale of ~15 users); completed [1], [4], [5], [6] (security fixes); admin log viewer UI shipped (partially addresses [28]); completed [9] (picks transaction), closed [12] (false positive); completed [10], [11], [17] (cron week reset, settings error handling, email transporter singleton); completed [2], [3] (email XSS escape, rate limiter TRUST_PROXY); completed [7], [8] (DB connection options, admin bootstrap fix); completed [13], [14] (ErrorBoundary hookup, addGameToWeek removal); completed [15], [19] (picks N+1 bulk fetch, startTime index); completed [16], [18] (notification bulk query, rate limiter interval cleanup); completed [22], [26], [32] (week query-param validation refactor, weekNumber rename, schema consolidation); completed [25] (Hono RPC type cast removal); completed [23], [24] (AdminSection and WeekGameSection component refactor); completed [27] (pick voided status, FK cascade → restrict)
 
 ---
 
@@ -41,8 +41,7 @@ _None identified._
 _None identified._
 
 ### Low
-- **[20]** **[packages/backend/src/db/dbUserFunctions.ts:217]**: Leaderboard query joins all user picks and groups by user — O(all_picks) complexity. Will degrade noticeably at scale (10K+ users, 100+ weeks). Fix: consider materialized view or short-lived cache invalidated on new picks/score updates.
-- **[21]** **[packages/backend/src/api/index.ts:63]**: External data source (NCAA/CFBD/SportsDataverse) is queried on every admin request with no caching. Fix: in-memory or Redis cache with TTL for game metadata.
+_None identified._
 
 ---
 
@@ -97,7 +96,7 @@ _None identified._
 |----------|------|--------|-----|-------|
 | Security | 0 | 0 | 0 | 0 |
 | Bugs | 0 | 0 | 0 | 0 |
-| Performance | 0 | 1 | 2 | 3 |
+| Performance | 0 | 1 | 0 | 1 |
 | Improvements & Refactors | 0 | 0 | 5 | 5 |
 | Feature Ideas | 2 | 6 | 10 | 18 |
-| **Total** | **0** | **7** | **17** | **24** |
+| **Total** | **0** | **6** | **15** | **21** |
