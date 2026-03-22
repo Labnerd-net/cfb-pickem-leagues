@@ -96,7 +96,7 @@ _None identified._
 |----------|------|--------|-----|-------|
 | Security | 0 | 0 | 0 | 0 |
 | Bugs | 0 | 0 | 0 | 0 |
-| Performance | 0 | 1 | 0 | 1 |
+| Performance | 0 | 0 | 0 | 0 |
 | Improvements & Refactors | 0 | 0 | 5 | 5 |
 | Feature Ideas | 2 | 6 | 10 | 18 |
 | **Total** | **0** | **6** | **15** | **21** |
