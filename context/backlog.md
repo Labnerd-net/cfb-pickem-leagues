@@ -99,4 +99,4 @@ _None identified._
 | Performance | 0 | 0 | 0 | 0 |
 | Improvements & Refactors | 0 | 0 | 5 | 5 |
 | Feature Ideas | 2 | 6 | 10 | 18 |
-| **Total** | **0** | **6** | **15** | **21** |
+| **Total** | **2** | **6** | **15** | **23** |
