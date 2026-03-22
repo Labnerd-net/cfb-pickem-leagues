@@ -147,7 +147,7 @@ JWT_EXPIRATION_DAYS=7
 JWT_SALT_ROUNDS=10            # bcrypt rounds for password hashing
 
 # Data source
-DATA_SOURCE=ncaa              # or cfbd, sdv
+DATA_SOURCE=ncaa              # or cfbd
 CFBD_API_KEY=<required if DATA_SOURCE=cfbd>
 
 # Logging

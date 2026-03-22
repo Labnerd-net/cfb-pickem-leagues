@@ -31,9 +31,14 @@ export const bcryptSaltRounds = Number(process.env.JWT_SALT_ROUNDS) || 10;
 
 // cfbd = college football data = https://collegefootballdata.com/
 // ncaa = ncaa-api = https://ncaa-api.henrygd.me/openapi
-// sdv = sportsdataverse = https://js.sportsdataverse.org/docs/intro
 // External Data Source Configuration
 export const dataSource = process.env.DATA_SOURCE || 'ncaa';
+
+if (dataSource !== 'ncaa' && dataSource !== 'cfbd') {
+  throw new Error(
+    `FATAL: Invalid DATA_SOURCE="${dataSource}". Supported values are "ncaa" or "cfbd".`
+  );
+}
 
 // Validate CFBD API key if using CFBD as data source
 if (dataSource === 'cfbd' && !process.env.CFBD_API_KEY) {
