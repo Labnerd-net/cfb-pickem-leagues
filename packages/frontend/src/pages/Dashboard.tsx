@@ -20,6 +20,14 @@ export default function Dashboard() {
   const isAdmin = user?.roles.includes('admin') ?? false;
   const [currentTab, setCurrentTab] = useState(0);
 
+  const tabComponents = [
+    <UserSection />,
+    <AdminSection />,
+    <UsersSection />,
+    <NotificationLogSection />,
+    ...(IS_DEV ? [<DevSection />] : []),
+  ];
+
   const handleTabChange = (_event: React.SyntheticEvent, newValue: number) => {
     setCurrentTab(newValue);
   };
@@ -65,17 +73,7 @@ export default function Dashboard() {
             </Box>
 
             {/* Tab Content */}
-            {currentTab === 0 ? (
-              <UserSection />
-            ) : currentTab === 1 ? (
-              <AdminSection />
-            ) : currentTab === 2 ? (
-              <UsersSection />
-            ) : currentTab === 3 ? (
-              <NotificationLogSection />
-            ) : (
-              <DevSection />
-            )}
+            {tabComponents[currentTab] ?? null}
           </>
         ) : (
           <UserSection />

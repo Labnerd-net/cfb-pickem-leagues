@@ -173,9 +173,16 @@ export interface GetNotificationLogsResponse {
   error?: string;
 }
 
-export async function getNotificationLogs(): Promise<GetNotificationLogsResponse> {
+export async function getNotificationLogs(
+  params: { limit?: number; offset?: number } = {}
+): Promise<GetNotificationLogsResponse> {
   try {
-    const res = await client.api.admin['notification-logs'].$get();
+    const res = await client.api.admin['notification-logs'].$get({
+      query: {
+        limit: params.limit !== undefined ? String(params.limit) : undefined,
+        offset: params.offset !== undefined ? String(params.offset) : undefined,
+      },
+    });
     if (!res.ok) {
       const body = (await res.json()) as unknown as { error: string };
       return { success: false, error: body.error };

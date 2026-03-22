@@ -37,6 +37,7 @@ export function picksReminderTemplate({
   firstKickoffTime: Date;
 }): EmailTemplate {
   const kickoffStr = firstKickoffTime.toLocaleString('en-US', {
+    timeZone: 'America/Chicago',
     weekday: 'short',
     month: 'short',
     day: 'numeric',

@@ -55,10 +55,10 @@ _None identified._
 
 ### Low
 - **[28]** **[packages/backend/src/routes/admin.ts:169]** + **[packages/frontend/src/components/admin/NotificationLogSection.tsx:50]**: Notification log limit is hardcoded at 500 with no pagination — a silent data truncation for self-hosters running multiple seasons. Fix: add `limit`/`offset` query params to `GET /admin/notification-logs` and paginate the UI. Add a code comment at the hardcap explaining the limitation. _(UI shipped 2026-03-16; pagination still needed)_
-- **[29]** **[packages/backend/src/routes/leaderboard.ts:14]**: `GET /leaderboard` returns all users on every request with no pagination. Only relevant at meaningful scale (50+ users). Fix: add `?limit=50&offset=0` query params.
 - **[30]** **[packages/backend/src/notifications/templates.ts:30-36]**: `toLocaleString` called without an explicit timezone — kickoff times in reminder emails reflect server timezone, not anything meaningful to recipients. Fix: pass `{ timeZone: 'America/New_York' }` or use UTC with explicit label.
 - **[31]** **[packages/frontend/src/pages/Dashboard.tsx:68-78]**: Tab-to-component mapping uses sequential `currentTab === N` ternaries. Inserting a new tab shifts all subsequent indices. Fix: use an array of `{ label, icon, component }` objects indexed by tab value.
 - **[33]** **[packages/backend/src/utils/envVars.js]**: Environment variables validated lazily at runtime when first accessed. Fix: validate all required env vars at startup via Zod and fail fast with a clear error message.
+- **[52]** **[packages/frontend/src/components/admin/NotificationLogSection.tsx]**: "X total entries" count reflects the unfiltered DB total even when a channel or type filter is active — the displayed number doesn't match what's on screen. Fix: either move channel/type filtering to server-side query params so the count reflects filtered results, or label the count as "X total (unfiltered)" to make the discrepancy clear.
 
 ---
 
@@ -69,6 +69,7 @@ _None identified._
 - **[35]** **[packages/backend/src/routes/user.ts]**: No endpoint for updating user profile. Users can't change display name or password after registration. Add `PATCH /user/profile` with display name and password change support.
 
 ### Medium
+- **[52]** **[packages/frontend/src/components/admin/GameCard.tsx]** + **[packages/backend/src/api/cfbd.ts]** + **[packages/backend/src/routes/admin.ts]**: Show betting spread next to each game in the admin game picker so the admin can identify competitive matchups vs. blowouts when curating the week's games. CFBD's betting lines endpoint (`/lines`) returns spread, over/under, and moneyline by game ID. **Requires `DATA_SOURCE=cfbd`** — the NCAA API has no equivalent lines data. Implementation: fetch lines alongside game data in the admin games route, add nullable `spread` field to `AdminGameData` in shared types, and display it on `GameCard.tsx` (e.g. "Alabama -28.5" or "Pick'em"). Falls back gracefully to no spread shown when data is unavailable.
 - **[36]** **[packages/frontend/src/components/user/UserPicksGameCard.tsx]**: Deadline UX is minimal — locked games show generic message with no advance warning. Add: countdown timer to lockdown, visual lock indicators on cards before deadline, pre-submit validation showing which picks will be rejected.
 - **[37]** **[packages/backend/src/db/dbUserFunctions.ts:179]** + **[packages/frontend/src/apis/userRequests.ts]**: `GET /user/picks/history` exists in the backend but the UI doesn't expose a full pick history browser. Build a filterable history view (by week, outcome, team).
 - **[38]** **[packages/frontend/src/components/admin/UsersSection.tsx]**: Admin user management is single-user only. Add bulk operations: bulk role assignment, CSV export of user + pick data, bulk notification send.
@@ -98,5 +99,5 @@ _None identified._
 | Bugs | 0 | 0 | 0 | 0 |
 | Performance | 0 | 0 | 0 | 0 |
 | Improvements & Refactors | 0 | 0 | 5 | 5 |
-| Feature Ideas | 2 | 6 | 10 | 18 |
-| **Total** | **2** | **6** | **15** | **23** |
+| Feature Ideas | 2 | 7 | 10 | 19 |
+| **Total** | **2** | **7** | **15** | **24** |

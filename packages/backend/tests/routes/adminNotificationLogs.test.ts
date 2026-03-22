@@ -102,4 +102,42 @@ describe('GET /api/admin/notification-logs', () => {
 		expect(userEntry).toBeDefined();
 		expect(userEntry?.recipient).toBe('Test Admin');
 	});
+
+	it('respects limit param', async () => {
+		const token = await makeToken(['admin', 'user'], 1);
+		const res = await app.request('/api/admin/notification-logs?limit=1', {
+			headers: { Cookie: `auth_token=${token}` },
+		});
+		expect(res.status).toBe(200);
+		const body = await res.json() as { entries: unknown[]; total: number };
+		expect(body.entries.length).toBe(1);
+		expect(body.total).toBeGreaterThan(0);
+	});
+
+	it('returns empty entries when offset exceeds total', async () => {
+		const token = await makeToken(['admin', 'user'], 1);
+		const res = await app.request('/api/admin/notification-logs?limit=50&offset=9999', {
+			headers: { Cookie: `auth_token=${token}` },
+		});
+		expect(res.status).toBe(200);
+		const body = await res.json() as { entries: unknown[]; total: number };
+		expect(body.entries.length).toBe(0);
+		expect(body.total).toBeGreaterThan(0);
+	});
+
+	it('uses default limit of 50 when no params provided', async () => {
+		const token = await makeToken(['admin', 'user'], 1);
+		const res = await app.request('/api/admin/notification-logs', {
+			headers: { Cookie: `auth_token=${token}` },
+		});
+		expect(res.status).toBe(200);
+	});
+
+	it('returns 400 for invalid limit param', async () => {
+		const token = await makeToken(['admin', 'user'], 1);
+		const res = await app.request('/api/admin/notification-logs?limit=abc', {
+			headers: { Cookie: `auth_token=${token}` },
+		});
+		expect(res.status).toBe(400);
+	});
 });

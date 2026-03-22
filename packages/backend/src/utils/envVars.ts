@@ -1,5 +1,62 @@
 import 'dotenv/config';
+import { z } from 'zod';
 import type { AlgorithmTypes } from 'hono/jwt';
+
+const envSchema = z
+  .object({
+    CLIENT_URL: z.string().optional(),
+    SERVER_PORT: z.coerce.number().default(3000),
+
+    JWT_SECRET: z.string().min(1, 'JWT_SECRET is required'),
+    JWT_ALGORITHM: z.string().default('HS256'),
+    JWT_EXPIRATION_DAYS: z.coerce.number().default(7),
+    JWT_SALT_ROUNDS: z.coerce.number().default(10),
+
+    DATA_SOURCE: z.enum(['ncaa', 'cfbd']).default('ncaa'),
+    CFBD_API_KEY: z.string().optional(),
+
+    LOG_LEVEL: z.string().default('info'),
+    NODE_ENV: z.string().optional(),
+    DEV_CURRENT_TIME: z.string().optional(),
+    PICKS_IGNORE_DEADLINE: z.string().optional(),
+    TRUST_PROXY: z.string().optional(),
+
+    NOTIFICATION_FROM_EMAIL: z.string().default(''),
+    SMTP_HOST: z.string().default(''),
+    SMTP_PORT: z.coerce.number().default(587),
+    SMTP_USER: z.string().default(''),
+    SMTP_PASS: z.string().default(''),
+    SMTP_SECURE: z.string().optional(),
+    SKIP_EMAIL_SEND: z.string().optional(),
+
+    NTFY_TOPIC_URL: z.string().default(''),
+    TELEGRAM_BOT_TOKEN: z.string().default(''),
+    TELEGRAM_CHAT_ID: z.string().default(''),
+    TELEGRAM_INVITE_URL: z.string().default(''),
+    DISCORD_WEBHOOK_URL: z.string().default(''),
+    DISCORD_INVITE_URL: z.string().default(''),
+  })
+  .superRefine((data, ctx) => {
+    if (data.DATA_SOURCE === 'cfbd' && !data.CFBD_API_KEY) {
+      ctx.addIssue({
+        code: 'custom',
+        message:
+          'CFBD_API_KEY is required when DATA_SOURCE=cfbd. Get your key at https://collegefootballdata.com/',
+        path: ['CFBD_API_KEY'],
+      });
+    }
+  });
+
+export function validateEnv(env: NodeJS.ProcessEnv) {
+  const result = envSchema.safeParse(env);
+  if (!result.success) {
+    const messages = result.error.issues.map(i => `  ${i.path.join('.')}: ${i.message}`).join('\n');
+    throw new Error(`FATAL: Invalid environment configuration:\n${messages}`);
+  }
+  return result.data;
+}
+
+const env = validateEnv(process.env);
 
 const localClientURLs = [
   'http://localhost:4173',
@@ -8,85 +65,65 @@ const localClientURLs = [
   'http://localhost:3001',
   'http://localhost:8080',
 ];
-const envClientURLs = process.env.CLIENT_URL?.split(',');
+const envClientURLs = env.CLIENT_URL?.split(',');
 export const clientURLs = envClientURLs || localClientURLs;
 
-export const serverPort = Number(process.env.SERVER_PORT) || 3000;
+export const serverPort = env.SERVER_PORT;
 
-// JWT Configuration
-if (!process.env.JWT_SECRET) {
-  throw new Error('FATAL: JWT_SECRET environment variable is required. Set it in your .env file.');
-}
-
-export const jwtSecret = process.env.JWT_SECRET;
-export const jwtAlgorithm = (process.env.JWT_ALGORITHM || 'HS256') as AlgorithmTypes;
-export const jwtExpirationDays = Number(process.env.JWT_EXPIRATION_DAYS) || 7;
+export const jwtSecret = env.JWT_SECRET;
+export const jwtAlgorithm = env.JWT_ALGORITHM as AlgorithmTypes;
+export const jwtExpirationDays = env.JWT_EXPIRATION_DAYS;
 
 // Helper function to calculate JWT expiration (call this when creating tokens)
 export function getJwtExpirationSeconds(): number {
   return Math.floor(Date.now() / 1000) + jwtExpirationDays * 24 * 60 * 60;
 }
 
-export const bcryptSaltRounds = Number(process.env.JWT_SALT_ROUNDS) || 10;
+export const bcryptSaltRounds = env.JWT_SALT_ROUNDS;
 
 // cfbd = college football data = https://collegefootballdata.com/
 // ncaa = ncaa-api = https://ncaa-api.henrygd.me/openapi
-// External Data Source Configuration
-export const dataSource = process.env.DATA_SOURCE || 'ncaa';
+export const dataSource = env.DATA_SOURCE;
+export const cfbdApiKey = env.CFBD_API_KEY ?? '';
 
-if (dataSource !== 'ncaa' && dataSource !== 'cfbd') {
-  throw new Error(
-    `FATAL: Invalid DATA_SOURCE="${dataSource}". Supported values are "ncaa" or "cfbd".`
-  );
-}
+export const logLevel = env.LOG_LEVEL;
 
-// Validate CFBD API key if using CFBD as data source
-if (dataSource === 'cfbd' && !process.env.CFBD_API_KEY) {
-  throw new Error(
-    'FATAL: CFBD_API_KEY environment variable is required when DATA_SOURCE=cfbd. Get your key at https://collegefootballdata.com/'
-  );
-}
-
-export const cfbdApiKey = process.env.CFBD_API_KEY || '';
-
-export const logLevel = process.env.LOG_LEVEL ?? 'info';
-
-export const isProduction = process.env.NODE_ENV === 'production';
+export const isProduction = env.NODE_ENV === 'production';
 
 // Dev-only: override the current time for simulation (ignored in production).
 // Set to an ISO 8601 string, e.g. DEV_CURRENT_TIME=2024-08-31T10:00:00Z
 // Used by getNow() in src/utils/clock.ts
-export const devCurrentTime = isProduction ? undefined : process.env.DEV_CURRENT_TIME;
+export const devCurrentTime = isProduction ? undefined : env.DEV_CURRENT_TIME;
 
 // Set to 'true' to bypass pick deadline enforcement (useful for off-season testing)
-export const ignorePickDeadline = process.env.PICKS_IGNORE_DEADLINE === 'true';
+export const ignorePickDeadline = env.PICKS_IGNORE_DEADLINE === 'true';
 
 // Set to 'true' when running behind a trusted reverse proxy (Nginx, Traefik) that sets
 // x-forwarded-for. When false (default), rate limiting uses the raw socket address only.
-export const trustProxy = process.env.TRUST_PROXY === 'true';
+export const trustProxy = env.TRUST_PROXY === 'true';
 
 // Notification / SMTP configuration
-export const notificationFromEmail = process.env.NOTIFICATION_FROM_EMAIL || '';
-export const smtpHost = process.env.SMTP_HOST || '';
-export const smtpPort = Number(process.env.SMTP_PORT) || 587;
-export const smtpUser = process.env.SMTP_USER || '';
-export const smtpPass = process.env.SMTP_PASS || '';
-export const smtpSecure = process.env.SMTP_SECURE === 'true';
+export const notificationFromEmail = env.NOTIFICATION_FROM_EMAIL;
+export const smtpHost = env.SMTP_HOST;
+export const smtpPort = env.SMTP_PORT;
+export const smtpUser = env.SMTP_USER;
+export const smtpPass = env.SMTP_PASS;
+export const smtpSecure = env.SMTP_SECURE === 'true';
 export const notificationsEnabled = notificationFromEmail !== '' && smtpHost !== '';
 // Set to 'true' in dev to skip sending emails
-export const skipEmailSend = process.env.SKIP_EMAIL_SEND === 'true';
+export const skipEmailSend = env.SKIP_EMAIL_SEND === 'true';
 
 // Broadcast notification channels (admin-configured)
-export const ntfyTopicUrl = process.env.NTFY_TOPIC_URL || '';
+export const ntfyTopicUrl = env.NTFY_TOPIC_URL;
 export const ntfyEnabled = ntfyTopicUrl !== '';
 
-export const telegramBotToken = process.env.TELEGRAM_BOT_TOKEN || '';
-export const telegramChatId = process.env.TELEGRAM_CHAT_ID || '';
+export const telegramBotToken = env.TELEGRAM_BOT_TOKEN;
+export const telegramChatId = env.TELEGRAM_CHAT_ID;
 export const telegramEnabled = telegramBotToken !== '' && telegramChatId !== '';
 // Public-facing invite link shown to users in Settings (e.g. https://t.me/yourchannel)
-export const telegramInviteUrl = process.env.TELEGRAM_INVITE_URL || '';
+export const telegramInviteUrl = env.TELEGRAM_INVITE_URL;
 
-export const discordWebhookUrl = process.env.DISCORD_WEBHOOK_URL || '';
+export const discordWebhookUrl = env.DISCORD_WEBHOOK_URL;
 export const discordEnabled = discordWebhookUrl !== '';
 // Public-facing invite link shown to users in Settings (e.g. https://discord.gg/abc123)
-export const discordInviteUrl = process.env.DISCORD_INVITE_URL || '';
+export const discordInviteUrl = env.DISCORD_INVITE_URL;

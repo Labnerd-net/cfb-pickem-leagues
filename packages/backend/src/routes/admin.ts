@@ -7,6 +7,8 @@ import { getGameData, getWeekData } from '../api/index.js';
 import type { JwtData } from '@shared/types/cfb-pickem-api.js';
 import { authMiddleware, requireRole } from '../utils/middleware.js';
 import { apiRateLimit } from '../utils/rateLimiter.js';
+import { z } from 'zod';
+import { zValidator } from '@hono/zod-validator';
 import { weekIdentifierValidator, pickedGameRequestValidator, updateUserRolesValidator, markGameCompleteValidator, yearQueryValidator, weekIdentifierQueryValidator } from '../utils/zValidate.js';
 import { dispatchNotification } from '../notifications/dispatcher.js';
 import { sendNtfyNotification } from '../notifications/ntfySender.js';
@@ -155,11 +157,26 @@ const admin = new Hono<{ Variables: Variables }>()
       return c.json({ game: updated });
     }
   )
-  // Return notification log entries (most recent 500)
-  .get('/notification-logs', apiRateLimit, authMiddleware, requireRole('admin'), async c => {
-    const { entries, total } = await returnNotificationLogs(500);
-    return c.json({ entries, total });
-  })
+  // Return notification log entries with pagination.
+  // Hard cap: 500 rows max per page. Sufficient for ~1–2 seasons at this scale.
+  .get(
+    '/notification-logs',
+    apiRateLimit,
+    authMiddleware,
+    requireRole('admin'),
+    zValidator(
+      'query',
+      z.object({
+        limit: z.coerce.number().min(1).max(500).default(50),
+        offset: z.coerce.number().min(0).default(0),
+      })
+    ),
+    async c => {
+      const { limit, offset } = c.req.valid('query');
+      const { entries, total } = await returnNotificationLogs(limit, offset);
+      return c.json({ entries, total });
+    }
+  )
   // Test broadcast notifications (admin only — does not log to notification_log)
   .post('/notifications/test', apiRateLimit, authMiddleware, requireRole('admin'), async c => {
     const title = "CFB Pick'em test notification";

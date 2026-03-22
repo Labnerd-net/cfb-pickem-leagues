@@ -1,6 +1,23 @@
 import { describe, it, expect } from 'vitest';
-import { rankingsUpdatedTemplate } from '../../../src/notifications/templates.js';
+import { picksReminderTemplate, rankingsUpdatedTemplate } from '../../../src/notifications/templates.js';
 import type { LeaderboardEntry } from '@shared/types/cfb-pickem-api.js';
+
+describe('picksReminderTemplate', () => {
+	it('formats kickoff time in Central Time', () => {
+		// 2024-09-07T17:00:00Z = 12:00 PM CDT (UTC-5 in summer)
+		const kickoff = new Date('2024-09-07T17:00:00Z');
+		const { textBody } = picksReminderTemplate({ year: 2024, weekNumber: 1, firstKickoffTime: kickoff });
+		// Should contain a Central Time abbreviation (CDT in summer, CST in winter)
+		expect(textBody).toMatch(/C[DS]T/);
+	});
+
+	it('does not use a server-local timezone without an explicit zone', () => {
+		const kickoff = new Date('2024-09-07T17:00:00Z');
+		const { textBody } = picksReminderTemplate({ year: 2024, weekNumber: 1, firstKickoffTime: kickoff });
+		// The time displayed should match Central noon, not UTC 5 PM
+		expect(textBody).toContain('12:00');
+	});
+});
 
 function makeEntry(displayName: string): LeaderboardEntry {
 	return { userId: 1, displayName, correct: 5, incorrect: 3, pending: 2, total: 10, percentage: 0.5 };

@@ -14,6 +14,7 @@ import {
   TableHead,
   TableRow,
   Typography,
+  Pagination,
 } from '@mui/material';
 import NotificationsIcon from '@mui/icons-material/Notifications';
 import RefreshIcon from '@mui/icons-material/Refresh';
@@ -34,6 +35,8 @@ const CHANNEL_LABELS: Record<NotificationChannel, string> = {
   discord: 'Discord',
 };
 
+const PAGE_SIZE = 50;
+
 export default function NotificationLogSection() {
   const [entries, setEntries] = useState<NotificationLogEntry[]>([]);
   const [total, setTotal] = useState(0);
@@ -42,12 +45,13 @@ export default function NotificationLogSection() {
   const [channelFilter, setChannelFilter] = useState<NotificationChannel | ''>('');
   const [typeFilter, setTypeFilter] = useState<NotificationType | ''>('');
   const [refreshKey, setRefreshKey] = useState(0);
+  const [page, setPage] = useState(1);
 
   useEffect(() => {
     const loadLogs = async () => {
       setLoading(true);
       setError(null);
-      const result = await getNotificationLogs();
+      const result = await getNotificationLogs({ limit: PAGE_SIZE, offset: (page - 1) * PAGE_SIZE });
       if (result.success && result.data) {
         setEntries(result.data.entries);
         setTotal(result.data.total);
@@ -57,7 +61,7 @@ export default function NotificationLogSection() {
       setLoading(false);
     };
     loadLogs();
-  }, [refreshKey]);
+  }, [refreshKey, page]);
 
   const filtered = entries.filter(e => {
     if (channelFilter && e.channel !== channelFilter) return false;
@@ -77,7 +81,7 @@ export default function NotificationLogSection() {
           <Select
             value={channelFilter}
             label="Channel"
-            onChange={e => setChannelFilter(e.target.value as NotificationChannel | '')}
+            onChange={e => { setChannelFilter(e.target.value as NotificationChannel | ''); setPage(1); }}
           >
             <MenuItem value="">All</MenuItem>
             {(Object.keys(CHANNEL_LABELS) as NotificationChannel[]).map(ch => (
@@ -93,7 +97,7 @@ export default function NotificationLogSection() {
           <Select
             value={typeFilter}
             label="Type"
-            onChange={e => setTypeFilter(e.target.value as NotificationType | '')}
+            onChange={e => { setTypeFilter(e.target.value as NotificationType | ''); setPage(1); }}
           >
             <MenuItem value="">All</MenuItem>
             {(Object.keys(NOTIFICATION_TYPE_LABELS) as NotificationType[]).map(t => (
@@ -108,17 +112,28 @@ export default function NotificationLogSection() {
           variant="outlined"
           size="small"
           startIcon={<RefreshIcon />}
-          onClick={() => setRefreshKey(k => k + 1)}
+          onClick={() => { setPage(1); setRefreshKey(k => k + 1); }}
           disabled={loading}
         >
           Refresh
         </Button>
       </Box>
 
-      {total > entries.length && (
-        <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
-          Showing {entries.length} of {total} entries
-        </Typography>
+      {total > 0 && (
+        <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 1 }}>
+          <Typography variant="body2" color="text.secondary">
+            {total} total entr{total === 1 ? 'y' : 'ies'}
+          </Typography>
+          {total > PAGE_SIZE && (
+            <Pagination
+              count={Math.ceil(total / PAGE_SIZE)}
+              page={page}
+              onChange={(_e, value) => setPage(value)}
+              size="small"
+              disabled={loading}
+            />
+          )}
+        </Box>
       )}
 
       {loading ? (
