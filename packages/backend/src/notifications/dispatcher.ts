@@ -12,6 +12,7 @@ import { sendDiscordNotification } from './discordSender.js';
 import {
   gamesReadyTemplate,
   picksReminderTemplate,
+  picksReminder24hTemplate,
   rankingsUpdatedTemplate,
   escapeHtml,
 } from './templates.js';
@@ -136,8 +137,14 @@ function buildTemplate(
   switch (notificationType) {
     case 'games_ready':
       return gamesReadyTemplate({ year: params.year, weekNumber: params.weekNumber });
-    case 'picks_reminder':
+    case 'picks_reminder_1h':
       return picksReminderTemplate({
+        year: params.year,
+        weekNumber: params.weekNumber,
+        firstKickoffTime: params.firstKickoffTime ?? getNow(),
+      });
+    case 'picks_reminder_24h':
+      return picksReminder24hTemplate({
         year: params.year,
         weekNumber: params.weekNumber,
         firstKickoffTime: params.firstKickoffTime ?? getNow(),

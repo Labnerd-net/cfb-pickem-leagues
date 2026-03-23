@@ -1,5 +1,5 @@
 export type Role = "user" | "admin";
-export type NotificationType = "games_ready" | "picks_reminder" | "rankings_updated" | "admin_broadcast";
+export type NotificationType = "games_ready" | "picks_reminder_1h" | "picks_reminder_24h" | "rankings_updated" | "admin_broadcast";
 export type NotificationChannel = "email" | "ntfy" | "telegram" | "discord";
 export type Team = "home_team" | "away_team" | "pending" | "voided";
 export type Classification = "fbs" | "fcs" | "d1" | "d2" | "d3";

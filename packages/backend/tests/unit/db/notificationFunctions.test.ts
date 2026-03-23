@@ -123,7 +123,7 @@ describe('Notification Database Functions', () => {
 	describe('returnNotificationLogs', () => {
 		it('returns all entries and correct total with no filters', async () => {
 			await addNotificationLog(1, 2024, 1, 'games_ready', 'email');
-			await addNotificationLog(1, 2024, 1, 'picks_reminder', 'ntfy');
+			await addNotificationLog(1, 2024, 1, 'picks_reminder_1h', 'ntfy');
 			const { entries, total } = await returnNotificationLogs(50, 0);
 			expect(total).toBe(2);
 			expect(entries).toHaveLength(2);
@@ -131,7 +131,7 @@ describe('Notification Database Functions', () => {
 
 		it('filters by channel and returns correct total', async () => {
 			await addNotificationLog(1, 2024, 1, 'games_ready', 'email');
-			await addNotificationLog(1, 2024, 1, 'picks_reminder', 'ntfy');
+			await addNotificationLog(1, 2024, 1, 'picks_reminder_1h', 'ntfy');
 			const { entries, total } = await returnNotificationLogs(50, 0, 'email');
 			expect(total).toBe(1);
 			expect(entries).toHaveLength(1);
@@ -140,7 +140,7 @@ describe('Notification Database Functions', () => {
 
 		it('filters by notificationType and returns correct total', async () => {
 			await addNotificationLog(1, 2024, 1, 'games_ready', 'email');
-			await addNotificationLog(1, 2024, 1, 'picks_reminder', 'email');
+			await addNotificationLog(1, 2024, 1, 'picks_reminder_1h', 'email');
 			const { entries, total } = await returnNotificationLogs(50, 0, undefined, 'games_ready');
 			expect(total).toBe(1);
 			expect(entries).toHaveLength(1);
@@ -150,7 +150,7 @@ describe('Notification Database Functions', () => {
 		it('ANDs channel and notificationType filters', async () => {
 			await addNotificationLog(1, 2024, 1, 'games_ready', 'email');
 			await addNotificationLog(1, 2024, 1, 'games_ready', 'ntfy');
-			await addNotificationLog(1, 2024, 1, 'picks_reminder', 'email');
+			await addNotificationLog(1, 2024, 1, 'picks_reminder_1h', 'email');
 			const { entries, total } = await returnNotificationLogs(50, 0, 'email', 'games_ready');
 			expect(total).toBe(1);
 			expect(entries).toHaveLength(1);

@@ -2,9 +2,9 @@
 
 ## Current Feature Spec File
 
-Title:
-Spec file:
-Branch:
+Title: Scheduled Notification Reminders
+Spec file: context/specs/scheduled-notification-reminders.md
+Branch: claude/feature/scheduled-notification-reminders
 
 ## Current Feature Plan File
 

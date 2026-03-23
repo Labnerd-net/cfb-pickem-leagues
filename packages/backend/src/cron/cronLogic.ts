@@ -14,6 +14,20 @@ export function shouldSendPicksReminder({
   return now >= windowStart && now <= windowEnd;
 }
 
+// Returns true if now is in [firstKickoff - 25h, firstKickoff - 24h]
+export function shouldSend24hrReminder({
+  now,
+  firstKickoff,
+}: {
+  now: Date;
+  firstKickoff: Date | null;
+}): boolean {
+  if (!firstKickoff) return false;
+  const windowStart = new Date(firstKickoff.getTime() - 25 * 60 * 60 * 1000);
+  const windowEnd = new Date(firstKickoff.getTime() - 24 * 60 * 60 * 1000);
+  return now >= windowStart && now <= windowEnd;
+}
+
 // Returns true if we should refresh scores
 export function shouldRefreshScores({
   now,

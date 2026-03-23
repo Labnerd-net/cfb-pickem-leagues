@@ -8,7 +8,7 @@ import type {
   MarkGameCompleteRequest,
 } from '@shared/types/cfb-pickem-api.js';
 
-const notificationTypeEnum = z.enum(['games_ready', 'picks_reminder', 'rankings_updated']);
+const notificationTypeEnum = z.enum(['games_ready', 'picks_reminder_1h', 'picks_reminder_24h', 'rankings_updated']);
 const notificationChannelEnum = z.enum(['email']);
 
 const notificationPreferenceSchema = z.object({

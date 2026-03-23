@@ -224,7 +224,7 @@ const admin = new Hono<{ Variables: Variables }>()
         limit: z.coerce.number().min(1).max(500).default(50),
         offset: z.coerce.number().min(0).default(0),
         channel: z.enum(['email', 'ntfy', 'telegram', 'discord']).optional(),
-        notificationType: z.enum(['games_ready', 'picks_reminder', 'rankings_updated', 'admin_broadcast']).optional(),
+        notificationType: z.enum(['games_ready', 'picks_reminder_1h', 'picks_reminder_24h', 'rankings_updated', 'admin_broadcast']).optional(),
       })
     ),
     async c => {

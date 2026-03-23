@@ -24,7 +24,8 @@ import { getNotificationLogs } from '../../apis/adminRequests';
 
 const NOTIFICATION_TYPE_LABELS: Record<NotificationType, string> = {
   games_ready: 'Games Ready',
-  picks_reminder: 'Picks Reminder',
+  picks_reminder_1h: 'Picks Reminder (1hr)',
+  picks_reminder_24h: 'Picks Reminder (24hr)',
   rankings_updated: 'Rankings Updated',
   admin_broadcast: 'Admin Broadcast',
 };

@@ -27,7 +27,8 @@ import { useAuth } from '../contexts/auth/AuthContext';
 
 const NOTIFICATION_TYPES: { value: Exclude<NotificationType, 'admin_broadcast'>; label: string }[] = [
   { value: 'games_ready', label: 'Games Ready' },
-  { value: 'picks_reminder', label: 'Picks Reminder (1hr before kickoff)' },
+  { value: 'picks_reminder_1h', label: 'Picks Reminder (1hr before kickoff)' },
+  { value: 'picks_reminder_24h', label: 'Picks Reminder (24hr before kickoff)' },
   { value: 'rankings_updated', label: 'Rankings Updated' },
 ];
 

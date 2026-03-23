@@ -6,6 +6,7 @@ import logger from '../utils/logger.js';
 import { getNow } from '../utils/clock.js';
 import {
   shouldSendPicksReminder,
+  shouldSend24hrReminder,
   shouldRefreshScores,
   isWeekComplete,
   getFirstKickoff,
@@ -17,6 +18,7 @@ let lastRefreshAt: Date | null = null;
 let hardCapStart: Date | null = null;
 let scoresCompletedForWeek: string | null = null; // key: "year-week"
 let lastWeekKey: string | null = null;
+let reminder24hSentForWeek: string | null = null; // key: "year-week"
 
 export async function runCronTick(): Promise<void> {
   const now = getNow();
@@ -36,6 +38,7 @@ export async function runCronTick(): Promise<void> {
   if (weekKey !== lastWeekKey) {
     hardCapStart = null;
     lastRefreshAt = null;
+    reminder24hSentForWeek = null;
     lastWeekKey = weekKey;
     logger.info({ weekKey }, 'Week changed, resetting cron state');
   }
@@ -44,15 +47,24 @@ export async function runCronTick(): Promise<void> {
   const games = await returnPickedGames(identifier);
   if (games.length === 0) return;
 
-  // 3. Picks reminder
+  // 3. Picks reminders
   const firstKickoff = getFirstKickoff(games);
-  if (shouldSendPicksReminder({ now, firstKickoff })) {
+  if (shouldSend24hrReminder({ now, firstKickoff }) && reminder24hSentForWeek !== weekKey) {
+    reminder24hSentForWeek = weekKey;
     dispatchNotification({
-      notificationType: 'picks_reminder',
+      notificationType: 'picks_reminder_24h',
       year: week.year,
       weekNumber: week.weekNumber,
       firstKickoffTime: firstKickoff ?? undefined,
-    }).catch(err => logger.error({ err }, 'picks_reminder dispatch failed'));
+    }).catch(err => logger.error({ err }, 'picks_reminder_24h dispatch failed'));
+  }
+  if (shouldSendPicksReminder({ now, firstKickoff })) {
+    dispatchNotification({
+      notificationType: 'picks_reminder_1h',
+      year: week.year,
+      weekNumber: week.weekNumber,
+      firstKickoffTime: firstKickoff ?? undefined,
+    }).catch(err => logger.error({ err }, 'picks_reminder_1h dispatch failed'));
   }
 
   // 4. Score refresh

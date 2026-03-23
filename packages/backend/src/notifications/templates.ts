@@ -56,6 +56,35 @@ export function picksReminderTemplate({
   return { subject, htmlBody, textBody };
 }
 
+export function picksReminder24hTemplate({
+  year,
+  weekNumber,
+  firstKickoffTime,
+}: {
+  year: number;
+  weekNumber: number;
+  firstKickoffTime: Date;
+}): EmailTemplate {
+  const kickoffStr = firstKickoffTime.toLocaleString('en-US', {
+    timeZone: 'America/Chicago',
+    weekday: 'short',
+    month: 'short',
+    day: 'numeric',
+    hour: 'numeric',
+    minute: '2-digit',
+    timeZoneName: 'short',
+  });
+  const subject = `CFB Pick'em — 24 hours until kickoff! Make your picks`;
+  const textBody = `The first game of Week ${weekNumber} (${year}) kicks off at ${kickoffStr}. You have about 24 hours left to make your picks!`;
+  const htmlBody = `
+    <h2>Picks Deadline Reminder</h2>
+    <p>The first game of Week ${weekNumber} of the ${year} season kicks off at <strong>${kickoffStr}</strong>.</p>
+    <p>You have about 24 hours — log in and lock in your picks!</p>
+  `.trim();
+
+  return { subject, htmlBody, textBody };
+}
+
 export function rankingsUpdatedTemplate({
   year,
   weekNumber,
