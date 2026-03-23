@@ -1,7 +1,7 @@
 import { Hono } from 'hono';
 import { HTTPException } from 'hono/http-exception';
 import * as dbAdminFunctions from '../db/dbAdminFunctions.js';
-import { returnUsers, updateUserRoles } from '../db/dbUserFunctions.js';
+import { returnUsers, updateUserRoles, returnUserPickTotals } from '../db/dbUserFunctions.js';
 import { returnNotificationLogs } from '../db/dbNotificationFunctions.js';
 import { getGameData, getWeekData } from '../api/index.js';
 import type { JwtData } from '@shared/types/cfb-pickem-api.js';
@@ -9,8 +9,9 @@ import { authMiddleware, requireRole } from '../utils/middleware.js';
 import { apiRateLimit } from '../utils/rateLimiter.js';
 import { z } from 'zod';
 import { zValidator } from '@hono/zod-validator';
-import { weekIdentifierValidator, pickedGameRequestValidator, updateUserRolesValidator, markGameCompleteValidator, yearQueryValidator, weekIdentifierQueryValidator, correctGameScoreParamValidator, correctGameScoreBodyValidator } from '../utils/zValidate.js';
-import { dispatchNotification } from '../notifications/dispatcher.js';
+import { weekIdentifierValidator, pickedGameRequestValidator, updateUserRolesValidator, markGameCompleteValidator, yearQueryValidator, weekIdentifierQueryValidator, correctGameScoreParamValidator, correctGameScoreBodyValidator, adminBroadcastBodyValidator } from '../utils/zValidate.js';
+import { dispatchNotification, dispatchAdminBroadcast } from '../notifications/dispatcher.js';
+import { getNow } from '../utils/clock.js';
 import { sendNtfyNotification } from '../notifications/ntfySender.js';
 import { sendTelegramNotification } from '../notifications/telegramSender.js';
 import { sendDiscordNotification } from '../notifications/discordSender.js';
@@ -223,7 +224,7 @@ const admin = new Hono<{ Variables: Variables }>()
         limit: z.coerce.number().min(1).max(500).default(50),
         offset: z.coerce.number().min(0).default(0),
         channel: z.enum(['email', 'ntfy', 'telegram', 'discord']).optional(),
-        notificationType: z.enum(['games_ready', 'picks_reminder', 'rankings_updated']).optional(),
+        notificationType: z.enum(['games_ready', 'picks_reminder', 'rankings_updated', 'admin_broadcast']).optional(),
       })
     ),
     async c => {
@@ -249,6 +250,39 @@ const admin = new Hono<{ Variables: Variables }>()
     }
 
     return c.json({ results });
-  });
+  })
+  // Export user list with all-time pick totals
+  .get('/users/export', apiRateLimit, authMiddleware, requireRole('admin'), async c => {
+    const [allUsers, pickTotals] = await Promise.all([returnUsers(), returnUserPickTotals()]);
+    const totalsById = new Map(pickTotals.map(t => [t.userId, t]));
+    const users = allUsers.map(u => {
+      const totals = totalsById.get(u.userId) ?? { total: 0, correct: 0 };
+      const accuracy = totals.total === 0 ? 0 : totals.correct / totals.total;
+      return {
+        userId: u.userId,
+        displayName: u.displayName,
+        email: u.email,
+        roles: u.roles,
+        total: totals.total,
+        correct: totals.correct,
+        accuracy,
+      };
+    });
+    return c.json({ users });
+  })
+  // Send a free-form admin broadcast notification to all users
+  .post(
+    '/notifications/broadcast',
+    apiRateLimit,
+    authMiddleware,
+    requireRole('admin'),
+    adminBroadcastBodyValidator,
+    async c => {
+      const { subject, message, overrideEmailPreferences } = c.req.valid('json');
+      const { year, weekNumber } = await dbAdminFunctions.resolveWeekContext(getNow());
+      await dispatchAdminBroadcast(subject, message, overrideEmailPreferences, year, weekNumber);
+      return c.json({ success: true });
+    }
+  );
 
 export default admin;

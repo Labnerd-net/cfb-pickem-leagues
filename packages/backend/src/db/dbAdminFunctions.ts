@@ -1,4 +1,4 @@
-import { eq, and, inArray, notInArray, lte, gte, max } from 'drizzle-orm';
+import { eq, and, inArray, notInArray, lte, gte, gt, max, asc } from 'drizzle-orm';
 import { adminWeeks, adminGames, scoreCorrections } from './schema/admin.js';
 import { games as userGames } from './schema/users.js';
 import { db } from './index.js';
@@ -417,4 +417,37 @@ export async function enrichWeekIdentifier(identifier: WeekIdentifier): Promise<
     week: identifier.week,
     seasonType,
   };
+}
+
+// ------------------------------------------------------------------
+// Resolve the week context for notification logging.
+// Returns the active week if one exists, otherwise the next upcoming
+// season year with weekNumber=0 (pre-season), or current calendar year
+// with weekNumber=0 if no weeks exist in the DB at all.
+// ------------------------------------------------------------------
+export async function resolveWeekContext(now: Date): Promise<{ year: number; weekNumber: number }> {
+  const current = await returnCurrentWeek(now);
+  if (current) {
+    return { year: current.year, weekNumber: current.weekNumber };
+  }
+  const dateStr = now.toISOString().slice(0, 10);
+  // Check for an upcoming week — if one exists we're in a mid-season gap, not truly off-season
+  const upcoming = await db
+    .select({ year: adminWeeks.year })
+    .from(adminWeeks)
+    .where(gt(adminWeeks.weekStart, dateStr))
+    .orderBy(asc(adminWeeks.weekStart))
+    .limit(1);
+  if (upcoming.length > 0) {
+    return { year: upcoming[0].year, weekNumber: 0 };
+  }
+  // No upcoming weeks — season is over, use next year
+  const rows = await db
+    .select({ maxYear: max(adminWeeks.year) })
+    .from(adminWeeks);
+  const maxYear = rows[0]?.maxYear;
+  if (maxYear != null) {
+    return { year: maxYear + 1, weekNumber: 0 };
+  }
+  return { year: now.getFullYear(), weekNumber: 0 };
 }

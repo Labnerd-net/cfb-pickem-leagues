@@ -13,6 +13,7 @@ import {
 	returnWeekScores,
 	returnUserPickCount,
 	returnUserPickHistory,
+	returnUserPickTotals,
 } from '../../../src/db/dbUserFunctions.js';
 import { db } from '../../../src/db/index.js';
 
@@ -525,6 +526,65 @@ describe('User Database Functions', () => {
 			expect(week1.total).toBe(1);
 			expect(week1.correct).toBe(1);
 			expect(week1.incorrect).toBe(0);
+		});
+	});
+
+	describe('returnUserPickTotals', () => {
+		afterEach(async () => {
+			await cleanDatabase();
+			await seedTestData();
+		});
+
+		it('returns zero totals for users with no picks', async () => {
+			const totals = await returnUserPickTotals();
+			expect(Array.isArray(totals)).toBe(true);
+			expect(totals.length).toBe(2); // 2 seeded users
+			totals.forEach(t => {
+				expect(t.total).toBe(0);
+				expect(t.correct).toBe(0);
+			});
+		});
+
+		it('counts total and correct picks across all years', async () => {
+			await createTestWeek(1, 2024, 'regular');
+			await createTestWeek(1, 2025, 'regular');
+			const g1 = await createTestGame(1, 2024, 'Home A', 'Away A', true, true);
+			const g2 = await createTestGame(1, 2025, 'Home B', 'Away B', true, true);
+			const id1 = (g1 as { game_id: number }).game_id;
+			const id2 = (g2 as { game_id: number }).game_id;
+
+			await db.execute(sql`UPDATE "admin"."games" SET winning_team = 'home_team' WHERE game_id = ${id1}`);
+			await db.execute(sql`UPDATE "admin"."games" SET winning_team = 'away_team' WHERE game_id = ${id2}`);
+
+			// User 1: correct on g1, incorrect on g2
+			await addPickedGame({ game: id1, pick: 'home_team' }, '1');
+			await addPickedGame({ game: id2, pick: 'home_team' }, '1');
+
+			const totals = await returnUserPickTotals();
+			const user1 = totals.find(t => t.userId === 1)!;
+			expect(user1).toBeDefined();
+			expect(user1.total).toBe(2);
+			expect(user1.correct).toBe(1);
+
+			// User 2 has no picks
+			const user2 = totals.find(t => t.userId === 2)!;
+			expect(user2.total).toBe(0);
+			expect(user2.correct).toBe(0);
+		});
+
+		it('excludes voided picks from total', async () => {
+			await createTestWeek(1, 2024, 'regular');
+			const g1 = await createTestGame(1, 2024, 'Home A', 'Away A', true, false);
+			const id1 = (g1 as { game_id: number }).game_id;
+
+			await addPickedGame({ game: id1, pick: 'home_team' }, '1');
+			// Mark the pick as voided
+			await db.execute(sql`UPDATE "user"."games" SET team_chosen = 'voided' WHERE user_id = 1 AND game_id = ${id1}`);
+
+			const totals = await returnUserPickTotals();
+			const user1 = totals.find(t => t.userId === 1)!;
+			expect(user1.total).toBe(0);
+			expect(user1.correct).toBe(0);
 		});
 	});
 });

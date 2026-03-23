@@ -9,6 +9,8 @@ import type {
   NotificationChannel,
   NotificationLogEntry,
   NotificationType,
+  UserExportEntry,
+  AdminBroadcastRequest,
 } from '@shared/types/cfb-pickem-api';
 import { client } from '../lib/api';
 
@@ -245,6 +247,44 @@ export async function correctGameScore(
     }
     const body = await res.json();
     return { success: true, data: (body as unknown as { game: AdminDbGameData }).game };
+  } catch {
+    return { success: false, error: 'Request failed' };
+  }
+}
+
+export interface GetAdminExportResponse {
+  success: boolean;
+  data?: UserExportEntry[];
+  error?: string;
+}
+
+export async function getAdminExport(): Promise<GetAdminExportResponse> {
+  try {
+    const res = await client.api.admin.users.export.$get();
+    if (!res.ok) {
+      const body = (await res.json()) as unknown as { error: string };
+      return { success: false, error: body.error };
+    }
+    const body = await res.json();
+    return { success: true, data: (body as unknown as { users: UserExportEntry[] }).users };
+  } catch {
+    return { success: false, error: 'Request failed' };
+  }
+}
+
+export interface SendAdminBroadcastResponse {
+  success: boolean;
+  error?: string;
+}
+
+export async function sendAdminBroadcast(request: AdminBroadcastRequest): Promise<SendAdminBroadcastResponse> {
+  try {
+    const res = await client.api.admin.notifications.broadcast.$post({ json: request });
+    if (!res.ok) {
+      const body = (await res.json()) as unknown as { error: string };
+      return { success: false, error: body.error };
+    }
+    return { success: true };
   } catch {
     return { success: false, error: 'Request failed' };
   }

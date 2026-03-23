@@ -1,6 +1,6 @@
 import type { LeaderboardEntry } from '@shared/types/cfb-pickem-api.js';
 
-function escapeHtml(str: string): string {
+export function escapeHtml(str: string): string {
   return str
     .replace(/&/g, '&amp;')
     .replace(/</g, '&lt;')

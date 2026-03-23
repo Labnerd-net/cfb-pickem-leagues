@@ -99,6 +99,12 @@ const updateProfileSchema = z
     }
   });
 
+const adminBroadcastBodySchema = z.object({
+  subject: z.string().min(1).max(100),
+  message: z.string().min(1).max(1000),
+  overrideEmailPreferences: z.boolean(),
+});
+
 const correctGameScoreParamSchema = z.object({
   gameId: z.coerce.number().int().positive(),
 });
@@ -122,3 +128,4 @@ export const verifyEmailQueryValidator = zValidator('query', verifyEmailQuerySch
 export const registerRequestValidator = zValidator('json', registerRequestSchema);
 export const loginRequestValidator = zValidator('json', loginRequestSchema);
 export const updateProfileValidator = zValidator('json', updateProfileSchema);
+export const adminBroadcastBodyValidator = zValidator('json', adminBroadcastBodySchema);

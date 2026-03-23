@@ -26,6 +26,7 @@ const NOTIFICATION_TYPE_LABELS: Record<NotificationType, string> = {
   games_ready: 'Games Ready',
   picks_reminder: 'Picks Reminder',
   rankings_updated: 'Rankings Updated',
+  admin_broadcast: 'Admin Broadcast',
 };
 
 const CHANNEL_LABELS: Record<NotificationChannel, string> = {
@@ -173,7 +174,11 @@ export default function NotificationLogSection() {
                 </TableCell>
                 <TableCell>{CHANNEL_LABELS[entry.channel] ?? entry.channel}</TableCell>
                 <TableCell>
-                  {entry.year} W{entry.weekNumber}
+                  {entry.year === 0 && entry.weekNumber === 0
+                    ? '–'
+                    : entry.weekNumber === 0
+                      ? `${entry.year} Pre-season`
+                      : `${entry.year} W${entry.weekNumber}`}
                 </TableCell>
                 <TableCell>{entry.recipient}</TableCell>
               </TableRow>
