@@ -1,4 +1,4 @@
-import { eq, and, inArray, notInArray, lte, gte } from 'drizzle-orm';
+import { eq, and, inArray, notInArray, lte, gte, max } from 'drizzle-orm';
 import { adminWeeks, adminGames } from './schema/admin.js';
 import { db } from './index.js';
 import logger from '../utils/logger.js';
@@ -289,6 +289,17 @@ export async function markGameComplete(
 }
 
 // ------------------------------------------------------------------
+// Get max regular season week number for a year
+// ------------------------------------------------------------------
+async function getMaxRegularWeek(year: number): Promise<number> {
+  const rows = await db
+    .select({ maxWeek: max(adminWeeks.weekNumber) })
+    .from(adminWeeks)
+    .where(and(eq(adminWeeks.year, year), eq(adminWeeks.seasonType, 'regular')));
+  return rows[0]?.maxWeek ?? 0;
+}
+
+// ------------------------------------------------------------------
 // Convert WeekIdentifier to WeekQuery by looking up seasonType
 // ------------------------------------------------------------------
 export async function enrichWeekIdentifier(identifier: WeekIdentifier): Promise<WeekQuery> {
@@ -302,9 +313,17 @@ export async function enrichWeekIdentifier(identifier: WeekIdentifier): Promise<
     );
   }
 
+  // Postseason week numbers are stored as (regularCount + cfbdWeek).
+  // Reverse the offset so the CFBD API receives the original week number (1, 2, 3…).
+  let cfbdWeek = identifier.week;
+  if (seasonType === 'postseason') {
+    const regularCount = await getMaxRegularWeek(identifier.year);
+    cfbdWeek = identifier.week - regularCount;
+  }
+
   return {
     year: identifier.year,
-    week: identifier.week,
+    week: cfbdWeek,
     seasonType,
   };
 }
