@@ -9,6 +9,7 @@ const currentSeason = getCurrentSeason();
 const defaultProps = {
   selectedYear: currentSeason,
   selectedWeek: 1,
+  availableYears: [currentSeason, currentSeason - 1, currentSeason - 2],
   weeks: [],
   onYearChange: vi.fn(),
   onWeekChange: vi.fn(),
@@ -23,18 +24,16 @@ describe('UserWeekSelector', () => {
     expect(screen.queryByRole('spinbutton')).not.toBeInTheDocument();
   });
 
-  it('renders four season options including next season', async () => {
+  it('renders only the years provided via availableYears', async () => {
     const user = userEvent.setup();
     render(<UserWeekSelector {...defaultProps} />);
 
-    // Season select is the first combobox in the DOM
     const yearCombobox = screen.getAllByRole('combobox')[0];
     await user.click(yearCombobox);
 
     const options = screen.getAllByRole('option');
-    expect(options).toHaveLength(4);
+    expect(options).toHaveLength(3);
     expect(options.map(o => Number(o.getAttribute('data-value')))).toEqual([
-      currentSeason + 1,
       currentSeason,
       currentSeason - 1,
       currentSeason - 2,

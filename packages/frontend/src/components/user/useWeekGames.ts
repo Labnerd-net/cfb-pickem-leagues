@@ -22,6 +22,7 @@ interface UseWeekGamesReturn {
   setSelectedYear: (year: number) => void;
   selectedWeek: number;
   setSelectedWeek: (week: number) => void;
+  availableYears: number[];
   weeks: AdminWeekData[];
   games: AdminGameWire[];
   userPicks: Map<number, 'home_team' | 'away_team'>;
@@ -41,6 +42,7 @@ interface UseWeekGamesReturn {
 export function useWeekGames(): UseWeekGamesReturn {
   const [selectedYear, setSelectedYear] = useState<number>(0);
   const [selectedWeek, setSelectedWeek] = useState<number>(0);
+  const [availableYears, setAvailableYears] = useState<number[]>([]);
   const [weeks, setWeeks] = useState<AdminWeekData[]>([]);
   const [games, setGames] = useState<AdminGameWire[]>([]);
   const [userPicks, setUserPicks] = useState<Map<number, 'home_team' | 'away_team'>>(new Map());
@@ -97,6 +99,9 @@ export function useWeekGames(): UseWeekGamesReturn {
           setInitializing(false);
           return;
         }
+
+        const years = [...new Set(allWeeks.map(w => w.year))].sort((a, b) => b - a);
+        setAvailableYears(years);
 
         const current = getCurrentWeek(allWeeks);
         setSelectedYear(current.year);
@@ -258,6 +263,7 @@ export function useWeekGames(): UseWeekGamesReturn {
     setSelectedYear,
     selectedWeek,
     setSelectedWeek,
+    availableYears,
     weeks,
     games,
     userPicks,

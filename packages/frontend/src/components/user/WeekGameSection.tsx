@@ -10,6 +10,7 @@ export default function WeekGameSection() {
     setSelectedYear,
     selectedWeek,
     setSelectedWeek,
+    availableYears,
     weeks,
     games,
     userPicks,
@@ -39,6 +40,7 @@ export default function WeekGameSection() {
       <UserWeekSelector
         selectedYear={selectedYear}
         selectedWeek={selectedWeek}
+        availableYears={availableYears}
         weeks={weeks}
         onYearChange={setSelectedYear}
         onWeekChange={setSelectedWeek}
