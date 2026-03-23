@@ -2,7 +2,7 @@
 
 > Generated: 2026-03-14
 > Focus: Full audit
-> Last updated: 2026-03-22 — closed [20], [21] (leaderboard cache, external API cache — not warranted at target scale of ~15 users); completed [1], [4], [5], [6] (security fixes); completed [9] (picks transaction), closed [12] (false positive); completed [10], [11], [17] (cron week reset, settings error handling, email transporter singleton); completed [2], [3] (email XSS escape, rate limiter TRUST_PROXY); completed [7], [8] (DB connection options, admin bootstrap fix); completed [13], [14] (ErrorBoundary hookup, addGameToWeek removal); completed [15], [19] (picks N+1 bulk fetch, startTime index); completed [16], [18] (notification bulk query, rate limiter interval cleanup); completed [22], [26], [32] (week query-param validation refactor, weekNumber rename, schema consolidation); completed [25] (Hono RPC type cast removal); completed [23], [24] (AdminSection and WeekGameSection component refactor); completed [27] (pick voided status, FK cascade → restrict); completed [28], [30], [31], [33] (notification log pagination, email timezone, tab index refactor, env var Zod validation)
+> Last updated: 2026-03-22 — closed [20], [21] (leaderboard cache, external API cache — not warranted at target scale of ~15 users); completed [1], [4], [5], [6] (security fixes); completed [9] (picks transaction), closed [12] (false positive); completed [10], [11], [17] (cron week reset, settings error handling, email transporter singleton); completed [2], [3] (email XSS escape, rate limiter TRUST_PROXY); completed [7], [8] (DB connection options, admin bootstrap fix); completed [13], [14] (ErrorBoundary hookup, addGameToWeek removal); completed [15], [19] (picks N+1 bulk fetch, startTime index); completed [16], [18] (notification bulk query, rate limiter interval cleanup); completed [22], [26], [32] (week query-param validation refactor, weekNumber rename, schema consolidation); completed [25] (Hono RPC type cast removal); completed [23], [24] (AdminSection and WeekGameSection component refactor); completed [27] (pick voided status, FK cascade → restrict); completed [28], [30], [31], [33] (notification log pagination, email timezone, tab index refactor, env var Zod validation); completed [53] (notification log server-side filtering)
 
 ---
 
@@ -54,7 +54,7 @@ _None identified._
 _None identified._
 
 ### Low
-- **[53]** **[packages/frontend/src/components/admin/NotificationLogSection.tsx]**: "X total entries" count reflects the unfiltered DB total even when a channel or type filter is active — the displayed number doesn't match what's on screen. Fix: either move channel/type filtering to server-side query params so the count reflects filtered results, or label the count as "X total (unfiltered)" to make the discrepancy clear.
+_None identified._
 
 ---
 
@@ -94,6 +94,6 @@ _None identified._
 | Security | 0 | 0 | 0 | 0 |
 | Bugs | 0 | 0 | 0 | 0 |
 | Performance | 0 | 0 | 0 | 0 |
-| Improvements & Refactors | 0 | 0 | 1 | 1 |
+| Improvements & Refactors | 0 | 0 | 0 | 0 |
 | Feature Ideas | 2 | 7 | 10 | 19 |
-| **Total** | **2** | **7** | **11** | **20** |
+| **Total** | **2** | **7** | **10** | **19** |

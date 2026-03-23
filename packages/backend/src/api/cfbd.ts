@@ -1,4 +1,4 @@
-import { client, getGames, getCalendar } from 'cfbd';
+import { client, getGames, getCalendar, getLines } from 'cfbd';
 import type { DivisionClassification } from 'cfbd';
 import { cfbdApiKey } from '../utils/envVars.js';
 import type { Classification, WeekQuery } from '@shared/types/cfb-pickem-api.js';
@@ -32,6 +32,16 @@ export async function getCfbdGameData(query: WeekQuery, classification: Classifi
     },
   });
   return cfbdGameData.data;
+}
+
+// ------------------------------------------------------------------
+// Returns Lines (spread) data from CFBD for a given week
+// ------------------------------------------------------------------
+export async function getCfbdLinesData(query: WeekQuery) {
+  const linesData = await getLines({
+    query: { year: query.year, week: query.week, seasonType: query.seasonType },
+  });
+  return linesData.data;
 }
 
 // ------------------------------------------------------------------

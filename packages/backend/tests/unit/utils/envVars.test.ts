@@ -3,7 +3,7 @@ import { validateEnv } from '../../../src/utils/envVars.js';
 
 const minimalValid = {
   JWT_SECRET: 'supersecret',
-  DATA_SOURCE: 'ncaa',
+  CFBD_API_KEY: 'testkey',
 } as NodeJS.ProcessEnv;
 
 describe('validateEnv', () => {
@@ -12,33 +12,29 @@ describe('validateEnv', () => {
   });
 
   it('throws when JWT_SECRET is missing', () => {
-    expect(() => validateEnv({ DATA_SOURCE: 'ncaa' } as NodeJS.ProcessEnv)).toThrow('FATAL');
+    expect(() => validateEnv({ CFBD_API_KEY: 'testkey' } as NodeJS.ProcessEnv)).toThrow('FATAL');
   });
 
   it('throws when JWT_SECRET is empty string', () => {
-    expect(() => validateEnv({ JWT_SECRET: '', DATA_SOURCE: 'ncaa' } as NodeJS.ProcessEnv)).toThrow('FATAL');
+    expect(() => validateEnv({ JWT_SECRET: '', CFBD_API_KEY: 'testkey' } as NodeJS.ProcessEnv)).toThrow('FATAL');
   });
 
-  it('throws when DATA_SOURCE=cfbd and CFBD_API_KEY is missing', () => {
+  it('throws when CFBD_API_KEY is missing', () => {
     expect(() =>
-      validateEnv({ JWT_SECRET: 'secret', DATA_SOURCE: 'cfbd' } as NodeJS.ProcessEnv)
+      validateEnv({ JWT_SECRET: 'secret' } as NodeJS.ProcessEnv)
     ).toThrow('CFBD_API_KEY');
   });
 
-  it('passes when DATA_SOURCE=ncaa and CFBD_API_KEY is missing', () => {
-    expect(() => validateEnv({ JWT_SECRET: 'secret', DATA_SOURCE: 'ncaa' } as NodeJS.ProcessEnv)).not.toThrow();
+  it('throws when CFBD_API_KEY is empty string', () => {
+    expect(() =>
+      validateEnv({ JWT_SECRET: 'secret', CFBD_API_KEY: '' } as NodeJS.ProcessEnv)
+    ).toThrow('CFBD_API_KEY');
   });
 
-  it('passes when DATA_SOURCE=cfbd and CFBD_API_KEY is provided', () => {
+  it('passes when CFBD_API_KEY is provided', () => {
     expect(() =>
-      validateEnv({ JWT_SECRET: 'secret', DATA_SOURCE: 'cfbd', CFBD_API_KEY: 'mykey' } as NodeJS.ProcessEnv)
+      validateEnv({ JWT_SECRET: 'secret', CFBD_API_KEY: 'mykey' } as NodeJS.ProcessEnv)
     ).not.toThrow();
-  });
-
-  it('throws when DATA_SOURCE is an invalid value', () => {
-    expect(() =>
-      validateEnv({ JWT_SECRET: 'secret', DATA_SOURCE: 'invalid' } as NodeJS.ProcessEnv)
-    ).toThrow('FATAL');
   });
 
   it('throws when SMTP_PORT is a non-numeric string', () => {

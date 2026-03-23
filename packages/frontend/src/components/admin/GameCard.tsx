@@ -80,6 +80,18 @@ export default function GameCard({ game, selected, onSelect }: GameCardProps) {
             >
               Week {game.weekNumber} • {game.seasonType}
             </Typography>
+            {game.spread !== null && (
+              <Typography
+                variant="body2"
+                sx={{
+                  fontFamily: '"Work Sans", sans-serif',
+                  color: 'text.secondary',
+                  fontSize: '0.875rem',
+                }}
+              >
+                Spread: {game.spread > 0 ? `+${game.spread}` : game.spread} (home)
+              </Typography>
+            )}
             {game.completed && game.awayPoints !== null && game.homePoints !== null && (
               <Typography
                 variant="body2"

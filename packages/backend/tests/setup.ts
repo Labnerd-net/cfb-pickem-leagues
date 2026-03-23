@@ -6,6 +6,7 @@ import { drizzle } from 'drizzle-orm/pglite';
 // Override environment variables for tests
 process.env.NODE_ENV = 'test';
 process.env.JWT_SECRET = 'test-secret-key-do-not-use-in-production';
+process.env.CFBD_API_KEY = 'test-cfbd-key';
 
 // Set global test timeout
 vi.setConfig({ testTimeout: 10000 });
@@ -38,7 +39,6 @@ vi.mock('../src/db/index.ts', async () => {
 		CREATE TABLE admin.games (
 			game_id SERIAL PRIMARY KEY,
 			cfbd_game_id INTEGER,
-			ncaa_game_id TEXT,
 			picked BOOLEAN NOT NULL,
 			week_number INTEGER NOT NULL,
 			year INTEGER NOT NULL,
@@ -50,6 +50,7 @@ vi.mock('../src/db/index.ts', async () => {
 			away_points INTEGER,
 			winning_team TEXT NOT NULL DEFAULT 'pending',
 			start_time TIMESTAMP,
+			spread REAL,
 			created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,
 			CONSTRAINT games_week_fk FOREIGN KEY (year, week_number)
 				REFERENCES admin.weeks (year, week_number) ON DELETE CASCADE

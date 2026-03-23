@@ -7,7 +7,6 @@ function makeGame(overrides: Partial<AdminGameWire> = {}): AdminGameWire {
   return {
     gameId: 1,
     cfbdGameId: null,
-    ncaaGameId: 'ncaa-1',
     picked: true,
     weekNumber: 1,
     year: 2025,
@@ -19,6 +18,7 @@ function makeGame(overrides: Partial<AdminGameWire> = {}): AdminGameWire {
     awayPoints: null,
     winningTeam: 'pending',
     startTime: null,
+    spread: null,
     createdAt: '2025-08-01T00:00:00.000Z',
     ...overrides,
   };

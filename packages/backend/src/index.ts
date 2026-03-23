@@ -4,7 +4,7 @@ import { HTTPException } from 'hono/http-exception';
 import { cors } from 'hono/cors';
 import { prettyJSON } from 'hono/pretty-json';
 import cron from 'node-cron';
-import { clientURLs, serverPort, dataSource } from './utils/envVars.js';
+import { clientURLs, serverPort } from './utils/envVars.js';
 import authRoutes from './routes/auth.js';
 import adminRoutes from './routes/admin.js';
 import userRoutes from './routes/user.js';
@@ -58,7 +58,7 @@ serve(
   },
   info => {
     pinoLogger.info(
-      { port: info.port, dataSource, dbHost: process.env.DB_HOST ?? 'localhost' },
+      { port: info.port, dbHost: process.env.DB_HOST ?? 'localhost' },
       'Server started'
     );
     cron.schedule('*/15 * * * *', () => {

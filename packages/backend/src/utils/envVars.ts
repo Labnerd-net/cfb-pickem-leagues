@@ -12,8 +12,7 @@ const envSchema = z
     JWT_EXPIRATION_DAYS: z.coerce.number().default(7),
     JWT_SALT_ROUNDS: z.coerce.number().default(10),
 
-    DATA_SOURCE: z.enum(['ncaa', 'cfbd']).default('ncaa'),
-    CFBD_API_KEY: z.string().optional(),
+    CFBD_API_KEY: z.string().min(1, 'CFBD_API_KEY is required. Get your key at https://collegefootballdata.com/'),
 
     LOG_LEVEL: z.string().default('info'),
     NODE_ENV: z.string().optional(),
@@ -36,16 +35,6 @@ const envSchema = z
     DISCORD_WEBHOOK_URL: z.string().default(''),
     DISCORD_INVITE_URL: z.string().default(''),
   })
-  .superRefine((data, ctx) => {
-    if (data.DATA_SOURCE === 'cfbd' && !data.CFBD_API_KEY) {
-      ctx.addIssue({
-        code: 'custom',
-        message:
-          'CFBD_API_KEY is required when DATA_SOURCE=cfbd. Get your key at https://collegefootballdata.com/',
-        path: ['CFBD_API_KEY'],
-      });
-    }
-  });
 
 export function validateEnv(env: NodeJS.ProcessEnv) {
   const result = envSchema.safeParse(env);
@@ -82,9 +71,7 @@ export function getJwtExpirationSeconds(): number {
 export const bcryptSaltRounds = env.JWT_SALT_ROUNDS;
 
 // cfbd = college football data = https://collegefootballdata.com/
-// ncaa = ncaa-api = https://ncaa-api.henrygd.me/openapi
-export const dataSource = env.DATA_SOURCE;
-export const cfbdApiKey = env.CFBD_API_KEY ?? '';
+export const cfbdApiKey = env.CFBD_API_KEY;
 
 export const logLevel = env.LOG_LEVEL;
 
