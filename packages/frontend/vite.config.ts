@@ -10,4 +10,7 @@ export default defineConfig({
       '@backend': path.resolve(__dirname, '../backend/src'),
     },
   },
+  build: {
+    chunkSizeWarningLimit: 800,
+  },
 })
