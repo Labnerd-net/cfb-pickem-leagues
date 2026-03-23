@@ -76,6 +76,29 @@ const loginRequestSchema = z.object({
   password: z.string().min(1),
 });
 
+const updateProfileSchema = z
+  .object({
+    displayName: z.string().trim().min(1).max(50).optional(),
+    currentPassword: z.string().optional(),
+    newPassword: z.string().optional(),
+  })
+  .superRefine((val, ctx) => {
+    const hasCurrent = val.currentPassword !== undefined;
+    const hasNew = val.newPassword !== undefined;
+    if (hasCurrent !== hasNew) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: 'currentPassword and newPassword must both be provided together',
+      });
+    }
+    if (!val.displayName && !hasCurrent && !hasNew) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: 'At least one field must be provided',
+      });
+    }
+  });
+
 export const yearQueryValidator = zValidator('query', yearQuerySchema);
 export const weekIdentifierQueryValidator = zValidator('query', weekIdentifierQuerySchema);
 export const markGameCompleteValidator = zValidator('json', markGameCompleteSchema);
@@ -87,3 +110,4 @@ export const notificationPreferenceValidator = zValidator('json', notificationPr
 export const verifyEmailQueryValidator = zValidator('query', verifyEmailQuerySchema);
 export const registerRequestValidator = zValidator('json', registerRequestSchema);
 export const loginRequestValidator = zValidator('json', loginRequestSchema);
+export const updateProfileValidator = zValidator('json', updateProfileSchema);

@@ -1,5 +1,8 @@
 import { Hono } from 'hono';
 import { HTTPException } from 'hono/http-exception';
+import { sign } from 'hono/jwt';
+import { setCookie } from 'hono/cookie';
+import * as bcrypt from 'bcryptjs';
 import * as dbUserFunctions from '../db/dbUserFunctions.js';
 import {
   returnPickedGames,
@@ -25,14 +28,22 @@ import {
   ntfyEnabled, ntfyTopicUrl,
   telegramEnabled, telegramInviteUrl,
   discordEnabled, discordInviteUrl,
+  bcryptSaltRounds,
+  jwtAlgorithm,
+  getJwtExpirationSeconds,
+  jwtSecret,
+  jwtExpirationDays,
+  isProduction,
 } from '../utils/envVars.js';
 import { getNow } from '../utils/clock.js';
+import { validatePassword } from '../utils/passwordValidation.js';
 import { apiRateLimit } from '../utils/rateLimiter.js';
 import {
   allUserPickedRequestValidator,
   notificationPreferenceValidator,
   yearQueryValidator,
   weekIdentifierQueryValidator,
+  updateProfileValidator,
 } from '../utils/zValidate.js';
 
 type Variables = {
@@ -48,6 +59,58 @@ const user = new Hono<{ Variables: Variables }>()
       throw new HTTPException(404, { message: 'User not found' });
     const profile: ProfileData = userData[0];
     return c.json(profile);
+  })
+  // Update user profile (display name and/or password)
+  .patch('/profile', apiRateLimit, authMiddleware, updateProfileValidator, async c => {
+    const payload = c.get('jwtPayload');
+    const { displayName, currentPassword, newPassword } = c.req.valid('json');
+
+    const updateFields: { displayName?: string; passwordHash?: string } = {};
+
+    if (displayName !== undefined) {
+      updateFields.displayName = displayName;
+    }
+
+    if (currentPassword !== undefined && newPassword !== undefined) {
+      const user = await dbUserFunctions.returnUserById(payload.sub);
+      if (!user || user.length === 0)
+        throw new HTTPException(404, { message: 'User not found' });
+
+      const isValid = await bcrypt.compare(currentPassword, user[0].passwordHash);
+      if (!isValid)
+        throw new HTTPException(401, { message: 'Current password is incorrect' });
+
+      const passwordValidation = validatePassword(newPassword);
+      if (!passwordValidation.valid)
+        throw new HTTPException(400, { message: passwordValidation.error! });
+
+      updateFields.passwordHash = await bcrypt.hash(newPassword, bcryptSaltRounds);
+    }
+
+    const updated = await dbUserFunctions.updateUserProfile(payload.sub, updateFields);
+    if (!updated || updated.length === 0)
+      throw new HTTPException(404, { message: 'User not found' });
+
+    const cookieOptions = {
+      httpOnly: true,
+      sameSite: 'Strict' as const,
+      secure: isProduction,
+      path: '/',
+      maxAge: jwtExpirationDays * 24 * 60 * 60,
+    };
+
+    const newPayload = {
+      sub: updated[0].userId,
+      email: updated[0].email,
+      displayName: updated[0].displayName,
+      roles: updated[0].roles,
+      emailVerified: updated[0].emailVerified ?? false,
+      exp: getJwtExpirationSeconds(),
+    };
+    const token = await sign(newPayload, jwtSecret, jwtAlgorithm);
+    setCookie(c, 'auth_token', token, cookieOptions);
+
+    return c.json({ status: 'updated' });
   })
   // Get user game picks
   .get('/picks', apiRateLimit, authMiddleware, weekIdentifierQueryValidator, async c => {

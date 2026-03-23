@@ -158,6 +158,27 @@ export async function deleteUserWithAudit(user: UserDbData): Promise<void> {
 }
 
 // ------------------------------------------------------------------
+// Update user profile (display name and/or password hash)
+// ------------------------------------------------------------------
+export async function updateUserProfile(
+  userId: number,
+  fields: { displayName?: string; passwordHash?: string }
+): Promise<UserDbData[]> {
+  logger.debug({ userId }, 'updateUserProfile');
+  try {
+    const rows = await db
+      .update(users)
+      .set({ ...fields })
+      .where(eq(users.userId, userId))
+      .returning();
+    return rows.map(r => ({ ...r, emailVerified: r.emailVerified ?? false }));
+  } catch (e) {
+    logger.error({ err: e }, 'updateUserProfile failed');
+    throw e;
+  }
+}
+
+// ------------------------------------------------------------------
 // Add Game Picks to user
 // ------------------------------------------------------------------
 export async function addPickedGame(pick: UserGamePicks, userId: string): Promise<void> {

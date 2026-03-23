@@ -6,6 +6,7 @@ import type {
   NotificationSettings,
   NotificationType,
   ProfileData,
+  UpdateProfileRequest,
   UserPickHistoryResponse,
   WeekIdentifier,
 } from '@shared/types/cfb-pickem-api.js';
@@ -174,6 +175,18 @@ export async function updateNotificationPreference(pref: {
 }): Promise<{ success: boolean; error?: string }> {
   try {
     const res = await client.api.user.notifications.preferences.$patch({ json: pref });
+    if (!res.ok) return { success: false, error: await extractError(res) };
+    return { success: true };
+  } catch {
+    return { success: false, error: 'Request failed' };
+  }
+}
+
+export async function updateUserProfile(
+  data: UpdateProfileRequest
+): Promise<{ success: boolean; error?: string }> {
+  try {
+    const res = await client.api.user.profile.$patch({ json: data });
     if (!res.ok) return { success: false, error: await extractError(res) };
     return { success: true };
   } catch {

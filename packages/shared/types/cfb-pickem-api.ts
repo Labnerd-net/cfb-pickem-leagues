@@ -202,3 +202,9 @@ export interface BroadcastChannelInfo {
   telegram: { inviteUrl: string | null } | null;
   discord: { inviteUrl: string | null } | null;
 }
+
+export interface UpdateProfileRequest {
+  displayName?: string;
+  currentPassword?: string;
+  newPassword?: string;
+}
