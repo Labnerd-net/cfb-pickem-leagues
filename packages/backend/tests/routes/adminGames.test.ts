@@ -87,7 +87,7 @@ describe('POST /api/admin/week', () => {
       {
         gameId: 0,
         cfbdGameId: null,
-        ncaaGameId: 'game-post-1',
+        
         picked: false,
         weekNumber: 2,
         year: 2024,
@@ -98,6 +98,7 @@ describe('POST /api/admin/week', () => {
         homePoints: null,
         awayPoints: null,
         winningTeam: 'pending',
+        spread: null,
         startTime: null,
       },
     ]);
@@ -123,7 +124,7 @@ describe('POST /api/admin/week', () => {
       {
         gameId: 0,
         cfbdGameId: null,
-        ncaaGameId: 'game-dup-1',
+        
         picked: false,
         weekNumber: 1,
         year: 2024,
@@ -134,6 +135,7 @@ describe('POST /api/admin/week', () => {
         homePoints: null,
         awayPoints: null,
         winningTeam: 'pending',
+        spread: null,
         startTime: null,
       },
     ]);

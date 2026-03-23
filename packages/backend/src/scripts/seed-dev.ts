@@ -27,7 +27,6 @@ function game(
   return {
     gameId: 0,
     cfbdGameId: null,
-    ncaaGameId: null,
     picked: false,
     weekNumber,
     year: SEED_YEAR,
@@ -39,6 +38,7 @@ function game(
     awayPoints: null,
     winningTeam: 'pending',
     startTime: new Date(startTime),
+    spread: null,
   };
 }
 

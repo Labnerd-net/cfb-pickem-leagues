@@ -108,7 +108,6 @@ export async function upsertGameForWeek(game: AdminGameData): Promise<void> {
       .insert(adminGames)
       .values({
         cfbdGameId: game.cfbdGameId,
-        ncaaGameId: game.ncaaGameId,
         picked: false,
         weekNumber: game.weekNumber,
         year: game.year,
@@ -120,6 +119,7 @@ export async function upsertGameForWeek(game: AdminGameData): Promise<void> {
         awayPoints: game.completed ? game.awayPoints : null,
         winningTeam,
         startTime: game.startTime,
+        spread: game.spread,
       })
       .onConflictDoUpdate({
         target: [adminGames.year, adminGames.weekNumber, adminGames.homeTeam, adminGames.awayTeam],
@@ -130,6 +130,7 @@ export async function upsertGameForWeek(game: AdminGameData): Promise<void> {
           awayPoints: game.completed ? game.awayPoints : null,
           winningTeam,
           startTime: game.startTime,
+          spread: game.spread,
         },
       });
   } catch (e) {

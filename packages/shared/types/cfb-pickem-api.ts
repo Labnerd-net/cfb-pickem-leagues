@@ -3,7 +3,6 @@ export type NotificationType = "games_ready" | "picks_reminder" | "rankings_upda
 export type NotificationChannel = "email" | "ntfy" | "telegram" | "discord";
 export type Team = "home_team" | "away_team" | "pending" | "voided";
 export type Classification = "fbs" | "fcs" | "d1" | "d2" | "d3";
-export type DataSource = "ncaa" | "cfbd" | "sdv";
 export type SeasonType =
   | "regular"
   | "postseason"
@@ -68,7 +67,6 @@ export interface UserGameData {
   userId: number;
   gameId: number;
   cfbdGameId: number | null;
-  ncaaGameId: string | null;
   weekNumber: number;
   year: number;
   seasonType: SeasonType;
@@ -101,7 +99,6 @@ export interface AdminDbWeekData extends AdminWeekData {
 export interface AdminGameData {
   gameId: number;
   cfbdGameId: number | null;
-  ncaaGameId: string | null;
   picked: boolean;
   weekNumber: number;
   year: number;
@@ -113,6 +110,7 @@ export interface AdminGameData {
   awayPoints: number | null;
   winningTeam: Team;
   startTime: Date | null;
+  spread: number | null;
 }
 
 export interface AdminDbGameData extends AdminGameData {

@@ -379,7 +379,6 @@ export async function returnUserGames(
       .select({
         gameId: adminGames.gameId,
         cfbdGameId: adminGames.cfbdGameId,
-        ncaaGameId: adminGames.ncaaGameId,
         weekNumber: adminGames.weekNumber,
         year: adminGames.year,
         seasonType: adminGames.seasonType,

@@ -7,6 +7,7 @@ import {
   integer,
   pgSchema,
   primaryKey,
+  real,
   serial,
   text,
   timestamp,
@@ -45,7 +46,6 @@ export const adminGames = adminSchema.table(
   {
     gameId: serial('game_id').primaryKey(),
     cfbdGameId: integer('cfbd_game_id'),
-    ncaaGameId: text('ncaa_game_id'),
     picked: boolean('picked').notNull(),
     weekNumber: integer('week_number').notNull(),
     year: integer('year').notNull(),
@@ -57,6 +57,7 @@ export const adminGames = adminSchema.table(
     awayPoints: integer('away_points'),
     winningTeam: columnTeam('winning_team').notNull().default('pending'),
     startTime: timestamp('start_time'),
+    spread: real('spread'),
     createdAt: timestamp('created_at').defaultNow().notNull(),
   },
   table => [

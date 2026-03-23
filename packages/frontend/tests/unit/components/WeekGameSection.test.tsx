@@ -54,7 +54,6 @@ function makeGame(overrides: Partial<AdminGameWire> = {}): AdminGameWire {
 	return {
 		gameId: 1,
 		cfbdGameId: null,
-		ncaaGameId: null,
 		picked: true,
 		weekNumber: 1,
 		year: currentYear,
@@ -66,6 +65,7 @@ function makeGame(overrides: Partial<AdminGameWire> = {}): AdminGameWire {
 		awayPoints: 17,
 		winningTeam: 'home_team',
 		startTime: null,
+		spread: null,
 		createdAt: new Date().toISOString(),
 		...overrides,
 	};
@@ -76,7 +76,6 @@ function makeUserPick(overrides: Partial<UserPickWire> = {}): UserPickWire {
 		userId: 1,
 		gameId: 1,
 		cfbdGameId: null,
-		ncaaGameId: null,
 		weekNumber: 1,
 		year: currentYear,
 		seasonType: 'regular',

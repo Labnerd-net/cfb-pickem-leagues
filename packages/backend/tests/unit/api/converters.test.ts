@@ -1,19 +1,11 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import type { AdminWeekData } from '@shared/types/cfb-pickem-api.js';
 
-// Mock the external API modules and env vars before importing getWeekData
-vi.mock('../../../src/utils/envVars.js', () => ({
-	dataSource: 'cfbd',
-}));
-
+// Mock the external API modules before importing converters
 vi.mock('../../../src/api/cfbd.js', () => ({
 	getCfbdWeekData: vi.fn(),
 	getCfbdGameData: vi.fn(),
-}));
-
-vi.mock('../../../src/api/ncaa-api.js', () => ({
-	getNcaaSchedule: vi.fn(),
-	getNcaaScoreboard: vi.fn(),
+	getCfbdLinesData: vi.fn(),
 }));
 
 describe('API Converters', () => {
@@ -45,78 +37,11 @@ describe('API Converters', () => {
 		});
 	});
 
-	describe('getWeekData - NCAA', () => {
-		it('should filter out the aggregate summary row', async () => {
-			vi.resetModules();
-
-			// Re-mock with NCAA data source
-			vi.doMock('../../../src/utils/envVars.js', () => ({
-				dataSource: 'ncaa',
-			}));
-
-			const { getNcaaSchedule } = await import('../../../src/api/ncaa-api.js');
-			vi.mocked(getNcaaSchedule).mockResolvedValue({
-				data: {
-					schedules: {
-						games: [
-							{ count: 96, contestDate: '08/23/2025-09/01/2025' },
-							{ count: 83, contestDate: '09/05/2025-09/07/2025' },
-							{ count: 47, contestDate: '12/13/2025-01/19/2026' }, // aggregate row
-						],
-						today: { date: '2026/P', week: 3, season: 2025 },
-					},
-				},
-			});
-
-			const { getWeekData } = await import('../../../src/api/index.js');
-			const weeks = await getWeekData(2025);
-
-			// Should only have 2 weeks (aggregate row filtered out)
-			expect(weeks.length).toBe(2);
-			expect(weeks[0].weekNumber).toBe(1);
-			expect(weeks[1].weekNumber).toBe(2);
-		});
-
-		it('should use sequential index as weekNumber', async () => {
-			vi.resetModules();
-
-			vi.doMock('../../../src/utils/envVars.js', () => ({
-				dataSource: 'ncaa',
-			}));
-
-			const { getNcaaSchedule } = await import('../../../src/api/ncaa-api.js');
-			vi.mocked(getNcaaSchedule).mockResolvedValue({
-				data: {
-					schedules: {
-						games: [
-							{ count: 96, contestDate: '08/23/2025-09/01/2025' },
-							{ count: 83, contestDate: '09/05/2025-09/07/2025' },
-							{ count: 70, contestDate: '09/11/2025-09/14/2025' },
-							{ count: 47, contestDate: '12/13/2025-01/19/2026' }, // aggregate
-						],
-						today: { date: '2026/P', week: 4, season: 2025 },
-					},
-				},
-			});
-
-			const { getWeekData } = await import('../../../src/api/index.js');
-			const weeks = await getWeekData(2025);
-
-			expect(weeks.length).toBe(3);
-			expect(weeks[0].weekNumber).toBe(1);
-			expect(weeks[1].weekNumber).toBe(2);
-			expect(weeks[2].weekNumber).toBe(3);
-		});
-	});
-
 	describe('getGameData - CFBD', () => {
 		it('should correctly determine winner when one team scores 0 (shutout)', async () => {
 			vi.resetModules();
-			vi.doMock('../../../src/utils/envVars.js', () => ({
-				dataSource: 'cfbd',
-			}));
 
-			const { getCfbdGameData } = await import('../../../src/api/cfbd.js');
+			const { getCfbdGameData, getCfbdLinesData } = await import('../../../src/api/cfbd.js');
 			vi.mocked(getCfbdGameData).mockResolvedValue([
 				{
 					id: 1,
@@ -129,6 +54,7 @@ describe('API Converters', () => {
 				// eslint-disable-next-line @typescript-eslint/no-explicit-any
 				} as any,
 			]);
+			vi.mocked(getCfbdLinesData).mockResolvedValue([]);
 
 			const { getGameData } = await import('../../../src/api/index.js');
 			const games = await getGameData({ year: 2025, week: 2, seasonType: 'regular' });
@@ -141,11 +67,8 @@ describe('API Converters', () => {
 
 		it('should leave winningTeam as pending for incomplete games', async () => {
 			vi.resetModules();
-			vi.doMock('../../../src/utils/envVars.js', () => ({
-				dataSource: 'cfbd',
-			}));
 
-			const { getCfbdGameData } = await import('../../../src/api/cfbd.js');
+			const { getCfbdGameData, getCfbdLinesData } = await import('../../../src/api/cfbd.js');
 			vi.mocked(getCfbdGameData).mockResolvedValue([
 				{
 					id: 2,
@@ -158,6 +81,7 @@ describe('API Converters', () => {
 				// eslint-disable-next-line @typescript-eslint/no-explicit-any
 				} as any,
 			]);
+			vi.mocked(getCfbdLinesData).mockResolvedValue([]);
 
 			const { getGameData } = await import('../../../src/api/index.js');
 			const games = await getGameData({ year: 2025, week: 14, seasonType: 'regular' });
@@ -166,6 +90,168 @@ describe('API Converters', () => {
 			expect(games[0].winningTeam).toBe('pending');
 			expect(games[0].homePoints).toBeNull();
 			expect(games[0].awayPoints).toBeNull();
+		});
+
+		it('should use consensus line spread when available', async () => {
+			vi.resetModules();
+
+			const { getCfbdGameData, getCfbdLinesData } = await import('../../../src/api/cfbd.js');
+			vi.mocked(getCfbdGameData).mockResolvedValue([
+				{
+					id: 10,
+					completed: false,
+					homeTeam: 'Georgia',
+					awayTeam: 'Florida',
+					homePoints: null,
+					awayPoints: null,
+					startDate: '2025-10-25T17:00:00.000Z',
+				// eslint-disable-next-line @typescript-eslint/no-explicit-any
+				} as any,
+			]);
+			vi.mocked(getCfbdLinesData).mockResolvedValue([
+				{
+					id: 10,
+					season: 2025,
+					seasonType: 'regular',
+					week: 8,
+					startDate: '2025-10-25T17:00:00.000Z',
+					homeTeamId: 1,
+					homeTeam: 'Georgia',
+					homeConference: 'SEC',
+					homeClassification: 'fbs',
+					homeScore: null,
+					awayTeamId: 2,
+					awayTeam: 'Florida',
+					awayConference: 'SEC',
+					awayClassification: 'fbs',
+					awayScore: null,
+					lines: [
+						{ provider: 'DraftKings', spread: -7.5, formattedSpread: 'Georgia -7.5', spreadOpen: null, overUnder: null, overUnderOpen: null, homeMoneyline: null, awayMoneyline: null },
+						{ provider: 'consensus', spread: -6.5, formattedSpread: 'Georgia -6.5', spreadOpen: null, overUnder: null, overUnderOpen: null, homeMoneyline: null, awayMoneyline: null },
+					],
+				},
+			]);
+
+			const { getGameData } = await import('../../../src/api/index.js');
+			const games = await getGameData({ year: 2025, week: 8, seasonType: 'regular' });
+
+			expect(games).toHaveLength(1);
+			expect(games[0].spread).toBe(-6.5); // consensus preferred over DraftKings
+		});
+
+		it('should fall back to first line when no consensus line exists', async () => {
+			vi.resetModules();
+
+			const { getCfbdGameData, getCfbdLinesData } = await import('../../../src/api/cfbd.js');
+			vi.mocked(getCfbdGameData).mockResolvedValue([
+				{
+					id: 11,
+					completed: false,
+					homeTeam: 'Alabama',
+					awayTeam: 'Auburn',
+					homePoints: null,
+					awayPoints: null,
+					startDate: '2025-11-29T16:00:00.000Z',
+				// eslint-disable-next-line @typescript-eslint/no-explicit-any
+				} as any,
+			]);
+			vi.mocked(getCfbdLinesData).mockResolvedValue([
+				{
+					id: 11,
+					season: 2025,
+					seasonType: 'regular',
+					week: 14,
+					startDate: '2025-11-29T16:00:00.000Z',
+					homeTeamId: 3,
+					homeTeam: 'Alabama',
+					homeConference: 'SEC',
+					homeClassification: 'fbs',
+					homeScore: null,
+					awayTeamId: 4,
+					awayTeam: 'Auburn',
+					awayConference: 'SEC',
+					awayClassification: 'fbs',
+					awayScore: null,
+					lines: [
+						{ provider: 'ESPN BET', spread: -14, formattedSpread: 'Alabama -14', spreadOpen: null, overUnder: null, overUnderOpen: null, homeMoneyline: null, awayMoneyline: null },
+					],
+				},
+			]);
+
+			const { getGameData } = await import('../../../src/api/index.js');
+			const games = await getGameData({ year: 2025, week: 14, seasonType: 'regular' });
+
+			expect(games).toHaveLength(1);
+			expect(games[0].spread).toBe(-14); // falls back to first line
+		});
+
+		it('should set spread to null when lines array is empty', async () => {
+			vi.resetModules();
+
+			const { getCfbdGameData, getCfbdLinesData } = await import('../../../src/api/cfbd.js');
+			vi.mocked(getCfbdGameData).mockResolvedValue([
+				{
+					id: 12,
+					completed: false,
+					homeTeam: 'App State',
+					awayTeam: 'Troy',
+					homePoints: null,
+					awayPoints: null,
+					startDate: '2025-09-20T14:00:00.000Z',
+				// eslint-disable-next-line @typescript-eslint/no-explicit-any
+				} as any,
+			]);
+			vi.mocked(getCfbdLinesData).mockResolvedValue([
+				{
+					id: 12,
+					season: 2025,
+					seasonType: 'regular',
+					week: 4,
+					startDate: '2025-09-20T14:00:00.000Z',
+					homeTeamId: 5,
+					homeTeam: 'App State',
+					homeConference: 'Sun Belt',
+					homeClassification: 'fbs',
+					homeScore: null,
+					awayTeamId: 6,
+					awayTeam: 'Troy',
+					awayConference: 'Sun Belt',
+					awayClassification: 'fbs',
+					awayScore: null,
+					lines: [],
+				},
+			]);
+
+			const { getGameData } = await import('../../../src/api/index.js');
+			const games = await getGameData({ year: 2025, week: 4, seasonType: 'regular' });
+
+			expect(games).toHaveLength(1);
+			expect(games[0].spread).toBeNull();
+		});
+
+		it('should set spread to null when game has no matching lines entry', async () => {
+			vi.resetModules();
+
+			const { getCfbdGameData, getCfbdLinesData } = await import('../../../src/api/cfbd.js');
+			vi.mocked(getCfbdGameData).mockResolvedValue([
+				{
+					id: 99,
+					completed: false,
+					homeTeam: 'SMU',
+					awayTeam: 'TCU',
+					homePoints: null,
+					awayPoints: null,
+					startDate: '2025-09-13T15:00:00.000Z',
+				// eslint-disable-next-line @typescript-eslint/no-explicit-any
+				} as any,
+			]);
+			vi.mocked(getCfbdLinesData).mockResolvedValue([]); // no lines data at all
+
+			const { getGameData } = await import('../../../src/api/index.js');
+			const games = await getGameData({ year: 2025, week: 3, seasonType: 'regular' });
+
+			expect(games).toHaveLength(1);
+			expect(games[0].spread).toBeNull();
 		});
 	});
 

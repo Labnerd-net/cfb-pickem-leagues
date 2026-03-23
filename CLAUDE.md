@@ -91,7 +91,7 @@ NODE_ENV=test pnpm migrate
 ### Backend Layers
 1. **Routes** (`src/routes/`) — Hono route handlers. `auth.ts` is public; `user.ts` and `leaderboard.ts` require auth; `admin.ts` requires admin role.
 2. **DB Functions** (`src/db/dbAdminFunctions.ts`, `dbUserFunctions.ts`, `dbNotificationFunctions.ts`) — Drizzle queries. Two PostgreSQL schemas: `admin` (reference data: weeks/games) and `user` (accounts and picks).
-3. **API Adapters** (`src/api/`) — External data sources (NCAA, CFBD, SportsDataverse). Configurable via `DATA_SOURCE` env var. Converters in `src/api/index.ts` normalize data into shared types.
+3. **API Adapters** (`src/api/`) — External data source (CFBD). `cfbd.ts` fetches games and lines; `index.ts` normalizes data into shared types.
 4. **Middleware** (`src/utils/middleware.ts`) — JWT auth middleware and `requireRole()` guard.
 5. **Notifications** (`src/notifications/`) — `dispatcher.ts` routes events to `emailSender.ts` (SMTP via nodemailer) and/or `ntfySender.ts` (NTFY push). `templates.ts` holds message content.
 
@@ -146,9 +146,8 @@ JWT_ALGORITHM=HS256
 JWT_EXPIRATION_DAYS=7
 JWT_SALT_ROUNDS=10            # bcrypt rounds for password hashing
 
-# Data source
-DATA_SOURCE=ncaa              # or cfbd
-CFBD_API_KEY=<required if DATA_SOURCE=cfbd>
+# Data source (CFBD only)
+CFBD_API_KEY=<required>       # get your key at https://collegefootballdata.com/
 
 # Logging
 LOG_LEVEL=info                # trace | debug | info | warn | error | fatal | silent

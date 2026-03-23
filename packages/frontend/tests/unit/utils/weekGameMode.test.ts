@@ -13,7 +13,6 @@ function makeGame(overrides: Partial<AdminDbGameData> = {}): AdminDbGameData {
   return {
     gameId: 1,
     cfbdGameId: null,
-    ncaaGameId: null,
     picked: false,
     weekNumber: 1,
     year: 2024,
@@ -25,6 +24,7 @@ function makeGame(overrides: Partial<AdminDbGameData> = {}): AdminDbGameData {
     awayPoints: null,
     winningTeam: 'pending',
     startTime: null,
+    spread: null,
     createdAt: new Date(),
     ...overrides,
   };
