@@ -65,7 +65,8 @@ export async function returnGamesForWeek(identifier: WeekIdentifier): Promise<Ad
     return await db
       .select()
       .from(adminGames)
-      .where(and(eq(adminGames.year, identifier.year), eq(adminGames.weekNumber, identifier.week)));
+      .where(and(eq(adminGames.year, identifier.year), eq(adminGames.weekNumber, identifier.week)))
+      .orderBy(adminGames.startTime);
   } catch (e) {
     logger.error({ err: e }, 'returnGamesForWeek failed');
     throw e;
