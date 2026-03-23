@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { Box } from '@mui/material';
 import type { AdminDbGameData } from '@shared/types/cfb-pickem-api';
 import GameCard from './GameCard';
@@ -22,16 +23,26 @@ export default function GamesList({
   onSaveSelection,
   loading = false,
 }: GamesListProps) {
+  const [pickedFirst, setPickedFirst] = useState(false);
+
+  const sortedGames = pickedFirst
+    ? [...games].sort((a, b) => Number(b.picked) - Number(a.picked))
+    : games;
+
+  const controlProps = {
+    numOfGames: games.length,
+    selectedGameIds,
+    onSelectAll,
+    onDeselectAll,
+    onSaveSelection,
+    pickedFirst,
+    onTogglePickedFirst: () => setPickedFirst(prev => !prev),
+    loading,
+  };
+
   return (
     <Box>
-      <GameListControl
-        numOfGames={games.length}
-        selectedGameIds={selectedGameIds}
-        onSelectAll={onSelectAll}
-        onDeselectAll={onDeselectAll}
-        onSaveSelection={onSaveSelection}
-        loading={loading}
-      />
+      <GameListControl {...controlProps} />
 
       {/* Games Grid */}
       <Box
@@ -42,7 +53,7 @@ export default function GamesList({
           mb: 3,
         }}
       >
-        {games.map(game => (
+        {sortedGames.map(game => (
           <GameCard
             key={game.gameId}
             game={game}
@@ -52,14 +63,7 @@ export default function GamesList({
         ))}
       </Box>
 
-      <GameListControl
-        numOfGames={games.length}
-        selectedGameIds={selectedGameIds}
-        onSelectAll={onSelectAll}
-        onDeselectAll={onDeselectAll}
-        onSaveSelection={onSaveSelection}
-        loading={loading}
-      />
+      <GameListControl {...controlProps} />
     </Box>
   );
 }

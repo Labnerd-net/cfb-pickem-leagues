@@ -1,7 +1,8 @@
-import { Button, Typography, Stack, CircularProgress } from '@mui/material';
+import { Button, Typography, Stack, CircularProgress, ToggleButton } from '@mui/material';
 import CheckBoxIcon from '@mui/icons-material/CheckBox';
 import CheckBoxOutlineBlankIcon from '@mui/icons-material/CheckBoxOutlineBlank';
 import SaveIcon from '@mui/icons-material/Save';
+import FilterListIcon from '@mui/icons-material/FilterList';
 
 interface GamesListControlProps {
   numOfGames: number;
@@ -9,6 +10,8 @@ interface GamesListControlProps {
   onSelectAll: () => void;
   onDeselectAll: () => void;
   onSaveSelection: () => void;
+  pickedFirst: boolean;
+  onTogglePickedFirst: () => void;
   loading?: boolean;
 }
 
@@ -18,6 +21,8 @@ export default function GameListControl({
   onSelectAll,
   onDeselectAll,
   onSaveSelection,
+  pickedFirst,
+  onTogglePickedFirst,
   loading = false,
 }: GamesListControlProps) {
   return (
@@ -53,6 +58,16 @@ export default function GameListControl({
         >
           Deselect All
         </Button>
+        <ToggleButton
+          value="pickedFirst"
+          selected={pickedFirst}
+          onChange={onTogglePickedFirst}
+          size="small"
+          disabled={loading}
+        >
+          <FilterListIcon fontSize="small" sx={{ mr: 0.5 }} />
+          Picked First
+        </ToggleButton>
       </Stack>
 
       {/* Center: Save Button */}
