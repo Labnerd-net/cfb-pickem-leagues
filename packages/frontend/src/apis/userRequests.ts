@@ -169,7 +169,7 @@ export async function getBroadcastChannels(): Promise<BroadcastChannelsResponse>
 }
 
 export async function updateNotificationPreference(pref: {
-  notificationType: NotificationType;
+  notificationType: Exclude<NotificationType, 'admin_broadcast'>;
   channel: 'email';
   enabled: boolean;
 }): Promise<{ success: boolean; error?: string }> {

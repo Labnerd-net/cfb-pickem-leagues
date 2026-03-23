@@ -429,3 +429,32 @@ export async function returnUserGames(
     throw e;
   }
 }
+
+// ------------------------------------------------------------------
+// Return all-time pick totals per user (across all years/weeks).
+// Used for CSV export. LEFT JOIN so users with zero picks are included.
+// ------------------------------------------------------------------
+export async function returnUserPickTotals(): Promise<{ userId: number; total: number; correct: number }[]> {
+  logger.debug('returnUserPickTotals');
+  const userGames = alias(games, 'user_games');
+  try {
+    const rows = await db
+      .select({
+        userId: users.userId,
+        total: sql<number>`COUNT(CASE WHEN ${userGames.teamChosen} != 'voided' THEN 1 END)`,
+        correct: sql<number>`COUNT(CASE WHEN ${adminGames.winningTeam} != 'pending' AND ${adminGames.winningTeam} = ${userGames.teamChosen} THEN 1 END)`,
+      })
+      .from(users)
+      .leftJoin(userGames, eq(users.userId, userGames.userId))
+      .leftJoin(adminGames, eq(userGames.gameId, adminGames.gameId))
+      .groupBy(users.userId);
+    return rows.map(r => ({
+      userId: r.userId,
+      total: Number(r.total),
+      correct: Number(r.correct),
+    }));
+  } catch (e) {
+    logger.error({ err: e }, 'returnUserPickTotals failed');
+    throw e;
+  }
+}

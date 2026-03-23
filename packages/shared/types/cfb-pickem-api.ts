@@ -1,5 +1,5 @@
 export type Role = "user" | "admin";
-export type NotificationType = "games_ready" | "picks_reminder" | "rankings_updated";
+export type NotificationType = "games_ready" | "picks_reminder" | "rankings_updated" | "admin_broadcast";
 export type NotificationChannel = "email" | "ntfy" | "telegram" | "discord";
 export type Team = "home_team" | "away_team" | "pending" | "voided";
 export type Classification = "fbs" | "fcs" | "d1" | "d2" | "d3";
@@ -212,4 +212,20 @@ export interface UpdateProfileRequest {
 export interface CorrectGameScoreRequest {
   homePoints: number;
   awayPoints: number;
+}
+
+export interface UserExportEntry {
+  userId: number;
+  displayName: string;
+  email: string;
+  roles: Role[];
+  total: number;
+  correct: number;
+  accuracy: number;
+}
+
+export interface AdminBroadcastRequest {
+  subject: string;
+  message: string;
+  overrideEmailPreferences: boolean;
 }

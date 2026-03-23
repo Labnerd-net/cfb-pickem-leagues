@@ -25,7 +25,7 @@ import {
 import { resendVerificationEmail } from '../apis/authRequests';
 import { useAuth } from '../contexts/auth/AuthContext';
 
-const NOTIFICATION_TYPES: { value: NotificationType; label: string }[] = [
+const NOTIFICATION_TYPES: { value: Exclude<NotificationType, 'admin_broadcast'>; label: string }[] = [
   { value: 'games_ready', label: 'Games Ready' },
   { value: 'picks_reminder', label: 'Picks Reminder (1hr before kickoff)' },
   { value: 'rankings_updated', label: 'Rankings Updated' },
@@ -98,7 +98,7 @@ export default function Settings() {
     setResendStatus(res.success ? 'sent' : 'error');
   };
 
-  const handlePrefToggle = async (type: NotificationType, currentEnabled: boolean) => {
+  const handlePrefToggle = async (type: Exclude<NotificationType, 'admin_broadcast'>, currentEnabled: boolean) => {
     if (!settings) return;
     const newEnabled = !currentEnabled;
     await updateNotificationPreference({ notificationType: type, channel: 'email', enabled: newEnabled });

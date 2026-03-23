@@ -4,7 +4,7 @@ import {
   returnEmailOptedInUsers,
   returnSentNotificationUserIds,
 } from '../db/dbNotificationFunctions.js';
-import { returnLeaderboard } from '../db/dbUserFunctions.js';
+import { returnLeaderboard, returnUsers } from '../db/dbUserFunctions.js';
 import { sendEmail } from './emailSender.js';
 import { sendNtfyNotification } from './ntfySender.js';
 import { sendTelegramNotification } from './telegramSender.js';
@@ -13,6 +13,7 @@ import {
   gamesReadyTemplate,
   picksReminderTemplate,
   rankingsUpdatedTemplate,
+  escapeHtml,
 } from './templates.js';
 import logger from '../utils/logger.js';
 import { getNow } from '../utils/clock.js';
@@ -23,7 +24,7 @@ import type { LeaderboardEntry, NotificationType } from '@shared/types/cfb-picke
 const BROADCAST_USER_ID = 0;
 
 interface DispatchParams {
-  notificationType: NotificationType;
+  notificationType: Exclude<NotificationType, 'admin_broadcast'>;
   year: number;
   weekNumber: number;
   firstKickoffTime?: Date;
@@ -129,7 +130,7 @@ export async function dispatchNotification(params: DispatchParams): Promise<void
 }
 
 function buildTemplate(
-  notificationType: NotificationType,
+  notificationType: Exclude<NotificationType, 'admin_broadcast'>,
   params: { year: number; weekNumber: number; firstKickoffTime?: Date; leaderboard: LeaderboardEntry[] }
 ) {
   switch (notificationType) {
@@ -144,4 +145,97 @@ function buildTemplate(
     case 'rankings_updated':
       return rankingsUpdatedTemplate({ year: params.year, weekNumber: params.weekNumber, leaderboard: params.leaderboard });
   }
+}
+
+// ------------------------------------------------------------------
+// Dispatch a free-form admin broadcast to all users and broadcast channels.
+// No deduplication — each call is an intentional unique send.
+// year/weekNumber are the resolved week context for the notification log.
+// ------------------------------------------------------------------
+export async function dispatchAdminBroadcast(
+  subject: string,
+  message: string,
+  overrideEmailPreferences: boolean,
+  year: number,
+  weekNumber: number
+): Promise<void> {
+  logger.info({ year, weekNumber, overrideEmailPreferences }, 'dispatchAdminBroadcast started');
+
+  // ----------------------------------------------------------------
+  // Email channel
+  // ----------------------------------------------------------------
+  try {
+    let emailUsers: { userId: number; email: string; emailVerified: boolean }[];
+    if (overrideEmailPreferences) {
+      const allUsers = await returnUsers();
+      emailUsers = allUsers
+        .filter(u => u.emailVerified && u.email)
+        .map(u => ({ userId: u.userId, email: u.email, emailVerified: u.emailVerified }));
+    } else {
+      emailUsers = await returnEmailOptedInUsers('admin_broadcast');
+    }
+
+    for (const user of emailUsers) {
+      try {
+        if (!user.emailVerified || !user.email) continue;
+        const sent = await sendEmail({
+          to: user.email,
+          subject,
+          htmlBody: escapeHtml(message),
+          textBody: message,
+        });
+        if (sent) {
+          await addNotificationLog(user.userId, year, weekNumber, 'admin_broadcast', 'email');
+        }
+      } catch (e) {
+        logger.error({ err: e, userId: user.userId }, 'Failed to send admin broadcast email to user');
+      }
+    }
+  } catch (e) {
+    logger.error({ err: e }, 'Failed to fetch users for admin broadcast email');
+  }
+
+  // ----------------------------------------------------------------
+  // ntfy broadcast channel
+  // ----------------------------------------------------------------
+  if (ntfyEnabled) {
+    try {
+      const sent = await sendNtfyNotification({ title: subject, message });
+      if (sent) {
+        await addNotificationLog(BROADCAST_USER_ID, year, weekNumber, 'admin_broadcast', 'ntfy');
+      }
+    } catch (e) {
+      logger.error({ err: e }, 'Failed to send admin broadcast ntfy notification');
+    }
+  }
+
+  // ----------------------------------------------------------------
+  // Telegram broadcast channel
+  // ----------------------------------------------------------------
+  if (telegramEnabled) {
+    try {
+      const sent = await sendTelegramNotification({ title: subject, message });
+      if (sent) {
+        await addNotificationLog(BROADCAST_USER_ID, year, weekNumber, 'admin_broadcast', 'telegram');
+      }
+    } catch (e) {
+      logger.error({ err: e }, 'Failed to send admin broadcast Telegram notification');
+    }
+  }
+
+  // ----------------------------------------------------------------
+  // Discord broadcast channel
+  // ----------------------------------------------------------------
+  if (discordEnabled) {
+    try {
+      const sent = await sendDiscordNotification({ title: subject, message });
+      if (sent) {
+        await addNotificationLog(BROADCAST_USER_ID, year, weekNumber, 'admin_broadcast', 'discord');
+      }
+    } catch (e) {
+      logger.error({ err: e }, 'Failed to send admin broadcast Discord notification');
+    }
+  }
+
+  logger.info({ year, weekNumber }, 'dispatchAdminBroadcast complete');
 }
