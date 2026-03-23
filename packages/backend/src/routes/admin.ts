@@ -64,6 +64,18 @@ const admin = new Hono<{ Variables: Variables }>()
     }
     return c.json({ status: 'added all weeks' });
   })
+  // Delete all weeks and games for a year
+  .delete('/year/:year', apiRateLimit, authMiddleware, requireRole('admin'), async c => {
+    const yearNumber = Number(c.req.param('year'));
+    if (isNaN(yearNumber) || yearNumber < 1900 || yearNumber > 2100)
+      throw new HTTPException(400, { message: 'year must be between 1900 and 2100' });
+    const haspicks = await dbAdminFunctions.hasPicksForYear(yearNumber);
+    if (haspicks)
+      throw new HTTPException(409, { message: 'Cannot delete year: user picks exist for this season' });
+    await dbAdminFunctions.deleteGamesForYear(yearNumber);
+    await dbAdminFunctions.deleteWeeksForYear(yearNumber);
+    return c.json({ status: 'deleted' });
+  })
   // Get Weeks for Year
   .get('/weeks', apiRateLimit, authMiddleware, requireRole('admin'), yearQueryValidator, async c => {
     const { year } = c.req.valid('query');

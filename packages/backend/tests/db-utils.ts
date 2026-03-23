@@ -118,6 +118,17 @@ export async function createTestGame(
 }
 
 /**
+ * Helper to create a user pick (user.games row)
+ */
+export async function createTestPick(userId: number, gameId: number) {
+	await db.execute(sql`
+		INSERT INTO "user"."games" (user_id, game_id, team_chosen)
+		VALUES (${userId}, ${gameId}, 'home_team')
+		ON CONFLICT (user_id, game_id) DO NOTHING
+	`);
+}
+
+/**
  * Helper to create a test notification preference
  */
 export async function createTestNotificationPreference(

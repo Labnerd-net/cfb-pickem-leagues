@@ -1,6 +1,6 @@
 import { useState, useEffect, type Dispatch, type SetStateAction } from 'react';
 import type { AdminDbWeekData } from '@shared/types/cfb-pickem-api';
-import { addWeeksToYear, getWeeksForYear } from '../../apis/adminRequests';
+import { addWeeksToYear, getWeeksForYear, deleteYear as deleteYearApi } from '../../apis/adminRequests';
 import { getCurrentSeason } from '../../utils/weekCalculation';
 
 interface ImportFeedback {
@@ -23,6 +23,7 @@ interface UseWeekManagementReturn {
   weekLoading: boolean;
   weekError: string | null;
   importWeeks: (callbacks: ImportWeeksCallbacks) => Promise<void>;
+  deleteYear: (callbacks: ImportWeeksCallbacks) => Promise<void>;
 }
 
 export function useWeekManagement(initialYear?: number): UseWeekManagementReturn {
@@ -93,6 +94,28 @@ export function useWeekManagement(initialYear?: number): UseWeekManagementReturn
     }
   }
 
+  async function deleteYear({ setImporting, setImportFeedback }: ImportWeeksCallbacks) {
+    setImporting(true);
+    setImportFeedback(null);
+    try {
+      const result = await deleteYearApi(selectedYear);
+      if (result.success) {
+        setWeeks([]);
+        setSelectedWeek(1);
+        setImportFeedback({ severity: 'success', message: `Season ${selectedYear} data deleted` });
+      } else {
+        setImportFeedback({
+          severity: 'error',
+          message: result.error ?? 'Failed to delete year data',
+        });
+      }
+    } catch {
+      setImportFeedback({ severity: 'error', message: 'An unexpected error occurred' });
+    } finally {
+      setImporting(false);
+    }
+  }
+
   return {
     selectedYear,
     setSelectedYear,
@@ -103,5 +126,6 @@ export function useWeekManagement(initialYear?: number): UseWeekManagementReturn
     weekLoading,
     weekError,
     importWeeks,
+    deleteYear,
   };
 }

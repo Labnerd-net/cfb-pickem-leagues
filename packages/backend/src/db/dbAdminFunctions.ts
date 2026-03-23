@@ -1,5 +1,6 @@
 import { eq, and, inArray, notInArray, lte, gte, max } from 'drizzle-orm';
 import { adminWeeks, adminGames } from './schema/admin.js';
+import { games as userGames } from './schema/users.js';
 import { db } from './index.js';
 import logger from '../utils/logger.js';
 import type {
@@ -298,6 +299,51 @@ export async function getMaxRegularWeek(year: number): Promise<number> {
     .from(adminWeeks)
     .where(and(eq(adminWeeks.year, year), eq(adminWeeks.seasonType, 'regular')));
   return rows[0]?.maxWeek ?? 0;
+}
+
+// ------------------------------------------------------------------
+// Check if any user picks exist for any game in a given year
+// ------------------------------------------------------------------
+export async function hasPicksForYear(year: number): Promise<boolean> {
+  logger.debug({ year }, 'hasPicksForYear');
+  try {
+    const rows = await db
+      .select({ gameId: userGames.gameId })
+      .from(userGames)
+      .innerJoin(adminGames, eq(userGames.gameId, adminGames.gameId))
+      .where(eq(adminGames.year, year))
+      .limit(1);
+    return rows.length > 0;
+  } catch (e) {
+    logger.error({ err: e }, 'hasPicksForYear failed');
+    throw e;
+  }
+}
+
+// ------------------------------------------------------------------
+// Delete all games for a year (must run before deleteWeeksForYear)
+// ------------------------------------------------------------------
+export async function deleteGamesForYear(year: number): Promise<void> {
+  logger.debug({ year }, 'deleteGamesForYear');
+  try {
+    await db.delete(adminGames).where(eq(adminGames.year, year));
+  } catch (e) {
+    logger.error({ err: e }, 'deleteGamesForYear failed');
+    throw e;
+  }
+}
+
+// ------------------------------------------------------------------
+// Delete all weeks for a year
+// ------------------------------------------------------------------
+export async function deleteWeeksForYear(year: number): Promise<void> {
+  logger.debug({ year }, 'deleteWeeksForYear');
+  try {
+    await db.delete(adminWeeks).where(eq(adminWeeks.year, year));
+  } catch (e) {
+    logger.error({ err: e }, 'deleteWeeksForYear failed');
+    throw e;
+  }
 }
 
 // ------------------------------------------------------------------
