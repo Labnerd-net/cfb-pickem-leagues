@@ -1,4 +1,17 @@
-import { Box, Alert, Snackbar, Typography, Button, CircularProgress } from '@mui/material';
+import {
+  Box,
+  Alert,
+  Snackbar,
+  Typography,
+  Button,
+  CircularProgress,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogContentText,
+  DialogActions,
+} from '@mui/material';
+import { useState } from 'react';
 import DashboardCard from '../dashboard/DashboardCard';
 import GamesList from './GamesList';
 import AdminPanelSettingsIcon from '@mui/icons-material/AdminPanelSettings';
@@ -9,6 +22,8 @@ import { useGameManagement } from './useGameManagement';
 export default function AdminSection() {
   const weekHook = useWeekManagement();
   const gameHook = useGameManagement(weekHook.selectedYear, weekHook.selectedWeek);
+  const [resetDialogOpen, setResetDialogOpen] = useState(false);
+  const [resetting, setResetting] = useState(false);
 
   const loading = weekHook.weekLoading || gameHook.gameLoading;
   const importing = gameHook.importing;
@@ -82,9 +97,20 @@ export default function AdminSection() {
           {/* Games section — only render when weeks are loaded */}
           {weekHook.weeks.length > 0 && (
             <Box sx={{ mt: 4, pt: 4, borderTop: 2, borderColor: 'divider' }}>
+              <Box sx={{ display: 'flex', justifyContent: 'flex-end', mb: 2 }}>
+                <Button
+                  variant="outlined"
+                  color="error"
+                  size="small"
+                  onClick={() => setResetDialogOpen(true)}
+                  disabled={importing || loading || resetting}
+                >
+                  Reset Year
+                </Button>
+              </Box>
               {gameHook.games.length > 0 ? (
                 <>
-                  <Box sx={{ display: 'flex', justifyContent: 'flex-end', mb: 2 }}>
+                  <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 1, mb: 2 }}>
                     <Button
                       variant="outlined"
                       size="small"
@@ -158,6 +184,35 @@ export default function AdminSection() {
           {gameHook.errorMessage}
         </Alert>
       </Snackbar>
+
+      <Dialog open={resetDialogOpen} onClose={() => setResetDialogOpen(false)}>
+        <DialogTitle>Reset {weekHook.selectedYear} Season?</DialogTitle>
+        <DialogContent>
+          <DialogContentText>
+            This will permanently delete all weeks and games for {weekHook.selectedYear}. This
+            action cannot be undone.
+          </DialogContentText>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setResetDialogOpen(false)} disabled={resetting}>
+            Cancel
+          </Button>
+          <Button
+            color="error"
+            disabled={resetting}
+            startIcon={resetting ? <CircularProgress size={16} /> : undefined}
+            onClick={async () => {
+              await weekHook.deleteYear({
+                setImporting: setResetting,
+                setImportFeedback: gameHook.setImportFeedback,
+              });
+              setResetDialogOpen(false);
+            }}
+          >
+            {resetting ? 'Deleting...' : 'Delete'}
+          </Button>
+        </DialogActions>
+      </Dialog>
     </Box>
   );
 }

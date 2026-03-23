@@ -33,6 +33,28 @@ export async function addWeeksToYear(year: number): Promise<AddWeeksResponse> {
   }
 }
 
+export interface DeleteYearResponse {
+  success: boolean;
+  data?: { status: string };
+  error?: string;
+}
+
+export async function deleteYear(year: number): Promise<DeleteYearResponse> {
+  try {
+    const res = await client.api.admin.year[':year'].$delete({
+      param: { year: String(year) },
+    });
+    if (!res.ok) {
+      const body = (await res.json()) as unknown as { error: string };
+      return { success: false, error: body.error };
+    }
+    const data = await res.json();
+    return { success: true, data };
+  } catch {
+    return { success: false, error: 'Request failed' };
+  }
+}
+
 export interface GetWeeksResponse {
   success: boolean;
   data?: AdminDbWeekData[];
