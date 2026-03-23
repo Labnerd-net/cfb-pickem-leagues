@@ -1,4 +1,7 @@
 import { useEffect, useState } from 'react';
+import { useForm, type SubmitHandler } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { z } from 'zod';
 import {
   Box,
   Button,
@@ -8,6 +11,7 @@ import {
   FormControlLabel,
   Link,
   Stack,
+  TextField,
   Tooltip,
   Typography,
 } from '@mui/material';
@@ -16,6 +20,7 @@ import {
   getNotificationSettings,
   getBroadcastChannels,
   updateNotificationPreference,
+  updateUserProfile,
 } from '../apis/userRequests';
 import { resendVerificationEmail } from '../apis/authRequests';
 import { useAuth } from '../contexts/auth/AuthContext';
@@ -31,13 +36,44 @@ function isEmailEnabled(settings: NotificationSettings, type: NotificationType):
   return pref ? pref.enabled : true;
 }
 
+const displayNameSchema = z.object({
+  displayName: z
+    .string()
+    .trim()
+    .min(1, 'Display name is required')
+    .max(50, 'Display name must be 50 characters or fewer'),
+});
+type DisplayNameForm = z.infer<typeof displayNameSchema>;
+
+const changePasswordSchema = z.object({
+  currentPassword: z.string().min(1, 'Current password is required'),
+  newPassword: z
+    .string()
+    .min(8, 'Password must be at least 8 characters')
+    .max(72, 'Password must be 72 characters or fewer'),
+});
+type ChangePasswordForm = z.infer<typeof changePasswordSchema>;
+
 export default function Settings() {
-  const { user } = useAuth();
+  const { user, login } = useAuth();
   const [settings, setSettings] = useState<NotificationSettings | null>(null);
   const [channels, setChannels] = useState<BroadcastChannelInfo | null>(null);
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [resendStatus, setResendStatus] = useState<'idle' | 'sent' | 'error'>('idle');
+  const [displayNameSuccess, setDisplayNameSuccess] = useState(false);
+  const [passwordSuccess, setPasswordSuccess] = useState(false);
+
+  const displayNameForm = useForm<DisplayNameForm>({
+    resolver: zodResolver(displayNameSchema),
+    defaultValues: { displayName: user?.displayName ?? '' },
+    mode: 'onBlur',
+  });
+
+  const passwordForm = useForm<ChangePasswordForm>({
+    resolver: zodResolver(changePasswordSchema),
+    mode: 'onBlur',
+  });
 
   useEffect(() => {
     async function load() {
@@ -84,6 +120,32 @@ export default function Settings() {
     });
   };
 
+  const handleDisplayNameSubmit: SubmitHandler<DisplayNameForm> = async data => {
+    setDisplayNameSuccess(false);
+    const res = await updateUserProfile({ displayName: data.displayName });
+    if (res.success) {
+      await login();
+      setDisplayNameSuccess(true);
+      displayNameForm.reset({ displayName: data.displayName });
+    } else {
+      displayNameForm.setError('root', { message: res.error ?? 'Update failed' });
+    }
+  };
+
+  const handlePasswordSubmit: SubmitHandler<ChangePasswordForm> = async data => {
+    setPasswordSuccess(false);
+    const res = await updateUserProfile({
+      currentPassword: data.currentPassword,
+      newPassword: data.newPassword,
+    });
+    if (res.success) {
+      setPasswordSuccess(true);
+      passwordForm.reset();
+    } else {
+      passwordForm.setError('root', { message: res.error ?? 'Update failed' });
+    }
+  };
+
   if (loading) {
     return (
       <Box display="flex" justifyContent="center" mt={8}>
@@ -108,8 +170,93 @@ export default function Settings() {
         Settings
       </Typography>
 
+      {/* Profile section */}
+      <Typography variant="h6" mt={3} mb={2}>
+        Profile
+      </Typography>
+
+      <Box
+        component="form"
+        onSubmit={displayNameForm.handleSubmit(handleDisplayNameSubmit)}
+        sx={{ mb: 3 }}
+      >
+        <Stack direction="row" spacing={2} alignItems="flex-start">
+          <TextField
+            label="Display Name"
+            size="small"
+            {...displayNameForm.register('displayName')}
+            error={!!displayNameForm.formState.errors.displayName}
+            helperText={displayNameForm.formState.errors.displayName?.message}
+            sx={{ flex: 1 }}
+          />
+          <Button
+            type="submit"
+            variant="contained"
+            size="small"
+            disabled={displayNameForm.formState.isSubmitting}
+            sx={{ mt: '2px' }}
+          >
+            Save
+          </Button>
+        </Stack>
+        {displayNameForm.formState.errors.root && (
+          <Typography color="error" variant="caption" mt={0.5} display="block">
+            {displayNameForm.formState.errors.root.message}
+          </Typography>
+        )}
+        {displayNameSuccess && (
+          <Typography color="success.main" variant="caption" mt={0.5} display="block">
+            Display name updated.
+          </Typography>
+        )}
+      </Box>
+
+      <Box component="form" onSubmit={passwordForm.handleSubmit(handlePasswordSubmit)}>
+        <Typography variant="subtitle2" mb={1}>
+          Change Password
+        </Typography>
+        <Stack spacing={1.5}>
+          <TextField
+            label="Current Password"
+            type="password"
+            size="small"
+            {...passwordForm.register('currentPassword')}
+            error={!!passwordForm.formState.errors.currentPassword}
+            helperText={passwordForm.formState.errors.currentPassword?.message}
+          />
+          <TextField
+            label="New Password"
+            type="password"
+            size="small"
+            {...passwordForm.register('newPassword')}
+            error={!!passwordForm.formState.errors.newPassword}
+            helperText={passwordForm.formState.errors.newPassword?.message}
+          />
+          <Box>
+            <Button
+              type="submit"
+              variant="contained"
+              size="small"
+              disabled={passwordForm.formState.isSubmitting}
+            >
+              Change Password
+            </Button>
+          </Box>
+        </Stack>
+        {passwordForm.formState.errors.root && (
+          <Typography color="error" variant="caption" mt={0.5} display="block">
+            {passwordForm.formState.errors.root.message}
+          </Typography>
+        )}
+        {passwordSuccess && (
+          <Typography color="success.main" variant="caption" mt={0.5} display="block">
+            Password updated.
+          </Typography>
+        )}
+      </Box>
+
       {/* Account section */}
-      <Typography variant="h6" mt={3} mb={1}>
+      <Typography variant="h6" mt={4} mb={1}>
         Account
       </Typography>
       <Stack direction="row" alignItems="center" spacing={2}>
