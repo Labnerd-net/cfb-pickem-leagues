@@ -289,9 +289,10 @@ export async function markGameComplete(
 }
 
 // ------------------------------------------------------------------
-// Get max regular season week number for a year
+// Get max regular season week number for a year.
+// Used to translate stored postseason weekNumbers back to CFBD week numbers.
 // ------------------------------------------------------------------
-async function getMaxRegularWeek(year: number): Promise<number> {
+export async function getMaxRegularWeek(year: number): Promise<number> {
   const rows = await db
     .select({ maxWeek: max(adminWeeks.weekNumber) })
     .from(adminWeeks)
@@ -300,7 +301,9 @@ async function getMaxRegularWeek(year: number): Promise<number> {
 }
 
 // ------------------------------------------------------------------
-// Convert WeekIdentifier to WeekQuery by looking up seasonType
+// Convert WeekIdentifier to WeekQuery by looking up seasonType.
+// The returned week is the DB-stored weekNumber (not the CFBD week).
+// For postseason API calls, translate via getMaxRegularWeek().
 // ------------------------------------------------------------------
 export async function enrichWeekIdentifier(identifier: WeekIdentifier): Promise<WeekQuery> {
   logger.debug({ year: identifier.year, week: identifier.week }, 'enrichWeekIdentifier');
@@ -313,17 +316,9 @@ export async function enrichWeekIdentifier(identifier: WeekIdentifier): Promise<
     );
   }
 
-  // Postseason week numbers are stored as (regularCount + cfbdWeek).
-  // Reverse the offset so the CFBD API receives the original week number (1, 2, 3…).
-  let cfbdWeek = identifier.week;
-  if (seasonType === 'postseason') {
-    const regularCount = await getMaxRegularWeek(identifier.year);
-    cfbdWeek = identifier.week - regularCount;
-  }
-
   return {
     year: identifier.year,
-    week: cfbdWeek,
+    week: identifier.week,
     seasonType,
   };
 }

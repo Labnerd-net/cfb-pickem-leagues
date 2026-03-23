@@ -80,9 +80,18 @@ const admin = new Hono<{ Variables: Variables }>()
     async c => {
       const weekIdentifier = c.req.valid('json');
       const weekQuery = await dbAdminFunctions.enrichWeekIdentifier(weekIdentifier);
+
+      // Postseason weeks are stored offset by the regular season count.
+      // Compute the original CFBD week number for the API call.
+      let cfbdWeek: number | undefined;
+      if (weekQuery.seasonType === 'postseason') {
+        const regularCount = await dbAdminFunctions.getMaxRegularWeek(weekQuery.year);
+        cfbdWeek = weekQuery.week - regularCount;
+      }
+
       let gameData;
       try {
-        gameData = await getGameData(weekQuery);
+        gameData = await getGameData(weekQuery, undefined, cfbdWeek);
       } catch (e) {
         const msg = e instanceof Error ? e.message : String(e);
         throw new HTTPException(502, { message: `External API error: ${msg}` });

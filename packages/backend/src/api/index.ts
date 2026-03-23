@@ -41,13 +41,18 @@ export async function getWeekData(year: number): Promise<AdminWeekData[]> {
 // ------------------------------------------------------------------
 export async function getGameData(
   queryData: WeekQuery,
-  classification: Classification = 'fbs'
+  classification: Classification = 'fbs',
+  cfbdWeek?: number
 ): Promise<AdminGameData[]> {
   const gameData: AdminGameData[] = [];
 
+  // For postseason, the DB week is offset by the regular season count.
+  // cfbdWeek carries the original CFBD week number (1, 2, 3…) for the API call.
+  const apiQuery = cfbdWeek !== undefined ? { ...queryData, week: cfbdWeek } : queryData;
+
   const [cfbdGamedata, cfbdLinesData] = await Promise.all([
-    getCfbdGameData(queryData, classification),
-    getCfbdLinesData(queryData),
+    getCfbdGameData(apiQuery, classification),
+    getCfbdLinesData(apiQuery),
   ]);
 
   // Build a lookup map: cfbdGameId -> spread (home team perspective)
