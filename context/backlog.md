@@ -2,7 +2,7 @@
 
 > Generated: 2026-03-14
 > Focus: Full audit
-> Last updated: 2026-03-22 — closed [20], [21] (leaderboard cache, external API cache — not warranted at target scale of ~15 users); completed [1], [4], [5], [6] (security fixes); completed [9] (picks transaction), closed [12] (false positive); completed [10], [11], [17] (cron week reset, settings error handling, email transporter singleton); completed [2], [3] (email XSS escape, rate limiter TRUST_PROXY); completed [7], [8] (DB connection options, admin bootstrap fix); completed [13], [14] (ErrorBoundary hookup, addGameToWeek removal); completed [15], [19] (picks N+1 bulk fetch, startTime index); completed [16], [18] (notification bulk query, rate limiter interval cleanup); completed [22], [26], [32] (week query-param validation refactor, weekNumber rename, schema consolidation); completed [25] (Hono RPC type cast removal); completed [23], [24] (AdminSection and WeekGameSection component refactor); completed [27] (pick voided status, FK cascade → restrict); completed [28], [30], [31], [33] (notification log pagination, email timezone, tab index refactor, env var Zod validation); completed [53] (notification log server-side filtering)
+> Last updated: 2026-03-22 — closed [20], [21] (leaderboard cache, external API cache — not warranted at target scale of ~15 users); completed [1], [4], [5], [6] (security fixes); completed [9] (picks transaction), closed [12] (false positive); completed [10], [11], [17] (cron week reset, settings error handling, email transporter singleton); completed [2], [3] (email XSS escape, rate limiter TRUST_PROXY); completed [7], [8] (DB connection options, admin bootstrap fix); completed [13], [14] (ErrorBoundary hookup, addGameToWeek removal); completed [15], [19] (picks N+1 bulk fetch, startTime index); completed [16], [18] (notification bulk query, rate limiter interval cleanup); completed [22], [26], [32] (week query-param validation refactor, weekNumber rename, schema consolidation); completed [25] (Hono RPC type cast removal); completed [23], [24] (AdminSection and WeekGameSection component refactor); completed [27] (pick voided status, FK cascade → restrict); completed [28], [30], [31], [33] (notification log pagination, email timezone, tab index refactor, env var Zod validation); completed [53] (notification log server-side filtering); completed [52] (CFBD-only data source, spread support)
 
 ---
 
@@ -65,7 +65,6 @@ _None identified._
 - **[35]** **[packages/backend/src/routes/user.ts]**: No endpoint for updating user profile. Users can't change display name or password after registration. Add `PATCH /user/profile` with display name and password change support.
 
 ### Medium
-- **[52]** **[packages/frontend/src/components/admin/GameCard.tsx]** + **[packages/backend/src/api/cfbd.ts]** + **[packages/backend/src/routes/admin.ts]**: Show betting spread next to each game in the admin game picker so the admin can identify competitive matchups vs. blowouts when curating the week's games. CFBD's betting lines endpoint (`/lines`) returns spread, over/under, and moneyline by game ID. **Requires `DATA_SOURCE=cfbd`** — the NCAA API has no equivalent lines data. Implementation: fetch lines alongside game data in the admin games route, add nullable `spread` field to `AdminGameData` in shared types, and display it on `GameCard.tsx` (e.g. "Alabama -28.5" or "Pick'em"). Falls back gracefully to no spread shown when data is unavailable.
 - **[36]** **[packages/frontend/src/components/user/UserPicksGameCard.tsx]**: Deadline UX is minimal — locked games show generic message with no advance warning. Add: countdown timer to lockdown, visual lock indicators on cards before deadline, pre-submit validation showing which picks will be rejected.
 - **[37]** **[packages/backend/src/db/dbUserFunctions.ts:179]** + **[packages/frontend/src/apis/userRequests.ts]**: `GET /user/picks/history` exists in the backend but the UI doesn't expose a full pick history browser. Build a filterable history view (by week, outcome, team).
 - **[38]** **[packages/frontend/src/components/admin/UsersSection.tsx]**: Admin user management is single-user only. Add bulk operations: bulk role assignment, CSV export of user + pick data, bulk notification send.
@@ -95,5 +94,5 @@ _None identified._
 | Bugs | 0 | 0 | 0 | 0 |
 | Performance | 0 | 0 | 0 | 0 |
 | Improvements & Refactors | 0 | 0 | 0 | 0 |
-| Feature Ideas | 2 | 7 | 10 | 19 |
-| **Total** | **2** | **7** | **10** | **19** |
+| Feature Ideas | 2 | 6 | 10 | 18 |
+| **Total** | **2** | **6** | **10** | **18** |
