@@ -2,9 +2,9 @@
 
 ## Current Feature Spec File
 
-Title: Scheduled Notification Reminders
-Spec file: context/specs/scheduled-notification-reminders.md
-Branch: claude/feature/scheduled-notification-reminders
+Title:
+Spec file:
+Branch:
 
 ## Current Feature Plan File
 
@@ -33,3 +33,4 @@ Plan File:
 - **Delete Year Data**: Added `DELETE /admin/year/:year` endpoint that blocks deletion with 409 if any user picks exist for the year, otherwise deletes all `admin.games` then `admin.weeks` in FK-safe order (games first). Added `hasPicksForYear`, `deleteGamesForYear`, `deleteWeeksForYear` DB functions. Frontend gains a "Reset Year" button (visible whenever weeks are loaded) with a confirmation dialog; on 409 shows the blocking message, on success clears week/game state. Route tests cover 401, 403, 400 (invalid/out-of-range year), 200 (no-op), 200 (cleanup), and 409 (picks exist).
 - **Admin Score Correction**: Added `PATCH /admin/games/:gameId/score` (production-safe, admin-only) that recalculates `winningTeam`, writes an audit row to the new `admin.score_corrections` table, and fires `rankings_updated` if all picked games for the week become complete. Added `correctGameScore()` DB function wrapping update + audit insert in a transaction. Added `correctGameScoreParamValidator` and `correctGameScoreBodyValidator` (non-negative integers). Admin `GameCard` shows an edit icon next to "PICKED" badge on picked games only; clicking opens a dialog pre-filled with current scores that submits the correction and updates the game card inline. Migration generated. Route and DB function tests added.
 - **Admin User Tools** (CSV Export + Broadcast Notification): Added `GET /admin/users/export` returning merged user + all-time pick totals (`returnUserPickTotals` DB function, LEFT JOIN so zero-pick users included). Frontend "Export CSV" button downloads `users-export-YYYY-MM-DD.csv` with Display Name, Email, Roles, Total Picks, Correct Picks, Accuracy columns; button disabled while loading or export in-flight. Added `POST /admin/notifications/broadcast` (Zod-validated subject/message/overrideEmailPreferences) that calls `dispatchAdminBroadcast` — free-form email (escaped HTML body) + ntfy/Telegram/Discord broadcast channels, no deduplication. `overrideEmailPreferences=true` sends to all emailVerified users, false uses opt-in list. `resolveWeekContext` DB helper resolves active week for log context; falls back to upcoming-week year (mid-season gap) or `maxYear+1` (off-season); `weekNumber=0` displayed as "Pre-season" in notification log. `admin_broadcast` added to `NotificationType`. Route and DB unit tests added for both endpoints.
+- **24hr Picks Reminder and Notification Type Rename** (backlog #41 partial): Added `picks_reminder_24h` notification type firing in the 25h–24h window before first kickoff, mirroring the existing 1hr reminder pattern. Added `shouldSend24hrReminder` to `cronLogic.ts`, `reminder24hSentForWeek` state flag to `cronTick.ts`, `picksReminder24hTemplate` to `templates.ts`, and wired through dispatcher, zValidate, admin route filter, and frontend Settings/NotificationLogSection. Renamed `picks_reminder` → `picks_reminder_1h` across all layers (shared types, backend, frontend, tests) for consistency.
