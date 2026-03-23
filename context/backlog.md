@@ -2,7 +2,7 @@
 
 > Generated: 2026-03-14
 > Focus: Full audit
-> Last updated: 2026-03-22 — closed [20], [21] (leaderboard cache, external API cache — not warranted at target scale of ~15 users); completed [1], [4], [5], [6] (security fixes); completed [9] (picks transaction), closed [12] (false positive); completed [10], [11], [17] (cron week reset, settings error handling, email transporter singleton); completed [2], [3] (email XSS escape, rate limiter TRUST_PROXY); completed [7], [8] (DB connection options, admin bootstrap fix); completed [13], [14] (ErrorBoundary hookup, addGameToWeek removal); completed [15], [19] (picks N+1 bulk fetch, startTime index); completed [16], [18] (notification bulk query, rate limiter interval cleanup); completed [22], [26], [32] (week query-param validation refactor, weekNumber rename, schema consolidation); completed [25] (Hono RPC type cast removal); completed [23], [24] (AdminSection and WeekGameSection component refactor); completed [27] (pick voided status, FK cascade → restrict); completed [28], [30], [31], [33] (notification log pagination, email timezone, tab index refactor, env var Zod validation); completed [53] (notification log server-side filtering); completed [52] (CFBD-only data source, spread support); completed [35] (user profile update — display name and password change)
+> Last updated: 2026-03-23 — closed [20], [21] (leaderboard cache, external API cache — not warranted at target scale of ~15 users); completed [1], [4], [5], [6] (security fixes); completed [9] (picks transaction), closed [12] (false positive); completed [10], [11], [17] (cron week reset, settings error handling, email transporter singleton); completed [2], [3] (email XSS escape, rate limiter TRUST_PROXY); completed [7], [8] (DB connection options, admin bootstrap fix); completed [13], [14] (ErrorBoundary hookup, addGameToWeek removal); completed [15], [19] (picks N+1 bulk fetch, startTime index); completed [16], [18] (notification bulk query, rate limiter interval cleanup); completed [22], [26], [32] (week query-param validation refactor, weekNumber rename, schema consolidation); completed [25] (Hono RPC type cast removal); completed [23], [24] (AdminSection and WeekGameSection component refactor); completed [27] (pick voided status, FK cascade → restrict); completed [28], [30], [31], [33] (notification log pagination, email timezone, tab index refactor, env var Zod validation); completed [53] (notification log server-side filtering); completed [52] (CFBD-only data source, spread support); completed [35] (user profile update — display name and password change); completed [54] (delete year data — admin reset UI)
 
 ---
 
@@ -64,7 +64,6 @@ _None identified._
 - **[34]** **[packages/frontend/src/components/user/LeaderboardSection.tsx]**: Week-level leaderboard exists at `GET /leaderboard/scores` but the UI has no week selector — only season standings are shown. Wire up the existing endpoint with a week dropdown.
 
 ### Medium
-- **[54]** **[packages/backend/src/routes/admin.ts]** + **[packages/frontend/src/components/admin/]**: No way to delete a year's weeks/games from the admin UI. Add `DELETE /admin/year/:year` endpoint that removes all weeks and games for the year (handling the `RESTRICT` FK on user picks — either block if picks exist or cascade-delete picks with a confirmation). Surface as a "Reset Year" action in the admin panel.
 - **[36]** **[packages/frontend/src/components/user/UserPicksGameCard.tsx]**: Deadline UX is minimal — locked games show generic message with no advance warning. Add: countdown timer to lockdown, visual lock indicators on cards before deadline, pre-submit validation showing which picks will be rejected.
 - **[37]** **[packages/backend/src/db/dbUserFunctions.ts:179]** + **[packages/frontend/src/apis/userRequests.ts]**: `GET /user/picks/history` exists in the backend but the UI doesn't expose a full pick history browser. Build a filterable history view (by week, outcome, team).
 - **[38]** **[packages/frontend/src/components/admin/UsersSection.tsx]**: Admin user management is single-user only. Add bulk operations: bulk role assignment, CSV export of user + pick data, bulk notification send.
@@ -94,5 +93,5 @@ _None identified._
 | Bugs | 0 | 0 | 0 | 0 |
 | Performance | 0 | 0 | 0 | 0 |
 | Improvements & Refactors | 0 | 0 | 0 | 0 |
-| Feature Ideas | 1 | 7 | 10 | 18 |
-| **Total** | **1** | **7** | **10** | **18** |
+| Feature Ideas | 1 | 6 | 10 | 17 |
+| **Total** | **1** | **6** | **10** | **17** |
