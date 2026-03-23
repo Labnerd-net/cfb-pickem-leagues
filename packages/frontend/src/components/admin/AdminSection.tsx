@@ -128,6 +128,7 @@ export default function AdminSection() {
                     onSelectAll={gameHook.handleSelectAll}
                     onDeselectAll={gameHook.handleDeselectAll}
                     onSaveSelection={gameHook.handleSavePickedGames}
+                    onGameCorrected={gameHook.handleGameCorrected}
                     loading={loading}
                   />
                 </>

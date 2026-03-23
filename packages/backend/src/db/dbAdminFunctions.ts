@@ -1,5 +1,5 @@
 import { eq, and, inArray, notInArray, lte, gte, max } from 'drizzle-orm';
-import { adminWeeks, adminGames } from './schema/admin.js';
+import { adminWeeks, adminGames, scoreCorrections } from './schema/admin.js';
 import { games as userGames } from './schema/users.js';
 import { db } from './index.js';
 import logger from '../utils/logger.js';
@@ -286,6 +286,55 @@ export async function markGameComplete(
     return updated.length > 0 ? updated[0] : null;
   } catch (e) {
     logger.error({ err: e }, 'markGameComplete failed');
+    throw e;
+  }
+}
+
+// ------------------------------------------------------------------
+// Correct a game's final score and record the change in the audit log
+// ------------------------------------------------------------------
+export async function correctGameScore(
+  gameId: number,
+  homePoints: number,
+  awayPoints: number,
+  correctedBy: number
+): Promise<AdminDbGameData | null> {
+  logger.debug({ gameId, homePoints, awayPoints, correctedBy }, 'correctGameScore');
+  try {
+    return await db.transaction(async tx => {
+      const currentRows = await tx
+        .select()
+        .from(adminGames)
+        .where(eq(adminGames.gameId, gameId));
+      if (currentRows.length === 0) return null;
+      const current = currentRows[0];
+
+      let winningTeam: Team = 'pending';
+      if (homePoints > awayPoints) {
+        winningTeam = 'home_team';
+      } else if (awayPoints > homePoints) {
+        winningTeam = 'away_team';
+      }
+
+      const updated = await tx
+        .update(adminGames)
+        .set({ completed: true, homePoints, awayPoints, winningTeam })
+        .where(eq(adminGames.gameId, gameId))
+        .returning();
+
+      await tx.insert(scoreCorrections).values({
+        gameId,
+        correctedBy,
+        oldHomePoints: current.homePoints,
+        oldAwayPoints: current.awayPoints,
+        newHomePoints: homePoints,
+        newAwayPoints: awayPoints,
+      });
+
+      return updated.length > 0 ? updated[0] : null;
+    });
+  } catch (e) {
+    logger.error({ err: e }, 'correctGameScore failed');
     throw e;
   }
 }

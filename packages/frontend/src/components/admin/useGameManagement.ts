@@ -27,6 +27,7 @@ interface UseGameManagementReturn {
   handleGameSelection: (gameId: number, selected: boolean) => void;
   handleSelectAll: () => void;
   handleDeselectAll: () => void;
+  handleGameCorrected: (updated: AdminDbGameData) => void;
   clearMessages: () => void;
 }
 
@@ -138,6 +139,10 @@ export function useGameManagement(
     setSelectedGameIds([]);
   }
 
+  function handleGameCorrected(updated: AdminDbGameData) {
+    setGames(prev => prev.map(g => (g.gameId === updated.gameId ? updated : g)));
+  }
+
   function clearMessages() {
     setErrorMessage(null);
     setSuccessMessage(null);
@@ -159,6 +164,7 @@ export function useGameManagement(
     handleGameSelection,
     handleSelectAll,
     handleDeselectAll,
+    handleGameCorrected,
     clearMessages,
   };
 }

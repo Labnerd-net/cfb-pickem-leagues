@@ -61,6 +61,18 @@ vi.mock('../src/db/index.ts', async () => {
 		CREATE INDEX games_year_week_picked_idx ON admin.games (year, week_number, picked);
 		ALTER TABLE admin.games ADD CONSTRAINT games_natural_key UNIQUE (year, week_number, home_team, away_team);
 
+		-- Admin schema: score corrections audit log
+		CREATE TABLE admin.score_corrections (
+			id SERIAL PRIMARY KEY,
+			game_id INTEGER NOT NULL REFERENCES admin.games (game_id) ON DELETE CASCADE,
+			corrected_by INTEGER NOT NULL,
+			corrected_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,
+			old_home_points INTEGER,
+			old_away_points INTEGER,
+			new_home_points INTEGER NOT NULL,
+			new_away_points INTEGER NOT NULL
+		);
+
 		-- User schema: users table
 		CREATE TABLE "user".users (
 			user_id SERIAL PRIMARY KEY,

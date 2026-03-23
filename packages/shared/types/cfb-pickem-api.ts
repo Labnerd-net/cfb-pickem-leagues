@@ -208,3 +208,8 @@ export interface UpdateProfileRequest {
   currentPassword?: string;
   newPassword?: string;
 }
+
+export interface CorrectGameScoreRequest {
+  homePoints: number;
+  awayPoints: number;
+}

@@ -1,5 +1,6 @@
 import { describe, it, expect, beforeAll, afterEach } from 'vitest';
-import { seedTestData, createTestWeek, createTestGame, cleanDatabase } from '../../db-utils.js';
+import { sql } from 'drizzle-orm';
+import { seedTestData, createTestWeek, createTestGame, cleanDatabase, testDb } from '../../db-utils.js';
 import {
 	returnWeek,
   returnWeeksByYear,
@@ -8,6 +9,7 @@ import {
 	returnGamesBulk,
 	getSeasonTypeForWeek,
 	enrichWeekIdentifier,
+	correctGameScore,
 } from '../../../src/db/dbAdminFunctions.js';
 import type { WeekIdentifier } from '@shared/types/cfb-pickem-api.js';
 
@@ -189,6 +191,44 @@ describe('Admin Database Functions', () => {
 			await expect(
 				enrichWeekIdentifier({ year: 2026, week: 99 })
 			).rejects.toThrow('Week 99 of year 2026 not found');
+		});
+	});
+
+	describe('correctGameScore', () => {
+		it('should return null for a non-existent gameId', async () => {
+			const result = await correctGameScore(999999, 28, 21, 1);
+			expect(result).toBeNull();
+		});
+
+		it('should update the game and insert an audit row', async () => {
+			const row = await createTestGame(1, 2024, 'Alabama', 'Georgia', true, false);
+			const id = (row as { game_id: number }).game_id;
+
+			const updated = await correctGameScore(id, 28, 21, 1);
+
+			expect(updated).not.toBeNull();
+			expect(updated!.homePoints).toBe(28);
+			expect(updated!.awayPoints).toBe(21);
+			expect(updated!.winningTeam).toBe('home_team');
+			expect(updated!.completed).toBe(true);
+
+			const audit = await testDb.execute(sql`
+				SELECT * FROM "admin"."score_corrections" WHERE game_id = ${id}
+			`);
+			expect(audit.rows.length).toBe(1);
+			const auditRow = audit.rows[0] as Record<string, unknown>;
+			expect(auditRow.new_home_points).toBe(28);
+			expect(auditRow.new_away_points).toBe(21);
+			expect(auditRow.corrected_by).toBe(1);
+		});
+
+		it('should set winningTeam to pending on a tie', async () => {
+			const row = await createTestGame(1, 2024, 'Auburn', 'LSU', true, false);
+			const id = (row as { game_id: number }).game_id;
+
+			const updated = await correctGameScore(id, 14, 14, 1);
+
+			expect(updated!.winningTeam).toBe('pending');
 		});
 	});
 });

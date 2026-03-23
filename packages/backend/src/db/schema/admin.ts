@@ -75,6 +75,22 @@ export const adminGames = adminSchema.table(
 );
 
 // ------------------------------------------------------------------
+// ScoreCorrections – audit log of manual score overrides
+// ------------------------------------------------------------------
+export const scoreCorrections = adminSchema.table('score_corrections', {
+  id: serial('id').primaryKey(),
+  gameId: integer('game_id')
+    .notNull()
+    .references(() => adminGames.gameId, { onDelete: 'cascade' }),
+  correctedBy: integer('corrected_by').notNull(),
+  correctedAt: timestamp('corrected_at').defaultNow().notNull(),
+  oldHomePoints: integer('old_home_points'),
+  oldAwayPoints: integer('old_away_points'),
+  newHomePoints: integer('new_home_points').notNull(),
+  newAwayPoints: integer('new_away_points').notNull(),
+});
+
+// ------------------------------------------------------------------
 // Relation helpers
 // ------------------------------------------------------------------
 export const adminWeekRelations = relations(adminWeeks, ({ many }) => ({

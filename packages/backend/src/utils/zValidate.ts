@@ -99,6 +99,17 @@ const updateProfileSchema = z
     }
   });
 
+const correctGameScoreParamSchema = z.object({
+  gameId: z.coerce.number().int().positive(),
+});
+
+const correctGameScoreBodySchema = z.object({
+  homePoints: z.number().int().min(0),
+  awayPoints: z.number().int().min(0),
+});
+
+export const correctGameScoreParamValidator = zValidator('param', correctGameScoreParamSchema);
+export const correctGameScoreBodyValidator = zValidator('json', correctGameScoreBodySchema);
 export const yearQueryValidator = zValidator('query', yearQuerySchema);
 export const weekIdentifierQueryValidator = zValidator('query', weekIdentifierQuerySchema);
 export const markGameCompleteValidator = zValidator('json', markGameCompleteSchema);

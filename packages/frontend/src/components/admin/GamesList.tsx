@@ -11,6 +11,7 @@ interface GamesListProps {
   onSelectAll: () => void;
   onDeselectAll: () => void;
   onSaveSelection: () => void;
+  onGameCorrected: (updated: AdminDbGameData) => void;
   loading?: boolean;
 }
 
@@ -21,6 +22,7 @@ export default function GamesList({
   onSelectAll,
   onDeselectAll,
   onSaveSelection,
+  onGameCorrected,
   loading = false,
 }: GamesListProps) {
   const [pickedFirst, setPickedFirst] = useState(false);
@@ -59,6 +61,7 @@ export default function GamesList({
             game={game}
             selected={selectedGameIds.includes(game.gameId)}
             onSelect={selected => onGameSelect(game.gameId, selected)}
+            onGameCorrected={onGameCorrected}
           />
         ))}
       </Box>

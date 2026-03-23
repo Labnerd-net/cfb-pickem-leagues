@@ -5,6 +5,7 @@ import type {
   PickedGamesRequest,
   ProfileData,
   MarkGameCompleteRequest,
+  CorrectGameScoreRequest,
   NotificationChannel,
   NotificationLogEntry,
   NotificationType,
@@ -218,6 +219,32 @@ export async function getNotificationLogs(
       success: true,
       data: body as unknown as { entries: NotificationLogEntry[]; total: number },
     };
+  } catch {
+    return { success: false, error: 'Request failed' };
+  }
+}
+
+export interface CorrectGameScoreResponse {
+  success: boolean;
+  data?: AdminDbGameData;
+  error?: string;
+}
+
+export async function correctGameScore(
+  gameId: number,
+  request: CorrectGameScoreRequest
+): Promise<CorrectGameScoreResponse> {
+  try {
+    const res = await client.api.admin.games[':gameId'].score.$patch({
+      param: { gameId: String(gameId) },
+      json: request,
+    });
+    if (!res.ok) {
+      const body = (await res.json()) as unknown as { error: string };
+      return { success: false, error: body.error };
+    }
+    const body = await res.json();
+    return { success: true, data: (body as unknown as { game: AdminDbGameData }).game };
   } catch {
     return { success: false, error: 'Request failed' };
   }

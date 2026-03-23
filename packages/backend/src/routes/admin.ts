@@ -9,7 +9,7 @@ import { authMiddleware, requireRole } from '../utils/middleware.js';
 import { apiRateLimit } from '../utils/rateLimiter.js';
 import { z } from 'zod';
 import { zValidator } from '@hono/zod-validator';
-import { weekIdentifierValidator, pickedGameRequestValidator, updateUserRolesValidator, markGameCompleteValidator, yearQueryValidator, weekIdentifierQueryValidator } from '../utils/zValidate.js';
+import { weekIdentifierValidator, pickedGameRequestValidator, updateUserRolesValidator, markGameCompleteValidator, yearQueryValidator, weekIdentifierQueryValidator, correctGameScoreParamValidator, correctGameScoreBodyValidator } from '../utils/zValidate.js';
 import { dispatchNotification } from '../notifications/dispatcher.js';
 import { sendNtfyNotification } from '../notifications/ntfySender.js';
 import { sendTelegramNotification } from '../notifications/telegramSender.js';
@@ -172,6 +172,38 @@ const admin = new Hono<{ Variables: Variables }>()
           notificationType: 'rankings_updated',
           year: game.year,
           weekNumber: game.weekNumber,
+        }).catch(err => logger.error({ err }, 'rankings_updated dispatch failed'));
+      }
+
+      return c.json({ game: updated });
+    }
+  )
+  // Correct a game's final score (production-safe; writes audit row)
+  .patch(
+    '/games/:gameId/score',
+    apiRateLimit,
+    authMiddleware,
+    requireRole('admin'),
+    correctGameScoreParamValidator,
+    correctGameScoreBodyValidator,
+    async c => {
+      const { gameId } = c.req.valid('param');
+      const { homePoints, awayPoints } = c.req.valid('json');
+      const correctedBy = c.get('jwtPayload').sub;
+
+      const updated = await dbAdminFunctions.correctGameScore(gameId, homePoints, awayPoints, correctedBy);
+      if (!updated) throw new HTTPException(404, { message: 'Game not found' });
+
+      // Dispatch rankings_updated if all picked games for the week are now complete
+      const weekGames = await dbAdminFunctions.returnPickedGames({
+        year: updated.year,
+        week: updated.weekNumber,
+      });
+      if (weekGames.length > 0 && weekGames.every(g => g.completed)) {
+        dispatchNotification({
+          notificationType: 'rankings_updated',
+          year: updated.year,
+          weekNumber: updated.weekNumber,
         }).catch(err => logger.error({ err }, 'rankings_updated dispatch failed'));
       }
 
