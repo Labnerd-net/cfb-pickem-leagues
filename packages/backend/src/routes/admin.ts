@@ -114,11 +114,6 @@ const admin = new Hono<{ Variables: Variables }>()
         });
       }
       await Promise.all(gameData.map(game => dbAdminFunctions.upsertGameForWeek(game)));
-      dispatchNotification({
-        notificationType: 'games_ready',
-        year: weekIdentifier.year,
-        weekNumber: weekIdentifier.week,
-      }).catch(err => logger.error({ err }, 'games_ready dispatch failed'));
       return c.json({ status: `imported ${gameData.length} games` });
     }
   )
@@ -140,6 +135,11 @@ const admin = new Hono<{ Variables: Variables }>()
       if (pickedData.games.length === 0)
         throw new HTTPException(422, { message: 'games array must not be empty' });
       await dbAdminFunctions.setPickedGames(pickedData);
+      dispatchNotification({
+        notificationType: 'games_ready',
+        year: pickedData.year,
+        weekNumber: pickedData.week,
+      }).catch(err => logger.error({ err }, 'games_ready dispatch failed'));
       return c.json({ status: 'updated picked games' });
     }
   )
