@@ -97,17 +97,6 @@ export default function AdminSection() {
           {/* Games section — only render when weeks are loaded */}
           {weekHook.weeks.length > 0 && (
             <Box sx={{ mt: 4, pt: 4, borderTop: 2, borderColor: 'divider' }}>
-              <Box sx={{ display: 'flex', justifyContent: 'flex-end', mb: 2 }}>
-                <Button
-                  variant="outlined"
-                  color="error"
-                  size="small"
-                  onClick={() => setResetDialogOpen(true)}
-                  disabled={importing || loading || resetting}
-                >
-                  Reset Year
-                </Button>
-              </Box>
               {gameHook.games.length > 0 ? (
                 <>
                   <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 1, mb: 2 }}>
@@ -119,6 +108,15 @@ export default function AdminSection() {
                       startIcon={importing ? <CircularProgress size={16} /> : undefined}
                     >
                       {importing ? 'Re-importing...' : 'Re-import'}
+                    </Button>
+                    <Button
+                      variant="outlined"
+                      color="error"
+                      size="small"
+                      onClick={() => setResetDialogOpen(true)}
+                      disabled={importing || loading || resetting}
+                    >
+                      Reset Year
                     </Button>
                   </Box>
                   <GamesList
