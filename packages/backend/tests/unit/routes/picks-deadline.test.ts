@@ -22,10 +22,9 @@ async function buildApp(ignoreDeadline = false) {
 		jwtExpirationDays: 7,
 		getJwtExpirationSeconds: () => 9999999999,
 		bcryptSaltRounds: 10,
-		dataSource: 'ncaa',
-		cfbdApiKey: '',
 		logLevel: 'silent',
 		isProduction: false,
+		trustProxy: false,
 		serverPort: 3000,
 		clientURLs: ['http://localhost:5173'],
 	}));

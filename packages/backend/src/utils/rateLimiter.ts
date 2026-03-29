@@ -4,6 +4,7 @@
  */
 
 import type { Context, Next } from 'hono';
+import { trustProxy } from './envVars.js';
 
 interface RateLimitEntry {
   count: number;
@@ -43,7 +44,6 @@ export function rateLimit(config: RateLimitConfig) {
   return async (c: Context, next: Next) => {
     // Get client IP address. Only trust forwarded headers when TRUST_PROXY=true,
     // otherwise use the raw socket address to prevent IP spoofing.
-    const trustProxy = process.env.TRUST_PROXY === 'true';
     const ip = trustProxy
       ? (c.req.header('x-forwarded-for')?.split(',')[0]?.trim() ||
          c.req.header('x-real-ip') ||

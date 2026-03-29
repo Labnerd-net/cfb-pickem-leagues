@@ -12,6 +12,7 @@ import {
 import type { JwtData, UserData } from '@shared/types/cfb-pickem-api.js';
 import {
   bcryptSaltRounds,
+  clientURLs,
   jwtAlgorithm,
   getJwtExpirationSeconds,
   jwtSecret,
@@ -68,7 +69,7 @@ const auth = new Hono<{ Variables: Variables }>()
     const verificationToken = randomBytes(32).toString('hex');
     setEmailVerificationToken(result[0].userId, verificationToken, new Date())
       .then(() => {
-        const verifyUrl = `${process.env.CLIENT_URL?.split(',')[0] ?? ''}/verify-email?token=${verificationToken}`;
+        const verifyUrl = `${clientURLs[0] ?? ''}/verify-email?token=${verificationToken}`;
         return sendEmail({
           to: email,
           subject: "Verify your CFB Pick'em email",
@@ -148,7 +149,7 @@ const auth = new Hono<{ Variables: Variables }>()
     const payload = c.get('jwtPayload');
     const verificationToken = randomBytes(32).toString('hex');
     await setEmailVerificationToken(payload.sub, verificationToken, new Date());
-    const verifyUrl = `${process.env.CLIENT_URL?.split(',')[0] ?? ''}/verify-email?token=${verificationToken}`;
+    const verifyUrl = `${clientURLs[0] ?? ''}/verify-email?token=${verificationToken}`;
     sendEmail({
       to: payload.email,
       subject: "Verify your CFB Pick'em email",

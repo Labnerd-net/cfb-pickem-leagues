@@ -26,20 +26,8 @@ function makeContext(opts: {
 const noopNext: Next = vi.fn().mockResolvedValue(undefined);
 
 describe('rate limiter — TRUST_PROXY=false (default)', () => {
-	let origTrustProxy: string | undefined;
-
-	beforeEach(() => {
-		origTrustProxy = process.env.TRUST_PROXY;
-		process.env.TRUST_PROXY = 'false';
-	});
-
 	afterEach(() => {
 		clearRateLimitStore();
-		if (origTrustProxy === undefined) {
-			delete process.env.TRUST_PROXY;
-		} else {
-			process.env.TRUST_PROXY = origTrustProxy;
-		}
 	});
 
 	it('uses the socket address, not x-forwarded-for, as the rate-limit key', async () => {
@@ -72,24 +60,23 @@ describe('rate limiter — TRUST_PROXY=false (default)', () => {
 });
 
 describe('rate limiter — TRUST_PROXY=true', () => {
-	let origTrustProxy: string | undefined;
+	let proxyRateLimit: typeof import('../../../src/utils/rateLimiter.js').rateLimit;
+	let proxyRateLimitClear: typeof import('../../../src/utils/rateLimiter.js').clearRateLimitStore;
 
-	beforeEach(() => {
-		origTrustProxy = process.env.TRUST_PROXY;
-		process.env.TRUST_PROXY = 'true';
+	beforeEach(async () => {
+		vi.resetModules();
+		vi.doMock('../../../src/utils/envVars.js', () => ({ trustProxy: true }));
+		const mod = await import('../../../src/utils/rateLimiter.js') as typeof import('../../../src/utils/rateLimiter.js');
+		proxyRateLimit = mod.rateLimit;
+		proxyRateLimitClear = mod.clearRateLimitStore;
 	});
 
 	afterEach(() => {
-		clearRateLimitStore();
-		if (origTrustProxy === undefined) {
-			delete process.env.TRUST_PROXY;
-		} else {
-			process.env.TRUST_PROXY = origTrustProxy;
-		}
+		proxyRateLimitClear?.();
 	});
 
 	it('uses x-forwarded-for as the rate-limit key', async () => {
-		const middleware = rateLimit({ windowMs: 60_000, maxRequests: 2 });
+		const middleware = proxyRateLimit({ windowMs: 60_000, maxRequests: 2 });
 
 		// Two requests from different sockets but same x-forwarded-for
 		await middleware(makeContext({ socketAddr: '10.0.0.1', xForwardedFor: '5.5.5.5', path: '/rl-c' }), noopNext);
@@ -102,7 +89,7 @@ describe('rate limiter — TRUST_PROXY=true', () => {
 	});
 
 	it('uses only the first IP from a comma-separated x-forwarded-for', async () => {
-		const middleware = rateLimit({ windowMs: 60_000, maxRequests: 2 });
+		const middleware = proxyRateLimit({ windowMs: 60_000, maxRequests: 2 });
 		const xff = '6.6.6.6, 10.0.0.1, 172.16.0.1';
 
 		await middleware(makeContext({ socketAddr: '10.0.0.1', xForwardedFor: xff, path: '/rl-d' }), noopNext);
@@ -116,20 +103,8 @@ describe('rate limiter — TRUST_PROXY=true', () => {
 });
 
 describe('rate limiter — general behavior', () => {
-	let origTrustProxy: string | undefined;
-
-	beforeEach(() => {
-		origTrustProxy = process.env.TRUST_PROXY;
-		process.env.TRUST_PROXY = 'false';
-	});
-
 	afterEach(() => {
 		clearRateLimitStore();
-		if (origTrustProxy === undefined) {
-			delete process.env.TRUST_PROXY;
-		} else {
-			process.env.TRUST_PROXY = origTrustProxy;
-		}
 	});
 
 	it('allows requests up to maxRequests and blocks the next', async () => {
