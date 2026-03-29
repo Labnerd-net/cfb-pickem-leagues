@@ -160,9 +160,8 @@ describe('Pick deadline with DEV_CURRENT_TIME', () => {
         jwtExpirationDays: 7,
         getJwtExpirationSeconds: () => 9999999999,
         bcryptSaltRounds: 10,
-        dataSource: 'ncaa',
-        cfbdApiKey: '',
         logLevel: 'silent',
+        trustProxy: false,
         serverPort: 3000,
         clientURLs: ['http://localhost:5173'],
       }));
@@ -211,9 +210,8 @@ describe('Pick deadline with DEV_CURRENT_TIME', () => {
         jwtExpirationDays: 7,
         getJwtExpirationSeconds: () => 9999999999,
         bcryptSaltRounds: 10,
-        dataSource: 'ncaa',
-        cfbdApiKey: '',
         logLevel: 'silent',
+        trustProxy: false,
         serverPort: 3000,
         clientURLs: ['http://localhost:5173'],
       }));
