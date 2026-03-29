@@ -69,7 +69,6 @@ _None identified._
 
 ### Medium
 - **#22 [packages/backend/src/db/dbUserFunctions.ts, packages/backend/src/routes/user.ts]**: `GET /user/history` endpoint and `returnUserPickHistory()` DB function already exist, but there is no frontend UI to browse full pick history. Create a `PickHistoryView.tsx` component with season/week/outcome filters, surfaced as a new Dashboard tab or collapsible section.
-- **#23 [packages/frontend/src/components/admin/]**: Several admin screens show blank space when data is absent. Add empty state messaging to `AdminSection.tsx` ("No weeks imported yet") and `UsersSection.tsx` ("No users registered").
 - **#24 [packages/backend/src/cron/cronTick.ts, packages/backend/src/notifications/]**: No recurring admin-configurable notifications exist. Consider: weekly "picks open" reminder at a configurable day/time, and end-of-week standings digest after all games complete. Would require a `scheduled_notifications` DB table; reuses existing `dispatcher.ts` and `templates.ts`.
 
 ### Low
@@ -85,5 +84,5 @@ _None identified._
 | Bugs | 0 | 0 | 0 | 0 |
 | Performance | 0 | 2 | 1 | 3 |
 | Improvements & Refactors | 0 | 3 | 1 | 4 |
-| Feature Ideas | 2 | 3 | 1 | 6 |
-| **Total** | **4** | **10** | **3** | **17** |
+| Feature Ideas | 2 | 2 | 1 | 5 |
+| **Total** | **4** | **9** | **3** | **16** |
