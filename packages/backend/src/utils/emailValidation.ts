@@ -16,13 +16,6 @@ export function validateEmail(email: string): EmailValidationResult {
   // Not RFC 5322 compliant (overly complex), but covers 99% of valid emails
   const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
-  if (!email || typeof email !== 'string') {
-    return {
-      valid: false,
-      error: 'Email is required',
-    };
-  }
-
   if (!emailRegex.test(email)) {
     return {
       valid: false,

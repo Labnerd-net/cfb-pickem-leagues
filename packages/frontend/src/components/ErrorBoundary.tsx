@@ -16,6 +16,9 @@ class ErrorBoundary extends Component<Props, State> {
   }
 
   componentDidCatch(error: Error, info: ErrorInfo) {
+    // Intentionally use console.error rather than the logger abstraction —
+    // render crashes must always be visible in the browser console regardless
+    // of the VITE_LOG_LEVEL setting (which defaults to 'off').
     console.error('Unhandled render error:', error, info.componentStack);
   }
 

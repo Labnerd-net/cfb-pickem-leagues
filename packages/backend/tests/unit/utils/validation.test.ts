@@ -19,7 +19,7 @@ describe('Email Validation', () => {
 	it('should reject empty email', () => {
 		const result = validateEmail('');
 		expect(result.valid).toBe(false);
-		expect(result.error).toBe('Email is required');
+		expect(result.error).toBe('Invalid email format');
 	});
 
 	it('should provide error messages for invalid emails', () => {
