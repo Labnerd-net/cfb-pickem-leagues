@@ -49,8 +49,7 @@ _None identified._
 ## Improvements & Refactors
 
 ### High
-- **#11 [packages/frontend/src/apis/adminRequests.ts]**: ~30 occurrences of `as unknown as SomeType` double-cast silently defeat TypeScript — backend response shape changes won't surface compile errors at these cast sites. Fix: use Hono's `InferResponseType<>` utility (already done correctly in `userRequests.ts:17–18`) and remove the double-cast pattern throughout `adminRequests.ts`.
-- **#12 [packages/backend/src/api/index.ts:21,76]**: `{} as AdminGameData` object mutation bypasses TypeScript's required-field checking; adding a required field to `AdminGameData` won't produce a compile error at these sites. Fix: replace with proper typed object literals.
+_None identified._
 
 ### Medium
 - **#13 [packages/backend/src/cron/cronTick.ts:16–21]**: Cron state (`lastRefreshAt`, `hardCapStart`, `scoresCompletedForWeek`, `reminder24hSentForWeek`) lives in module-level memory and resets on restart. The existing `hasNotificationBeenSent` DB check prevents duplicate user notifications, so the risk is limited to extra CFBD API calls post-restart. Either document this assumption clearly or persist state to a `cron_state` DB table.
@@ -88,6 +87,6 @@ _None identified._
 | Security | 2 | 2 | 0 | 4 |
 | Bugs | 0 | 0 | 1 | 1 |
 | Performance | 0 | 2 | 1 | 3 |
-| Improvements & Refactors | 2 | 5 | 2 | 9 |
+| Improvements & Refactors | 0 | 5 | 2 | 7 |
 | Feature Ideas | 2 | 3 | 1 | 6 |
-| **Total** | **6** | **12** | **5** | **23** |
+| **Total** | **4** | **12** | **5** | **21** |
