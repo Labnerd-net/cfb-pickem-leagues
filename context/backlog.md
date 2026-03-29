@@ -64,7 +64,6 @@ _None identified._
 ## Feature Ideas
 
 ### High
-- **#20 [packages/frontend/src/components/user/LeaderboardSection.tsx]**: Week-level leaderboard is ~80% done — `GET /api/leaderboard/scores` already returns per-week results. The frontend only shows season-level standings. Fix: add a week selector to `LeaderboardSection.tsx` wired to the existing `scores` endpoint, similar to `UserWeekSelector` in `WeekGameSection.tsx`.
 - **#21 [packages/frontend/src/components/user/UserPicksGameCard.tsx]**: Games silently become unclickable with a "LOCKED" chip — no advance warning. Add a countdown timer to game cards (highlight red when <1 hour to kickoff), and consider an "unsaved picks" warning dialog when the first game of the week is about to lock.
 
 ### Medium
@@ -84,5 +83,5 @@ _None identified._
 | Bugs | 0 | 0 | 0 | 0 |
 | Performance | 0 | 2 | 1 | 3 |
 | Improvements & Refactors | 0 | 3 | 1 | 4 |
-| Feature Ideas | 2 | 2 | 1 | 5 |
-| **Total** | **4** | **9** | **3** | **16** |
+| Feature Ideas | 1 | 2 | 1 | 4 |
+| **Total** | **3** | **9** | **3** | **15** |

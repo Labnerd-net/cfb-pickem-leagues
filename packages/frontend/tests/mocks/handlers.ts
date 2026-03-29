@@ -106,6 +106,21 @@ export const handlers = [
 		});
 	}),
 
+	http.get(`${API_URL}/api/leaderboard/scores`, () => {
+		return HttpResponse.json({
+			scores: [
+				{
+					userId: 1,
+					displayName: 'Test User',
+					total: 5,
+					correct: 3,
+					incorrect: 1,
+					pending: 1,
+				},
+			],
+		});
+	}),
+
 	http.get(`${API_URL}/api/admin/users`, () => {
 		return HttpResponse.json({
 			allUserProfiles: [
