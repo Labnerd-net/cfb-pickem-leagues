@@ -28,7 +28,7 @@ _None identified._
 _None identified._
 
 ### Low
-- **#7 [packages/backend/src/utils/emailValidation.ts:14–21]**: `validateEmail` contains dead type guards (`!email || typeof email !== 'string'`) that are unreachable after Zod schema validation runs upstream. The function adds no logic beyond what the regex provides. Fix: remove the redundant guards, or remove the function entirely.
+_None identified._
 
 ---
 
@@ -52,14 +52,11 @@ _None identified._
 _None identified._
 
 ### Medium
-- **#13 [packages/backend/src/cron/cronTick.ts:16–21]**: Cron state (`lastRefreshAt`, `hardCapStart`, `scoresCompletedForWeek`, `reminder24hSentForWeek`) lives in module-level memory and resets on restart. The existing `hasNotificationBeenSent` DB check prevents duplicate user notifications, so the risk is limited to extra CFBD API calls post-restart. Either document this assumption clearly or persist state to a `cron_state` DB table.
 - **#14 [packages/frontend/src/components/admin/UsersSection.tsx]**: 295-line component handling four distinct responsibilities: user list fetching, role toggling, CSV export (including DOM manipulation), and broadcast notification form. Fix: extract CSV export into a `lib/` utility and the broadcast dialog into a `BroadcastDialog.tsx` component.
 - **#15 [packages/frontend/src/components/user/useWeekGames.ts]**: 240-line hook mixing initialization, year/week navigation side effects, pick submission, and snackbar state. Fix: split into two hooks — one for week/year navigation, one for pick submission. Low urgency at current scale.
 - **#16 [packages/backend/src/db/dbNotificationFunctions.ts:234]**: `returnNotificationLogs` accepts `channel` and `notificationType` as plain `string` rather than the narrower union types. Route-level Zod validation blocks invalid values upstream, but the DB function signature doesn't express the constraint. Fix: tighten the parameter types to `NotificationChannel | undefined` and `NotificationType | undefined`.
-- **#17 [packages/backend/src/db/schema/admin.ts:60]**: `spread` field is persisted but never displayed or used in any calculation. If reserved for a future "against the spread" mode, add a schema comment documenting that intent.
 
 ### Low
-- **#18 [packages/frontend/src/components/ErrorBoundary.tsx:19]**: Uses `console.error` directly while the rest of the frontend uses a `logger` abstraction. Fix: import and use the frontend logger, or explicitly document that error boundaries are a console exception.
 - **#19 [packages/frontend/src/components/user/WeekGameSection.tsx:40–91]**: Props are drilled through `UserWeekSelector` → `WeekPicksView` → `UserPicksGameCard`. Not painful at current scale, but consider a `WeekGameContext` if the chain grows.
 
 ---
@@ -85,8 +82,8 @@ _None identified._
 | Category | High | Medium | Low | Total |
 |----------|------|--------|-----|-------|
 | Security | 2 | 2 | 0 | 4 |
-| Bugs | 0 | 0 | 1 | 1 |
+| Bugs | 0 | 0 | 0 | 0 |
 | Performance | 0 | 2 | 1 | 3 |
-| Improvements & Refactors | 0 | 5 | 2 | 7 |
+| Improvements & Refactors | 0 | 3 | 1 | 4 |
 | Feature Ideas | 2 | 3 | 1 | 6 |
-| **Total** | **4** | **12** | **5** | **21** |
+| **Total** | **4** | **10** | **3** | **17** |

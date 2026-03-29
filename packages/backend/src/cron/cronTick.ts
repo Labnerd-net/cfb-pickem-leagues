@@ -13,7 +13,15 @@ import {
   getLastKickoff,
 } from './cronLogic.js';
 
-// Module-level cron state (resets on process restart)
+// Module-level cron state — resets on process restart (by design).
+//
+// On restart mid-week the only observable side effects are:
+//   - An immediate CFBD API refresh (lastRefreshAt reset → shouldRefreshScores returns true)
+//   - Re-evaluation of notification windows (hardCapStart, reminder24hSentForWeek reset)
+//
+// User-facing safety net: dispatcher.ts calls hasNotificationBeenSent() before every send,
+// which checks the DB, so notifications are never double-sent regardless of in-memory state.
+// Persisting this state to a DB table is not necessary at current scale.
 let lastRefreshAt: Date | null = null;
 let hardCapStart: Date | null = null;
 let scoresCompletedForWeek: string | null = null; // key: "year-week"

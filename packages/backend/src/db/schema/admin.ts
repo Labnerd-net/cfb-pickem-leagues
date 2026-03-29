@@ -57,7 +57,7 @@ export const adminGames = adminSchema.table(
     awayPoints: integer('away_points'),
     winningTeam: columnTeam('winning_team').notNull().default('pending'),
     startTime: timestamp('start_time'),
-    spread: real('spread'),
+    spread: real('spread'), // populated from CFBD lines; reserved for future "against the spread" mode — not used in current scoring or pick display
     createdAt: timestamp('created_at').defaultNow().notNull(),
   },
   table => [
