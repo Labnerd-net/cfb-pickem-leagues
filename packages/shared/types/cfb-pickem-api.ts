@@ -97,7 +97,7 @@ export interface AdminDbWeekData extends AdminWeekData {
 }
 
 export interface AdminGameData {
-  gameId: number;
+  gameId?: number;
   cfbdGameId: number | null;
   picked: boolean;
   weekNumber: number;
@@ -114,6 +114,7 @@ export interface AdminGameData {
 }
 
 export interface AdminDbGameData extends AdminGameData {
+  gameId: number;
   createdAt: Date;
 }
 

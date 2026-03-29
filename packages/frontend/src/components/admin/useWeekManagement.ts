@@ -1,6 +1,10 @@
 import { useState, useEffect, type Dispatch, type SetStateAction } from 'react';
-import type { AdminDbWeekData } from '@shared/types/cfb-pickem-api';
-import { addWeeksToYear, getWeeksForYear, deleteYear as deleteYearApi } from '../../apis/adminRequests';
+import {
+  type AdminDbWeekDataWire,
+  addWeeksToYear,
+  getWeeksForYear,
+  deleteYear as deleteYearApi,
+} from '../../apis/adminRequests';
 import { getCurrentSeason } from '../../utils/weekCalculation';
 
 interface ImportFeedback {
@@ -18,7 +22,7 @@ interface UseWeekManagementReturn {
   setSelectedYear: Dispatch<SetStateAction<number>>;
   selectedWeek: number;
   setSelectedWeek: Dispatch<SetStateAction<number>>;
-  weeks: AdminDbWeekData[];
+  weeks: AdminDbWeekDataWire[];
   weeksChecked: boolean;
   weekLoading: boolean;
   weekError: string | null;
@@ -29,7 +33,7 @@ interface UseWeekManagementReturn {
 export function useWeekManagement(initialYear?: number): UseWeekManagementReturn {
   const [selectedYear, setSelectedYear] = useState(() => initialYear ?? getCurrentSeason());
   const [selectedWeek, setSelectedWeek] = useState(1);
-  const [weeks, setWeeks] = useState<AdminDbWeekData[]>([]);
+  const [weeks, setWeeks] = useState<AdminDbWeekDataWire[]>([]);
   const [weeksChecked, setWeeksChecked] = useState(false);
   const [weekLoading, setWeekLoading] = useState(false);
   const [weekError, setWeekError] = useState<string | null>(null);

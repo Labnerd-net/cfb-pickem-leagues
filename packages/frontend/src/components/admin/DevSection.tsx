@@ -20,7 +20,7 @@ import WeekSelector from './WeekSelector';
 import { getActiveSimTime } from '../../utils/clock';
 import { getWeeksForYear, getGamesForWeek, markGameComplete } from '../../apis/adminRequests';
 import { getCurrentSeason } from '../../utils/weekCalculation';
-import type { AdminDbWeekData, AdminDbGameData } from '@shared/types/cfb-pickem-api';
+import type { AdminDbWeekDataWire, AdminDbGameDataWire } from '../../apis/adminRequests';
 
 const LS_KEY = 'devCurrentTime';
 
@@ -151,7 +151,7 @@ function SimClockCard() {
 // ---------------------------------------------------------------------------
 
 interface GameRowProps {
-  game: AdminDbGameData;
+  game: AdminDbGameDataWire;
   homeScore: string;
   awayScore: string;
   onHomeChange: (v: string) => void;
@@ -245,8 +245,8 @@ function GameRow({ game, homeScore, awayScore, onHomeChange, onAwayChange, onCom
 function MarkCompleteCard() {
   const [selectedYear, setSelectedYear] = useState(() => getCurrentSeason());
   const [selectedWeek, setSelectedWeek] = useState(1);
-  const [weeks, setWeeks] = useState<AdminDbWeekData[]>([]);
-  const [games, setGames] = useState<AdminDbGameData[]>([]);
+  const [weeks, setWeeks] = useState<AdminDbWeekDataWire[]>([]);
+  const [games, setGames] = useState<AdminDbGameDataWire[]>([]);
   const [scores, setScores] = useState<Record<number, { home: string; away: string }>>({});
   const [completing, setCompleting] = useState<number | null>(null);
   const [loading, setLoading] = useState(false);
@@ -296,7 +296,7 @@ function MarkCompleteCard() {
     setScores(prev => ({ ...prev, [gameId]: { ...prev[gameId], [side]: value } }));
   };
 
-  const handleMarkComplete = async (game: AdminDbGameData) => {
+  const handleMarkComplete = async (game: AdminDbGameDataWire) => {
     const score = scores[game.gameId] ?? { home: '', away: '' };
     const homePoints = parseInt(score.home);
     const awayPoints = parseInt(score.away);

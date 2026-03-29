@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback, type Dispatch, type SetStateAction } from 'react';
-import type { AdminDbGameData, WeekIdentifier } from '@shared/types/cfb-pickem-api';
+import type { WeekIdentifier } from '@shared/types/cfb-pickem-api';
 import {
+  type AdminDbGameDataWire,
   addGamesToWeek,
   getGamesForWeek,
   setPickedGames,
@@ -12,7 +13,7 @@ export interface ImportFeedback {
 }
 
 interface UseGameManagementReturn {
-  games: AdminDbGameData[];
+  games: AdminDbGameDataWire[];
   selectedGameIds: number[];
   gameLoading: boolean;
   importing: boolean;
@@ -27,7 +28,7 @@ interface UseGameManagementReturn {
   handleGameSelection: (gameId: number, selected: boolean) => void;
   handleSelectAll: () => void;
   handleDeselectAll: () => void;
-  handleGameCorrected: (updated: AdminDbGameData) => void;
+  handleGameCorrected: (updated: AdminDbGameDataWire) => void;
   clearMessages: () => void;
 }
 
@@ -35,7 +36,7 @@ export function useGameManagement(
   selectedYear: number,
   selectedWeek: number,
 ): UseGameManagementReturn {
-  const [games, setGames] = useState<AdminDbGameData[]>([]);
+  const [games, setGames] = useState<AdminDbGameDataWire[]>([]);
   const [selectedGameIds, setSelectedGameIds] = useState<number[]>([]);
   const [gameLoading, setGameLoading] = useState(false);
   const [importing, setImporting] = useState(false);
@@ -139,7 +140,7 @@ export function useGameManagement(
     setSelectedGameIds([]);
   }
 
-  function handleGameCorrected(updated: AdminDbGameData) {
+  function handleGameCorrected(updated: AdminDbGameDataWire) {
     setGames(prev => prev.map(g => (g.gameId === updated.gameId ? updated : g)));
   }
 

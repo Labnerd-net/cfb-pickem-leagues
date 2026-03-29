@@ -1,17 +1,17 @@
 import { useState } from 'react';
 import { Box } from '@mui/material';
-import type { AdminDbGameData } from '@shared/types/cfb-pickem-api';
+import type { AdminDbGameDataWire } from '../../apis/adminRequests';
 import GameCard from './GameCard';
 import GameListControl from './GameListControl';
 
 interface GamesListProps {
-  games: AdminDbGameData[];
+  games: AdminDbGameDataWire[];
   selectedGameIds: number[];
   onGameSelect: (gameId: number, selected: boolean) => void;
   onSelectAll: () => void;
   onDeselectAll: () => void;
   onSaveSelection: () => void;
-  onGameCorrected: (updated: AdminDbGameData) => void;
+  onGameCorrected: (updated: AdminDbGameDataWire) => void;
   loading?: boolean;
 }
 

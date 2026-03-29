@@ -18,18 +18,13 @@ export async function getWeekData(year: number): Promise<AdminWeekData[]> {
   const regularWeekCount = Math.max(...regularWeeks.map(w => w.week), 0);
 
   cfbdWeekData?.forEach(week => {
-    const data = {} as AdminWeekData;
-
-    if (week.seasonType === 'postseason') {
-      data.weekNumber = regularWeekCount + week.week;
-    } else {
-      data.weekNumber = week.week;
-    }
-
-    data.year = week.season;
-    data.seasonType = week.seasonType;
-    data.weekStart = week.startDate;
-    data.weekEnd = week.endDate;
+    const data: AdminWeekData = {
+      weekNumber: week.seasonType === 'postseason' ? regularWeekCount + week.week : week.week,
+      year: week.season,
+      seasonType: week.seasonType,
+      weekStart: week.startDate,
+      weekEnd: week.endDate,
+    };
     weekData.push(data);
   });
 
@@ -73,20 +68,21 @@ export async function getGameData(
       if (homePoints > awayPoints) winningTeam = 'home_team';
       if (awayPoints > homePoints) winningTeam = 'away_team';
     }
-    const data = {} as AdminGameData;
-    data.cfbdGameId = game.id;
-    data.picked = false;
-    data.weekNumber = queryData.week;
-    data.year = queryData.year;
-    data.seasonType = queryData.seasonType;
-    data.completed = game.completed;
-    data.homeTeam = game.homeTeam;
-    data.awayTeam = game.awayTeam;
-    data.homePoints = homePoints;
-    data.awayPoints = awayPoints;
-    data.winningTeam = winningTeam;
-    data.startTime = game.startDate ? new Date(game.startDate) : null;
-    data.spread = spreadMap.get(game.id) ?? null;
+    const data: AdminGameData = {
+      cfbdGameId: game.id,
+      picked: false,
+      weekNumber: queryData.week,
+      year: queryData.year,
+      seasonType: queryData.seasonType,
+      completed: game.completed,
+      homeTeam: game.homeTeam,
+      awayTeam: game.awayTeam,
+      homePoints,
+      awayPoints,
+      winningTeam,
+      startTime: game.startDate ? new Date(game.startDate) : null,
+      spread: spreadMap.get(game.id) ?? null,
+    };
     gameData.push(data);
   });
 

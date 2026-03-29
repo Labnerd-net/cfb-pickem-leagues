@@ -1,6 +1,5 @@
+import type { InferResponseType } from 'hono/client';
 import type {
-  AdminDbGameData,
-  AdminDbWeekData,
   WeekIdentifier,
   PickedGamesRequest,
   ProfileData,
@@ -14,6 +13,32 @@ import type {
 } from '@shared/types/cfb-pickem-api';
 import { client } from '../lib/api';
 
+// Wire-format types derived from Hono RPC inference.
+// Date fields (startTime, createdAt) are serialized as strings over JSON.
+type GetWeeksRPC            = InferResponseType<typeof client.api.admin.weeks.$get, 200>;
+type GetGamesRPC            = InferResponseType<typeof client.api.admin.games.$get, 200>;
+type GetUsersRPC            = InferResponseType<typeof client.api.admin.users.$get, 200>;
+type AdminUsersClient       = typeof client.api.admin.users;
+type UpdateUserRolesRPC     = InferResponseType<AdminUsersClient[':id']['roles']['$patch'], 200>;
+type MarkGameCompleteRPC    = InferResponseType<typeof client.api.admin.games.complete.$post, 200>;
+type AdminGamesClient       = typeof client.api.admin.games;
+type CorrectGameScoreRPC    = InferResponseType<AdminGamesClient[':gameId']['score']['$patch'], 200>;
+type AdminClient            = typeof client.api.admin;
+type GetNotificationLogsRPC = InferResponseType<AdminClient['notification-logs']['$get'], 200>;
+type GetAdminExportRPC      = InferResponseType<typeof client.api.admin.users.export.$get, 200>;
+
+export type AdminDbWeekDataWire = GetWeeksRPC['weeks'][number];
+export type AdminDbGameDataWire = GetGamesRPC['weekGames'][number];
+
+async function extractError(res: { json(): Promise<unknown> }): Promise<string> {
+  try {
+    const body = (await res.json()) as { error?: string };
+    return body.error ?? 'Request failed';
+  } catch {
+    return 'Request failed';
+  }
+}
+
 export interface AddWeeksResponse {
   success: boolean;
   data?: { status: string };
@@ -25,10 +50,7 @@ export async function addWeeksToYear(year: number): Promise<AddWeeksResponse> {
     const res = await client.api.admin.year[':year'].$post({
       param: { year: String(year) },
     });
-    if (!res.ok) {
-      const body = (await res.json()) as unknown as { error: string };
-      return { success: false, error: body.error };
-    }
+    if (!res.ok) return { success: false, error: await extractError(res) };
     const data = await res.json();
     return { success: true, data };
   } catch {
@@ -47,10 +69,7 @@ export async function deleteYear(year: number): Promise<DeleteYearResponse> {
     const res = await client.api.admin.year[':year'].$delete({
       param: { year: String(year) },
     });
-    if (!res.ok) {
-      const body = (await res.json()) as unknown as { error: string };
-      return { success: false, error: body.error };
-    }
+    if (!res.ok) return { success: false, error: await extractError(res) };
     const data = await res.json();
     return { success: true, data };
   } catch {
@@ -60,19 +79,16 @@ export async function deleteYear(year: number): Promise<DeleteYearResponse> {
 
 export interface GetWeeksResponse {
   success: boolean;
-  data?: AdminDbWeekData[];
+  data?: AdminDbWeekDataWire[];
   error?: string;
 }
 
 export async function getWeeksForYear(year: number): Promise<GetWeeksResponse> {
   try {
     const res = await client.api.admin.weeks.$get({ query: { year: String(year) } });
-    if (!res.ok) {
-      const body = (await res.json()) as unknown as { error: string };
-      return { success: false, error: body.error };
-    }
-    const body = await res.json();
-    return { success: true, data: body.weeks as unknown as AdminDbWeekData[] };
+    if (!res.ok) return { success: false, error: await extractError(res) };
+    const body = (await res.json()) as GetWeeksRPC;
+    return { success: true, data: body.weeks };
   } catch {
     return { success: false, error: 'Request failed' };
   }
@@ -87,10 +103,7 @@ export interface AddGamesResponse {
 export async function addGamesToWeek(weekData: WeekIdentifier): Promise<AddGamesResponse> {
   try {
     const res = await client.api.admin.week.$post({ json: weekData });
-    if (!res.ok) {
-      const body = (await res.json()) as unknown as { error: string };
-      return { success: false, error: body.error };
-    }
+    if (!res.ok) return { success: false, error: await extractError(res) };
     const data = await res.json();
     return { success: true, data };
   } catch {
@@ -100,7 +113,7 @@ export async function addGamesToWeek(weekData: WeekIdentifier): Promise<AddGames
 
 export interface GetGamesResponse {
   success: boolean;
-  data?: AdminDbGameData[];
+  data?: AdminDbGameDataWire[];
   error?: string;
 }
 
@@ -109,12 +122,9 @@ export async function getGamesForWeek(weekData: WeekIdentifier): Promise<GetGame
     const res = await client.api.admin.games.$get({
       query: { year: String(weekData.year), weekNumber: String(weekData.week) },
     });
-    if (!res.ok) {
-      const body = (await res.json()) as unknown as { error: string };
-      return { success: false, error: body.error };
-    }
-    const body = await res.json();
-    return { success: true, data: body.weekGames as unknown as AdminDbGameData[] };
+    if (!res.ok) return { success: false, error: await extractError(res) };
+    const body = (await res.json()) as GetGamesRPC;
+    return { success: true, data: body.weekGames };
   } catch {
     return { success: false, error: 'Request failed' };
   }
@@ -129,12 +139,9 @@ export interface GetUsersResponse {
 export async function getUsers(): Promise<GetUsersResponse> {
   try {
     const res = await client.api.admin.users.$get();
-    if (!res.ok) {
-      const body = (await res.json()) as unknown as { error: string };
-      return { success: false, error: body.error };
-    }
-    const body = await res.json();
-    return { success: true, data: body.allUserProfiles as unknown as ProfileData[] };
+    if (!res.ok) return { success: false, error: await extractError(res) };
+    const body = (await res.json()) as GetUsersRPC;
+    return { success: true, data: body.allUserProfiles as ProfileData[] };
   } catch {
     return { success: false, error: 'Request failed' };
   }
@@ -161,12 +168,9 @@ export async function updateUserRoles(
       param: { id: String(userId) },
       json: { roles },
     });
-    if (!res.ok) {
-      const body = (await res.json()) as unknown as { error: string };
-      return { success: false, error: body.error };
-    }
-    const body = await res.json();
-    return { success: true, data: (body as unknown as { user: ProfileData }).user };
+    if (!res.ok) return { success: false, error: await extractError(res) };
+    const body = (await res.json()) as UpdateUserRolesRPC;
+    return { success: true, data: body.user as ProfileData };
   } catch {
     return { success: false, error: 'Request failed' };
   }
@@ -174,7 +178,7 @@ export async function updateUserRoles(
 
 export interface MarkGameCompleteResponse {
   success: boolean;
-  data?: AdminDbGameData;
+  data?: AdminDbGameDataWire;
   error?: string;
 }
 
@@ -183,12 +187,9 @@ export async function markGameComplete(
 ): Promise<MarkGameCompleteResponse> {
   try {
     const res = await client.api.admin.games.complete.$post({ json: request });
-    if (!res.ok) {
-      const body = (await res.json()) as unknown as { error: string };
-      return { success: false, error: body.error };
-    }
-    const body = await res.json();
-    return { success: true, data: (body as unknown as { game: AdminDbGameData }).game };
+    if (!res.ok) return { success: false, error: await extractError(res) };
+    const body = (await res.json()) as MarkGameCompleteRPC;
+    return { success: true, data: body.game };
   } catch {
     return { success: false, error: 'Request failed' };
   }
@@ -212,14 +213,11 @@ export async function getNotificationLogs(
         notificationType: params.notificationType,
       },
     });
-    if (!res.ok) {
-      const body = (await res.json()) as unknown as { error: string };
-      return { success: false, error: body.error };
-    }
-    const body = await res.json();
+    if (!res.ok) return { success: false, error: await extractError(res) };
+    const body = (await res.json()) as GetNotificationLogsRPC;
     return {
       success: true,
-      data: body as unknown as { entries: NotificationLogEntry[]; total: number },
+      data: body as { entries: NotificationLogEntry[]; total: number },
     };
   } catch {
     return { success: false, error: 'Request failed' };
@@ -228,7 +226,7 @@ export async function getNotificationLogs(
 
 export interface CorrectGameScoreResponse {
   success: boolean;
-  data?: AdminDbGameData;
+  data?: AdminDbGameDataWire;
   error?: string;
 }
 
@@ -241,12 +239,9 @@ export async function correctGameScore(
       param: { gameId: String(gameId) },
       json: request,
     });
-    if (!res.ok) {
-      const body = (await res.json()) as unknown as { error: string };
-      return { success: false, error: body.error };
-    }
-    const body = await res.json();
-    return { success: true, data: (body as unknown as { game: AdminDbGameData }).game };
+    if (!res.ok) return { success: false, error: await extractError(res) };
+    const body = (await res.json()) as CorrectGameScoreRPC;
+    return { success: true, data: body.game };
   } catch {
     return { success: false, error: 'Request failed' };
   }
@@ -261,12 +256,9 @@ export interface GetAdminExportResponse {
 export async function getAdminExport(): Promise<GetAdminExportResponse> {
   try {
     const res = await client.api.admin.users.export.$get();
-    if (!res.ok) {
-      const body = (await res.json()) as unknown as { error: string };
-      return { success: false, error: body.error };
-    }
-    const body = await res.json();
-    return { success: true, data: (body as unknown as { users: UserExportEntry[] }).users };
+    if (!res.ok) return { success: false, error: await extractError(res) };
+    const body = (await res.json()) as GetAdminExportRPC;
+    return { success: true, data: body.users as UserExportEntry[] };
   } catch {
     return { success: false, error: 'Request failed' };
   }
@@ -280,10 +272,7 @@ export interface SendAdminBroadcastResponse {
 export async function sendAdminBroadcast(request: AdminBroadcastRequest): Promise<SendAdminBroadcastResponse> {
   try {
     const res = await client.api.admin.notifications.broadcast.$post({ json: request });
-    if (!res.ok) {
-      const body = (await res.json()) as unknown as { error: string };
-      return { success: false, error: body.error };
-    }
+    if (!res.ok) return { success: false, error: await extractError(res) };
     return { success: true };
   } catch {
     return { success: false, error: 'Request failed' };
@@ -293,10 +282,7 @@ export async function sendAdminBroadcast(request: AdminBroadcastRequest): Promis
 export async function setPickedGames(pickedData: PickedGamesRequest): Promise<SetPicksResponse> {
   try {
     const res = await client.api.admin.picks.$post({ json: pickedData });
-    if (!res.ok) {
-      const body = (await res.json()) as unknown as { error: string };
-      return { success: false, error: body.error };
-    }
+    if (!res.ok) return { success: false, error: await extractError(res) };
     const data = await res.json();
     return { success: true, data };
   } catch {

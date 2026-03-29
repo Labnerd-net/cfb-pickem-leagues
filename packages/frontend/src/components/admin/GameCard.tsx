@@ -16,14 +16,13 @@ import {
 } from '@mui/material';
 import EditIcon from '@mui/icons-material/Edit';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
-import type { AdminDbGameData } from '@shared/types/cfb-pickem-api';
-import { correctGameScore } from '../../apis/adminRequests';
+import { type AdminDbGameDataWire, correctGameScore } from '../../apis/adminRequests';
 
 interface GameCardProps {
-  game: AdminDbGameData;
+  game: AdminDbGameDataWire;
   selected: boolean;
   onSelect: (selected: boolean) => void;
-  onGameCorrected: (updated: AdminDbGameData) => void;
+  onGameCorrected: (updated: AdminDbGameDataWire) => void;
 }
 
 export default function GameCard({ game, selected, onSelect, onGameCorrected }: GameCardProps) {
