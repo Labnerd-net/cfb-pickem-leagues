@@ -1,18 +1,18 @@
 # Project Backlog
 
-> Generated: 2026-03-14
+> Generated: 2026-03-26
 > Focus: Full audit
-> Last updated: 2026-03-23 — closed [20], [21] (leaderboard cache, external API cache — not warranted at target scale of ~15 users); completed [1], [4], [5], [6] (security fixes); completed [9] (picks transaction), closed [12] (false positive); completed [10], [11], [17] (cron week reset, settings error handling, email transporter singleton); completed [2], [3] (email XSS escape, rate limiter TRUST_PROXY); completed [7], [8] (DB connection options, admin bootstrap fix); completed [13], [14] (ErrorBoundary hookup, addGameToWeek removal); completed [15], [19] (picks N+1 bulk fetch, startTime index); completed [16], [18] (notification bulk query, rate limiter interval cleanup); completed [22], [26], [32] (week query-param validation refactor, weekNumber rename, schema consolidation); completed [25] (Hono RPC type cast removal); completed [23], [24] (AdminSection and WeekGameSection component refactor); completed [27] (pick voided status, FK cascade → restrict); completed [28], [30], [31], [33] (notification log pagination, email timezone, tab index refactor, env var Zod validation); completed [53] (notification log server-side filtering); completed [52] (CFBD-only data source, spread support); completed [35] (user profile update — display name and password change); completed [54] (delete year data — admin reset UI); completed [39] (admin score correction with audit log); completed [38] (admin CSV export + broadcast notification)
 
 ---
 
 ## Security
 
 ### High
-_None identified._
-
+- **#1 [packages/backend/src/db/index.ts:15, scripts/migrate-prod.ts:15]**: SSL is configured with `rejectUnauthorized: false`, disabling certificate validation entirely. Anyone on the same network path as the DB can intercept credentials and query results (MITM). Fix: replace with `{ ssl: { rejectUnauthorized: true, ca: fs.readFileSync('/path/to/ca.pem') } }` using the actual CA cert from your hosting provider.
+- **#2 [packages/backend/src/routes/user.ts:149–189]**: The `POST /picks` handler verifies game IDs exist but does not confirm each game's `year` and `weekNumber` match the request envelope's `year`/`week`. A user could submit a valid game ID from a different week without detection. Fix: after `returnGamesBulk`, add `if (game.year !== userPicks.year || game.weekNumber !== userPicks.week) throw new HTTPException(422, ...)`.
 ### Medium
-_None identified._
+- **#5 [packages/backend/src/notifications/telegramSender.ts:16]**: The bot token is interpolated directly into the request URL string. If this URL ever enters an error log, the token is exposed. Fix: construct the URL once at module load as a constant outside the send function, so it never flows into error objects.
+- **#6 [packages/backend/src/utils/passwordValidation.ts:15]**: Password minimum is 6 characters — low bar. Fix: increase to 10+ characters or use entropy-based validation (`zxcvbn`).
 
 ### Low
 _None identified._
@@ -28,7 +28,7 @@ _None identified._
 _None identified._
 
 ### Low
-_None identified._
+- **#7 [packages/backend/src/utils/emailValidation.ts:14–21]**: `validateEmail` contains dead type guards (`!email || typeof email !== 'string'`) that are unreachable after Zod schema validation runs upstream. The function adds no logic beyond what the regex provides. Fix: remove the redundant guards, or remove the function entirely.
 
 ---
 
@@ -38,48 +38,46 @@ _None identified._
 _None identified._
 
 ### Medium
-_None identified._
+- **#8 [packages/backend/src/notifications/dispatcher.ts:54–77]**: Emails are sent sequentially in a `for` loop. At 15 users this is fine, but slow SMTP will hold the event loop open for all sends. Fix (when needed): convert to `Promise.allSettled` with per-user catch blocks.
+- **#9 [packages/frontend/src/pages/Dashboard.tsx:23–28]**: All four tab section components are mounted unconditionally on initial load, triggering API calls for every section even when only the first tab is visible. Fix: lazy-mount tab content on first activation, or conditionally render only the active tab.
 
 ### Low
-_None identified._
+- **#10 [packages/backend/src/db/dbUserFunctions.ts]**: Leaderboard win/loss/pending counts are recalculated on every request. Acceptable at ~15 users. Document the decision in code comments; revisit if user base grows.
 
 ---
 
 ## Improvements & Refactors
 
 ### High
-_None identified._
+- **#11 [packages/frontend/src/apis/adminRequests.ts]**: ~30 occurrences of `as unknown as SomeType` double-cast silently defeat TypeScript — backend response shape changes won't surface compile errors at these cast sites. Fix: use Hono's `InferResponseType<>` utility (already done correctly in `userRequests.ts:17–18`) and remove the double-cast pattern throughout `adminRequests.ts`.
+- **#12 [packages/backend/src/api/index.ts:21,76]**: `{} as AdminGameData` object mutation bypasses TypeScript's required-field checking; adding a required field to `AdminGameData` won't produce a compile error at these sites. Fix: replace with proper typed object literals.
 
 ### Medium
-_None identified._
+- **#13 [packages/backend/src/cron/cronTick.ts:16–21]**: Cron state (`lastRefreshAt`, `hardCapStart`, `scoresCompletedForWeek`, `reminder24hSentForWeek`) lives in module-level memory and resets on restart. The existing `hasNotificationBeenSent` DB check prevents duplicate user notifications, so the risk is limited to extra CFBD API calls post-restart. Either document this assumption clearly or persist state to a `cron_state` DB table.
+- **#14 [packages/frontend/src/components/admin/UsersSection.tsx]**: 295-line component handling four distinct responsibilities: user list fetching, role toggling, CSV export (including DOM manipulation), and broadcast notification form. Fix: extract CSV export into a `lib/` utility and the broadcast dialog into a `BroadcastDialog.tsx` component.
+- **#15 [packages/frontend/src/components/user/useWeekGames.ts]**: 240-line hook mixing initialization, year/week navigation side effects, pick submission, and snackbar state. Fix: split into two hooks — one for week/year navigation, one for pick submission. Low urgency at current scale.
+- **#16 [packages/backend/src/db/dbNotificationFunctions.ts:234]**: `returnNotificationLogs` accepts `channel` and `notificationType` as plain `string` rather than the narrower union types. Route-level Zod validation blocks invalid values upstream, but the DB function signature doesn't express the constraint. Fix: tighten the parameter types to `NotificationChannel | undefined` and `NotificationType | undefined`.
+- **#17 [packages/backend/src/db/schema/admin.ts:60]**: `spread` field is persisted but never displayed or used in any calculation. If reserved for a future "against the spread" mode, add a schema comment documenting that intent.
 
 ### Low
-_None identified._
+- **#18 [packages/frontend/src/components/ErrorBoundary.tsx:19]**: Uses `console.error` directly while the rest of the frontend uses a `logger` abstraction. Fix: import and use the frontend logger, or explicitly document that error boundaries are a console exception.
+- **#19 [packages/frontend/src/components/user/WeekGameSection.tsx:40–91]**: Props are drilled through `UserWeekSelector` → `WeekPicksView` → `UserPicksGameCard`. Not painful at current scale, but consider a `WeekGameContext` if the chain grows.
 
 ---
 
 ## Feature Ideas
 
 ### High
-- **[34]** **[packages/frontend/src/components/user/LeaderboardSection.tsx]**: Week-level leaderboard exists at `GET /leaderboard/scores` but the UI has no week selector — only season standings are shown. Wire up the existing endpoint with a week dropdown.
+- **#20 [packages/frontend/src/components/user/LeaderboardSection.tsx]**: Week-level leaderboard is ~80% done — `GET /api/leaderboard/scores` already returns per-week results. The frontend only shows season-level standings. Fix: add a week selector to `LeaderboardSection.tsx` wired to the existing `scores` endpoint, similar to `UserWeekSelector` in `WeekGameSection.tsx`.
+- **#21 [packages/frontend/src/components/user/UserPicksGameCard.tsx]**: Games silently become unclickable with a "LOCKED" chip — no advance warning. Add a countdown timer to game cards (highlight red when <1 hour to kickoff), and consider an "unsaved picks" warning dialog when the first game of the week is about to lock.
 
 ### Medium
-- **[36]** **[packages/frontend/src/components/user/UserPicksGameCard.tsx]**: Deadline UX is minimal — locked games show generic message with no advance warning. Add: countdown timer to lockdown, visual lock indicators on cards before deadline, pre-submit validation showing which picks will be rejected.
-- **[37]** **[packages/backend/src/db/dbUserFunctions.ts:179]** + **[packages/frontend/src/apis/userRequests.ts]**: `GET /user/picks/history` exists in the backend but the UI doesn't expose a full pick history browser. Build a filterable history view (by week, outcome, team).
-- **[40]** **[packages/frontend/src/components/user/WeekGameSection.tsx]** + **[packages/frontend/src/components/user/LeaderboardSection.tsx]**: Several views have no empty states — blank space renders for "no games", "no picks", or "season not started". Add meaningful placeholder content.
-- **[41]** **[packages/backend/src/notifications/dispatcher.ts]**: Notifications are event-driven only. Add scheduled/recurring notifications (weekly picks reminder at fixed time, season summary) configurable by admin.
+- **#22 [packages/backend/src/db/dbUserFunctions.ts, packages/backend/src/routes/user.ts]**: `GET /user/history` endpoint and `returnUserPickHistory()` DB function already exist, but there is no frontend UI to browse full pick history. Create a `PickHistoryView.tsx` component with season/week/outcome filters, surfaced as a new Dashboard tab or collapsible section.
+- **#23 [packages/frontend/src/components/admin/]**: Several admin screens show blank space when data is absent. Add empty state messaging to `AdminSection.tsx` ("No weeks imported yet") and `UsersSection.tsx` ("No users registered").
+- **#24 [packages/backend/src/cron/cronTick.ts, packages/backend/src/notifications/]**: No recurring admin-configurable notifications exist. Consider: weekly "picks open" reminder at a configurable day/time, and end-of-week standings digest after all games complete. Would require a `scheduled_notifications` DB table; reuses existing `dispatcher.ts` and `templates.ts`.
 
 ### Low
-- **[42]** **AI: Pick recommendations** — before the deadline, expose a per-game analysis endpoint that prompts an LLM with recent form, spread, and rankings context. Surface it as an optional "breakdown" on each game card in `UserPicksGameCard.tsx`. User still makes the pick manually. Requires an AI API key (e.g. Claude API); negligible cost at <20 users.
-- **[43]** **AI: Weekly recap narrative** — after scores finalize, generate a short personalized summary per user ("You went 7-3, nailed the Auburn upset...") via cron or on-demand. Pick history data already exists in `GET /user/picks/history`. Render in a new section on the Dashboard or as a notification.
-- **[44]** **AI: Season summary** — end-of-season narrative per user derived from full-season pick history. One-time generation per user per season. Low ongoing cost, no schema changes required.
-- **[45]** Head-to-head competition mode — users challenge each other for a specific week; H2H records tracked.
-- **[46]** Confidence/point-based picks — users assign strength levels; leaderboard sorts by points rather than win count. Requires schema extension to `user.games`.
-- **[47]** Weekly stat breakdowns — hot/cold streaks, most upsets picked, accuracy by game type.
-- **[48]** Mobile push notifications — extend the existing sender pattern in `packages/backend/src/notifications/` to support FCM/APNs.
-- **[49]** In-app discussion threads — per-game or per-week comments. Would require new tables and potentially WebSocket support.
-- **[50]** Season/competition templates — pre-built seasons, clone weeks from prior year. Builds on `POST /admin/year/:year` and `handleImportWeeks()`.
-- **[51]** Team-based leagues — users create private leagues with their own leaderboards. Significant schema work.
+- **#25 [packages/backend/src/db/dbUserFunctions.ts:141–158]**: `deleteUserWithAudit()` exists in the DB layer but there is no API route or frontend UI for account self-deletion. Add `DELETE /api/user/account` (with password confirmation) and an "Account Management" section in Settings.
 
 ---
 
@@ -87,9 +85,9 @@ _None identified._
 
 | Category | High | Medium | Low | Total |
 |----------|------|--------|-----|-------|
-| Security | 0 | 0 | 0 | 0 |
-| Bugs | 0 | 0 | 0 | 0 |
-| Performance | 0 | 0 | 0 | 0 |
-| Improvements & Refactors | 0 | 0 | 0 | 0 |
-| Feature Ideas | 1 | 4 | 10 | 15 |
-| **Total** | **1** | **4** | **10** | **15** |
+| Security | 2 | 2 | 0 | 4 |
+| Bugs | 0 | 0 | 1 | 1 |
+| Performance | 0 | 2 | 1 | 3 |
+| Improvements & Refactors | 2 | 5 | 2 | 9 |
+| Feature Ideas | 2 | 3 | 1 | 6 |
+| **Total** | **6** | **12** | **5** | **23** |
