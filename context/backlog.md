@@ -9,10 +9,9 @@
 
 ### High
 - **#1 [packages/backend/src/db/index.ts:15, scripts/migrate-prod.ts:15]**: SSL is configured with `rejectUnauthorized: false`, disabling certificate validation entirely. Anyone on the same network path as the DB can intercept credentials and query results (MITM). Fix: replace with `{ ssl: { rejectUnauthorized: true, ca: fs.readFileSync('/path/to/ca.pem') } }` using the actual CA cert from your hosting provider.
-- **#2 [packages/backend/src/routes/user.ts:149–189]**: The `POST /picks` handler verifies game IDs exist but does not confirm each game's `year` and `weekNumber` match the request envelope's `year`/`week`. A user could submit a valid game ID from a different week without detection. Fix: after `returnGamesBulk`, add `if (game.year !== userPicks.year || game.weekNumber !== userPicks.week) throw new HTTPException(422, ...)`.
+
 ### Medium
-- **#5 [packages/backend/src/notifications/telegramSender.ts:16]**: The bot token is interpolated directly into the request URL string. If this URL ever enters an error log, the token is exposed. Fix: construct the URL once at module load as a constant outside the send function, so it never flows into error objects.
-- **#6 [packages/backend/src/utils/passwordValidation.ts:15]**: Password minimum is 6 characters — low bar. Fix: increase to 10+ characters or use entropy-based validation (`zxcvbn`).
+_None identified._
 
 ### Low
 _None identified._
@@ -42,7 +41,7 @@ _None identified._
 - **#9 [packages/frontend/src/pages/Dashboard.tsx:23–28]**: All four tab section components are mounted unconditionally on initial load, triggering API calls for every section even when only the first tab is visible. Fix: lazy-mount tab content on first activation, or conditionally render only the active tab.
 
 ### Low
-- **#10 [packages/backend/src/db/dbUserFunctions.ts]**: Leaderboard win/loss/pending counts are recalculated on every request. Acceptable at ~15 users. Document the decision in code comments; revisit if user base grows.
+_None identified._
 
 ---
 
@@ -54,7 +53,6 @@ _None identified._
 ### Medium
 - **#14 [packages/frontend/src/components/admin/UsersSection.tsx]**: 295-line component handling four distinct responsibilities: user list fetching, role toggling, CSV export (including DOM manipulation), and broadcast notification form. Fix: extract CSV export into a `lib/` utility and the broadcast dialog into a `BroadcastDialog.tsx` component.
 - **#15 [packages/frontend/src/components/user/useWeekGames.ts]**: 240-line hook mixing initialization, year/week navigation side effects, pick submission, and snackbar state. Fix: split into two hooks — one for week/year navigation, one for pick submission. Low urgency at current scale.
-- **#16 [packages/backend/src/db/dbNotificationFunctions.ts:234]**: `returnNotificationLogs` accepts `channel` and `notificationType` as plain `string` rather than the narrower union types. Route-level Zod validation blocks invalid values upstream, but the DB function signature doesn't express the constraint. Fix: tighten the parameter types to `NotificationChannel | undefined` and `NotificationType | undefined`.
 
 ### Low
 - **#19 [packages/frontend/src/components/user/WeekGameSection.tsx:40–91]**: Props are drilled through `UserWeekSelector` → `WeekPicksView` → `UserPicksGameCard`. Not painful at current scale, but consider a `WeekGameContext` if the chain grows.
@@ -79,9 +77,9 @@ _None identified._
 
 | Category | High | Medium | Low | Total |
 |----------|------|--------|-----|-------|
-| Security | 2 | 2 | 0 | 4 |
+| Security | 1 | 0 | 0 | 1 |
 | Bugs | 0 | 0 | 0 | 0 |
-| Performance | 0 | 2 | 1 | 3 |
-| Improvements & Refactors | 0 | 3 | 1 | 4 |
+| Performance | 0 | 2 | 0 | 2 |
+| Improvements & Refactors | 0 | 2 | 1 | 3 |
 | Feature Ideas | 1 | 2 | 1 | 4 |
-| **Total** | **3** | **9** | **3** | **15** |
+| **Total** | **2** | **6** | **2** | **10** |

@@ -6,13 +6,17 @@ interface SendTelegramParams {
   message: string;
 }
 
+const TELEGRAM_API_URL = telegramBotToken
+  ? `https://api.telegram.org/bot${telegramBotToken}/sendMessage`
+  : null;
+
 export async function sendTelegramNotification(params: SendTelegramParams): Promise<boolean> {
-  if (!telegramEnabled) {
+  if (!telegramEnabled || !TELEGRAM_API_URL) {
     logger.warn('Telegram notification skipped: TELEGRAM_BOT_TOKEN or TELEGRAM_CHAT_ID not configured');
     return false;
   }
 
-  const url = `https://api.telegram.org/bot${telegramBotToken}/sendMessage`;
+  const url = TELEGRAM_API_URL;
   const text = `*${params.title}*\n${params.message}`;
 
   try {

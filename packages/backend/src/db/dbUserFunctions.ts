@@ -274,6 +274,12 @@ export async function returnUserPickHistory(
 
 // ------------------------------------------------------------------
 // Return season-level leaderboard (all users, LEFT JOIN so zero-pick users appear)
+//
+// Win/loss/pending counts are computed via SQL aggregation on every request rather
+// than being pre-computed or cached. At ~15 users this is negligible — a single
+// grouped query with a few CASE expressions is fast enough that the added complexity
+// of materialized counters or an application-level cache would not be justified.
+// Revisit if the user base grows significantly.
 // ------------------------------------------------------------------
 export async function returnLeaderboard(year: number): Promise<LeaderboardEntry[]> {
   logger.debug({ year }, 'returnLeaderboard');
@@ -318,6 +324,9 @@ export async function returnLeaderboard(year: number): Promise<LeaderboardEntry[
 
 // ------------------------------------------------------------------
 // Return per-week scores across all users who made picks for a week
+//
+// Same as returnLeaderboard: aggregated per-request, no caching. Acceptable at
+// current scale; see returnLeaderboard comment for the rationale.
 // ------------------------------------------------------------------
 export async function returnWeekScores(year: number, week: number): Promise<WeekScoresEntry[]> {
   logger.debug({ year, week }, 'returnWeekScores');

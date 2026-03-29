@@ -165,6 +165,12 @@ const user = new Hono<{ Variables: Variables }>()
         throw new HTTPException(404, { message: `Game ${pick.game} not found` });
       }
 
+      if (game.year !== userPicks.year || game.weekNumber !== userPicks.week) {
+        throw new HTTPException(422, {
+          message: `Game ${pick.game} does not belong to week ${userPicks.week} of ${userPicks.year}.`,
+        });
+      }
+
       if (!game.picked) {
         throw new HTTPException(422, {
           message: `Game ${pick.game} is not available for picks this week.`,

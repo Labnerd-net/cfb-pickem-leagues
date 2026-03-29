@@ -225,8 +225,8 @@ export async function hasNotificationBeenSent(
 export async function returnNotificationLogs(
   limit: number,
   offset: number,
-  channel?: string,
-  notificationType?: string
+  channel?: NotificationChannel,
+  notificationType?: NotificationType
 ): Promise<{ entries: NotificationLogEntry[]; total: number }> {
   logger.debug({ limit, offset, channel, notificationType }, 'returnNotificationLogs');
   try {
