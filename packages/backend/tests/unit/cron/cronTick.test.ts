@@ -9,6 +9,7 @@ const mockDispatchNotification = vi.hoisted(() => vi.fn().mockResolvedValue(unde
 const mockGetGameData = vi.hoisted(() => vi.fn().mockResolvedValue([]));
 const mockGetNow = vi.hoisted(() => vi.fn());
 const mockShouldSendPicksReminder = vi.hoisted(() => vi.fn().mockReturnValue(false));
+const mockShouldSend24hrReminder = vi.hoisted(() => vi.fn().mockReturnValue(false));
 const mockShouldRefreshScores = vi.hoisted(() => vi.fn().mockReturnValue(false));
 const mockIsWeekComplete = vi.hoisted(() => vi.fn().mockReturnValue(false));
 const mockGetFirstKickoff = vi.hoisted(() => vi.fn().mockReturnValue(null));
@@ -43,6 +44,7 @@ vi.mock('../../../src/utils/logger.js', () => ({
 
 vi.mock('../../../src/cron/cronLogic.js', () => ({
 	shouldSendPicksReminder: mockShouldSendPicksReminder,
+	shouldSend24hrReminder: mockShouldSend24hrReminder,
 	shouldRefreshScores: mockShouldRefreshScores,
 	isWeekComplete: mockIsWeekComplete,
 	getFirstKickoff: mockGetFirstKickoff,
