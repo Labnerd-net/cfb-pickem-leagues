@@ -2,20 +2,13 @@ import { useEffect, useState } from 'react';
 import {
   Box,
   Button,
-  Checkbox,
   CircularProgress,
   Alert,
-  Dialog,
-  DialogActions,
-  DialogContent,
-  DialogTitle,
-  FormControlLabel,
   Table,
   TableHead,
   TableBody,
   TableRow,
   TableCell,
-  TextField,
   Typography,
 } from '@mui/material';
 import PeopleIcon from '@mui/icons-material/People';
@@ -23,8 +16,10 @@ import DownloadIcon from '@mui/icons-material/Download';
 import SendIcon from '@mui/icons-material/Send';
 import type { ProfileData } from '@shared/types/cfb-pickem-api';
 import DashboardCard from '../dashboard/DashboardCard';
-import { getUsers, updateUserRoles, getAdminExport, sendAdminBroadcast } from '../../apis/adminRequests';
+import { getUsers, updateUserRoles, getAdminExport } from '../../apis/adminRequests';
 import { useAuth } from '../../contexts/auth/AuthContext';
+import { downloadCsv } from '../../lib/exportCsv';
+import BroadcastDialog from './BroadcastDialog';
 
 export default function UsersSection() {
   const { user: currentUser } = useAuth();
@@ -40,12 +35,6 @@ export default function UsersSection() {
 
   // Broadcast dialog state
   const [broadcastOpen, setBroadcastOpen] = useState(false);
-  const [broadcastSubject, setBroadcastSubject] = useState('');
-  const [broadcastMessage, setBroadcastMessage] = useState('');
-  const [overrideEmailPrefs, setOverrideEmailPrefs] = useState(false);
-  const [sending, setSending] = useState(false);
-  const [broadcastError, setBroadcastError] = useState<string | null>(null);
-  const [broadcastSuccess, setBroadcastSuccess] = useState(false);
 
   useEffect(() => {
     const loadUsers = async () => {
@@ -93,43 +82,10 @@ export default function UsersSection() {
       return [displayName, email, r.roles.join(';'), r.total, r.correct, accuracy].join(',');
     });
     const csv = [header, ...csvRows].join('\n');
-    const blob = new Blob([csv], { type: 'text/csv' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `users-export-${new Date().toISOString().slice(0, 10)}.csv`;
-    a.click();
-    URL.revokeObjectURL(url);
+    const filename = `users-export-${new Date().toISOString().slice(0, 10)}.csv`;
+    downloadCsv(csv, filename);
     setExporting(false);
   };
-
-  const handleBroadcastClose = () => {
-    if (sending) return;
-    setBroadcastOpen(false);
-    setBroadcastSubject('');
-    setBroadcastMessage('');
-    setOverrideEmailPrefs(false);
-    setBroadcastError(null);
-    setBroadcastSuccess(false);
-  };
-
-  const handleBroadcastSend = async () => {
-    setSending(true);
-    setBroadcastError(null);
-    const result = await sendAdminBroadcast({
-      subject: broadcastSubject,
-      message: broadcastMessage,
-      overrideEmailPreferences: overrideEmailPrefs,
-    });
-    if (result.success) {
-      setBroadcastSuccess(true);
-    } else {
-      setBroadcastError(result.error || 'Failed to send broadcast');
-    }
-    setSending(false);
-  };
-
-  const broadcastFormValid = broadcastSubject.trim().length > 0 && broadcastMessage.trim().length > 0;
 
   return (
     <DashboardCard
@@ -233,63 +189,7 @@ export default function UsersSection() {
         </>
       )}
 
-      <Dialog open={broadcastOpen} onClose={handleBroadcastClose} maxWidth="sm" fullWidth>
-        <DialogTitle>Send Notification to All Users</DialogTitle>
-        <DialogContent sx={{ display: 'flex', flexDirection: 'column', gap: 2, pt: 2 }}>
-          {broadcastSuccess ? (
-            <Alert severity="success">Notification sent successfully.</Alert>
-          ) : (
-            <>
-              {broadcastError && <Alert severity="error">{broadcastError}</Alert>}
-              <TextField
-                label="Subject"
-                value={broadcastSubject}
-                onChange={e => setBroadcastSubject(e.target.value)}
-                inputProps={{ maxLength: 100 }}
-                helperText={`${broadcastSubject.length}/100`}
-                disabled={sending}
-                fullWidth
-              />
-              <TextField
-                label="Message"
-                value={broadcastMessage}
-                onChange={e => setBroadcastMessage(e.target.value)}
-                inputProps={{ maxLength: 1000 }}
-                helperText={`${broadcastMessage.length}/1000`}
-                multiline
-                minRows={4}
-                disabled={sending}
-                fullWidth
-              />
-              <FormControlLabel
-                control={
-                  <Checkbox
-                    checked={overrideEmailPrefs}
-                    onChange={e => setOverrideEmailPrefs(e.target.checked)}
-                    disabled={sending}
-                  />
-                }
-                label="Override email preferences (send to all verified emails)"
-              />
-            </>
-          )}
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={handleBroadcastClose} disabled={sending}>
-            {broadcastSuccess ? 'Close' : 'Cancel'}
-          </Button>
-          {!broadcastSuccess && (
-            <Button
-              variant="contained"
-              disabled={sending || !broadcastFormValid}
-              startIcon={sending ? <CircularProgress size={16} /> : undefined}
-              onClick={handleBroadcastSend}
-            >
-              {sending ? 'Sending...' : 'Send'}
-            </Button>
-          )}
-        </DialogActions>
-      </Dialog>
+      <BroadcastDialog open={broadcastOpen} onClose={() => setBroadcastOpen(false)} />
     </DashboardCard>
   );
 }
