@@ -13,17 +13,23 @@ vi.mock('../../../src/apis/userRequests.js', () => ({
 	postUserPicks: vi.fn(),
 }));
 
+vi.mock('../../../src/components/user/useCountdownTick.js', () => ({
+	useCountdownTick: vi.fn(),
+}));
+
 import {
 	getPickedGames,
 	getUserPicks,
 	getWeeksForYear,
 	postUserPicks,
 } from '../../../src/apis/userRequests.js';
+import { useCountdownTick } from '../../../src/components/user/useCountdownTick.js';
 
 const mockGetPickedGames = vi.mocked(getPickedGames);
 const mockGetUserPicks = vi.mocked(getUserPicks);
 const mockGetWeeksForYear = vi.mocked(getWeeksForYear);
 const mockPostUserPicks = vi.mocked(postUserPicks);
+const mockUseCountdownTick = vi.mocked(useCountdownTick);
 
 const currentYear = new Date().getFullYear();
 
@@ -102,6 +108,8 @@ beforeEach(() => {
 	});
 	mockGetPickedGames.mockResolvedValue({ success: true, data: [] });
 	mockGetUserPicks.mockResolvedValue({ success: true, data: [] });
+	// Default: far-future `now` so the warning dialog does not appear in non-dialog tests
+	mockUseCountdownTick.mockReturnValue(new Date('2025-01-01T00:00:00.000Z'));
 });
 
 // ---------------------------------------------------------------------------
@@ -385,5 +393,116 @@ describe('WeekGameSection (mode switching)', () => {
 		await waitFor(() => {
 			expect(screen.getByText('No Pick')).toBeInTheDocument();
 		});
+	});
+});
+
+// ---------------------------------------------------------------------------
+// Lock warning dialog
+// ---------------------------------------------------------------------------
+
+describe('WeekGameSection (lock warning dialog)', () => {
+	// nearStartTime must be in the REAL future so isResultsMode (which calls getNow()) returns false.
+	// fakeNow is set close to nearStartTime so the 15-minute warning threshold is met.
+	const fakeNow = new Date();
+	const nearStartTime = new Date(fakeNow.getTime() + 8 * 60 * 1000).toISOString(); // 8 min from now
+
+	const nearGame = makeGame({
+		completed: false,
+		winningTeam: 'pending',
+		homePoints: null,
+		awayPoints: null,
+		startTime: nearStartTime,
+	});
+
+	it('shows the warning dialog when unsaved picks exist and deadline is near', async () => {
+		mockGetPickedGames.mockResolvedValue({ success: true, data: [nearGame] });
+		mockGetUserPicks.mockResolvedValue({ success: true, data: [] });
+		mockUseCountdownTick.mockReturnValue(fakeNow);
+
+		const user = userEvent.setup();
+		renderWithProviders(<WeekGameSection />);
+
+		await waitFor(() => expect(screen.getByRole('radio', { name: 'Away Team' })).toBeInTheDocument());
+		await user.click(screen.getByRole('radio', { name: 'Away Team' }));
+
+		await waitFor(() => {
+			expect(screen.getByText(/Picks deadline approaching/i)).toBeInTheDocument();
+		});
+	});
+
+	it('closes the dialog and submits when Submit Now is clicked', async () => {
+		mockGetPickedGames.mockResolvedValue({ success: true, data: [nearGame] });
+		mockGetUserPicks.mockResolvedValue({ success: true, data: [] });
+		mockPostUserPicks.mockResolvedValue({ success: true, data: { status: 'ok' } });
+		mockUseCountdownTick.mockReturnValue(fakeNow);
+
+		const user = userEvent.setup();
+		renderWithProviders(<WeekGameSection />);
+
+		await waitFor(() => expect(screen.getByRole('radio', { name: 'Away Team' })).toBeInTheDocument());
+		await user.click(screen.getByRole('radio', { name: 'Away Team' }));
+
+		await waitFor(() => expect(screen.getByText(/Picks deadline approaching/i)).toBeInTheDocument());
+
+		await user.click(screen.getByRole('button', { name: /submit now/i }));
+
+		await waitFor(() => {
+			expect(mockPostUserPicks).toHaveBeenCalled();
+			expect(screen.queryByText(/Picks deadline approaching/i)).not.toBeInTheDocument();
+		});
+	});
+
+	it('closes the dialog and does not reopen after Dismiss', async () => {
+		mockGetPickedGames.mockResolvedValue({ success: true, data: [nearGame] });
+		mockGetUserPicks.mockResolvedValue({ success: true, data: [] });
+		mockUseCountdownTick.mockReturnValue(fakeNow);
+
+		const user = userEvent.setup();
+		renderWithProviders(<WeekGameSection />);
+
+		await waitFor(() => expect(screen.getByRole('radio', { name: 'Away Team' })).toBeInTheDocument());
+		await user.click(screen.getByRole('radio', { name: 'Away Team' }));
+
+		await waitFor(() => expect(screen.getByText(/Picks deadline approaching/i)).toBeInTheDocument());
+
+		await user.click(screen.getByRole('button', { name: /dismiss/i }));
+		await waitFor(() => expect(screen.queryByText(/Picks deadline approaching/i)).not.toBeInTheDocument());
+
+		// Interact again — dialog must not reappear
+		await user.click(screen.getByRole('radio', { name: 'Home Team' }));
+		expect(screen.queryByText(/Picks deadline approaching/i)).not.toBeInTheDocument();
+	});
+
+	it('does not show the dialog when all picks are already saved', async () => {
+		mockGetPickedGames.mockResolvedValue({ success: true, data: [nearGame] });
+		mockGetUserPicks.mockResolvedValue({
+			success: true,
+			data: [makeUserPick({ teamChosen: 'home_team', completed: false, winningTeam: 'pending', homePoints: null, awayPoints: null, startTime: nearStartTime })],
+		});
+		mockUseCountdownTick.mockReturnValue(fakeNow);
+
+		renderWithProviders(<WeekGameSection />);
+
+		await waitFor(() => expect(screen.getByRole('radio', { name: 'Home Team' })).toBeChecked());
+		expect(screen.queryByText(/Picks deadline approaching/i)).not.toBeInTheDocument();
+	});
+
+	it('does not show the dialog when VITE_IGNORE_PICK_DEADLINE is true', async () => {
+		const original = import.meta.env.VITE_IGNORE_PICK_DEADLINE;
+		import.meta.env.VITE_IGNORE_PICK_DEADLINE = 'true';
+
+		mockGetPickedGames.mockResolvedValue({ success: true, data: [nearGame] });
+		mockGetUserPicks.mockResolvedValue({ success: true, data: [] });
+		mockUseCountdownTick.mockReturnValue(fakeNow);
+
+		const user = userEvent.setup();
+		renderWithProviders(<WeekGameSection />);
+
+		await waitFor(() => expect(screen.getByRole('radio', { name: 'Away Team' })).toBeInTheDocument());
+		await user.click(screen.getByRole('radio', { name: 'Away Team' }));
+
+		expect(screen.queryByText(/Picks deadline approaching/i)).not.toBeInTheDocument();
+
+		import.meta.env.VITE_IGNORE_PICK_DEADLINE = original;
 	});
 });
