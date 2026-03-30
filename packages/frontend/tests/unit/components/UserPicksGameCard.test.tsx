@@ -28,10 +28,12 @@ const noop = vi.fn();
 
 describe('UserPicksGameCard', () => {
   it('renders interactive radios when startTime is in the future', () => {
-    const futureTime = new Date(Date.now() + 60 * 60 * 1000).toISOString();
+    const now = new Date();
+    const futureTime = new Date(now.getTime() + 60 * 60 * 1000).toISOString();
     render(
       <UserPicksGameCard
         game={makeGame({ startTime: futureTime })}
+        now={now}
         onPickChange={noop}
       />
     );
@@ -43,10 +45,12 @@ describe('UserPicksGameCard', () => {
   it('renders disabled radios and LOCKED badge when startTime is in the past', () => {
     const original = import.meta.env.VITE_IGNORE_PICK_DEADLINE;
     import.meta.env.VITE_IGNORE_PICK_DEADLINE = 'false';
-    const pastTime = new Date(Date.now() - 60 * 60 * 1000).toISOString();
+    const now = new Date();
+    const pastTime = new Date(now.getTime() - 60 * 60 * 1000).toISOString();
     render(
       <UserPicksGameCard
         game={makeGame({ startTime: pastTime })}
+        now={now}
         onPickChange={noop}
       />
     );
@@ -57,10 +61,12 @@ describe('UserPicksGameCard', () => {
   });
 
   it('displays formatted start time when startTime is set', () => {
+    const now = new Date();
     const startTime = '2025-09-06T19:00:00.000Z';
     render(
       <UserPicksGameCard
         game={makeGame({ startTime })}
+        now={now}
         onPickChange={noop}
       />
     );
@@ -72,6 +78,7 @@ describe('UserPicksGameCard', () => {
     render(
       <UserPicksGameCard
         game={makeGame({ startTime: null })}
+        now={new Date()}
         onPickChange={noop}
       />
     );
@@ -79,15 +86,85 @@ describe('UserPicksGameCard', () => {
   });
 
   it('shows SAVED badge for non-locked game with saved pick', () => {
-    const futureTime = new Date(Date.now() + 60 * 60 * 1000).toISOString();
+    const now = new Date();
+    const futureTime = new Date(now.getTime() + 60 * 60 * 1000).toISOString();
     render(
       <UserPicksGameCard
         game={makeGame({ startTime: futureTime })}
+        now={now}
         onPickChange={noop}
         hasSavedPick
       />
     );
     expect(screen.getByText('SAVED')).toBeInTheDocument();
     expect(screen.queryByText('LOCKED')).not.toBeInTheDocument();
+  });
+
+  describe('countdown label', () => {
+    it('renders countdown when startTime is 2 hours away', () => {
+      const now = new Date('2025-09-06T17:00:00.000Z');
+      const startTime = '2025-09-06T19:00:00.000Z'; // 2h away
+      render(
+        <UserPicksGameCard
+          game={makeGame({ startTime })}
+          now={now}
+          onPickChange={noop}
+        />
+      );
+      expect(screen.getByText('Locks in 2 h 0 m')).toBeInTheDocument();
+    });
+
+    it('renders countdown when startTime is 30 minutes away', () => {
+      const now = new Date('2025-09-06T18:30:00.000Z');
+      const startTime = '2025-09-06T19:00:00.000Z'; // 30 min away
+      render(
+        <UserPicksGameCard
+          game={makeGame({ startTime })}
+          now={now}
+          onPickChange={noop}
+        />
+      );
+      expect(screen.getByText('Locks in 30 m')).toBeInTheDocument();
+    });
+
+    it('does not render countdown when startTime is null', () => {
+      render(
+        <UserPicksGameCard
+          game={makeGame({ startTime: null })}
+          now={new Date()}
+          onPickChange={noop}
+        />
+      );
+      expect(screen.queryByText(/Locks in/)).not.toBeInTheDocument();
+    });
+
+    it('does not render countdown when game is locked (past startTime)', () => {
+      const now = new Date('2025-09-06T20:00:00.000Z');
+      const startTime = '2025-09-06T19:00:00.000Z'; // past
+      render(
+        <UserPicksGameCard
+          game={makeGame({ startTime })}
+          now={now}
+          onPickChange={noop}
+        />
+      );
+      expect(screen.queryByText(/Locks in/)).not.toBeInTheDocument();
+    });
+
+    it('does not render countdown when VITE_IGNORE_PICK_DEADLINE is true', () => {
+      const original = import.meta.env.VITE_IGNORE_PICK_DEADLINE;
+      import.meta.env.VITE_IGNORE_PICK_DEADLINE = 'true';
+      const now = new Date('2025-09-06T17:00:00.000Z');
+      const startTime = '2025-09-06T19:00:00.000Z';
+      render(
+        <UserPicksGameCard
+          game={makeGame({ startTime })}
+          now={now}
+          onPickChange={noop}
+        />
+      );
+      expect(screen.queryByText(/Locks in/)).not.toBeInTheDocument();
+      import.meta.env.VITE_IGNORE_PICK_DEADLINE = original;
+    });
   });
 });

@@ -6,6 +6,7 @@ interface UserPicksGamesListProps {
   games: AdminGameWire[];
   picks: Map<number, 'home_team' | 'away_team'>;
   savedPicks: Set<number>;
+  now: Date;
   onPickChange: (gameId: number, pick: 'home_team' | 'away_team') => void;
   onSubmit: () => void;
   loading: boolean;
@@ -15,6 +16,7 @@ export default function UserPicksGamesList({
   games,
   picks,
   savedPicks,
+  now,
   onPickChange,
   onSubmit,
   loading,
@@ -31,6 +33,7 @@ export default function UserPicksGamesList({
           <UserPicksGameCard
             key={game.gameId}
             game={game}
+            now={now}
             selectedTeam={picks.get(game.gameId)}
             onPickChange={onPickChange}
             hasSavedPick={savedPicks.has(game.gameId)}

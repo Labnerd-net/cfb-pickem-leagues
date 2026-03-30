@@ -4,6 +4,7 @@ import { isResultsMode } from '../../utils/weekCalculation';
 import type { WeekResultRow } from './WeekResultsGameRow';
 import { useWeekNavigation } from './useWeekNavigation';
 import { usePickSubmit, type SnackbarState } from './usePickSubmit';
+import { useCountdownTick } from './useCountdownTick';
 
 export type { SnackbarState };
 
@@ -15,6 +16,7 @@ interface UseWeekGamesReturn {
   availableYears: number[];
   weeks: AdminWeekData[];
   games: AdminGameWire[];
+  now: Date;
   userPicks: Map<number, 'home_team' | 'away_team'>;
   savedPickIds: Set<number>;
   loading: boolean;
@@ -31,6 +33,7 @@ interface UseWeekGamesReturn {
 
 export function useWeekGames(): UseWeekGamesReturn {
   const nav = useWeekNavigation();
+  const now = useCountdownTick(nav.games);
   const picks = usePickSubmit({
     selectedYear: nav.selectedYear,
     selectedWeek: nav.selectedWeek,
@@ -57,6 +60,7 @@ export function useWeekGames(): UseWeekGamesReturn {
     availableYears: nav.availableYears,
     weeks: nav.weeks,
     games: nav.games,
+    now,
     loading: nav.loading,
     initializing: nav.initializing,
     error: nav.error,

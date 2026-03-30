@@ -2,10 +2,11 @@ import { Paper, RadioGroup, FormControlLabel, Radio, Box, Typography, Chip } fro
 import type { AdminGameWire } from '../../apis/userRequests';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import LockIcon from '@mui/icons-material/Lock';
-import { getNow } from '../../utils/clock';
+import { formatCountdown, isRedThreshold } from '../../utils/countdownFormat';
 
 interface UserPicksGameCardProps {
   game: AdminGameWire;
+  now: Date;
   selectedTeam?: 'home_team' | 'away_team';
   onPickChange: (gameId: number, pick: 'home_team' | 'away_team') => void;
   hasSavedPick?: boolean;
@@ -13,13 +14,22 @@ interface UserPicksGameCardProps {
 
 export default function UserPicksGameCard({
   game,
+  now,
   selectedTeam,
   onPickChange,
   hasSavedPick,
 }: UserPicksGameCardProps) {
   const ignoreDeadline = import.meta.env.VITE_IGNORE_PICK_DEADLINE === 'true';
   const isLocked =
-    !ignoreDeadline && game.startTime !== null && getNow() >= new Date(game.startTime);
+    !ignoreDeadline && game.startTime !== null && now >= new Date(game.startTime);
+
+  const msRemaining =
+    !ignoreDeadline && !isLocked && game.startTime !== null
+      ? new Date(game.startTime).getTime() - now.getTime()
+      : 0;
+
+  const countdownText = msRemaining > 0 ? formatCountdown(msRemaining) : null;
+  const isRed = msRemaining > 0 && isRedThreshold(msRemaining);
 
   const handleChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     if (isLocked) return;
@@ -38,12 +48,24 @@ export default function UserPicksGameCard({
         justifyContent: 'space-between',
         gap: 2,
         border: 2,
-        borderColor: isLocked ? 'grey.400' : selectedTeam ? 'primary.main' : 'transparent',
+        borderColor: isLocked
+          ? 'grey.400'
+          : isRed
+            ? 'error.main'
+            : selectedTeam
+              ? 'primary.main'
+              : 'transparent',
         transition: 'all 0.2s',
         opacity: isLocked ? 0.7 : 1,
         backgroundColor: hasSavedPick ? 'action.hover' : 'background.paper',
         '&:hover': {
-          borderColor: isLocked ? 'grey.400' : selectedTeam ? 'primary.main' : 'grey.300',
+          borderColor: isLocked
+            ? 'grey.400'
+            : isRed
+              ? 'error.main'
+              : selectedTeam
+                ? 'primary.main'
+                : 'grey.300',
         },
       }}
     >
@@ -65,6 +87,18 @@ export default function UserPicksGameCard({
         >
           {game.startTime ? new Date(game.startTime).toLocaleString() : 'Start time TBD'}
         </Typography>
+        {countdownText !== null && (
+          <Typography
+            variant="caption"
+            sx={{
+              fontFamily: '"Work Sans", sans-serif',
+              color: isRed ? 'error.main' : 'text.secondary',
+              fontWeight: isRed ? 600 : 400,
+            }}
+          >
+            {countdownText}
+          </Typography>
+        )}
       </Box>
 
       {/* Right: pick controls + status */}
