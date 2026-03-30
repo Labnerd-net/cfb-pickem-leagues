@@ -1,6 +1,6 @@
 import { Box, Typography, CircularProgress, Snackbar, Alert } from '@mui/material';
 import UserWeekSelector from './UserWeekSelector';
-import WeekPicksView from './WeekPicksView';
+import UserPicksGamesList from './UserPicksGamesList';
 import WeekResultsView from './WeekResultsView';
 import { useWeekGames } from './useWeekGames';
 
@@ -80,7 +80,7 @@ export default function WeekGameSection() {
       )}
 
       {!loading && !error && games.length > 0 && !resultsMode && (
-        <WeekPicksView
+        <UserPicksGamesList
           games={games}
           picks={userPicks}
           savedPicks={savedPickIds}
