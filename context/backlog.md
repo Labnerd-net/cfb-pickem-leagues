@@ -59,11 +59,11 @@ _None identified._
 ## Feature Ideas
 
 ### High
-- **#21 [packages/frontend/src/components/user/UserPicksGameCard.tsx]**: Games silently become unclickable with a "LOCKED" chip — no advance warning. Add a countdown timer to game cards (highlight red when <1 hour to kickoff), and consider an "unsaved picks" warning dialog when the first game of the week is about to lock.
+_None identified._
 
 ### Medium
 - **#22 [packages/backend/src/db/dbUserFunctions.ts, packages/backend/src/routes/user.ts]**: `GET /user/history` endpoint and `returnUserPickHistory()` DB function already exist, but there is no frontend UI to browse full pick history. Create a `PickHistoryView.tsx` component with season/week/outcome filters, surfaced as a new Dashboard tab or collapsible section.
-- **#24 [packages/backend/src/cron/cronTick.ts, packages/backend/src/notifications/]**: No recurring admin-configurable notifications exist. Consider: weekly "picks open" reminder at a configurable day/time, and end-of-week standings digest after all games complete. Would require a `scheduled_notifications` DB table; reuses existing `dispatcher.ts` and `templates.ts`.
+- **#24 [packages/backend/src/cron/cronTick.ts, packages/backend/src/notifications/]**: No admin-configurable "picks open" reminder exists. The end-of-week standings digest already fires automatically via `rankings_updated` in the cron. The missing piece is a weekly reminder at a configurable day/time with two behaviors: (1) if games have been curated for the active week, send the normal picks-open reminder to all users; (2) if no games exist yet, send an admin-only notification prompting them to add games — the standard `games_ready` only fires after curation, so without this an admin who forgot would get no reminder at all. Would require a `scheduled_notifications` DB table or a stored cron schedule; reuses existing `dispatcher.ts` and `templates.ts`.
 
 ### Low
 - **#25 [packages/backend/src/db/dbUserFunctions.ts:141–158]**: `deleteUserWithAudit()` exists in the DB layer but there is no API route or frontend UI for account self-deletion. Add `DELETE /api/user/account` (with password confirmation) and an "Account Management" section in Settings.
@@ -78,5 +78,5 @@ _None identified._
 | Bugs | 0 | 0 | 0 | 0 |
 | Performance | 0 | 1 | 0 | 1 |
 | Improvements & Refactors | 0 | 0 | 0 | 0 |
-| Feature Ideas | 1 | 2 | 1 | 4 |
-| **Total** | **2** | **3** | **1** | **6** |
+| Feature Ideas | 0 | 2 | 1 | 3 |
+| **Total** | **1** | **3** | **1** | **5** |
