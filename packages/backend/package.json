@@ -17,6 +17,8 @@
     "studio": "npx drizzle-kit studio",
     "seed:dev": "tsx src/scripts/seed-dev.ts",
     "teardown:dev": "tsx src/scripts/teardown-dev.ts",
+    "seed:sim": "node dist/backend/src/scripts/seed-sim.js",
+    "teardown:sim": "node dist/backend/src/scripts/teardown-sim.js",
     "test": "vitest run",
     "test:watch": "vitest",
     "test:ui": "vitest --ui",

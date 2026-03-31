@@ -18,6 +18,7 @@ import AdminPanelSettingsIcon from '@mui/icons-material/AdminPanelSettings';
 import WeekSelector from './WeekSelector';
 import { useWeekManagement } from './useWeekManagement';
 import { useGameManagement } from './useGameManagement';
+import MarkCompleteCard from './MarkCompleteCard';
 
 export default function AdminSection() {
   const weekHook = useWeekManagement();
@@ -160,6 +161,8 @@ export default function AdminSection() {
           )}
         </Box>
       </DashboardCard>
+
+      <MarkCompleteCard />
 
       {/* Success/Error Messages */}
       <Snackbar
