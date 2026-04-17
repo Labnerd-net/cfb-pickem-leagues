@@ -20,12 +20,8 @@ const envSchema = z
     PICKS_IGNORE_DEADLINE: z.string().optional(),
     TRUST_PROXY: z.string().optional(),
 
+    RESEND_API_KEY: z.string().default(''),
     NOTIFICATION_FROM_EMAIL: z.string().default(''),
-    SMTP_HOST: z.string().default(''),
-    SMTP_PORT: z.coerce.number().default(587),
-    SMTP_USER: z.string().default(''),
-    SMTP_PASS: z.string().default(''),
-    SMTP_SECURE: z.string().optional(),
     SKIP_EMAIL_SEND: z.string().optional(),
 
     NTFY_TOPIC_URL: z.string().default(''),
@@ -89,14 +85,10 @@ export const ignorePickDeadline = env.PICKS_IGNORE_DEADLINE === 'true';
 // x-forwarded-for. When false (default), rate limiting uses the raw socket address only.
 export const trustProxy = env.TRUST_PROXY === 'true';
 
-// Notification / SMTP configuration
+// Resend email configuration
+export const resendApiKey = env.RESEND_API_KEY;
 export const notificationFromEmail = env.NOTIFICATION_FROM_EMAIL;
-export const smtpHost = env.SMTP_HOST;
-export const smtpPort = env.SMTP_PORT;
-export const smtpUser = env.SMTP_USER;
-export const smtpPass = env.SMTP_PASS;
-export const smtpSecure = env.SMTP_SECURE === 'true';
-export const notificationsEnabled = notificationFromEmail !== '' && smtpHost !== '';
+export const notificationsEnabled = resendApiKey !== '' && notificationFromEmail !== '';
 // Set to 'true' in dev to skip sending emails
 export const skipEmailSend = env.SKIP_EMAIL_SEND === 'true';
 

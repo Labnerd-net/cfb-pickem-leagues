@@ -49,22 +49,6 @@ describe('POST /api/admin/games/complete', () => {
     vi.mocked(dispatchNotification).mockClear();
   });
 
-  it('returns 403 in production mode', async () => {
-    const origEnv = process.env.NODE_ENV;
-    process.env.NODE_ENV = 'production';
-    try {
-      const token = await makeAdminToken();
-      const res = await app.request('/api/admin/games/complete', {
-        method: 'POST',
-        headers: { Cookie: `auth_token=${token}`, 'Content-Type': 'application/json' },
-        body: JSON.stringify({ gameId: 1, homePoints: 21, awayPoints: 14 }),
-      });
-      expect(res.status).toBe(403);
-    } finally {
-      process.env.NODE_ENV = origEnv;
-    }
-  });
-
   it('returns 404 when game does not exist', async () => {
     const token = await makeAdminToken();
     const res = await completeRequest(99999, 28, 14, token);

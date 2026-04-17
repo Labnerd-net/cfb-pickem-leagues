@@ -37,12 +37,6 @@ describe('validateEnv', () => {
     ).not.toThrow();
   });
 
-  it('throws when SMTP_PORT is a non-numeric string', () => {
-    expect(() =>
-      validateEnv({ ...minimalValid, SMTP_PORT: 'abc' } as NodeJS.ProcessEnv)
-    ).toThrow('FATAL');
-  });
-
   it('uses default SERVER_PORT of 3000 when not set', () => {
     const result = validateEnv(minimalValid);
     expect(result.SERVER_PORT).toBe(3000);

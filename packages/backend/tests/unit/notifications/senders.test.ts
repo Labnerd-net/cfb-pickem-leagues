@@ -1,12 +1,13 @@
 import { describe, it, expect, vi, afterEach } from 'vitest';
 
 // vi.hoisted() variables are accessible inside vi.mock() factories
-const mockSendMail = vi.hoisted(() => vi.fn().mockResolvedValue({}));
+const mockResendSend = vi.hoisted(() => vi.fn().mockResolvedValue({ data: { id: 'test-id' }, error: null }));
 
 vi.mock('../../../src/utils/envVars.js', async importOriginal => {
 	const actual = await importOriginal<typeof import('../../../src/utils/envVars.js')>();
 	return {
 		...actual,
+		resendApiKey: 'test-api-key',
 		notificationFromEmail: 'from@example.com',
 		notificationsEnabled: true,
 		skipEmailSend: false,
@@ -20,12 +21,10 @@ vi.mock('../../../src/utils/envVars.js', async importOriginal => {
 	};
 });
 
-vi.mock('nodemailer', () => ({
-	default: {
-		createTransport: vi.fn().mockReturnValue({
-			sendMail: mockSendMail,
-		}),
-	},
+vi.mock('resend', () => ({
+	Resend: vi.fn(function () {
+		return { emails: { send: mockResendSend } };
+	}),
 }));
 
 import { sendEmail } from '../../../src/notifications/emailSender.js';
@@ -34,8 +33,8 @@ import { sendTelegramNotification } from '../../../src/notifications/telegramSen
 import { sendDiscordNotification } from '../../../src/notifications/discordSender.js';
 
 describe('emailSender', () => {
-	it('calls nodemailer sendMail with correct parameters and returns true', async () => {
-		mockSendMail.mockResolvedValue({});
+	it('calls resend.emails.send with correct parameters and returns true', async () => {
+		mockResendSend.mockResolvedValue({ data: { id: 'test-id' }, error: null });
 		const result = await sendEmail({
 			to: 'user@example.com',
 			subject: 'Test subject',
@@ -43,7 +42,7 @@ describe('emailSender', () => {
 			textBody: 'Hello',
 		});
 		expect(result).toBe(true);
-		expect(mockSendMail).toHaveBeenCalledWith(
+		expect(mockResendSend).toHaveBeenCalledWith(
 			expect.objectContaining({
 				to: 'user@example.com',
 				subject: 'Test subject',
@@ -53,15 +52,15 @@ describe('emailSender', () => {
 		);
 	});
 
-	it('creates the nodemailer transporter only once (singleton), not per sendEmail call', async () => {
-		const nodemailer = await import('nodemailer');
-		const createTransport = vi.mocked(nodemailer.default.createTransport);
-
-		await sendEmail({ to: 'a@example.com', subject: 'S1', htmlBody: '<p>1</p>', textBody: '1' });
-		await sendEmail({ to: 'b@example.com', subject: 'S2', htmlBody: '<p>2</p>', textBody: '2' });
-
-		// createTransport is called at module load, never inside sendEmail
-		expect(createTransport).toHaveBeenCalledTimes(1);
+	it('returns false when Resend returns an error', async () => {
+		mockResendSend.mockResolvedValue({ data: null, error: { name: 'validation_error', message: 'Invalid email' } });
+		const result = await sendEmail({
+			to: 'bad@example.com',
+			subject: 'Test',
+			htmlBody: '<p>Hi</p>',
+			textBody: 'Hi',
+		});
+		expect(result).toBe(false);
 	});
 });
 
