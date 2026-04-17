@@ -1,7 +1,10 @@
 import { Hono } from 'hono';
 import { HTTPException } from 'hono/http-exception';
+import * as bcrypt from 'bcryptjs';
+import { validatePassword } from '../utils/passwordValidation.js';
+import { bcryptSaltRounds } from '../utils/envVars.js';
 import * as dbAdminFunctions from '../db/dbAdminFunctions.js';
-import { returnUsers, updateUserRoles, returnUserPickTotals } from '../db/dbUserFunctions.js';
+import { returnUsers, updateUserRoles, updateUserPassword, returnUserPickTotals } from '../db/dbUserFunctions.js';
 import { returnNotificationLogs } from '../db/dbNotificationFunctions.js';
 import { getGameData, getWeekData } from '../api/index.js';
 import type { JwtData } from '@shared/types/cfb-pickem-api.js';
@@ -9,7 +12,7 @@ import { authMiddleware, requireRole } from '../utils/middleware.js';
 import { apiRateLimit } from '../utils/rateLimiter.js';
 import { z } from 'zod';
 import { zValidator } from '@hono/zod-validator';
-import { weekIdentifierValidator, pickedGameRequestValidator, updateUserRolesValidator, markGameCompleteValidator, yearQueryValidator, weekIdentifierQueryValidator, correctGameScoreParamValidator, correctGameScoreBodyValidator, adminBroadcastBodyValidator } from '../utils/zValidate.js';
+import { weekIdentifierValidator, pickedGameRequestValidator, updateUserRolesValidator, markGameCompleteValidator, yearQueryValidator, weekIdentifierQueryValidator, correctGameScoreParamValidator, correctGameScoreBodyValidator, adminBroadcastBodyValidator, resetPasswordParamValidator, resetPasswordBodyValidator } from '../utils/zValidate.js';
 import { dispatchNotification, dispatchAdminBroadcast } from '../notifications/dispatcher.js';
 import { getNow } from '../utils/clock.js';
 import { sendNtfyNotification } from '../notifications/ntfySender.js';
@@ -46,6 +49,29 @@ const admin = new Hono<{ Variables: Variables }>()
       const updated = await updateUserRoles(targetId, roles);
       if (updated.length === 0) throw new HTTPException(404, { message: 'User not found' });
       return c.json({ user: updated[0] });
+    }
+  )
+  // Reset a user's password (admin only)
+  .patch(
+    '/users/:id/password',
+    apiRateLimit,
+    authMiddleware,
+    requireRole('admin'),
+    resetPasswordParamValidator,
+    resetPasswordBodyValidator,
+    async c => {
+      const { id: targetId } = c.req.valid('param');
+      const jwtPayload = c.get('jwtPayload');
+      if (jwtPayload.sub === targetId)
+        throw new HTTPException(403, { message: 'Cannot reset your own password' });
+      const { password } = c.req.valid('json');
+      const validation = validatePassword(password);
+      if (!validation.valid)
+        throw new HTTPException(400, { message: validation.error! });
+      const passwordHash = await bcrypt.hash(password, bcryptSaltRounds);
+      const found = await updateUserPassword(targetId, passwordHash);
+      if (!found) throw new HTTPException(404, { message: 'User not found' });
+      return c.json({ status: 'password updated' });
     }
   )
   // Add Weeks to Year

@@ -20,6 +20,7 @@ import { getUsers, updateUserRoles, getAdminExport } from '../../apis/adminReque
 import { useAuth } from '../../contexts/auth/AuthContext';
 import { downloadCsv } from '../../lib/exportCsv';
 import BroadcastDialog from './BroadcastDialog';
+import ResetPasswordDialog from './ResetPasswordDialog';
 
 export default function UsersSection() {
   const { user: currentUser } = useAuth();
@@ -35,6 +36,10 @@ export default function UsersSection() {
 
   // Broadcast dialog state
   const [broadcastOpen, setBroadcastOpen] = useState(false);
+
+  // Reset password state
+  const [resetTarget, setResetTarget] = useState<ProfileData | null>(null);
+  const [resetSuccess, setResetSuccess] = useState<string | null>(null);
 
   useEffect(() => {
     const loadUsers = async () => {
@@ -130,6 +135,11 @@ export default function UsersSection() {
               {updateError}
             </Alert>
           )}
+          {resetSuccess && (
+            <Alert severity="success" sx={{ mb: 1 }} onClose={() => setResetSuccess(null)}>
+              {resetSuccess}
+            </Alert>
+          )}
           {users.length === 0 ? (
             <Typography
               sx={{
@@ -163,21 +173,32 @@ export default function UsersSection() {
                       <TableCell>{user.roles.join(', ')}</TableCell>
                       <TableCell align="right">
                         {!isCurrentUser && (
-                          <Button
-                            size="small"
-                            variant="outlined"
-                            color={isAdmin ? 'warning' : 'primary'}
-                            disabled={updatingId === user.userId}
-                            onClick={() => handleRoleToggle(user)}
-                          >
-                            {updatingId === user.userId ? (
-                              <CircularProgress size={16} />
-                            ) : isAdmin ? (
-                              'Remove Admin'
-                            ) : (
-                              'Make Admin'
-                            )}
-                          </Button>
+                          <>
+                            <Button
+                              size="small"
+                              variant="outlined"
+                              color={isAdmin ? 'warning' : 'primary'}
+                              disabled={updatingId === user.userId}
+                              onClick={() => handleRoleToggle(user)}
+                              sx={{ mr: 1 }}
+                            >
+                              {updatingId === user.userId ? (
+                                <CircularProgress size={16} />
+                              ) : isAdmin ? (
+                                'Remove Admin'
+                              ) : (
+                                'Make Admin'
+                              )}
+                            </Button>
+                            <Button
+                              size="small"
+                              variant="outlined"
+                              color="secondary"
+                              onClick={() => { setResetSuccess(null); setResetTarget(user); }}
+                            >
+                              Reset Password
+                            </Button>
+                          </>
                         )}
                       </TableCell>
                     </TableRow>
@@ -190,6 +211,19 @@ export default function UsersSection() {
       )}
 
       <BroadcastDialog open={broadcastOpen} onClose={() => setBroadcastOpen(false)} />
+
+      {resetTarget && (
+        <ResetPasswordDialog
+          open={!!resetTarget}
+          userId={resetTarget.userId}
+          displayName={resetTarget.displayName}
+          onClose={() => setResetTarget(null)}
+          onSuccess={() => {
+            setResetSuccess(`Password reset for ${resetTarget.displayName}.`);
+            setResetTarget(null);
+          }}
+        />
+      )}
     </DashboardCard>
   );
 }

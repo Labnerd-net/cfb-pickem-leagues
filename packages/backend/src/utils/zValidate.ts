@@ -105,6 +105,14 @@ const adminBroadcastBodySchema = z.object({
   overrideEmailPreferences: z.boolean(),
 });
 
+const resetPasswordParamSchema = z.object({
+  id: z.coerce.number().int().positive(),
+});
+
+const resetPasswordBodySchema = z.object({
+  password: z.string().min(1),
+});
+
 const correctGameScoreParamSchema = z.object({
   gameId: z.coerce.number().int().positive(),
 });
@@ -114,6 +122,8 @@ const correctGameScoreBodySchema = z.object({
   awayPoints: z.number().int().min(0),
 });
 
+export const resetPasswordParamValidator = zValidator('param', resetPasswordParamSchema);
+export const resetPasswordBodyValidator = zValidator('json', resetPasswordBodySchema);
 export const correctGameScoreParamValidator = zValidator('param', correctGameScoreParamSchema);
 export const correctGameScoreBodyValidator = zValidator('json', correctGameScoreBodySchema);
 export const yearQueryValidator = zValidator('query', yearQuerySchema);

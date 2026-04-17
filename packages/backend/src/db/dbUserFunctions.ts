@@ -96,6 +96,24 @@ export async function updateUserRoles(userId: number, roles: Role[]): Promise<Pr
 }
 
 // ------------------------------------------------------------------
+// Update user password hash (admin reset)
+// ------------------------------------------------------------------
+export async function updateUserPassword(userId: number, passwordHash: string): Promise<boolean> {
+  logger.debug({ userId }, 'updateUserPassword');
+  try {
+    const rows = await db
+      .update(users)
+      .set({ passwordHash })
+      .where(eq(users.userId, userId))
+      .returning({ userId: users.userId });
+    return rows.length > 0;
+  } catch (e) {
+    logger.error({ err: e }, 'updateUserPassword failed');
+    throw e;
+  }
+}
+
+// ------------------------------------------------------------------
 // Return user by Id
 // ------------------------------------------------------------------
 export async function returnUserById(userId: number): Promise<UserDbData[]> {

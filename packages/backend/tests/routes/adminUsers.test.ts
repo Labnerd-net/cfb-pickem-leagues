@@ -2,6 +2,7 @@ import { describe, it, expect, beforeAll, beforeEach } from 'vitest';
 import { Hono } from 'hono';
 import { HTTPException } from 'hono/http-exception';
 import { sign } from 'hono/jwt';
+import * as bcrypt from 'bcryptjs';
 import { seedTestData, testDb } from '../db-utils.js';
 import { sql } from 'drizzle-orm';
 import adminRoutes from '../../src/routes/admin.js';
@@ -210,5 +211,91 @@ describe('PATCH /api/admin/users/:id/roles', () => {
 		});
 
 		expect(res.status).toBe(401);
+	});
+});
+
+describe('PATCH /api/admin/users/:id/password', () => {
+	beforeAll(async () => {
+		await seedTestData();
+	});
+
+	it('returns 401 with no cookie', async () => {
+		const res = await app.request('/api/admin/users/2/password', {
+			method: 'PATCH',
+			headers: { 'Content-Type': 'application/json' },
+			body: JSON.stringify({ password: 'NewPassword1!' }),
+		});
+		expect(res.status).toBe(401);
+	});
+
+	it('returns 403 for non-admin user', async () => {
+		const token = await makeToken(['user'], 2);
+		const res = await app.request('/api/admin/users/1/password', {
+			method: 'PATCH',
+			headers: { Cookie: `auth_token=${token}`, 'Content-Type': 'application/json' },
+			body: JSON.stringify({ password: 'NewPassword1!' }),
+		});
+		expect(res.status).toBe(403);
+	});
+
+	it('returns 403 when admin tries to reset own password', async () => {
+		const token = await makeToken(['admin', 'user'], 1);
+		const res = await app.request('/api/admin/users/1/password', {
+			method: 'PATCH',
+			headers: { Cookie: `auth_token=${token}`, 'Content-Type': 'application/json' },
+			body: JSON.stringify({ password: 'NewPassword1!' }),
+		});
+		expect(res.status).toBe(403);
+		const body = await res.json() as { error: string };
+		expect(body.error).toBe('Cannot reset your own password');
+	});
+
+	it('returns 404 for unknown userId', async () => {
+		const token = await makeToken(['admin', 'user'], 1);
+		const res = await app.request('/api/admin/users/9999/password', {
+			method: 'PATCH',
+			headers: { Cookie: `auth_token=${token}`, 'Content-Type': 'application/json' },
+			body: JSON.stringify({ password: 'NewPassword1!' }),
+		});
+		expect(res.status).toBe(404);
+	});
+
+	it('returns 400 when password is too short', async () => {
+		const token = await makeToken(['admin', 'user'], 1);
+		const res = await app.request('/api/admin/users/2/password', {
+			method: 'PATCH',
+			headers: { Cookie: `auth_token=${token}`, 'Content-Type': 'application/json' },
+			body: JSON.stringify({ password: 'short' }),
+		});
+		expect(res.status).toBe(400);
+		const body = await res.json() as { error: string };
+		expect(body.error).toContain('8 characters');
+	});
+
+	it('returns 400 when password is too long', async () => {
+		const token = await makeToken(['admin', 'user'], 1);
+		const res = await app.request('/api/admin/users/2/password', {
+			method: 'PATCH',
+			headers: { Cookie: `auth_token=${token}`, 'Content-Type': 'application/json' },
+			body: JSON.stringify({ password: 'a'.repeat(73) }),
+		});
+		expect(res.status).toBe(400);
+		const body = await res.json() as { error: string };
+		expect(body.error).toContain('72 characters');
+	});
+
+	it('returns 200 and updates the password hash on success', async () => {
+		const token = await makeToken(['admin', 'user'], 1);
+		const newPassword = 'AdminReset99!';
+		const res = await app.request('/api/admin/users/2/password', {
+			method: 'PATCH',
+			headers: { Cookie: `auth_token=${token}`, 'Content-Type': 'application/json' },
+			body: JSON.stringify({ password: newPassword }),
+		});
+		expect(res.status).toBe(200);
+
+		const rows = await testDb.execute(sql`SELECT password_hash FROM "user"."users" WHERE user_id = 2`);
+		const hash = (rows.rows[0] as { password_hash: string }).password_hash;
+		expect(await bcrypt.compare(newPassword, hash)).toBe(true);
 	});
 });

@@ -176,6 +176,22 @@ export async function updateUserRoles(
   }
 }
 
+export async function resetUserPassword(
+  userId: number,
+  password: string
+): Promise<{ success: boolean; error?: string }> {
+  try {
+    const res = await client.api.admin.users[':id'].password.$patch({
+      param: { id: String(userId) },
+      json: { password },
+    });
+    if (!res.ok) return { success: false, error: await extractError(res) };
+    return { success: true };
+  } catch {
+    return { success: false, error: 'Request failed' };
+  }
+}
+
 export interface MarkGameCompleteResponse {
   success: boolean;
   data?: AdminDbGameDataWire;
