@@ -144,7 +144,7 @@ const admin = new Hono<{ Variables: Variables }>()
       return c.json({ status: 'updated picked games' });
     }
   )
-  // Mark a game complete with final scores (dev/test only — blocked in production)
+  // Mark a game complete with final scores
   .post(
     '/games/complete',
     apiRateLimit,
@@ -152,9 +152,6 @@ const admin = new Hono<{ Variables: Variables }>()
     requireRole('admin'),
     markGameCompleteValidator,
     async c => {
-      if (process.env.NODE_ENV === 'production') {
-        throw new HTTPException(403, { message: 'Not available in production' });
-      }
       const { gameId, homePoints, awayPoints } = c.req.valid('json');
       const gameRows = await dbAdminFunctions.returnGame(gameId);
       if (!gameRows || gameRows.length === 0)
