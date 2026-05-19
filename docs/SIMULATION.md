@@ -1,6 +1,6 @@
 # Running a Multi-User Simulation
 
-This guide covers how to run a 5-week pick'em simulation on the production instance at cfbpickem.labnerd.net with invited users.
+This guide covers how to run a 5-week pick'em simulation on your production instance with invited users.
 
 The simulation uses 5 weeks of real historical CFB matchups (year=2025 in the DB) with kickoff times automatically shifted to the near future, so pick deadlines work correctly — no environment variable overrides needed.
 
@@ -36,7 +36,7 @@ Week 1 games will kick off on the first Saturday that is at least 7 days from wh
 
 ### 3. Invite users
 
-Have your participants register at cfbpickem.labnerd.net. No special setup required — standard registration flow.
+Have your participants register at your production URL. No special setup required — standard registration flow.
 
 ### 4. Users make picks
 

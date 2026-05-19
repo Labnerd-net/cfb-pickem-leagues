@@ -161,7 +161,7 @@ DEV_CURRENT_TIME=             # ISO 8601 string to pin the backend clock, e.g. 2
 
 # Notifications (Resend email)
 RESEND_API_KEY=               # get your key at https://resend.com — leave blank to disable email notifications
-NOTIFICATION_FROM_EMAIL=      # must be on your Resend-verified domain, e.g. noreply@email.labnerd.net
+NOTIFICATION_FROM_EMAIL=      # must be on your Resend-verified domain, e.g. noreply@yourdomain.com
 SKIP_EMAIL_SEND=false         # set true in dev to log instead of sending
 
 # Notifications (broadcast channels — admin-configured)

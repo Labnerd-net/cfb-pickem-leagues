@@ -34,6 +34,7 @@ Thumbs.db
 # Data / local dev artifacts
 data/
 api-responses/
+*.pid
 
 # Claude Code
 .claude/settings.json
