@@ -6,6 +6,7 @@ import type { Context, Next } from 'hono';
 import { jwtAlgorithm, jwtSecret } from '../utils/envVars.js';
 import type { JwtData, Role } from '@shared/types/cfb-pickem-api.js';
 import pinoLogger from './logger.js';
+import { getLeagueById, getLeagueMembership } from '../db/dbLeagueFunctions.js';
 
 export const logger = createMiddleware(async (c, next) => {
   const start = Date.now();
@@ -34,6 +35,27 @@ export const requireRole = (role: Role) => {
     if (!payload || !payload.roles.includes(role)) {
       throw new HTTPException(403, { message: 'Forbidden' });
     }
+    await next();
+  };
+};
+
+// Middleware for routes requiring league membership; optionally requires 'admin' role within the league
+export const requireLeagueMembership = (requiredRole?: 'admin') => {
+  return async (c: Context, next: Next) => {
+    const payload: JwtData = c.get('jwtPayload');
+    const leagueId = Number(c.req.param('leagueId'));
+    if (!leagueId) throw new HTTPException(400, { message: 'Missing leagueId' });
+
+    const league = await getLeagueById(leagueId);
+    if (!league) throw new HTTPException(404, { message: 'League not found' });
+
+    const membership = await getLeagueMembership(leagueId, payload.sub);
+    if (!membership) throw new HTTPException(403, { message: 'Forbidden' });
+    if (requiredRole === 'admin' && membership.role !== 'admin') {
+      throw new HTTPException(403, { message: 'Forbidden' });
+    }
+
+    c.set('leagueMembership', membership);
     await next();
   };
 };

@@ -230,3 +230,21 @@ export interface AdminBroadcastRequest {
   message: string;
   overrideEmailPreferences: boolean;
 }
+
+export type LeagueRole = 'admin' | 'member';
+
+export interface LeagueData {
+  leagueId: number;
+  name: string;
+  inviteCode?: string; // only present when current user is league admin
+  memberCount: number;
+  createdAt: string;
+  role: LeagueRole;
+}
+
+export interface LeagueMemberData {
+  userId: number;
+  displayName: string;
+  role: LeagueRole;
+  joinedAt: string;
+}

@@ -139,3 +139,19 @@ export const registerRequestValidator = zValidator('json', registerRequestSchema
 export const loginRequestValidator = zValidator('json', loginRequestSchema);
 export const updateProfileValidator = zValidator('json', updateProfileSchema);
 export const adminBroadcastBodyValidator = zValidator('json', adminBroadcastBodySchema);
+
+// League validators
+const createLeagueSchema = z.object({ name: z.string().trim().min(1).max(80) });
+const joinLeagueSchema = z.object({ inviteCode: z.string().trim().min(1) });
+const leagueIdParamSchema = z.object({ leagueId: z.coerce.number().int().positive() });
+const memberParamSchema = z.object({
+  leagueId: z.coerce.number().int().positive(),
+  userId: z.coerce.number().int().positive(),
+});
+const updateMemberRoleSchema = z.object({ role: z.enum(['admin', 'member']) });
+
+export const createLeagueValidator = zValidator('json', createLeagueSchema);
+export const joinLeagueValidator = zValidator('json', joinLeagueSchema);
+export const leagueIdParamValidator = zValidator('param', leagueIdParamSchema);
+export const memberParamValidator = zValidator('param', memberParamSchema);
+export const updateMemberRoleValidator = zValidator('json', updateMemberRoleSchema);
