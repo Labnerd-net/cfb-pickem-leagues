@@ -54,7 +54,7 @@ export function useGameManagement(
       const result = await getGamesForWeek(weekData);
       if (result.success && result.data) {
         setGames(result.data);
-        const pickedGameIds = result.data.filter(game => game.picked).map(game => game.gameId);
+        const pickedGameIds = result.data.filter(game => game.inLeague).map(game => game.gameId);
         setSelectedGameIds(pickedGameIds);
       } else {
         setErrorMessage(result.error ?? 'Failed to load games');
@@ -108,7 +108,7 @@ export function useGameManagement(
         const gamesResult = await getGamesForWeek({ year: selectedYear, week: selectedWeek });
         if (gamesResult.success && gamesResult.data) {
           setGames(gamesResult.data);
-          const pickedIds = gamesResult.data.filter(g => g.picked).map(g => g.gameId);
+          const pickedIds = gamesResult.data.filter(g => g.inLeague).map(g => g.gameId);
           setSelectedGameIds(pickedIds);
         }
         setImportFeedback({

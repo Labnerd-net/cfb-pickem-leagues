@@ -41,7 +41,6 @@ export const handlers = [
 					homeTeam: 'Team A',
 					awayTeam: 'Team B',
 					completed: false,
-					picked: true,
 				},
 			],
 		});
@@ -79,7 +78,6 @@ export const handlers = [
 					homeTeam: 'Team A',
 					awayTeam: 'Team B',
 					completed: false,
-					picked: true,
 				},
 			],
 		});

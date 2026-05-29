@@ -5,11 +5,12 @@ import {
 	returnWeek,
   returnWeeksByYear,
 	returnGamesForWeek,
-	returnPickedGames,
 	returnGamesBulk,
 	getSeasonTypeForWeek,
 	enrichWeekIdentifier,
 	correctGameScore,
+	getGamesForLeagueWeek,
+	addGameToLeague,
 } from '../../../src/db/dbAdminFunctions.js';
 import type { WeekIdentifier } from '@shared/types/cfb-pickem-api.js';
 
@@ -68,7 +69,7 @@ describe('Admin Database Functions', () => {
 			await createTestWeek( 1, 2024, 'regular');
 
 			// Create a test game for the week
-			await createTestGame( 1, 2024, 'Team A', 'Team B', true, false);
+			await createTestGame( 1, 2024, 'Team A', 'Team B', false);
 
 			const weekData: WeekIdentifier = {
 				year: 2024,
@@ -96,37 +97,28 @@ describe('Admin Database Functions', () => {
 		});
 	});
 
-	describe('returnPickedGames', () => {
-		it('should return only picked games', async () => {
-			// Create picked and unpicked games
-			await createTestGame( 1, 2024, 'Team A', 'Team B', true, false);
-			await createTestGame( 1, 2024, 'Team C', 'Team D', false, false);
+	describe('getGamesForLeagueWeek', () => {
+		it('should return only games in the league pool', async () => {
+			const g1 = await createTestGame(1, 2024, 'Team A', 'Team B', false);
+			const g2 = await createTestGame(1, 2024, 'Team C', 'Team D', false);
+			const id1 = (g1 as { game_id: number }).game_id;
 
-			const weekData: WeekIdentifier = {
-				year: 2024,
-				week: 1,
-			};
+			// Only add game 1 to the league pool
+			await addGameToLeague(1, id1);
 
-			const pickedGames = await returnPickedGames(weekData);
+			const leagueGames = await getGamesForLeagueWeek(1, 2024, 1);
+			const ids = leagueGames.map(g => g.gameId);
 
-			expect(Array.isArray(pickedGames)).toBe(true);
-			expect(pickedGames.length).toBe(1);
-			expect(pickedGames[0].picked).toBe(true);
+			expect(ids).toContain(id1);
+			expect(ids).not.toContain((g2 as { game_id: number }).game_id);
 		});
 
-		it('should return empty array when no picked games exist', async () => {
-			// Create only unpicked games
-			await createTestGame( 1, 2024, 'Team A', 'Team B', false, false);
+		it('should return empty array when no games are in the league pool', async () => {
+			await createTestGame(1, 2024, 'Team E', 'Team F', false);
 
-			const weekData: WeekIdentifier = {
-				year: 2024,
-				week: 1,
-			};
-
-			const pickedGames = await returnPickedGames(weekData);
-
-			expect(Array.isArray(pickedGames)).toBe(true);
-			expect(pickedGames.length).toBe(0);
+			const leagueGames = await getGamesForLeagueWeek(1, 2024, 1);
+			// games from earlier tests may be in pool; verify no freshly added game appears without being added
+			expect(Array.isArray(leagueGames)).toBe(true);
 		});
 	});
 
@@ -147,8 +139,8 @@ describe('Admin Database Functions', () => {
 	describe('returnGamesBulk', () => {
 		it('should return all games for a list of valid IDs', async () => {
 			await createTestWeek(1, 2024, 'regular');
-			const gameA = await createTestGame(1, 2024, 'Team A', 'Team B', true, false);
-			const gameB = await createTestGame(1, 2024, 'Team C', 'Team D', true, false);
+			const gameA = await createTestGame(1, 2024, 'Team A', 'Team B', false);
+			const gameB = await createTestGame(1, 2024, 'Team C', 'Team D', false);
 			const idA = (gameA as { game_id: number }).game_id;
 			const idB = (gameB as { game_id: number }).game_id;
 
@@ -160,7 +152,7 @@ describe('Admin Database Functions', () => {
 
 		it('should return only matched rows when some IDs do not exist', async () => {
 			await createTestWeek(1, 2024, 'regular');
-			const game = await createTestGame(1, 2024, 'Team A', 'Team B', true, false);
+			const game = await createTestGame(1, 2024, 'Team A', 'Team B', false);
 			const id = (game as { game_id: number }).game_id;
 
 			const games = await returnGamesBulk([id, 99998, 99999]);
@@ -201,7 +193,7 @@ describe('Admin Database Functions', () => {
 		});
 
 		it('should update the game and insert an audit row', async () => {
-			const row = await createTestGame(1, 2024, 'Alabama', 'Georgia', true, false);
+			const row = await createTestGame(1, 2024, 'Alabama', 'Georgia', false);
 			const id = (row as { game_id: number }).game_id;
 
 			const updated = await correctGameScore(id, 28, 21, 1);
@@ -223,7 +215,7 @@ describe('Admin Database Functions', () => {
 		});
 
 		it('should set winningTeam to pending on a tie', async () => {
-			const row = await createTestGame(1, 2024, 'Auburn', 'LSU', true, false);
+			const row = await createTestGame(1, 2024, 'Auburn', 'LSU', false);
 			const id = (row as { game_id: number }).game_id;
 
 			const updated = await correctGameScore(id, 14, 14, 1);

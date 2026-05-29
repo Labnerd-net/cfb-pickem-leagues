@@ -3,7 +3,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 // All mocks must be declared before imports of the module under test.
 // vi.hoisted variables are accessible inside vi.mock() factories.
 const mockReturnCurrentWeek = vi.hoisted(() => vi.fn());
-const mockReturnPickedGames = vi.hoisted(() => vi.fn());
+const mockReturnGamesForWeek = vi.hoisted(() => vi.fn());
 const mockUpsertGameForWeek = vi.hoisted(() => vi.fn().mockResolvedValue(undefined));
 const mockDispatchNotification = vi.hoisted(() => vi.fn().mockResolvedValue(undefined));
 const mockGetGameData = vi.hoisted(() => vi.fn().mockResolvedValue([]));
@@ -17,7 +17,7 @@ const mockGetLastKickoff = vi.hoisted(() => vi.fn().mockReturnValue(null));
 
 vi.mock('../../../src/db/dbAdminFunctions.js', () => ({
 	returnCurrentWeek: mockReturnCurrentWeek,
-	returnPickedGames: mockReturnPickedGames,
+	returnGamesForWeek: mockReturnGamesForWeek,
 	upsertGameForWeek: mockUpsertGameForWeek,
 }));
 
@@ -66,7 +66,6 @@ function makeGame(gameId = 1) {
 		gameId,
 		cfbdGameId: null,
 		ncaaGameId: null,
-		picked: true,
 		weekNumber: 1,
 		year: 2024,
 		seasonType: 'regular' as const,
@@ -91,7 +90,7 @@ describe('runCronTick — first tick (null initial state)', () => {
 	it('calls shouldRefreshScores with null hardCapStart and lastRefreshAt on first tick', async () => {
 		mockGetNow.mockReturnValue(now);
 		mockReturnCurrentWeek.mockResolvedValue(makeWeek(2024, 1));
-		mockReturnPickedGames.mockResolvedValue([makeGame()]);
+		mockReturnGamesForWeek.mockResolvedValue([makeGame()]);
 		mockGetLastKickoff.mockReturnValue(null);
 
 		await runCronTick();
@@ -109,7 +108,7 @@ describe('runCronTick — week state reset', () => {
 		vi.clearAllMocks();
 		// Default safe return values
 		mockGetNow.mockReturnValue(now);
-		mockReturnPickedGames.mockResolvedValue([makeGame()]);
+		mockReturnGamesForWeek.mockResolvedValue([makeGame()]);
 		mockGetFirstKickoff.mockReturnValue(null);
 		mockShouldSendPicksReminder.mockReturnValue(false);
 		mockIsWeekComplete.mockReturnValue(false);
@@ -183,13 +182,13 @@ describe('runCronTick — early exits', () => {
 
 		await runCronTick();
 
-		expect(mockReturnPickedGames).not.toHaveBeenCalled();
+		expect(mockReturnGamesForWeek).not.toHaveBeenCalled();
 	});
 
 	it('returns early when there are no picked games', async () => {
 		mockGetNow.mockReturnValue(now);
 		mockReturnCurrentWeek.mockResolvedValue(makeWeek(2024, 1));
-		mockReturnPickedGames.mockResolvedValue([]);
+		mockReturnGamesForWeek.mockResolvedValue([]);
 
 		await runCronTick();
 

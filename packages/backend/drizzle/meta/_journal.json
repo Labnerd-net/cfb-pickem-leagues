@@ -57,6 +57,13 @@
       "when": 1780017581373,
       "tag": "0007_charming_brother_voodoo",
       "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "7",
+      "when": 1780024316483,
+      "tag": "0008_chunky_cardiac",
+      "breakpoints": true
     }
   ]
 }

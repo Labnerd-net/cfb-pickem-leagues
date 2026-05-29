@@ -1,5 +1,4 @@
-import { returnCurrentWeek } from '../db/dbAdminFunctions.js';
-import { returnPickedGames, upsertGameForWeek } from '../db/dbAdminFunctions.js';
+import { returnCurrentWeek, returnGamesForWeek, upsertGameForWeek } from '../db/dbAdminFunctions.js';
 import { dispatchNotification } from '../notifications/dispatcher.js';
 import { getGameData } from '../api/index.js';
 import logger from '../utils/logger.js';
@@ -51,8 +50,8 @@ export async function runCronTick(): Promise<void> {
     logger.info({ weekKey }, 'Week changed, resetting cron state');
   }
 
-  // 2. Get picked games for the current week
-  const games = await returnPickedGames(identifier);
+  // 2. Get games for the current week (Phase 6 will scope this per-league)
+  const games = await returnGamesForWeek(identifier);
   if (games.length === 0) return;
 
   // 3. Picks reminders
@@ -93,15 +92,11 @@ export async function runCronTick(): Promise<void> {
       }
       lastRefreshAt = getNow();
 
-      // Re-fetch to check completion
-      const updatedGames = await returnPickedGames(identifier);
+      // Re-fetch to check completion (Phase 6 will dispatch rankings_updated per-league)
+      const updatedGames = await returnGamesForWeek(identifier);
       if (isWeekComplete(updatedGames) && scoresCompletedForWeek !== weekKey) {
         scoresCompletedForWeek = weekKey;
-        dispatchNotification({
-          notificationType: 'rankings_updated',
-          year: week.year,
-          weekNumber: week.weekNumber,
-        }).catch(err => logger.error({ err }, 'rankings_updated dispatch failed'));
+        // Phase 6: dispatch rankings_updated per-league
       }
     } catch (e) {
       logger.error({ err: e, weekKey }, 'Score refresh failed');

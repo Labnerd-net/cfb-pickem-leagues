@@ -71,7 +71,7 @@ export interface UserGameResponse {
 export async function getUserPicks(weekData: WeekIdentifier): Promise<UserGameResponse> {
   try {
     const res = await client.api.user.picks.$get({
-      query: { year: String(weekData.year), weekNumber: String(weekData.week) },
+      query: { year: String(weekData.year), weekNumber: String(weekData.week), leagueId: '1' }, // Phase 4: use active leagueId
     });
     if (!res.ok) return { success: false, error: await extractError(res) };
     const body = await res.json();
@@ -90,7 +90,7 @@ export interface AdminGameResponse {
 export async function getPickedGames(weekData: WeekIdentifier): Promise<AdminGameResponse> {
   try {
     const res = await client.api.user.games.$get({
-      query: { year: String(weekData.year), weekNumber: String(weekData.week) },
+      query: { year: String(weekData.year), weekNumber: String(weekData.week), leagueId: '1' }, // Phase 4: use active leagueId
     });
     if (!res.ok) return { success: false, error: await extractError(res) };
     const body = await res.json();
@@ -108,7 +108,7 @@ export interface PickHistoryResponse {
 
 export async function getUserPickHistory(year: number): Promise<PickHistoryResponse> {
   try {
-    const res = await client.api.user.history.$get({ query: { year: String(year) } });
+    const res = await client.api.user.history.$get({ query: { year: String(year), leagueId: '1' } }); // Phase 4: use active leagueId
     if (!res.ok) return { success: false, error: await extractError(res) };
     const data = await res.json();
     return { success: true, data };

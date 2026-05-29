@@ -4,7 +4,6 @@ import type {
   AllUserGamePicksRequest,
   UserGamePicks,
   WeekIdentifier,
-  PickedGamesRequest,
   MarkGameCompleteRequest,
 } from '@shared/types/cfb-pickem-api.js';
 
@@ -42,12 +41,6 @@ const weekIdentifierSchema: z.ZodType<WeekIdentifier> = z.object({
   week: weekSchema,
 });
 
-const pickedGameRequestSchema: z.ZodType<PickedGamesRequest> = z.object({
-  year: yearSchema,
-  week: weekSchema,
-  games: z.number().int().positive().array(),
-});
-
 const userPickedGameSchema: z.ZodType<UserGamePicks> = z.object({
   game: z.number().int().positive(),
   pick: z.enum(['home_team', 'away_team']),
@@ -56,6 +49,7 @@ const userPickedGameSchema: z.ZodType<UserGamePicks> = z.object({
 const allUserPickedRequestSchema: z.ZodType<AllUserGamePicksRequest> = z.object({
   year: yearSchema,
   week: weekSchema,
+  leagueId: z.number().int().positive(),
   games: userPickedGameSchema.array(),
 });
 
@@ -130,7 +124,6 @@ export const yearQueryValidator = zValidator('query', yearQuerySchema);
 export const weekIdentifierQueryValidator = zValidator('query', weekIdentifierQuerySchema);
 export const markGameCompleteValidator = zValidator('json', markGameCompleteSchema);
 export const weekIdentifierValidator = zValidator('json', weekIdentifierSchema);
-export const pickedGameRequestValidator = zValidator('json', pickedGameRequestSchema);
 export const allUserPickedRequestValidator = zValidator('json', allUserPickedRequestSchema);
 export const updateUserRolesValidator = zValidator('json', updateUserRolesSchema);
 export const notificationPreferenceValidator = zValidator('json', notificationPreferenceSchema);
@@ -155,3 +148,14 @@ export const joinLeagueValidator = zValidator('json', joinLeagueSchema);
 export const leagueIdParamValidator = zValidator('param', leagueIdParamSchema);
 export const memberParamValidator = zValidator('param', memberParamSchema);
 export const updateMemberRoleValidator = zValidator('json', updateMemberRoleSchema);
+
+// League-game param validator (leagueId + gameId in path)
+const leagueGameParamSchema = z.object({
+  leagueId: z.coerce.number().int().positive(),
+  gameId: z.coerce.number().int().positive(),
+});
+export const leagueGameParamValidator = zValidator('param', leagueGameParamSchema);
+
+// leagueId as a required query param
+const leagueIdQuerySchema = z.object({ leagueId: z.coerce.number().int().positive() });
+export const leagueIdQueryValidator = zValidator('query', leagueIdQuerySchema);

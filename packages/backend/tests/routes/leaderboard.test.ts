@@ -3,7 +3,7 @@ import { Hono } from 'hono';
 import { HTTPException } from 'hono/http-exception';
 import { sign } from 'hono/jwt';
 import { sql } from 'drizzle-orm';
-import { seedTestData, createTestGame, createTestUser, createTestWeek, testDb } from '../db-utils.js';
+import { seedTestData, createTestGame, createTestUser, createTestWeek, testDb, createLeagueGame } from '../db-utils.js';
 import { addPickedGame } from '../../src/db/dbUserFunctions.js';
 import leaderboardRoutes from '../../src/routes/leaderboard.js';
 
@@ -41,13 +41,13 @@ beforeAll(async () => {
 
 describe('GET /api/leaderboard', () => {
   it('returns 401 with no auth token', async () => {
-    const res = await app.request('/api/leaderboard?year=2024');
+    const res = await app.request('/api/leaderboard?year=2024&leagueId=1');
     expect(res.status).toBe(401);
   });
 
   it('returns 400 for invalid year', async () => {
     const token = await makeToken();
-    const res = await app.request('/api/leaderboard?year=abc', {
+    const res = await app.request('/api/leaderboard?year=abc&leagueId=1', {
       headers: { Cookie: `auth_token=${token}` },
     });
     expect(res.status).toBe(400);
@@ -55,7 +55,7 @@ describe('GET /api/leaderboard', () => {
 
   it('returns all users with zero picks still appearing', async () => {
     const token = await makeToken();
-    const res = await app.request('/api/leaderboard?year=2024', {
+    const res = await app.request('/api/leaderboard?year=2024&leagueId=1', {
       headers: { Cookie: `auth_token=${token}` },
     });
     expect(res.status).toBe(200);
@@ -75,9 +75,15 @@ describe('GET /api/leaderboard', () => {
     const user3Row = await createTestUser('leaderboard3@test.com', 'LB User3', ['user']);
     const user3Id = Number((user3Row as { user_id: number }).user_id);
 
+    // Add user3 to Default League so they appear in leaderboard
+    await testDb.execute(sql`
+      INSERT INTO league_members (league_id, user_id, role) VALUES (1, ${user3Id}, 'member')
+      ON CONFLICT (league_id, user_id) DO NOTHING
+    `);
+
     // Use seeded week 1
-    const game1 = await createTestGame(1, 2024, 'Clemson', 'FSU', true, false, new Date('2099-01-01'));
-    const game2 = await createTestGame(1, 2024, 'Georgia', 'Tennessee', true, false, new Date('2099-01-01'));
+    const game1 = await createTestGame(1, 2024, 'Clemson', 'FSU', false, new Date('2099-01-01'));
+    const game2 = await createTestGame(1, 2024, 'Georgia', 'Tennessee', false, new Date('2099-01-01'));
     const gameId1 = Number((game1 as { game_id: number }).game_id);
     const gameId2 = Number((game2 as { game_id: number }).game_id);
 
@@ -102,7 +108,7 @@ describe('GET /api/leaderboard', () => {
     `);
 
     const token = await makeToken();
-    const res = await app.request('/api/leaderboard?year=2024', {
+    const res = await app.request('/api/leaderboard?year=2024&leagueId=1', {
       headers: { Cookie: `auth_token=${token}` },
     });
     expect(res.status).toBe(200);
@@ -120,14 +126,14 @@ describe('GET /api/leaderboard', () => {
 
   it('pending games count toward total but not correct or incorrect', async () => {
     await createTestWeek(3, 2024);
-    const game = await createTestGame(3, 2024, 'Oregon', 'Washington', true, false, new Date('2099-01-01'));
+    const game = await createTestGame(3, 2024, 'Oregon', 'Washington', false, new Date('2099-01-01'));
     const gameId = Number((game as { game_id: number }).game_id);
 
     await addPickedGame({ game: gameId, pick: 'home_team' }, '1');
     // winning_team stays 'pending' by default
 
     const token = await makeToken();
-    const res = await app.request('/api/leaderboard?year=2024', {
+    const res = await app.request('/api/leaderboard?year=2024&leagueId=1', {
       headers: { Cookie: `auth_token=${token}` },
     });
     expect(res.status).toBe(200);
@@ -142,7 +148,7 @@ describe('GET /api/leaderboard', () => {
   it('tied users both appear in results', async () => {
     // Use seeded users 1 and 2 — both pick wrong; expect equal correct counts
     await createTestWeek(4, 2024);
-    const game = await createTestGame(4, 2024, 'Notre Dame', 'USC', true, false, new Date('2099-01-01'));
+    const game = await createTestGame(4, 2024, 'Notre Dame', 'USC', false, new Date('2099-01-01'));
     const gameId = Number((game as { game_id: number }).game_id);
 
     // Both pick home_team but away_team will win
@@ -156,7 +162,7 @@ describe('GET /api/leaderboard', () => {
     `);
 
     const token = await makeToken();
-    const res = await app.request('/api/leaderboard?year=2024', {
+    const res = await app.request('/api/leaderboard?year=2024&leagueId=1', {
       headers: { Cookie: `auth_token=${token}` },
     });
     expect(res.status).toBe(200);
@@ -170,13 +176,13 @@ describe('GET /api/leaderboard', () => {
 
 describe('GET /api/leaderboard/scores', () => {
   it('returns 401 with no auth token', async () => {
-    const res = await app.request('/api/leaderboard/scores?year=2024&weekNumber=1');
+    const res = await app.request('/api/leaderboard/scores?year=2024&weekNumber=1&leagueId=1');
     expect(res.status).toBe(401);
   });
 
   it('returns 400 for invalid year', async () => {
     const token = await makeToken();
-    const res = await app.request('/api/leaderboard/scores?year=bad&weekNumber=1', {
+    const res = await app.request('/api/leaderboard/scores?year=bad&weekNumber=1&leagueId=1', {
       headers: { Cookie: `auth_token=${token}` },
     });
     expect(res.status).toBe(400);
@@ -184,7 +190,7 @@ describe('GET /api/leaderboard/scores', () => {
 
   it('returns 400 for invalid week', async () => {
     const token = await makeToken();
-    const res = await app.request('/api/leaderboard/scores?year=2024&weekNumber=99', {
+    const res = await app.request('/api/leaderboard/scores?year=2024&weekNumber=99&leagueId=1', {
       headers: { Cookie: `auth_token=${token}` },
     });
     expect(res.status).toBe(400);
@@ -192,7 +198,7 @@ describe('GET /api/leaderboard/scores', () => {
 
   it('returns empty array when no picks exist for the week', async () => {
     const token = await makeToken();
-    const res = await app.request('/api/leaderboard/scores?year=2024&weekNumber=52', {
+    const res = await app.request('/api/leaderboard/scores?year=2024&weekNumber=52&leagueId=1', {
       headers: { Cookie: `auth_token=${token}` },
     });
     expect(res.status).toBe(200);
@@ -202,8 +208,8 @@ describe('GET /api/leaderboard/scores', () => {
 
   it('returns correct per-user counts for a week', async () => {
     await createTestWeek(5, 2024);
-    const game1 = await createTestGame(5, 2024, 'Penn State', 'Iowa', true, false, new Date('2099-01-01'));
-    const game2 = await createTestGame(5, 2024, 'Oklahoma', 'Texas', true, false, new Date('2099-01-01'));
+    const game1 = await createTestGame(5, 2024, 'Penn State', 'Iowa', false, new Date('2099-01-01'));
+    const game2 = await createTestGame(5, 2024, 'Oklahoma', 'Texas', false, new Date('2099-01-01'));
     const gameId1 = Number((game1 as { game_id: number }).game_id);
     const gameId2 = Number((game2 as { game_id: number }).game_id);
 
@@ -224,7 +230,7 @@ describe('GET /api/leaderboard/scores', () => {
     `);
 
     const token = await makeToken();
-    const res = await app.request('/api/leaderboard/scores?year=2024&weekNumber=5', {
+    const res = await app.request('/api/leaderboard/scores?year=2024&weekNumber=5&leagueId=1', {
       headers: { Cookie: `auth_token=${token}` },
     });
     expect(res.status).toBe(200);

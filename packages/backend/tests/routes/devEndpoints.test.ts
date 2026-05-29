@@ -2,7 +2,7 @@ import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { Hono } from 'hono';
 import { HTTPException } from 'hono/http-exception';
 import { sign } from 'hono/jwt';
-import { seedTestData, cleanDatabase, createTestGame } from '../db-utils.js';
+import { seedTestData, cleanDatabase, createTestGame, createLeagueGame } from '../db-utils.js';
 
 vi.mock('../../src/notifications/dispatcher.js', () => ({
   dispatchNotification: vi.fn().mockResolvedValue(undefined),
@@ -56,7 +56,7 @@ describe('POST /api/admin/games/complete', () => {
   });
 
   it('marks a game complete with home team winning', async () => {
-    const row = await createTestGame(1, 2024, 'Alabama', 'Georgia', true, false, null);
+    const row = await createTestGame(1, 2024, 'Alabama', 'Georgia', false, null);
     const gameId = (row as { game_id: number }).game_id;
 
     const token = await makeAdminToken();
@@ -71,7 +71,7 @@ describe('POST /api/admin/games/complete', () => {
   });
 
   it('marks a game complete with away team winning', async () => {
-    const row = await createTestGame(1, 2024, 'Michigan', 'Ohio State', true, false, null);
+    const row = await createTestGame(1, 2024, 'Michigan', 'Ohio State', false, null);
     const gameId = (row as { game_id: number }).game_id;
 
     const token = await makeAdminToken();
@@ -82,38 +82,14 @@ describe('POST /api/admin/games/complete', () => {
     expect(body.game.winningTeam).toBe('away_team');
   });
 
-  it('dispatches rankings_updated when all picked games for the week are complete', async () => {
-    const rowA = await createTestGame(1, 2024, 'Oregon', 'Washington', true, false, null);
-    const rowB = await createTestGame(1, 2024, 'Penn State', 'Notre Dame', true, false, null);
+  it('does not dispatch rankings_updated (Phase 6 handles per-league notifications)', async () => {
+    const rowA = await createTestGame(1, 2024, 'Oregon', 'Washington', false, null);
     const gameIdA = (rowA as { game_id: number }).game_id;
-    const gameIdB = (rowB as { game_id: number }).game_id;
 
     const token = await makeAdminToken();
-
-    // Mark first game complete — not all done yet
     await completeRequest(gameIdA, 35, 21, token);
+
     expect(dispatchNotification).not.toHaveBeenCalled();
-
-    // Mark second game complete — now all picked games for week 1 are done
-    await completeRequest(gameIdB, 17, 24, token);
-    expect(dispatchNotification).toHaveBeenCalledWith(
-      expect.objectContaining({ notificationType: 'rankings_updated', year: 2024, weekNumber: 1 })
-    );
-  });
-
-  it('does not dispatch notification when unpicked games remain incomplete', async () => {
-    // unpicked game (picked=false) should not block the notification
-    const pickedRow = await createTestGame(1, 2024, 'Texas', 'Oklahoma', true, false, null);
-    await createTestGame(1, 2024, 'LSU', 'Florida', false, false, null); // not picked
-    const gameId = (pickedRow as { game_id: number }).game_id;
-
-    const token = await makeAdminToken();
-    await completeRequest(gameId, 30, 24, token);
-
-    // The only picked game is now complete — notification fires
-    expect(dispatchNotification).toHaveBeenCalledWith(
-      expect.objectContaining({ notificationType: 'rankings_updated' })
-    );
   });
 });
 
@@ -132,8 +108,9 @@ describe('Pick deadline with DEV_CURRENT_TIME', () => {
     process.env.DEV_CURRENT_TIME = '2024-08-31T21:00:00Z'; // after kickoff
     try {
       const kickoff = new Date('2024-08-31T19:30:00Z');
-      const row = await createTestGame(1, 2024, 'Clock Home A', 'Clock Away A', true, false, kickoff);
+      const row = await createTestGame(1, 2024, 'Clock Home A', 'Clock Away A', false, kickoff);
       const gameId = (row as { game_id: number }).game_id;
+      await createLeagueGame(1, gameId);
 
       vi.resetModules();
       vi.doMock('../../src/utils/envVars.js', () => ({
@@ -166,7 +143,7 @@ describe('Pick deadline with DEV_CURRENT_TIME', () => {
       const res = await userApp.request('/user/picks', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', Cookie: `auth_token=${token}` },
-        body: JSON.stringify({ year: 2024, week: 1, games: [{ game: gameId, pick: 'home_team' }] }),
+        body: JSON.stringify({ year: 2024, week: 1, leagueId: 1, games: [{ game: gameId, pick: 'home_team' }] }),
       });
 
       expect(res.status).toBe(422);
@@ -182,8 +159,9 @@ describe('Pick deadline with DEV_CURRENT_TIME', () => {
     process.env.DEV_CURRENT_TIME = '2024-08-31T10:00:00Z'; // before kickoff
     try {
       const kickoff = new Date('2024-08-31T19:30:00Z');
-      const row = await createTestGame(1, 2024, 'Clock Home B', 'Clock Away B', true, false, kickoff);
+      const row = await createTestGame(1, 2024, 'Clock Home B', 'Clock Away B', false, kickoff);
       const gameId = (row as { game_id: number }).game_id;
+      await createLeagueGame(1, gameId);
 
       vi.resetModules();
       vi.doMock('../../src/utils/envVars.js', () => ({
@@ -216,7 +194,7 @@ describe('Pick deadline with DEV_CURRENT_TIME', () => {
       const res = await userApp.request('/user/picks', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', Cookie: `auth_token=${token}` },
-        body: JSON.stringify({ year: 2024, week: 1, games: [{ game: gameId, pick: 'home_team' }] }),
+        body: JSON.stringify({ year: 2024, week: 1, leagueId: 1, games: [{ game: gameId, pick: 'home_team' }] }),
       });
 
       expect(res.status).toBe(200);

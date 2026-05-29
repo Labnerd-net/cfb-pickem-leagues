@@ -10,6 +10,7 @@ import adminRoutes from './routes/admin.js';
 import userRoutes from './routes/user.js';
 import leaderboardRoutes from './routes/leaderboard.js';
 import leaguesRoute from './routes/leagues.js';
+import adminLeaguesRoute from './routes/adminLeagues.js';
 import { logger } from './utils/middleware.js';
 import pinoLogger from './utils/logger.js';
 import { runCronTick } from './cron/cronTick.js';
@@ -39,6 +40,7 @@ const routes = new Hono()
   .route('/api/auth', authRoutes)
   .route('/api/leagues', leaguesRoute)
   .route('/api/admin', adminRoutes)
+  .route('/api/admin/leagues', adminLeaguesRoute)
   .route('/api/user', userRoutes)
   .route('/api/leaderboard', leaderboardRoutes);
 

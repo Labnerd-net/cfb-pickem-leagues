@@ -16,7 +16,7 @@ export interface WeekScoresResponse {
 export async function getWeekScores(year: number, weekNumber: number): Promise<WeekScoresResponse> {
   try {
     const res = await client.api.leaderboard.scores.$get({
-      query: { year: String(year), weekNumber: String(weekNumber) },
+      query: { year: String(year), weekNumber: String(weekNumber), leagueId: '1' }, // Phase 4: use active leagueId
     });
     if (!res.ok) {
       const body = (await res.json()) as unknown as { error: string };
@@ -31,7 +31,7 @@ export async function getWeekScores(year: number, weekNumber: number): Promise<W
 
 export async function getLeaderboard(year: number): Promise<LeaderboardResponse> {
   try {
-    const res = await client.api.leaderboard.$get({ query: { year: String(year) } });
+    const res = await client.api.leaderboard.$get({ query: { year: String(year), leagueId: '1' } }); // Phase 4: use active leagueId
     if (!res.ok) {
       const body = (await res.json()) as unknown as { error: string };
       return { success: false, error: body.error };

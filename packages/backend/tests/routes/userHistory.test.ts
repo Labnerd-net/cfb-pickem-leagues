@@ -38,7 +38,7 @@ describe('GET /api/user/history', () => {
   it('returns empty history for a user with no picks', async () => {
     // user 2 has no picks seeded
     const token = await makeToken(2);
-    const res = await app.request('/api/user/history?year=2024', {
+    const res = await app.request('/api/user/history?year=2024&leagueId=1', {
       headers: { Cookie: `auth_token=${token}` },
     });
 
@@ -48,13 +48,13 @@ describe('GET /api/user/history', () => {
   });
 
   it('returns 401 when no auth token is provided', async () => {
-    const res = await app.request('/api/user/history?year=2024');
+    const res = await app.request('/api/user/history?year=2024&leagueId=1');
     expect(res.status).toBe(401);
   });
 
   it('returns 400 for invalid year', async () => {
     const token = await makeToken();
-    const res = await app.request('/api/user/history?year=abc', {
+    const res = await app.request('/api/user/history?year=abc&leagueId=1', {
       headers: { Cookie: `auth_token=${token}` },
     });
     expect(res.status).toBe(400);
@@ -62,8 +62,8 @@ describe('GET /api/user/history', () => {
 
   it('returns correct/incorrect counts for completed games', async () => {
     // Create two games in week 1
-    const game1 = await createTestGame(1, 2024, 'Alabama', 'Auburn', true, false, new Date('2099-01-01'));
-    const game2 = await createTestGame(1, 2024, 'Ohio State', 'Michigan', true, false, new Date('2099-01-01'));
+    const game1 = await createTestGame(1, 2024, 'Alabama', 'Auburn', false, new Date('2099-01-01'));
+    const game2 = await createTestGame(1, 2024, 'Ohio State', 'Michigan', false, new Date('2099-01-01'));
     const gameId1 = Number((game1 as { game_id: number }).game_id);
     const gameId2 = Number((game2 as { game_id: number }).game_id);
 
@@ -84,7 +84,7 @@ describe('GET /api/user/history', () => {
     `);
 
     const token = await makeToken(1);
-    const res = await app.request('/api/user/history?year=2024', {
+    const res = await app.request('/api/user/history?year=2024&leagueId=1', {
       headers: { Cookie: `auth_token=${token}` },
     });
 
@@ -100,14 +100,14 @@ describe('GET /api/user/history', () => {
 
   it('returns correct pending count for unfinished games', async () => {
     // Create a game in week 2 that stays pending
-    const game = await createTestGame(2, 2024, 'LSU', 'Texas', true, false, new Date('2099-01-01'));
+    const game = await createTestGame(2, 2024, 'LSU', 'Texas', false, new Date('2099-01-01'));
     const gameId = Number((game as { game_id: number }).game_id);
 
     await addPickedGame({ game: gameId, pick: 'home_team' }, '1');
     // winning_team stays 'pending' (default)
 
     const token = await makeToken(1);
-    const res = await app.request('/api/user/history?year=2024', {
+    const res = await app.request('/api/user/history?year=2024&leagueId=1', {
       headers: { Cookie: `auth_token=${token}` },
     });
 

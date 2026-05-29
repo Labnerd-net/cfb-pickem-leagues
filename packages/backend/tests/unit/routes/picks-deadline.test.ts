@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { Hono } from 'hono';
 import { HTTPException } from 'hono/http-exception';
-import { seedTestData, createTestWeek, createTestGame, cleanDatabase } from '../../db-utils.js';
+import { seedTestData, createTestWeek, createTestGame, createLeagueGame, cleanDatabase } from '../../db-utils.js';
 
 // Mock auth middleware to bypass JWT validation
 vi.mock('../../../src/utils/middleware.js', () => ({
@@ -10,6 +10,7 @@ vi.mock('../../../src/utils/middleware.js', () => ({
 		await next();
 	}),
 	requireRole: vi.fn(() => async (_c: unknown, next: () => Promise<void>) => { await next(); }),
+	requireLeagueMembership: vi.fn(() => async (_c: unknown, next: () => Promise<void>) => { await next(); }),
 	logger: vi.fn(async (_c: unknown, next: () => Promise<void>) => { await next(); }),
 }));
 
@@ -43,14 +44,14 @@ async function buildApp(ignoreDeadline = false) {
 	return app;
 }
 
-function makePicksRequest(gameId: number, year = 2024, week = 1) {
+function makePicksRequest(gameId: number, year = 2024, week = 1, leagueId = 1) {
 	return new Request('http://localhost/user/picks', {
 		method: 'POST',
 		headers: { 'Content-Type': 'application/json', Cookie: 'auth_token=fake' },
 		body: JSON.stringify({
 			year,
 			week,
-			seasonType: 'regular',
+			leagueId,
 			games: [{ game: gameId, pick: 'home_team' }],
 		}),
 	});
@@ -66,8 +67,9 @@ describe('POST /picks deadline enforcement', () => {
 
 	it('accepts pick when startTime is in the future', async () => {
 		const futureTime = new Date(Date.now() + 60 * 60 * 1000); // +1 hour
-		const row = await createTestGame(1, 2024, 'Home A', 'Away A', true, false, futureTime);
+		const row = await createTestGame(1, 2024, 'Home A', 'Away A', false, futureTime);
 		const gameId = (row as { game_id: number }).game_id;
+		await createLeagueGame(1, gameId);
 
 		const app = await buildApp(false);
 		const res = await app.request(makePicksRequest(gameId));
@@ -76,8 +78,9 @@ describe('POST /picks deadline enforcement', () => {
 
 	it('rejects pick (422) when startTime is in the past', async () => {
 		const pastTime = new Date(Date.now() - 60 * 60 * 1000); // -1 hour
-		const row = await createTestGame(1, 2024, 'Home B', 'Away B', true, false, pastTime);
+		const row = await createTestGame(1, 2024, 'Home B', 'Away B', false, pastTime);
 		const gameId = (row as { game_id: number }).game_id;
+		await createLeagueGame(1, gameId);
 
 		const app = await buildApp(false);
 		const res = await app.request(makePicksRequest(gameId));
@@ -88,8 +91,9 @@ describe('POST /picks deadline enforcement', () => {
 	});
 
 	it('rejects pick (422) when startTime is null', async () => {
-		const row = await createTestGame(1, 2024, 'Home C', 'Away C', true, false, null);
+		const row = await createTestGame(1, 2024, 'Home C', 'Away C', false, null);
 		const gameId = (row as { game_id: number }).game_id;
+		await createLeagueGame(1, gameId);
 
 		const app = await buildApp(false);
 		const res = await app.request(makePicksRequest(gameId));
@@ -102,10 +106,12 @@ describe('POST /picks deadline enforcement', () => {
 		const futureTime = new Date(Date.now() + 60 * 60 * 1000);
 		const pastTime = new Date(Date.now() - 60 * 60 * 1000);
 
-		const rowA = await createTestGame(1, 2024, 'Home D', 'Away D', true, false, pastTime);
-		const rowB = await createTestGame(1, 2024, 'Home E', 'Away E', true, false, futureTime);
+		const rowA = await createTestGame(1, 2024, 'Home D', 'Away D', false, pastTime);
+		const rowB = await createTestGame(1, 2024, 'Home E', 'Away E', false, futureTime);
 		const gameIdA = (rowA as { game_id: number }).game_id;
 		const gameIdB = (rowB as { game_id: number }).game_id;
+		await createLeagueGame(1, gameIdA);
+		await createLeagueGame(1, gameIdB);
 
 		const app = await buildApp(false);
 		const req = new Request('http://localhost/user/picks', {
@@ -114,7 +120,7 @@ describe('POST /picks deadline enforcement', () => {
 			body: JSON.stringify({
 				year: 2024,
 				week: 1,
-				seasonType: 'regular',
+				leagueId: 1,
 				games: [
 					{ game: gameIdA, pick: 'home_team' },
 					{ game: gameIdB, pick: 'away_team' },
@@ -127,8 +133,9 @@ describe('POST /picks deadline enforcement', () => {
 
 	it('bypasses deadline when PICKS_IGNORE_DEADLINE=true', async () => {
 		const pastTime = new Date(Date.now() - 60 * 60 * 1000);
-		const row = await createTestGame(1, 2024, 'Home F', 'Away F', true, false, pastTime);
+		const row = await createTestGame(1, 2024, 'Home F', 'Away F', false, pastTime);
 		const gameId = (row as { game_id: number }).game_id;
+		await createLeagueGame(1, gameId);
 
 		const app = await buildApp(true);
 		const res = await app.request(makePicksRequest(gameId));
@@ -155,8 +162,9 @@ describe('POST /picks TOCTTOU: startTime passes after now is captured', () => {
 
 		// startTime is 500ms ahead of the captured `now`
 		const startTime = new Date(baseTime + 500);
-		const row = await createTestGame(1, 2024, 'TOCTTOU Home', 'TOCTTOU Away', true, false, startTime);
+		const row = await createTestGame(1, 2024, 'TOCTTOU Home', 'TOCTTOU Away', false, startTime);
 		const gameId = (row as { game_id: number }).game_id;
+		await createLeagueGame(1, gameId);
 
 		// Mock addPickedGame to advance system time past startTime before inserting,
 		// simulating the race between the check and the actual DB write.

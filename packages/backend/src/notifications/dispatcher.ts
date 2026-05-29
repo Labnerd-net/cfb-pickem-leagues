@@ -37,8 +37,9 @@ export async function dispatchNotification(params: DispatchParams): Promise<void
 
   let leaderboard: LeaderboardEntry[] = [];
   if (notificationType === 'rankings_updated') {
+    // Phase 6: fetch leaderboard per-league; rankings_updated is not dispatched in Phase 3
     try {
-      leaderboard = await returnLeaderboard(year);
+      leaderboard = await returnLeaderboard(year, 0);
     } catch (e) {
       logger.error({ err: e }, 'Failed to fetch leaderboard for rankings_updated notification');
     }

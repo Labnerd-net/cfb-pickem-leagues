@@ -1,6 +1,7 @@
-import { eq, and, inArray, notInArray, lte, gte, gt, max, asc } from 'drizzle-orm';
+import { eq, and, inArray, lte, gte, gt, max, asc, sql } from 'drizzle-orm';
 import { adminWeeks, adminGames, scoreCorrections } from './schema/admin.js';
 import { games as userGames } from './schema/users.js';
+import { leagueGames } from './schema/leagues.js';
 import { db } from './index.js';
 import logger from '../utils/logger.js';
 import type {
@@ -11,7 +12,6 @@ import type {
   WeekQuery,
   WeekIdentifier,
   SeasonType,
-  PickedGamesRequest,
 } from '@shared/types/cfb-pickem-api.js';
 
 // ------------------------------------------------------------------
@@ -93,7 +93,7 @@ export async function addWeek(week: AdminWeekData): Promise<void> {
 }
 
 // ------------------------------------------------------------------
-// Upsert single game for a week (safe to re-import; preserves picked & gameId)
+// Upsert single game for a week (safe to re-import; preserves gameId on conflict)
 // ------------------------------------------------------------------
 export async function upsertGameForWeek(game: AdminGameData): Promise<void> {
   logger.debug({ year: game.year, week: game.weekNumber }, 'upsertGameForWeek');
@@ -110,7 +110,6 @@ export async function upsertGameForWeek(game: AdminGameData): Promise<void> {
       .insert(adminGames)
       .values({
         cfbdGameId: game.cfbdGameId,
-        picked: false,
         weekNumber: game.weekNumber,
         year: game.year,
         seasonType: game.seasonType,
@@ -169,57 +168,131 @@ export async function returnGamesBulk(gameIds: number[]): Promise<AdminDbGameDat
 }
 
 // ------------------------------------------------------------------
-// Set all picked games from number array
+// Return all games in a league's pool for a week
 // ------------------------------------------------------------------
-export async function setPickedGames(pickedGames: PickedGamesRequest): Promise<void> {
-  logger.debug({ count: pickedGames.games.length }, 'setPickedGame');
+export async function getGamesForLeagueWeek(
+  leagueId: number,
+  year: number,
+  week: number
+): Promise<AdminDbGameData[]> {
+  logger.debug({ leagueId, year, week }, 'getGamesForLeagueWeek');
   try {
-    await db.transaction(async tx => {
-      await tx
-        .update(adminGames)
-        .set({ picked: true })
-        .where(
-          and(
-            inArray(adminGames.gameId, pickedGames.games),
-            eq(adminGames.weekNumber, pickedGames.week),
-            eq(adminGames.year, pickedGames.year)
-          )
-        );
-      await tx
-        .update(adminGames)
-        .set({ picked: false })
-        .where(
-          and(
-            notInArray(adminGames.gameId, pickedGames.games),
-            eq(adminGames.weekNumber, pickedGames.week),
-            eq(adminGames.year, pickedGames.year)
-          )
-        );
-    });
+    return await db
+      .select({
+        gameId: adminGames.gameId,
+        cfbdGameId: adminGames.cfbdGameId,
+        weekNumber: adminGames.weekNumber,
+        year: adminGames.year,
+        seasonType: adminGames.seasonType,
+        completed: adminGames.completed,
+        homeTeam: adminGames.homeTeam,
+        awayTeam: adminGames.awayTeam,
+        homePoints: adminGames.homePoints,
+        awayPoints: adminGames.awayPoints,
+        winningTeam: adminGames.winningTeam,
+        startTime: adminGames.startTime,
+        spread: adminGames.spread,
+        createdAt: adminGames.createdAt,
+      })
+      .from(adminGames)
+      .innerJoin(
+        leagueGames,
+        and(eq(leagueGames.gameId, adminGames.gameId), eq(leagueGames.leagueId, leagueId))
+      )
+      .where(and(eq(adminGames.year, year), eq(adminGames.weekNumber, week)));
   } catch (e) {
-    logger.error({ err: e }, 'setPickedGame failed');
+    logger.error({ err: e }, 'getGamesForLeagueWeek failed');
     throw e;
   }
 }
 
 // ------------------------------------------------------------------
-// Return all picked games
+// Return all global games for a week annotated with inLeague status
 // ------------------------------------------------------------------
-export async function returnPickedGames(identifier: WeekIdentifier): Promise<AdminDbGameData[]> {
-  logger.debug({ year: identifier.year, week: identifier.week }, 'returnPickedGames');
+export async function getGlobalGamesWithLeagueStatus(
+  leagueId: number,
+  year: number,
+  week: number
+): Promise<(AdminDbGameData & { inLeague: boolean })[]> {
+  logger.debug({ leagueId, year, week }, 'getGlobalGamesWithLeagueStatus');
   try {
-    return await db
-      .select()
+    const rows = await db
+      .select({
+        gameId: adminGames.gameId,
+        cfbdGameId: adminGames.cfbdGameId,
+        weekNumber: adminGames.weekNumber,
+        year: adminGames.year,
+        seasonType: adminGames.seasonType,
+        completed: adminGames.completed,
+        homeTeam: adminGames.homeTeam,
+        awayTeam: adminGames.awayTeam,
+        homePoints: adminGames.homePoints,
+        awayPoints: adminGames.awayPoints,
+        winningTeam: adminGames.winningTeam,
+        startTime: adminGames.startTime,
+        spread: adminGames.spread,
+        createdAt: adminGames.createdAt,
+        inLeague: sql<boolean>`(${leagueGames.gameId} IS NOT NULL)`,
+      })
       .from(adminGames)
-      .where(
-        and(
-          eq(adminGames.year, identifier.year),
-          eq(adminGames.weekNumber, identifier.week),
-          eq(adminGames.picked, true)
-        )
-      );
+      .leftJoin(
+        leagueGames,
+        and(eq(leagueGames.gameId, adminGames.gameId), eq(leagueGames.leagueId, leagueId))
+      )
+      .where(and(eq(adminGames.year, year), eq(adminGames.weekNumber, week)));
+    return rows.map(r => ({ ...r, inLeague: Boolean(r.inLeague) }));
   } catch (e) {
-    logger.error({ err: e }, 'returnPickedGames failed');
+    logger.error({ err: e }, 'getGlobalGamesWithLeagueStatus failed');
+    throw e;
+  }
+}
+
+// ------------------------------------------------------------------
+// Add a game to a league's pool
+// ------------------------------------------------------------------
+export async function addGameToLeague(leagueId: number, gameId: number): Promise<void> {
+  logger.debug({ leagueId, gameId }, 'addGameToLeague');
+  try {
+    const game = await db
+      .select({ gameId: adminGames.gameId })
+      .from(adminGames)
+      .where(eq(adminGames.gameId, gameId))
+      .limit(1);
+    if (game.length === 0) throw Object.assign(new Error('Game not found'), { status: 404 });
+
+    const existing = await db
+      .select()
+      .from(leagueGames)
+      .where(and(eq(leagueGames.leagueId, leagueId), eq(leagueGames.gameId, gameId)))
+      .limit(1);
+    if (existing.length > 0) throw Object.assign(new Error('Game already in league pool'), { status: 409 });
+
+    await db.insert(leagueGames).values({ leagueId, gameId });
+  } catch (e) {
+    logger.error({ err: e }, 'addGameToLeague failed');
+    throw e;
+  }
+}
+
+// ------------------------------------------------------------------
+// Remove a game from a league's pool (blocks if any picks exist)
+// ------------------------------------------------------------------
+export async function removeGameFromLeague(leagueId: number, gameId: number): Promise<void> {
+  logger.debug({ leagueId, gameId }, 'removeGameFromLeague');
+  try {
+    const picks = await db
+      .select({ userId: userGames.userId })
+      .from(userGames)
+      .where(and(eq(userGames.gameId, gameId), eq(userGames.leagueId, leagueId)))
+      .limit(1);
+    if (picks.length > 0)
+      throw Object.assign(new Error('Cannot remove a game that has picks'), { status: 409 });
+
+    await db
+      .delete(leagueGames)
+      .where(and(eq(leagueGames.leagueId, leagueId), eq(leagueGames.gameId, gameId)));
+  } catch (e) {
+    logger.error({ err: e }, 'removeGameFromLeague failed');
     throw e;
   }
 }

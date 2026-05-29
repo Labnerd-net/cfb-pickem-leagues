@@ -13,7 +13,6 @@ function makeGame(overrides: Partial<AdminDbGameData> = {}): AdminDbGameData {
   return {
     gameId: 1,
     cfbdGameId: null,
-    picked: false,
     weekNumber: 1,
     year: 2024,
     seasonType: 'regular',

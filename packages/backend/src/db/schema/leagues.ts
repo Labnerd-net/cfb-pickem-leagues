@@ -1,6 +1,8 @@
 import { integer, pgTable, primaryKey, serial, text, timestamp } from 'drizzle-orm/pg-core';
 import { users } from './users.js';
+// import { users } from './users'; // for drizzle-kit generate
 import { adminGames } from './admin.js';
+// import { adminGames } from './admin'; // for drizzle-kit generate
 
 export const leagues = pgTable('leagues', {
   leagueId: serial('league_id').primaryKey(),

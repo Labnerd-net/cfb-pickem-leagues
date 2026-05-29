@@ -88,7 +88,6 @@ describe('POST /api/admin/week', () => {
         gameId: 0,
         cfbdGameId: null,
         
-        picked: false,
         weekNumber: 2,
         year: 2024,
         seasonType: 'regular',
@@ -125,7 +124,6 @@ describe('POST /api/admin/week', () => {
         gameId: 0,
         cfbdGameId: null,
         
-        picked: false,
         weekNumber: 1,
         year: 2024,
         seasonType: 'regular',

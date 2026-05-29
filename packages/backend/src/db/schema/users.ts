@@ -16,6 +16,8 @@ import { columnRole, columnTeam } from '../index.js';
 // import { columnRole, columnTeam } from '../index'; // for drizzle-kit generate
 import { adminGames } from '../schema/admin.js';
 // import { adminGames } from '../schema/admin'; // for drizzle-kit generate
+import { leagues } from '../schema/leagues.js';
+// import { leagues } from '../schema/leagues'; // for drizzle-kit generate
 
 const userSchema = pgSchema('user');
 
@@ -44,11 +46,14 @@ export const games = userSchema.table(
       .notNull()
       .references(() => users.userId, { onDelete: 'cascade' }),
     gameId: integer('game_id').notNull(),
+    leagueId: integer('league_id')
+      .notNull()
+      .references(() => leagues.leagueId, { onDelete: 'restrict' }),
     teamChosen: columnTeam('team_chosen').notNull().default('pending'),
     createdAt: timestamp('created_at').defaultNow().notNull(),
   },
   table => [
-    primaryKey({ columns: [table.userId, table.gameId] }),
+    primaryKey({ columns: [table.userId, table.gameId, table.leagueId] }),
     foreignKey({
       columns: [table.gameId],
       foreignColumns: [adminGames.gameId],

@@ -100,6 +100,7 @@ export function usePickSubmit({ selectedYear, selectedWeek }: UsePickSubmitParam
       const result = await postUserPicks({
         year: selectedYear,
         week: selectedWeek,
+        leagueId: 1, // Phase 4: replace with active league from league switcher
         games: picksArray,
       });
 

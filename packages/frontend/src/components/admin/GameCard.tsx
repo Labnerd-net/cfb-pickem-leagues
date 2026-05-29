@@ -26,7 +26,7 @@ interface GameCardProps {
 }
 
 export default function GameCard({ game, selected, onSelect, onGameCorrected }: GameCardProps) {
-  const isPicked = game.picked;
+  const isPicked = game.inLeague ?? false;
   const [dialogOpen, setDialogOpen] = useState(false);
   const [homeInput, setHomeInput] = useState('');
   const [awayInput, setAwayInput] = useState('');

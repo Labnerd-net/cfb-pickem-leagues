@@ -46,7 +46,6 @@ export const adminGames = adminSchema.table(
   {
     gameId: serial('game_id').primaryKey(),
     cfbdGameId: integer('cfbd_game_id'),
-    picked: boolean('picked').notNull(),
     weekNumber: integer('week_number').notNull(),
     year: integer('year').notNull(),
     seasonType: columnSeason('season_type').notNull(),
@@ -67,8 +66,6 @@ export const adminGames = adminSchema.table(
       name: 'games_week_fk',
     }).onDelete('cascade'),
     index('games_year_week_idx').on(table.year, table.weekNumber),
-    index('games_picked_idx').on(table.picked),
-    index('games_year_week_picked_idx').on(table.year, table.weekNumber, table.picked),
     index('games_start_time_idx').on(table.startTime),
     unique('games_natural_key').on(table.year, table.weekNumber, table.homeTeam, table.awayTeam),
   ]

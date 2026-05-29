@@ -43,7 +43,7 @@ export const requireRole = (role: Role) => {
 export const requireLeagueMembership = (requiredRole?: 'admin') => {
   return async (c: Context, next: Next) => {
     const payload: JwtData = c.get('jwtPayload');
-    const leagueId = Number(c.req.param('leagueId'));
+    const leagueId = Number(c.req.param('leagueId') || c.req.query('leagueId'));
     if (!leagueId) throw new HTTPException(400, { message: 'Missing leagueId' });
 
     const league = await getLeagueById(leagueId);
