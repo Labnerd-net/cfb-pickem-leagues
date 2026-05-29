@@ -129,6 +129,32 @@ vi.mock('../src/db/index.ts', async () => {
 			sent_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,
 			CONSTRAINT notification_log_unique UNIQUE (user_id, year, week_number, notification_type, channel)
 		);
+
+		-- Public schema: leagues
+		CREATE TABLE leagues (
+			league_id SERIAL PRIMARY KEY,
+			name TEXT NOT NULL,
+			invite_code TEXT NOT NULL UNIQUE,
+			created_by INTEGER NOT NULL REFERENCES "user".users (user_id),
+			created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL
+		);
+
+		-- Public schema: league members
+		CREATE TABLE league_members (
+			league_id INTEGER NOT NULL REFERENCES leagues (league_id),
+			user_id INTEGER NOT NULL REFERENCES "user".users (user_id),
+			role TEXT NOT NULL,
+			joined_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,
+			PRIMARY KEY (league_id, user_id)
+		);
+
+		-- Public schema: league games (per-league game pool)
+		CREATE TABLE league_games (
+			league_id INTEGER NOT NULL REFERENCES leagues (league_id),
+			game_id INTEGER NOT NULL REFERENCES admin.games (game_id),
+			added_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,
+			PRIMARY KEY (league_id, game_id)
+		);
 	`);
 
 	// Export the custom column types

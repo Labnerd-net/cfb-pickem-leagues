@@ -9,6 +9,7 @@ import authRoutes from './routes/auth.js';
 import adminRoutes from './routes/admin.js';
 import userRoutes from './routes/user.js';
 import leaderboardRoutes from './routes/leaderboard.js';
+import leaguesRoute from './routes/leagues.js';
 import { logger } from './utils/middleware.js';
 import pinoLogger from './utils/logger.js';
 import { runCronTick } from './cron/cronTick.js';
@@ -36,6 +37,7 @@ app.get('/health', c => c.json({ status: 'UP' }));
 // Typed sub-app for AppType inference — keep route() chained for type propagation
 const routes = new Hono()
   .route('/api/auth', authRoutes)
+  .route('/api/leagues', leaguesRoute)
   .route('/api/admin', adminRoutes)
   .route('/api/user', userRoutes)
   .route('/api/leaderboard', leaderboardRoutes);

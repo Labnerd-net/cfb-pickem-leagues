@@ -25,8 +25,8 @@
 
     /* Path aliases */
     "paths": {
-      "@shared/*": ["packages/shared/*"],
-      "@backend/*": ["packages/backend/src/*"]
+      "@shared/*": ["../shared/*"],
+      "@backend/*": ["../backend/src/*"]
     }
   },
   "include": ["src", "tests"]
