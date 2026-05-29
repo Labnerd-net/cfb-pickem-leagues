@@ -114,6 +114,115 @@ export const handlers = [
 		});
 	}),
 
+	http.post(`${API_URL}/api/leagues`, () => {
+		return HttpResponse.json(
+			{
+				league: {
+					leagueId: 3,
+					name: 'Created League',
+					inviteCode: 'NEWCODE1',
+					memberCount: 1,
+					createdAt: '2024-01-01T00:00:00.000Z',
+					role: 'admin',
+				},
+			},
+			{ status: 201 },
+		);
+	}),
+
+	http.get(`${API_URL}/api/leagues/:leagueId/members`, () => {
+		return HttpResponse.json({
+			members: [
+				{
+					userId: 1,
+					displayName: 'Test User',
+					role: 'admin',
+					joinedAt: '2024-01-01T00:00:00.000Z',
+				},
+				{
+					userId: 2,
+					displayName: 'Other User',
+					role: 'member',
+					joinedAt: '2024-01-02T00:00:00.000Z',
+				},
+			],
+		});
+	}),
+
+	http.patch(`${API_URL}/api/leagues/:leagueId/members/:userId`, () => {
+		return HttpResponse.json({
+			member: { userId: 2, role: 'admin', joinedAt: '2024-01-02T00:00:00.000Z' },
+		});
+	}),
+
+	http.delete(`${API_URL}/api/leagues/:leagueId/members/:userId`, () => {
+		return HttpResponse.json({ success: true });
+	}),
+
+	http.post(`${API_URL}/api/leagues/:leagueId/invite/regenerate`, () => {
+		return HttpResponse.json({ inviteCode: 'NEWCODE9' });
+	}),
+
+	// Admin league endpoints
+	http.get(`${API_URL}/api/admin/leagues/:leagueId/games`, () => {
+		return HttpResponse.json({
+			games: [
+				{
+					gameId: 1,
+					homeTeam: 'Team A',
+					awayTeam: 'Team B',
+					weekNumber: 1,
+					seasonType: 'regular',
+					completed: false,
+					homePoints: null,
+					awayPoints: null,
+					winningTeam: null,
+					inLeague: true,
+				},
+				{
+					gameId: 2,
+					homeTeam: 'Team C',
+					awayTeam: 'Team D',
+					weekNumber: 1,
+					seasonType: 'regular',
+					completed: false,
+					homePoints: null,
+					awayPoints: null,
+					winningTeam: null,
+					inLeague: false,
+				},
+			],
+		});
+	}),
+
+	http.post(`${API_URL}/api/admin/leagues/:leagueId/games/complete`, () => {
+		return HttpResponse.json({ completed: 2 });
+	}),
+
+	http.post(`${API_URL}/api/admin/leagues/:leagueId/games/:gameId`, () => {
+		return HttpResponse.json({ success: true }, { status: 201 });
+	}),
+
+	http.delete(`${API_URL}/api/admin/leagues/:leagueId/games/:gameId`, () => {
+		return HttpResponse.json({ success: true });
+	}),
+
+	http.patch(`${API_URL}/api/admin/leagues/:leagueId/games/:gameId/score`, () => {
+		return HttpResponse.json({
+			game: {
+				gameId: 1,
+				homeTeam: 'Team A',
+				awayTeam: 'Team B',
+				homePoints: 24,
+				awayPoints: 17,
+				winningTeam: 'home_team',
+				completed: true,
+				weekNumber: 1,
+				seasonType: 'regular',
+			},
+		});
+	}),
+
 	// Leaderboard endpoints
 	http.get(`${API_URL}/api/leaderboard`, () => {
 		return HttpResponse.json({

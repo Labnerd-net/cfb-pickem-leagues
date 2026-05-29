@@ -8,13 +8,19 @@ import {
   Checkbox,
   Chip,
   CircularProgress,
+  Dialog,
+  DialogContent,
+  DialogTitle,
   FormControlLabel,
+  IconButton,
   Link,
   Stack,
   TextField,
   Tooltip,
   Typography,
 } from '@mui/material';
+import SettingsIcon from '@mui/icons-material/Settings';
+import CloseIcon from '@mui/icons-material/Close';
 import type { BroadcastChannelInfo, NotificationSettings, NotificationType } from '@shared/types/cfb-pickem-api.js';
 import {
   getNotificationSettings,
@@ -26,6 +32,8 @@ import { resendVerificationEmail } from '../apis/authRequests';
 import { useAuth } from '../contexts/auth/AuthContext';
 import { useLeague } from '../contexts/LeagueContext';
 import JoinLeagueDialog from '../components/JoinLeagueDialog';
+import LeagueSettingsSection from '../components/LeagueSettingsSection';
+import CreateLeagueDialog from '../components/CreateLeagueDialog';
 
 const NOTIFICATION_TYPES: { value: Exclude<NotificationType, 'admin_broadcast'>; label: string }[] = [
   { value: 'games_ready', label: 'Games Ready' },
@@ -59,8 +67,11 @@ type ChangePasswordForm = z.infer<typeof changePasswordSchema>;
 
 export default function Settings() {
   const { user, login } = useAuth();
-  const { leagues, activeLeague, refetchLeagues } = useLeague();
+  const { leagues, activeLeague, setActiveLeague, refetchLeagues } = useLeague();
   const [joinDialogOpen, setJoinDialogOpen] = useState(false);
+  const [managingLeagueId, setManagingLeagueId] = useState<number | null>(null);
+  const [createLeagueOpen, setCreateLeagueOpen] = useState(false);
+  const [leagueInviteCodes, setLeagueInviteCodes] = useState<Record<number, string>>({});
   const [settings, setSettings] = useState<NotificationSettings | null>(null);
   const [channels, setChannels] = useState<BroadcastChannelInfo | null>(null);
   const [loading, setLoading] = useState(true);
@@ -265,11 +276,31 @@ export default function Settings() {
         Leagues
       </Typography>
       {leagues.length > 0 ? (
-        <Stack spacing={0.5} mb={2}>
+        <Stack spacing={1} mb={2}>
           {leagues.map(l => (
-            <Typography key={l.leagueId} variant="body2" sx={{ fontWeight: l.leagueId === activeLeague?.leagueId ? 700 : 400 }}>
-              {l.name}{l.leagueId === activeLeague?.leagueId ? ' (active)' : ''}
-            </Typography>
+            <Stack key={l.leagueId} direction="row" alignItems="center" spacing={1}>
+              <Typography
+                variant="body2"
+                sx={{ fontWeight: l.leagueId === activeLeague?.leagueId ? 700 : 400, flex: 1 }}
+              >
+                {l.name}
+                {l.leagueId === activeLeague?.leagueId && (
+                  <Typography component="span" variant="caption" color="text.secondary" sx={{ ml: 1 }}>
+                    (active)
+                  </Typography>
+                )}
+              </Typography>
+              {l.role === 'admin' && (
+                <Tooltip title="Manage league">
+                  <IconButton
+                    size="small"
+                    onClick={() => setManagingLeagueId(l.leagueId)}
+                  >
+                    <SettingsIcon fontSize="small" />
+                  </IconButton>
+                </Tooltip>
+              )}
+            </Stack>
           ))}
         </Stack>
       ) : (
@@ -277,13 +308,60 @@ export default function Settings() {
           You're not in any leagues yet.
         </Typography>
       )}
-      <Button variant="outlined" size="small" onClick={() => setJoinDialogOpen(true)}>
-        Join another league
-      </Button>
+      <Stack direction="row" spacing={1}>
+        <Button variant="outlined" size="small" onClick={() => setJoinDialogOpen(true)}>
+          Join another league
+        </Button>
+        {user?.roles.includes('admin') && (
+          <Button variant="outlined" size="small" onClick={() => setCreateLeagueOpen(true)}>
+            Create league
+          </Button>
+        )}
+      </Stack>
       <JoinLeagueDialog
         open={joinDialogOpen}
         onClose={() => setJoinDialogOpen(false)}
         onJoined={refetchLeagues}
+      />
+
+      {/* League settings dialog */}
+      {managingLeagueId !== null && (() => {
+        const league = leagues.find(l => l.leagueId === managingLeagueId);
+        if (!league) return null;
+        return (
+          <Dialog
+            open={true}
+            onClose={() => setManagingLeagueId(null)}
+            maxWidth="md"
+            fullWidth
+          >
+            <DialogTitle sx={{ fontFamily: '"Work Sans", sans-serif', display: 'flex', alignItems: 'center' }}>
+              <Box sx={{ flex: 1 }}>League Settings</Box>
+              <IconButton onClick={() => setManagingLeagueId(null)}>
+                <CloseIcon />
+              </IconButton>
+            </DialogTitle>
+            <DialogContent>
+              <LeagueSettingsSection
+                leagueId={league.leagueId}
+                leagueName={league.name}
+                inviteCode={leagueInviteCodes[league.leagueId] ?? league.inviteCode}
+                onInviteCodeChange={newCode =>
+                  setLeagueInviteCodes(prev => ({ ...prev, [league.leagueId]: newCode }))
+                }
+              />
+            </DialogContent>
+          </Dialog>
+        );
+      })()}
+
+      <CreateLeagueDialog
+        open={createLeagueOpen}
+        onClose={() => setCreateLeagueOpen(false)}
+        onCreated={async newLeague => {
+          await refetchLeagues();
+          setActiveLeague(newLeague);
+        }}
       />
 
       {/* Account section */}

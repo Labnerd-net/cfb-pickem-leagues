@@ -6,17 +6,11 @@ import {
   Box,
   Typography,
   IconButton,
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
-  Button,
-  TextField,
-  CircularProgress,
 } from '@mui/material';
 import EditIcon from '@mui/icons-material/Edit';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import { type AdminDbGameDataWire, correctGameScore } from '../../apis/adminRequests';
+import ScoreCorrectionDialog from './ScoreCorrectionDialog';
 
 interface GameCardProps {
   game: AdminDbGameDataWire;
@@ -28,41 +22,6 @@ interface GameCardProps {
 export default function GameCard({ game, selected, onSelect, onGameCorrected }: GameCardProps) {
   const isPicked = game.inLeague ?? false;
   const [dialogOpen, setDialogOpen] = useState(false);
-  const [homeInput, setHomeInput] = useState('');
-  const [awayInput, setAwayInput] = useState('');
-  const [submitting, setSubmitting] = useState(false);
-  const [dialogError, setDialogError] = useState<string | null>(null);
-
-  function openDialog() {
-    setHomeInput(game.homePoints !== null ? String(game.homePoints) : '');
-    setAwayInput(game.awayPoints !== null ? String(game.awayPoints) : '');
-    setDialogError(null);
-    setDialogOpen(true);
-  }
-
-  function closeDialog() {
-    if (submitting) return;
-    setDialogOpen(false);
-  }
-
-  async function handleSubmit() {
-    const home = parseInt(homeInput, 10);
-    const away = parseInt(awayInput, 10);
-    if (!Number.isInteger(home) || home < 0 || !Number.isInteger(away) || away < 0) {
-      setDialogError('Scores must be non-negative integers');
-      return;
-    }
-    setSubmitting(true);
-    setDialogError(null);
-    const result = await correctGameScore(game.gameId, { homePoints: home, awayPoints: away });
-    setSubmitting(false);
-    if (result.success && result.data) {
-      onGameCorrected(result.data);
-      setDialogOpen(false);
-    } else {
-      setDialogError(result.error ?? 'Failed to correct score');
-    }
-  }
 
   return (
     <>
@@ -100,7 +59,7 @@ export default function GameCard({ game, selected, onSelect, onGameCorrected }: 
             </Typography>
             <IconButton
               size="small"
-              onClick={e => { e.stopPropagation(); openDialog(); }}
+              onClick={e => { e.stopPropagation(); setDialogOpen(true); }}
               sx={{ ml: 0.5, color: 'text.secondary' }}
               title="Correct score"
             >
@@ -173,56 +132,16 @@ export default function GameCard({ game, selected, onSelect, onGameCorrected }: 
         />
       </Paper>
 
-      <Dialog open={dialogOpen} onClose={closeDialog} maxWidth="xs" fullWidth>
-        <DialogTitle sx={{ fontFamily: '"Work Sans", sans-serif' }}>
-          Correct Score
-        </DialogTitle>
-        <DialogContent>
-          <Typography variant="body2" sx={{ mb: 2, fontFamily: '"Work Sans", sans-serif' }}>
-            {game.awayTeam} @ {game.homeTeam}
-          </Typography>
-          <Box sx={{ display: 'flex', gap: 2 }}>
-            <TextField
-              label={`${game.awayTeam} (away)`}
-              value={awayInput}
-              onChange={e => setAwayInput(e.target.value)}
-              type="number"
-              slotProps={{ htmlInput: { min: 0, step: 1 } }}
-              size="small"
-              fullWidth
-              disabled={submitting}
-            />
-            <TextField
-              label={`${game.homeTeam} (home)`}
-              value={homeInput}
-              onChange={e => setHomeInput(e.target.value)}
-              type="number"
-              slotProps={{ htmlInput: { min: 0, step: 1 } }}
-              size="small"
-              fullWidth
-              disabled={submitting}
-            />
-          </Box>
-          {dialogError && (
-            <Typography variant="body2" color="error" sx={{ mt: 1, fontFamily: '"Work Sans", sans-serif' }}>
-              {dialogError}
-            </Typography>
-          )}
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={closeDialog} disabled={submitting}>
-            Cancel
-          </Button>
-          <Button
-            variant="contained"
-            onClick={handleSubmit}
-            disabled={submitting}
-            startIcon={submitting ? <CircularProgress size={16} /> : undefined}
-          >
-            {submitting ? 'Saving...' : 'Save'}
-          </Button>
-        </DialogActions>
-      </Dialog>
+      <ScoreCorrectionDialog
+        open={dialogOpen}
+        game={game}
+        onClose={() => setDialogOpen(false)}
+        onSave={async (homePoints, awayPoints) => {
+          const result = await correctGameScore(game.gameId, { homePoints, awayPoints });
+          if (result.success && result.data) onGameCorrected(result.data);
+          return result;
+        }}
+      />
     </>
   );
 }

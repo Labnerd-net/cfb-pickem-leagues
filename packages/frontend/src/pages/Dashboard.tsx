@@ -8,8 +8,10 @@ import AdminPanelSettingsIcon from '@mui/icons-material/AdminPanelSettings';
 import PeopleIcon from '@mui/icons-material/People';
 import BugReportIcon from '@mui/icons-material/BugReport';
 import NotificationsIcon from '@mui/icons-material/Notifications';
+import GroupsIcon from '@mui/icons-material/Groups';
 import WelcomeBanner from '../components/dashboard/WelcomeBanner';
 import AdminSection from '../components/admin/AdminSection';
+import LeagueAdminSection from '../components/admin/LeagueAdminSection';
 import UsersSection from '../components/admin/UsersSection';
 import NotificationLogSection from '../components/admin/NotificationLogSection';
 import UserSection from '../components/user/UserSection';
@@ -17,10 +19,19 @@ import DevSection from '../components/admin/DevSection';
 
 const IS_DEV = import.meta.env.DEV;
 
+interface TabDescriptor {
+  label: string;
+  icon: React.ReactElement;
+  component: React.ReactElement;
+  devOnly?: boolean;
+  warnColor?: boolean;
+}
+
 export default function Dashboard() {
   const { user } = useAuth();
   const { activeLeague, isLoading: leagueLoading, refetchLeagues } = useLeague();
   const isAdmin = user?.roles.includes('admin') ?? false;
+  const isLeagueAdmin = activeLeague?.role === 'admin';
   const [currentTab, setCurrentTab] = useState(0);
 
   if (leagueLoading) {
@@ -35,29 +46,39 @@ export default function Dashboard() {
     return <JoinLeaguePrompt onJoined={refetchLeagues} />;
   }
 
-  const tabComponents = [
-    <UserSection />,
-    <AdminSection />,
-    <UsersSection />,
-    <NotificationLogSection />,
-    ...(IS_DEV ? [<DevSection />] : []),
+  const tabs: TabDescriptor[] = [
+    { label: 'My Dashboard', icon: <SportsFootballIcon />, component: <UserSection /> },
+    ...(isLeagueAdmin
+      ? [{ label: 'League Admin', icon: <GroupsIcon />, component: <LeagueAdminSection /> }]
+      : []),
+    ...(isAdmin
+      ? [
+          { label: 'Admin Controls', icon: <AdminPanelSettingsIcon />, component: <AdminSection /> },
+          { label: 'Users', icon: <PeopleIcon />, component: <UsersSection /> },
+          { label: 'Notification Log', icon: <NotificationsIcon />, component: <NotificationLogSection /> },
+        ]
+      : []),
+    ...(IS_DEV
+      ? [{ label: 'Dev Tools', icon: <BugReportIcon />, component: <DevSection />, devOnly: true, warnColor: true }]
+      : []),
   ];
 
   const handleTabChange = (_event: React.SyntheticEvent, newValue: number) => {
     setCurrentTab(newValue);
   };
 
+  const safeTab = Math.min(currentTab, tabs.length - 1);
+
   return (
     <Container maxWidth="lg">
       <Box sx={{ mt: 4, mb: 4 }}>
         <WelcomeBanner displayName={user?.displayName || 'User'} />
 
-        {isAdmin ? (
+        {isAdmin || isLeagueAdmin ? (
           <>
-            {/* Tabs for Admin Users */}
             <Box sx={{ borderBottom: 1, borderColor: 'divider', mb: 3 }}>
               <Tabs
-                value={currentTab}
+                value={safeTab}
                 onChange={handleTabChange}
                 aria-label="dashboard tabs"
                 sx={{
@@ -68,27 +89,18 @@ export default function Dashboard() {
                   },
                 }}
               >
-                <Tab icon={<SportsFootballIcon />} iconPosition="start" label="My Dashboard" />
-                <Tab
-                  icon={<AdminPanelSettingsIcon />}
-                  iconPosition="start"
-                  label="Admin Controls"
-                />
-                <Tab icon={<PeopleIcon />} iconPosition="start" label="Users" />
-                <Tab icon={<NotificationsIcon />} iconPosition="start" label="Notification Log" />
-                {IS_DEV && (
+                {tabs.map(tab => (
                   <Tab
-                    icon={<BugReportIcon />}
+                    key={tab.label}
+                    icon={tab.icon}
                     iconPosition="start"
-                    label="Dev Tools"
-                    sx={{ color: 'warning.main' }}
+                    label={tab.label}
+                    sx={tab.warnColor ? { color: 'warning.main' } : undefined}
                   />
-                )}
+                ))}
               </Tabs>
             </Box>
-
-            {/* Tab Content */}
-            {tabComponents[currentTab] ?? null}
+            {tabs[safeTab]?.component ?? null}
           </>
         ) : (
           <UserSection />

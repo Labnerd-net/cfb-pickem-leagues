@@ -298,3 +298,123 @@ export async function sendAdminBroadcast(request: AdminBroadcastRequest): Promis
 export async function setPickedGames(_pickedData: { year: number; week: number; games: number[] }): Promise<SetPicksResponse> {
   return { success: false, error: 'Game selection is now per-league (Phase 4)' };
 }
+
+// --- League Admin endpoints ---
+
+type AdminLeaguesClient = typeof client.api.admin.leagues;
+type GetLeagueGamesRPC = InferResponseType<AdminLeaguesClient[':leagueId']['games']['$get'], 200>;
+
+export type LeagueGameWire = GetLeagueGamesRPC['games'][number];
+
+export interface GetLeagueGamesResponse {
+  success: boolean;
+  data?: LeagueGameWire[];
+  error?: string;
+}
+
+export async function getLeagueGamesForWeek(
+  leagueId: number,
+  year: number,
+  weekNumber: number,
+): Promise<GetLeagueGamesResponse> {
+  try {
+    const res = await client.api.admin.leagues[':leagueId'].games.$get({
+      param: { leagueId: String(leagueId) },
+      query: { year: String(year), weekNumber: String(weekNumber) },
+    });
+    if (!res.ok) return { success: false, error: await extractError(res) };
+    const body = await res.json();
+    return { success: true, data: body.games };
+  } catch {
+    return { success: false, error: 'Request failed' };
+  }
+}
+
+export interface LeagueGameMutationResponse {
+  success: boolean;
+  error?: string;
+  status?: number;
+}
+
+export async function addGameToLeague(
+  leagueId: number,
+  gameId: number,
+): Promise<LeagueGameMutationResponse> {
+  try {
+    const res = await client.api.admin.leagues[':leagueId'].games[':gameId'].$post({
+      param: { leagueId: String(leagueId), gameId: String(gameId) },
+    });
+    const status = res.status;
+    if (!res.ok) return { success: false, error: await extractError(res), status };
+    return { success: true };
+  } catch {
+    return { success: false, error: 'Request failed' };
+  }
+}
+
+export async function removeGameFromLeague(
+  leagueId: number,
+  gameId: number,
+): Promise<LeagueGameMutationResponse> {
+  try {
+    const res = await client.api.admin.leagues[':leagueId'].games[':gameId'].$delete({
+      param: { leagueId: String(leagueId), gameId: String(gameId) },
+    });
+    const status = res.status;
+    if (!res.ok) return { success: false, error: await extractError(res), status };
+    return { success: true };
+  } catch {
+    return { success: false, error: 'Request failed' };
+  }
+}
+
+export interface MarkLeagueWeekCompleteResponse {
+  success: boolean;
+  data?: { completed: number };
+  error?: string;
+}
+
+export async function markLeagueWeekComplete(
+  leagueId: number,
+  year: number,
+  weekNumber: number,
+): Promise<MarkLeagueWeekCompleteResponse> {
+  try {
+    const res = await client.api.admin.leagues[':leagueId'].games.complete.$post({
+      param: { leagueId: String(leagueId) },
+      query: { year: String(year), weekNumber: String(weekNumber) },
+    });
+    if (!res.ok) return { success: false, error: await extractError(res) };
+    const body = await res.json();
+    return { success: true, data: body };
+  } catch {
+    return { success: false, error: 'Request failed' };
+  }
+}
+
+type LeagueScoreRPC = InferResponseType<AdminLeaguesClient[':leagueId']['games'][':gameId']['score']['$patch'], 200>;
+export type LeagueGameCorrectedWire = LeagueScoreRPC['game'];
+
+export interface CorrectLeagueGameScoreResponse {
+  success: boolean;
+  data?: LeagueGameCorrectedWire;
+  error?: string;
+}
+
+export async function correctLeagueGameScore(
+  leagueId: number,
+  gameId: number,
+  body: CorrectGameScoreRequest,
+): Promise<CorrectLeagueGameScoreResponse> {
+  try {
+    const res = await client.api.admin.leagues[':leagueId'].games[':gameId'].score.$patch({
+      param: { leagueId: String(leagueId), gameId: String(gameId) },
+      json: body,
+    });
+    if (!res.ok) return { success: false, error: await extractError(res) };
+    const data = await res.json();
+    return { success: true, data: data.game };
+  } catch {
+    return { success: false, error: 'Request failed' };
+  }
+}
