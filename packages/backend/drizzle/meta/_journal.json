@@ -50,6 +50,13 @@
       "when": 1774287194320,
       "tag": "0006_soft_echo",
       "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1780017581373,
+      "tag": "0007_charming_brother_voodoo",
+      "breakpoints": true
     }
   ]
 }
