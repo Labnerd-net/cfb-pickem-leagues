@@ -87,6 +87,33 @@ export const handlers = [
 		return HttpResponse.json({ status: 'updated picked games' });
 	}),
 
+	// League endpoints
+	http.get(`${API_URL}/api/leagues`, () => {
+		return HttpResponse.json({
+			leagues: [
+				{
+					leagueId: 1,
+					name: 'Default League',
+					memberCount: 2,
+					createdAt: '2024-01-01T00:00:00.000Z',
+					role: 'admin',
+				},
+			],
+		});
+	}),
+
+	http.post(`${API_URL}/api/leagues/join`, () => {
+		return HttpResponse.json({
+			league: {
+				leagueId: 2,
+				name: 'New League',
+				memberCount: 1,
+				createdAt: '2024-01-01T00:00:00.000Z',
+				role: 'member',
+			},
+		});
+	}),
+
 	// Leaderboard endpoints
 	http.get(`${API_URL}/api/leaderboard`, () => {
 		return HttpResponse.json({

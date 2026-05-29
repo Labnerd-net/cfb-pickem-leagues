@@ -1,6 +1,8 @@
 import { useState } from 'react';
-import { Container, Box, Tabs, Tab } from '@mui/material';
+import { Container, Box, Tabs, Tab, CircularProgress } from '@mui/material';
 import { useAuth } from '../contexts/auth/AuthContext';
+import { useLeague } from '../contexts/LeagueContext';
+import JoinLeaguePrompt from '../components/JoinLeaguePrompt';
 import SportsFootballIcon from '@mui/icons-material/SportsFootball';
 import AdminPanelSettingsIcon from '@mui/icons-material/AdminPanelSettings';
 import PeopleIcon from '@mui/icons-material/People';
@@ -17,8 +19,21 @@ const IS_DEV = import.meta.env.DEV;
 
 export default function Dashboard() {
   const { user } = useAuth();
+  const { activeLeague, isLoading: leagueLoading, refetchLeagues } = useLeague();
   const isAdmin = user?.roles.includes('admin') ?? false;
   const [currentTab, setCurrentTab] = useState(0);
+
+  if (leagueLoading) {
+    return (
+      <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '60vh' }}>
+        <CircularProgress />
+      </Box>
+    );
+  }
+
+  if (!activeLeague) {
+    return <JoinLeaguePrompt onJoined={refetchLeagues} />;
+  }
 
   const tabComponents = [
     <UserSection />,

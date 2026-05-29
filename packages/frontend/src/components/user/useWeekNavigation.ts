@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import type { AdminWeekData } from '@shared/types/cfb-pickem-api';
 import { getPickedGames, getWeeksForYear, type AdminGameWire } from '../../apis/userRequests';
+import { useLeague } from '../../contexts/LeagueContext';
 import { getCurrentWeek, getCurrentSeason } from '../../utils/weekCalculation';
 import { logger } from '../../utils/logger';
 
@@ -18,6 +19,8 @@ export interface UseWeekNavigationReturn {
 }
 
 export function useWeekNavigation(): UseWeekNavigationReturn {
+  const { activeLeague } = useLeague();
+  const leagueId = activeLeague?.leagueId ?? 1;
   const [selectedYear, setSelectedYear] = useState<number>(0);
   const [selectedWeek, setSelectedWeek] = useState<number>(0);
   const [availableYears, setAvailableYears] = useState<number[]>([]);
@@ -118,7 +121,7 @@ export function useWeekNavigation(): UseWeekNavigationReturn {
       try {
         setLoading(true);
         setError(null);
-        const gamesResult = await getPickedGames({ year: selectedYear, week: selectedWeek });
+        const gamesResult = await getPickedGames({ year: selectedYear, week: selectedWeek }, leagueId);
 
         if (cancelled) return;
 
@@ -144,7 +147,7 @@ export function useWeekNavigation(): UseWeekNavigationReturn {
     return () => {
       cancelled = true;
     };
-  }, [selectedYear, selectedWeek]);
+  }, [selectedYear, selectedWeek, leagueId]);
 
   return {
     selectedYear,

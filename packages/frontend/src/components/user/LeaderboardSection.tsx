@@ -17,12 +17,15 @@ import {
 } from '@mui/material';
 import type { LeaderboardEntry, WeekScoresEntry, AdminWeekData } from '@shared/types/cfb-pickem-api.js';
 import { useAuth } from '../../contexts/auth/AuthContext';
+import { useLeague } from '../../contexts/LeagueContext';
 import { getLeaderboard, getWeekScores } from '../../apis/leaderboardRequests';
 import { getWeeksForYear } from '../../apis/userRequests';
 import { getCurrentSeason } from '../../utils/weekCalculation';
 
 export default function LeaderboardSection() {
   const { user } = useAuth();
+  const { activeLeague } = useLeague();
+  const leagueId = activeLeague?.leagueId ?? 1;
   const currentSeason = getCurrentSeason();
   const yearOptions = [currentSeason, currentSeason - 1, currentSeason - 2];
 
@@ -46,7 +49,7 @@ export default function LeaderboardSection() {
     const load = async () => {
       setLoading(true);
       setError(null);
-      const result = await getLeaderboard(year);
+      const result = await getLeaderboard(year, leagueId);
       if (result.success && result.data) {
         setEntries(result.data);
       } else {
@@ -55,7 +58,7 @@ export default function LeaderboardSection() {
       setLoading(false);
     };
     load();
-  }, [year]);
+  }, [year, leagueId]);
 
   // Week view — load weeks when weekYear or view changes
   useEffect(() => {
@@ -102,7 +105,7 @@ export default function LeaderboardSection() {
       setWeekLoading(true);
       setWeekError(null);
 
-      const result = await getWeekScores(weekYear, weekNumber);
+      const result = await getWeekScores(weekYear, weekNumber, leagueId);
       if (cancelled) return;
 
       if (result.success && result.data) {
@@ -118,7 +121,7 @@ export default function LeaderboardSection() {
 
     loadScores();
     return () => { cancelled = true; };
-  }, [view, weekYear, weekNumber]);
+  }, [view, weekYear, weekNumber, leagueId]);
 
   return (
     <Box>
