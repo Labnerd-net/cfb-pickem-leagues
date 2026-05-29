@@ -28,7 +28,7 @@ export default function GamesList({
   const [pickedFirst, setPickedFirst] = useState(false);
 
   const sortedGames = pickedFirst
-    ? [...games].sort((a, b) => Number(b.picked) - Number(a.picked))
+    ? [...games].sort((a, b) => Number(b.inLeague) - Number(a.inLeague))
     : games;
 
   const controlProps = {

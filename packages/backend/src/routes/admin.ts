@@ -12,14 +12,13 @@ import { authMiddleware, requireRole } from '../utils/middleware.js';
 import { apiRateLimit } from '../utils/rateLimiter.js';
 import { z } from 'zod';
 import { zValidator } from '@hono/zod-validator';
-import { weekIdentifierValidator, pickedGameRequestValidator, updateUserRolesValidator, markGameCompleteValidator, yearQueryValidator, weekIdentifierQueryValidator, correctGameScoreParamValidator, correctGameScoreBodyValidator, adminBroadcastBodyValidator, resetPasswordParamValidator, resetPasswordBodyValidator } from '../utils/zValidate.js';
-import { dispatchNotification, dispatchAdminBroadcast } from '../notifications/dispatcher.js';
+import { updateUserRolesValidator, weekIdentifierValidator, markGameCompleteValidator, yearQueryValidator, weekIdentifierQueryValidator, correctGameScoreParamValidator, correctGameScoreBodyValidator, adminBroadcastBodyValidator, resetPasswordParamValidator, resetPasswordBodyValidator } from '../utils/zValidate.js';
+import { dispatchAdminBroadcast } from '../notifications/dispatcher.js';
 import { getNow } from '../utils/clock.js';
 import { sendNtfyNotification } from '../notifications/ntfySender.js';
 import { sendTelegramNotification } from '../notifications/telegramSender.js';
 import { sendDiscordNotification } from '../notifications/discordSender.js';
 import { ntfyEnabled, telegramEnabled, discordEnabled } from '../utils/envVars.js';
-import logger from '../utils/logger.js';
 
 type Variables = {
   jwtPayload: JwtData;
@@ -150,26 +149,6 @@ const admin = new Hono<{ Variables: Variables }>()
     const weekGames = await dbAdminFunctions.returnGamesForWeek({ year, week: weekNumber });
     return c.json({ weekGames });
   })
-  // Set picked games
-  .post(
-    '/picks',
-    apiRateLimit,
-    authMiddleware,
-    requireRole('admin'),
-    pickedGameRequestValidator,
-    async c => {
-      const pickedData = c.req.valid('json');
-      if (pickedData.games.length === 0)
-        throw new HTTPException(422, { message: 'games array must not be empty' });
-      await dbAdminFunctions.setPickedGames(pickedData);
-      dispatchNotification({
-        notificationType: 'games_ready',
-        year: pickedData.year,
-        weekNumber: pickedData.week,
-      }).catch(err => logger.error({ err }, 'games_ready dispatch failed'));
-      return c.json({ status: 'updated picked games' });
-    }
-  )
   // Mark a game complete with final scores
   .post(
     '/games/complete',
@@ -182,22 +161,10 @@ const admin = new Hono<{ Variables: Variables }>()
       const gameRows = await dbAdminFunctions.returnGame(gameId);
       if (!gameRows || gameRows.length === 0)
         throw new HTTPException(404, { message: 'Game not found' });
-      const game = gameRows[0];
       const updated = await dbAdminFunctions.markGameComplete(gameId, homePoints, awayPoints);
       if (!updated) throw new HTTPException(404, { message: 'Game not found' });
 
-      // Dispatch rankings_updated if all picked games for the week are now complete
-      const weekGames = await dbAdminFunctions.returnPickedGames({
-        year: game.year,
-        week: game.weekNumber,
-      });
-      if (weekGames.length > 0 && weekGames.every(g => g.completed)) {
-        dispatchNotification({
-          notificationType: 'rankings_updated',
-          year: game.year,
-          weekNumber: game.weekNumber,
-        }).catch(err => logger.error({ err }, 'rankings_updated dispatch failed'));
-      }
+      // Note: rankings_updated notification is per-league and will be dispatched in Phase 6
 
       return c.json({ game: updated });
     }
@@ -218,18 +185,7 @@ const admin = new Hono<{ Variables: Variables }>()
       const updated = await dbAdminFunctions.correctGameScore(gameId, homePoints, awayPoints, correctedBy);
       if (!updated) throw new HTTPException(404, { message: 'Game not found' });
 
-      // Dispatch rankings_updated if all picked games for the week are now complete
-      const weekGames = await dbAdminFunctions.returnPickedGames({
-        year: updated.year,
-        week: updated.weekNumber,
-      });
-      if (weekGames.length > 0 && weekGames.every(g => g.completed)) {
-        dispatchNotification({
-          notificationType: 'rankings_updated',
-          year: updated.year,
-          weekNumber: updated.weekNumber,
-        }).catch(err => logger.error({ err }, 'rankings_updated dispatch failed'));
-      }
+      // Note: rankings_updated notification is per-league and will be dispatched in Phase 6
 
       return c.json({ game: updated });
     }

@@ -1,8 +1,9 @@
 import 'dotenv/config';
-import { upsertGameForWeek, returnGamesForWeek, setPickedGames } from '../db/dbAdminFunctions.js';
+import { upsertGameForWeek, returnGamesForWeek, addGameToLeague } from '../db/dbAdminFunctions.js';
 import { db } from '../db/index.js';
 import { adminWeeks } from '../db/schema/admin.js';
-import { sql } from 'drizzle-orm';
+import { leagues } from '../db/schema/leagues.js';
+import { sql, eq } from 'drizzle-orm';
 import type { AdminGameData, AdminWeekData } from '@shared/types/cfb-pickem-api.js';
 
 // Simulation seed — safe to run in production.
@@ -56,7 +57,6 @@ function game(weekNumber: number, homeTeam: string, awayTeam: string, startTime:
   return {
     gameId: 0,
     cfbdGameId: null,
-    picked: false,
     weekNumber,
     year: SIM_YEAR,
     seasonType: 'regular',
@@ -147,15 +147,17 @@ async function main() {
   }
   console.log(`  ${GAMES.length} games upserted`);
 
-  console.log('seed-sim: marking all games as picked…');
-  for (const week of WEEKS) {
-    const weekGames = await returnGamesForWeek({ year: SIM_YEAR, week: week.weekNumber });
-    await setPickedGames({
-      year: SIM_YEAR,
-      week: week.weekNumber,
-      games: weekGames.map(g => g.gameId),
-    });
-    console.log(`  week ${week.weekNumber}: ${weekGames.length} games picked`);
+  console.log('seed-sim: adding all games to Default League pool…');
+  const defaultLeague = await db.select({ leagueId: leagues.leagueId }).from(leagues).where(eq(leagues.name, 'Default League')).limit(1);
+  if (defaultLeague.length > 0) {
+    const leagueId = defaultLeague[0].leagueId;
+    for (const week of WEEKS) {
+      const weekGames = await returnGamesForWeek({ year: SIM_YEAR, week: week.weekNumber });
+      for (const g of weekGames) {
+        await addGameToLeague(leagueId, g.gameId).catch(() => { /* already in pool */ });
+      }
+      console.log(`  week ${week.weekNumber}: ${weekGames.length} games added to league pool`);
+    }
   }
 
   console.log('seed-sim: done.');

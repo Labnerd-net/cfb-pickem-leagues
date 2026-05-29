@@ -2,6 +2,7 @@ import { eq, and, ne, sql, count } from 'drizzle-orm';
 import { alias } from 'drizzle-orm/pg-core';
 import { users, games, deletedUsers } from './schema/users.js';
 import { adminGames } from './schema/admin.js';
+import { leagueMembers } from './schema/leagues.js';
 import { db } from './index.js';
 import logger from '../utils/logger.js';
 import type {
@@ -199,8 +200,8 @@ export async function updateUserProfile(
 // ------------------------------------------------------------------
 // Add Game Picks to user
 // ------------------------------------------------------------------
-export async function addPickedGame(pick: UserGamePicks, userId: string): Promise<void> {
-  logger.debug({ game: pick.game, userId }, 'addPickedGame');
+export async function addPickedGame(pick: UserGamePicks, userId: string, leagueId = 1): Promise<void> {
+  logger.debug({ game: pick.game, userId, leagueId }, 'addPickedGame');
   try {
     const userIdNumber = Number(userId);
     await db
@@ -208,10 +209,11 @@ export async function addPickedGame(pick: UserGamePicks, userId: string): Promis
       .values({
         userId: userIdNumber,
         gameId: pick.game,
+        leagueId,
         teamChosen: pick.pick,
       })
       .onConflictDoUpdate({
-        target: [games.userId, games.gameId],
+        target: [games.userId, games.gameId, games.leagueId],
         set: {
           teamChosen: pick.pick,
         },
@@ -225,8 +227,12 @@ export async function addPickedGame(pick: UserGamePicks, userId: string): Promis
 // ------------------------------------------------------------------
 // Add Game Picks to user (batch, transactional)
 // ------------------------------------------------------------------
-export async function addPickedGamesBatch(picks: UserGamePicks[], userId: string): Promise<void> {
-  logger.debug({ count: picks.length, userId }, 'addPickedGamesBatch');
+export async function addPickedGamesBatch(
+  picks: UserGamePicks[],
+  userId: string,
+  leagueId: number
+): Promise<void> {
+  logger.debug({ count: picks.length, userId, leagueId }, 'addPickedGamesBatch');
   try {
     const userIdNumber = Number(userId);
     await db.transaction(async tx => {
@@ -236,10 +242,11 @@ export async function addPickedGamesBatch(picks: UserGamePicks[], userId: string
           .values({
             userId: userIdNumber,
             gameId: pick.game,
+            leagueId,
             teamChosen: pick.pick,
           })
           .onConflictDoUpdate({
-            target: [games.userId, games.gameId],
+            target: [games.userId, games.gameId, games.leagueId],
             set: {
               teamChosen: pick.pick,
             },
@@ -257,10 +264,11 @@ export async function addPickedGamesBatch(picks: UserGamePicks[], userId: string
 // ------------------------------------------------------------------
 export async function returnUserPickHistory(
   year: number,
-  userId: string
+  userId: string,
+  leagueId: number
 ): Promise<UserPickHistoryEntry[]> {
   const userIdNumber = Number(userId);
-  logger.debug({ year, userId }, 'returnUserPickHistory');
+  logger.debug({ year, userId, leagueId }, 'returnUserPickHistory');
   try {
     const rows = await db
       .select({
@@ -273,7 +281,7 @@ export async function returnUserPickHistory(
       })
       .from(games)
       .innerJoin(adminGames, eq(games.gameId, adminGames.gameId))
-      .where(and(eq(adminGames.year, year), eq(games.userId, userIdNumber), ne(games.teamChosen, 'voided')))
+      .where(and(eq(adminGames.year, year), eq(games.userId, userIdNumber), eq(games.leagueId, leagueId), ne(games.teamChosen, 'voided')))
       .groupBy(adminGames.year, adminGames.weekNumber)
       .orderBy(sql`${adminGames.weekNumber} DESC`);
     return rows.map(r => ({
@@ -299,8 +307,8 @@ export async function returnUserPickHistory(
 // of materialized counters or an application-level cache would not be justified.
 // Revisit if the user base grows significantly.
 // ------------------------------------------------------------------
-export async function returnLeaderboard(year: number): Promise<LeaderboardEntry[]> {
-  logger.debug({ year }, 'returnLeaderboard');
+export async function returnLeaderboard(year: number, leagueId: number): Promise<LeaderboardEntry[]> {
+  logger.debug({ year, leagueId }, 'returnLeaderboard');
   // Alias user.games to avoid a table-name collision with admin.games in the same query
   const userGames = alias(games, 'user_games');
   try {
@@ -314,7 +322,8 @@ export async function returnLeaderboard(year: number): Promise<LeaderboardEntry[
         pending: sql<number>`COUNT(CASE WHEN ${adminGames.winningTeam} = 'pending' AND ${userGames.teamChosen} != 'voided' THEN 1 END)`,
       })
       .from(users)
-      .leftJoin(userGames, eq(users.userId, userGames.userId))
+      .innerJoin(leagueMembers, and(eq(leagueMembers.userId, users.userId), eq(leagueMembers.leagueId, leagueId)))
+      .leftJoin(userGames, and(eq(users.userId, userGames.userId), eq(userGames.leagueId, leagueId)))
       .leftJoin(adminGames, and(eq(userGames.gameId, adminGames.gameId), eq(adminGames.year, year)))
       .groupBy(users.userId, users.displayName)
       .orderBy(
@@ -346,8 +355,8 @@ export async function returnLeaderboard(year: number): Promise<LeaderboardEntry[
 // Same as returnLeaderboard: aggregated per-request, no caching. Acceptable at
 // current scale; see returnLeaderboard comment for the rationale.
 // ------------------------------------------------------------------
-export async function returnWeekScores(year: number, week: number): Promise<WeekScoresEntry[]> {
-  logger.debug({ year, week }, 'returnWeekScores');
+export async function returnWeekScores(year: number, week: number, leagueId: number): Promise<WeekScoresEntry[]> {
+  logger.debug({ year, week, leagueId }, 'returnWeekScores');
   try {
     const rows = await db
       .select({
@@ -368,7 +377,7 @@ export async function returnWeekScores(year: number, week: number): Promise<Week
         )
       )
       .innerJoin(users, eq(games.userId, users.userId))
-      .where(ne(games.teamChosen, 'voided'))
+      .where(and(ne(games.teamChosen, 'voided'), eq(games.leagueId, leagueId)))
       .groupBy(users.userId, users.displayName);
     return rows.map(r => ({
       userId: r.userId,
@@ -390,9 +399,10 @@ export async function returnWeekScores(year: number, week: number): Promise<Week
 export async function returnUserPickCount(
   userId: number,
   year: number,
-  weekNumber: number
+  weekNumber: number,
+  leagueId: number
 ): Promise<number> {
-  logger.debug({ userId, year, weekNumber }, 'returnUserPickCount');
+  logger.debug({ userId, year, weekNumber, leagueId }, 'returnUserPickCount');
   try {
     const rows = await db
       .select({ count: sql<number>`COUNT(*)` })
@@ -405,7 +415,7 @@ export async function returnUserPickCount(
           eq(adminGames.weekNumber, weekNumber)
         )
       )
-      .where(and(eq(games.userId, userId), ne(games.teamChosen, 'voided')));
+      .where(and(eq(games.userId, userId), eq(games.leagueId, leagueId), ne(games.teamChosen, 'voided')));
     return Number(rows[0]?.count ?? 0);
   } catch (e) {
     logger.error({ err: e }, 'returnUserPickCount failed');
@@ -418,10 +428,11 @@ export async function returnUserPickCount(
 // ------------------------------------------------------------------
 export async function returnUserGames(
   identifier: WeekIdentifier,
-  userId: string
+  userId: string,
+  leagueId: number
 ): Promise<UserDbGameData[]> {
   const userIdNumber = Number(userId);
-  logger.debug({ year: identifier.year, week: identifier.week, userId }, 'returnUserGames');
+  logger.debug({ year: identifier.year, week: identifier.week, userId, leagueId }, 'returnUserGames');
   try {
     return await db
       .select({
@@ -448,6 +459,7 @@ export async function returnUserGames(
           eq(adminGames.year, identifier.year),
           eq(adminGames.weekNumber, identifier.week),
           eq(games.userId, userIdNumber),
+          eq(games.leagueId, leagueId),
           ne(games.teamChosen, 'voided')
         )
       );

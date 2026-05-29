@@ -70,7 +70,6 @@ export async function getGameData(
     }
     const data: AdminGameData = {
       cfbdGameId: game.id,
-      picked: false,
       weekNumber: queryData.week,
       year: queryData.year,
       seasonType: queryData.seasonType,

@@ -141,7 +141,7 @@ export default function MarkCompleteCard() {
       setScores({});
       const result = await getGamesForWeek({ year: selectedYear, week: selectedWeek });
       if (result.success && result.data) {
-        const picked = result.data.filter(g => g.picked);
+        const picked = result.data.filter(g => g.inLeague);
         setGames(picked);
         const init: Record<number, { home: string; away: string }> = {};
         for (const g of picked) {

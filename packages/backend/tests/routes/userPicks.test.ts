@@ -2,7 +2,7 @@ import { describe, it, expect, beforeAll } from 'vitest';
 import { Hono } from 'hono';
 import { HTTPException } from 'hono/http-exception';
 import { sign } from 'hono/jwt';
-import { seedTestData, createTestWeek, createTestGame } from '../db-utils.js';
+import { seedTestData, createTestWeek, createTestGame, createLeagueGame } from '../db-utils.js';
 import userRoutes from '../../src/routes/user.js';
 
 const TEST_JWT_SECRET = 'test-secret-key-do-not-use-in-production';
@@ -28,10 +28,11 @@ async function makeToken() {
 	);
 }
 
-function makePicksBody(gameId: number) {
+function makePicksBody(gameId: number, leagueId = 1) {
 	return JSON.stringify({
 		year: 2024,
 		week: 1,
+		leagueId,
 		games: [{ game: gameId, pick: 'home_team' }],
 	});
 }
@@ -53,10 +54,11 @@ describe('POST /api/user/picks — curated game enforcement', () => {
 		await createTestWeek(1, 2024, 'regular');
 	});
 
-	it('returns 422 when game has picked=false', async () => {
-		// Create a game that is NOT curated (picked=false)
-		const row = await createTestGame(1, 2024, 'Home X', 'Away X', false, false, new Date(Date.now() + 60 * 60 * 1000));
+	it('returns 422 when game is not in the league pool', async () => {
+		// Create a game that is NOT in the league pool
+		const row = await createTestGame(1, 2024, 'Home X', 'Away X', false, new Date(Date.now() + 60 * 60 * 1000));
 		const gameId = (row as { game_id: number }).game_id;
+		// intentionally NOT calling createLeagueGame — game not in pool
 
 		const token = await makeToken();
 		const res = await app.request('/api/user/picks', {
@@ -67,7 +69,7 @@ describe('POST /api/user/picks — curated game enforcement', () => {
 
 		expect(res.status).toBe(422);
 		const body = await res.json() as { error: string };
-		expect(body.error).toContain('not available');
+		expect(body.error).toContain('not in this league');
 		expect(body.error).toContain(String(gameId));
 	});
 });

@@ -39,7 +39,6 @@ vi.mock('../src/db/index.ts', async () => {
 		CREATE TABLE admin.games (
 			game_id SERIAL PRIMARY KEY,
 			cfbd_game_id INTEGER,
-			picked BOOLEAN NOT NULL,
 			week_number INTEGER NOT NULL,
 			year INTEGER NOT NULL,
 			season_type TEXT NOT NULL,
@@ -57,8 +56,6 @@ vi.mock('../src/db/index.ts', async () => {
 		);
 
 		CREATE INDEX games_year_week_idx ON admin.games (year, week_number);
-		CREATE INDEX games_picked_idx ON admin.games (picked);
-		CREATE INDEX games_year_week_picked_idx ON admin.games (year, week_number, picked);
 		ALTER TABLE admin.games ADD CONSTRAINT games_natural_key UNIQUE (year, week_number, home_team, away_team);
 
 		-- Admin schema: score corrections audit log
@@ -97,15 +94,25 @@ vi.mock('../src/db/index.ts', async () => {
 			deleted_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL
 		);
 
+		-- Public schema: leagues (must be created before user.games for FK)
+		CREATE TABLE leagues (
+			league_id SERIAL PRIMARY KEY,
+			name TEXT NOT NULL,
+			invite_code TEXT NOT NULL UNIQUE,
+			created_by INTEGER NOT NULL REFERENCES "user".users (user_id),
+			created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL
+		);
+
 		-- User schema: games table (picks only; join with admin.games for metadata)
 		CREATE TABLE "user".games (
 			user_id INTEGER NOT NULL REFERENCES "user".users (user_id) ON DELETE CASCADE,
 			game_id INTEGER NOT NULL,
+			league_id INTEGER NOT NULL REFERENCES leagues (league_id) ON DELETE RESTRICT,
 			team_chosen TEXT NOT NULL DEFAULT 'pending',
 			created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,
-			PRIMARY KEY (user_id, game_id),
+			PRIMARY KEY (user_id, game_id, league_id),
 			CONSTRAINT user_games_admin_games_fk FOREIGN KEY (game_id)
-				REFERENCES admin.games (game_id) ON DELETE CASCADE
+				REFERENCES admin.games (game_id) ON DELETE RESTRICT
 		);
 
 		-- User schema: notification preferences
@@ -128,15 +135,6 @@ vi.mock('../src/db/index.ts', async () => {
 			channel TEXT NOT NULL,
 			sent_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,
 			CONSTRAINT notification_log_unique UNIQUE (user_id, year, week_number, notification_type, channel)
-		);
-
-		-- Public schema: leagues
-		CREATE TABLE leagues (
-			league_id SERIAL PRIMARY KEY,
-			name TEXT NOT NULL,
-			invite_code TEXT NOT NULL UNIQUE,
-			created_by INTEGER NOT NULL REFERENCES "user".users (user_id),
-			created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL
 		);
 
 		-- Public schema: league members

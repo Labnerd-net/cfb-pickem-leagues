@@ -99,7 +99,7 @@ export interface AdminDbWeekData extends AdminWeekData {
 export interface AdminGameData {
   gameId?: number;
   cfbdGameId: number | null;
-  picked: boolean;
+  inLeague?: boolean;
   weekNumber: number;
   year: number;
   seasonType: SeasonType;
@@ -129,11 +129,8 @@ export interface WeekIdentifier {
   week: number;
 }
 
-export interface PickedGamesRequest extends WeekIdentifier {
-  games: number[];
-}
-
 export interface AllUserGamePicksRequest extends WeekIdentifier {
+  leagueId: number;
   games: UserGamePicks[];
 }
 

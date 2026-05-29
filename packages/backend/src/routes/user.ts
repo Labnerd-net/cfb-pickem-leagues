@@ -5,11 +5,12 @@ import { setCookie } from 'hono/cookie';
 import * as bcrypt from 'bcryptjs';
 import * as dbUserFunctions from '../db/dbUserFunctions.js';
 import {
-  returnPickedGames,
   returnWeeksByYear,
   returnWeekByQuery,
   returnGamesBulk,
+  getGamesForLeagueWeek,
 } from '../db/dbAdminFunctions.js';
+import { getLeagueMembership } from '../db/dbLeagueFunctions.js';
 import {
   returnNotificationSettings,
   upsertNotificationPreference,
@@ -44,10 +45,13 @@ import {
   yearQueryValidator,
   weekIdentifierQueryValidator,
   updateProfileValidator,
+  leagueIdQueryValidator,
 } from '../utils/zValidate.js';
+import { requireLeagueMembership } from '../utils/middleware.js';
 
 type Variables = {
   jwtPayload: JwtData;
+  leagueMembership: { leagueId: number; userId: number; role: string; joinedAt: Date };
 };
 
 const user = new Hono<{ Variables: Variables }>()
@@ -112,20 +116,23 @@ const user = new Hono<{ Variables: Variables }>()
 
     return c.json({ status: 'updated' });
   })
-  // Get user game picks
-  .get('/picks', apiRateLimit, authMiddleware, weekIdentifierQueryValidator, async c => {
+  // Get user game picks (league-scoped)
+  .get('/picks', apiRateLimit, authMiddleware, weekIdentifierQueryValidator, leagueIdQueryValidator, requireLeagueMembership(), async c => {
     const payload = c.get('jwtPayload');
     const userIdString = String(payload.sub);
-    const { year, weekNumber } = c.req.valid('query');
-    const picks = await dbUserFunctions.returnUserGames({ year, week: weekNumber }, userIdString);
+    const year = Number(c.req.query('year'));
+    const weekNumber = Number(c.req.query('weekNumber'));
+    const leagueId = Number(c.req.query('leagueId'));
+    const picks = await dbUserFunctions.returnUserGames({ year, week: weekNumber }, userIdString, leagueId);
     return c.json({ picks });
   })
-  // Get per-week pick history for a year
-  .get('/history', apiRateLimit, authMiddleware, yearQueryValidator, async c => {
+  // Get per-week pick history for a year (league-scoped)
+  .get('/history', apiRateLimit, authMiddleware, yearQueryValidator, leagueIdQueryValidator, requireLeagueMembership(), async c => {
     const payload = c.get('jwtPayload');
     const userIdString = String(payload.sub);
-    const { year } = c.req.valid('query');
-    const history = await dbUserFunctions.returnUserPickHistory(year, userIdString);
+    const year = Number(c.req.query('year'));
+    const leagueId = Number(c.req.query('leagueId'));
+    const history = await dbUserFunctions.returnUserPickHistory(year, userIdString, leagueId);
     return c.json({ history });
   })
   // List weeks in a year with picked games
@@ -136,28 +143,39 @@ const user = new Hono<{ Variables: Variables }>()
       throw new HTTPException(404, { message: 'No weeks available for this year' });
     return c.json({ weeks });
   })
-  // Get admin-picked games for a week
-  .get('/games', apiRateLimit, authMiddleware, weekIdentifierQueryValidator, async c => {
-    const { year, weekNumber } = c.req.valid('query');
+  // Get league's game pool for a week
+  .get('/games', apiRateLimit, authMiddleware, weekIdentifierQueryValidator, leagueIdQueryValidator, requireLeagueMembership(), async c => {
+    const year = Number(c.req.query('year'));
+    const weekNumber = Number(c.req.query('weekNumber'));
+    const leagueId = Number(c.req.query('leagueId'));
     const weekIdentifier: WeekIdentifier = { year, week: weekNumber };
     const week = await returnWeekByQuery(weekIdentifier);
     if (!week || week.length === 0) throw new HTTPException(404, { message: 'Week not found' });
-    const pickedGames: AdminDbGameData[] = await returnPickedGames(weekIdentifier);
+    const pickedGames: AdminDbGameData[] = await getGamesForLeagueWeek(leagueId, year, weekNumber);
     return c.json({ pickedGames });
   })
-  // Set user game picks
+  // Set user game picks (league-scoped)
   .post('/picks', apiRateLimit, authMiddleware, allUserPickedRequestValidator, async c => {
     const payload = c.get('jwtPayload');
     const userIdString = String(payload.sub);
     const userPicks: AllUserGamePicksRequest = c.req.valid('json');
+    const { leagueId } = userPicks;
+
+    // Verify league membership (leagueId is in body, not path param)
+    const membership = await getLeagueMembership(leagueId, payload.sub);
+    if (!membership) throw new HTTPException(403, { message: 'Forbidden' });
 
     const gameIds = userPicks.games.map(p => p.game);
     if (new Set(gameIds).size !== gameIds.length)
       throw new HTTPException(400, { message: 'Duplicate game IDs in picks request' });
 
     // Validate all games before writing anything — prevents partial commits
-    const fetchedGames = await returnGamesBulk(gameIds);
+    const [fetchedGames, leagueGameList] = await Promise.all([
+      returnGamesBulk(gameIds),
+      getGamesForLeagueWeek(leagueId, userPicks.year, userPicks.week),
+    ]);
     const gameMap = new Map(fetchedGames.map(g => [g.gameId, g]));
+    const leagueGameIds = new Set(leagueGameList.map(g => g.gameId));
 
     for (const pick of userPicks.games) {
       const game = gameMap.get(pick.game);
@@ -171,9 +189,9 @@ const user = new Hono<{ Variables: Variables }>()
         });
       }
 
-      if (!game.picked) {
+      if (!leagueGameIds.has(pick.game)) {
         throw new HTTPException(422, {
-          message: `Game ${pick.game} is not available for picks this week.`,
+          message: `Game ${pick.game} is not in this league's pool for this week.`,
         });
       }
 
@@ -191,7 +209,7 @@ const user = new Hono<{ Variables: Variables }>()
       }
     }
 
-    await dbUserFunctions.addPickedGamesBatch(userPicks.games, userIdString);
+    await dbUserFunctions.addPickedGamesBatch(userPicks.games, userIdString, leagueId);
     return c.json({ status: 'updated picked games' });
   })
   // Get notification settings

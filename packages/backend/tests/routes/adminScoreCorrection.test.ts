@@ -139,7 +139,7 @@ describe('PATCH /api/admin/games/:gameId/score', () => {
   });
 
   it('inserts an audit row in score_corrections with before/after values', async () => {
-    const game = await createTestGame(1, 2024, 'Alabama', 'Georgia', true, true);
+    const game = await createTestGame(1, 2024, 'Alabama', 'Georgia', true);
 
     // Manually set initial scores so we have a "before" value
     await testDb.execute(sql`
@@ -165,7 +165,7 @@ describe('PATCH /api/admin/games/:gameId/score', () => {
   });
 
   it('works on a game with no prior score (completed: false)', async () => {
-    const game = await createTestGame(1, 2024, 'Alabama', 'Georgia', true, false);
+    const game = await createTestGame(1, 2024, 'Alabama', 'Georgia', false);
     const token = await makeAdminToken();
     const res = await correctRequest(game.game_id as number, 28, 21, token);
 
@@ -175,21 +175,10 @@ describe('PATCH /api/admin/games/:gameId/score', () => {
     expect(body.game.homePoints).toBe(28);
   });
 
-  it('dispatches rankings_updated when all picked games for the week are complete', async () => {
-    const game = await createTestGame(1, 2024, 'Alabama', 'Georgia', true, false);
+  it('does not dispatch rankings_updated (Phase 6 handles per-league notifications)', async () => {
+    const game = await createTestGame(1, 2024, 'Alabama', 'Georgia', false);
     const token = await makeAdminToken();
     await correctRequest(game.game_id as number, 28, 21, token);
-
-    expect(dispatchNotification).toHaveBeenCalledWith(
-      expect.objectContaining({ notificationType: 'rankings_updated' })
-    );
-  });
-
-  it('does not dispatch rankings_updated when other picked games are still incomplete', async () => {
-    await createTestGame(1, 2024, 'Alabama', 'Georgia', true, false);
-    const game2 = await createTestGame(1, 2024, 'Ohio State', 'Michigan', true, false);
-    const token = await makeAdminToken();
-    await correctRequest(game2.game_id as number, 28, 21, token);
 
     expect(dispatchNotification).not.toHaveBeenCalled();
   });

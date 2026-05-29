@@ -14,6 +14,7 @@ export { db as testDb };
 export async function cleanDatabase() {
 	await db.execute(sql`TRUNCATE TABLE "user"."notification_log", "user"."notification_preferences" CASCADE`);
 	await db.execute(sql`TRUNCATE TABLE "user"."games" CASCADE`);
+	await db.execute(sql`TRUNCATE TABLE league_games, league_members, leagues RESTART IDENTITY CASCADE`);
 	await db.execute(sql`TRUNCATE TABLE "user"."users" RESTART IDENTITY CASCADE`);
 	await db.execute(sql`TRUNCATE TABLE "user"."deleted_users" RESTART IDENTITY CASCADE`);
 	await db.execute(sql`TRUNCATE TABLE "admin"."games" RESTART IDENTITY CASCADE`);
@@ -49,6 +50,19 @@ export async function seedTestData() {
 		INSERT INTO "user"."users" (user_id, email, display_name, password_hash, roles)
 		VALUES (2, 'user@test.com', 'Test User', ${passwordHash}, ARRAY['user']::text[])
 		ON CONFLICT (email) DO NOTHING
+	`);
+
+	// Insert a Default League and add both test users as members
+	await db.execute(sql`
+		INSERT INTO leagues (league_id, name, invite_code, created_by)
+		OVERRIDING SYSTEM VALUE
+		VALUES (1, 'Default League', 'default00', 1)
+		ON CONFLICT (league_id) DO NOTHING
+	`);
+	await db.execute(sql`
+		INSERT INTO league_members (league_id, user_id, role)
+		VALUES (1, 1, 'admin'), (1, 2, 'member')
+		ON CONFLICT (league_id, user_id) DO NOTHING
 	`);
 }
 
@@ -99,17 +113,16 @@ export async function createTestGame(
 	year: number,
 	homeTeam: string,
 	awayTeam: string,
-	picked = false,
 	completed = false,
 	startTime: Date | null = null,
 ) {
 	const result = await db.execute(sql`
 		INSERT INTO "admin"."games" (
-			week_number, year, season_type, picked, completed,
+			week_number, year, season_type, completed,
 			home_team, away_team, home_points, away_points, winning_team, start_time
 		)
 		VALUES (
-			${weekNumber}, ${year}, 'regular', ${picked}, ${completed},
+			${weekNumber}, ${year}, 'regular', ${completed},
 			${homeTeam}, ${awayTeam}, NULL, NULL, 'pending', ${startTime}
 		)
 		RETURNING game_id
@@ -118,13 +131,24 @@ export async function createTestGame(
 }
 
 /**
+ * Helper to add a game to a league's pool
+ */
+export async function createLeagueGame(leagueId: number, gameId: number) {
+	await db.execute(sql`
+		INSERT INTO league_games (league_id, game_id)
+		VALUES (${leagueId}, ${gameId})
+		ON CONFLICT (league_id, game_id) DO NOTHING
+	`);
+}
+
+/**
  * Helper to create a user pick (user.games row)
  */
-export async function createTestPick(userId: number, gameId: number) {
+export async function createTestPick(userId: number, gameId: number, leagueId = 1) {
 	await db.execute(sql`
-		INSERT INTO "user"."games" (user_id, game_id, team_chosen)
-		VALUES (${userId}, ${gameId}, 'home_team')
-		ON CONFLICT (user_id, game_id) DO NOTHING
+		INSERT INTO "user"."games" (user_id, game_id, league_id, team_chosen)
+		VALUES (${userId}, ${gameId}, ${leagueId}, 'home_team')
+		ON CONFLICT (user_id, game_id, league_id) DO NOTHING
 	`);
 }
 

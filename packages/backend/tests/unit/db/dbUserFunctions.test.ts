@@ -114,7 +114,7 @@ describe('User Database Functions', () => {
 
 		it('should insert only userId, gameId, teamChosen into user.games', async () => {
 			await createTestWeek(1, 2024, 'regular');
-			const game = await createTestGame(1, 2024, 'Team A', 'Team B', true, false);
+			const game = await createTestGame(1, 2024, 'Team A', 'Team B', false);
 			const gameId = (game as { game_id: number }).game_id;
 
 			await addPickedGame({ game: gameId, pick: 'home_team' }, '1');
@@ -132,7 +132,7 @@ describe('User Database Functions', () => {
 
 		it('should update teamChosen when pick is re-submitted for same game', async () => {
 			await createTestWeek(1, 2024, 'regular');
-			const game = await createTestGame(1, 2024, 'Team A', 'Team B', true, false);
+			const game = await createTestGame(1, 2024, 'Team A', 'Team B', false);
 			const gameId = (game as { game_id: number }).game_id;
 
 			await addPickedGame({ game: gameId, pick: 'home_team' }, '1');
@@ -159,8 +159,8 @@ describe('User Database Functions', () => {
 
 		it('should insert all picks when all games are valid', async () => {
 			await createTestWeek(1, 2024, 'regular');
-			const game1 = await createTestGame(1, 2024, 'Team A', 'Team B', true, false);
-			const game2 = await createTestGame(1, 2024, 'Team C', 'Team D', true, false);
+			const game1 = await createTestGame(1, 2024, 'Team A', 'Team B', false);
+			const game2 = await createTestGame(1, 2024, 'Team C', 'Team D', false);
 			const gameId1 = (game1 as { game_id: number }).game_id;
 			const gameId2 = (game2 as { game_id: number }).game_id;
 
@@ -169,7 +169,8 @@ describe('User Database Functions', () => {
 					{ game: gameId1, pick: 'home_team' },
 					{ game: gameId2, pick: 'away_team' },
 				],
-				'1'
+				'1',
+				1
 			);
 
 			const rows = await db.execute(
@@ -182,7 +183,7 @@ describe('User Database Functions', () => {
 
 		it('should roll back all picks when one insert fails mid-batch', async () => {
 			await createTestWeek(1, 2024, 'regular');
-			const game1 = await createTestGame(1, 2024, 'Team A', 'Team B', true, false);
+			const game1 = await createTestGame(1, 2024, 'Team A', 'Team B', false);
 			const gameId1 = (game1 as { game_id: number }).game_id;
 			const nonExistentGameId = 999999;
 
@@ -192,7 +193,8 @@ describe('User Database Functions', () => {
 						{ game: gameId1, pick: 'home_team' },
 						{ game: nonExistentGameId, pick: 'away_team' },
 					],
-					'1'
+					'1',
+					1
 				)
 			).rejects.toThrow();
 
@@ -211,12 +213,12 @@ describe('User Database Functions', () => {
 
 		it('should return full game metadata via join', async () => {
 			await createTestWeek(1, 2024, 'regular');
-			const game = await createTestGame(1, 2024, 'Team A', 'Team B', true, false);
+			const game = await createTestGame(1, 2024, 'Team A', 'Team B', false);
 			const gameId = (game as { game_id: number }).game_id;
 
 			await addPickedGame({ game: gameId, pick: 'home_team' }, '1');
 
-			const picks = await returnUserGames({ year: 2024, week: 1 }, '1');
+			const picks = await returnUserGames({ year: 2024, week: 1 }, '1', 1);
 
 			expect(picks.length).toBe(1);
 			expect(picks[0]).toMatchObject({
@@ -234,7 +236,7 @@ describe('User Database Functions', () => {
 
 		it('should reflect updated scores from admin.games without re-submitting pick', async () => {
 			await createTestWeek(1, 2024, 'regular');
-			const game = await createTestGame(1, 2024, 'Team A', 'Team B', true, false);
+			const game = await createTestGame(1, 2024, 'Team A', 'Team B', false);
 			const gameId = (game as { game_id: number }).game_id;
 
 			await addPickedGame({ game: gameId, pick: 'home_team' }, '1');
@@ -246,7 +248,7 @@ describe('User Database Functions', () => {
 				WHERE game_id = ${gameId}
 			`);
 
-			const picks = await returnUserGames({ year: 2024, week: 1 }, '1');
+			const picks = await returnUserGames({ year: 2024, week: 1 }, '1', 1);
 
 			expect(picks.length).toBe(1);
 			expect(picks[0]).toMatchObject({
@@ -258,7 +260,7 @@ describe('User Database Functions', () => {
 		});
 
 		it('should return empty array when no picks exist for the week', async () => {
-			const picks = await returnUserGames({ year: 2024, week: 1 }, '1');
+			const picks = await returnUserGames({ year: 2024, week: 1 }, '1', 1);
 
 			expect(Array.isArray(picks)).toBe(true);
 			expect(picks.length).toBe(0);
@@ -273,9 +275,9 @@ describe('User Database Functions', () => {
 
 		it('returns correct/incorrect/pending counts for a user with picks', async () => {
 			await createTestWeek(1, 2024, 'regular');
-			const g1 = await createTestGame(1, 2024, 'Home A', 'Away A', true, true);
-			const g2 = await createTestGame(1, 2024, 'Home B', 'Away B', true, true);
-			const g3 = await createTestGame(1, 2024, 'Home C', 'Away C', true, false);
+			const g1 = await createTestGame(1, 2024, 'Home A', 'Away A', true);
+			const g2 = await createTestGame(1, 2024, 'Home B', 'Away B', true);
+			const g3 = await createTestGame(1, 2024, 'Home C', 'Away C', false);
 			const id1 = (g1 as { game_id: number }).game_id;
 			const id2 = (g2 as { game_id: number }).game_id;
 			const id3 = (g3 as { game_id: number }).game_id;
@@ -289,7 +291,7 @@ describe('User Database Functions', () => {
 			await addPickedGame({ game: id2, pick: 'home_team' }, '1');
 			await addPickedGame({ game: id3, pick: 'home_team' }, '1');
 
-			const entries = await returnLeaderboard(2024);
+			const entries = await returnLeaderboard(2024, 1);
 			const user1 = entries.find(e => e.userId === 1)!;
 
 			expect(user1.correct).toBe(1);
@@ -300,8 +302,8 @@ describe('User Database Functions', () => {
 
 		it('calculates percentage correctly', async () => {
 			await createTestWeek(1, 2024, 'regular');
-			const g1 = await createTestGame(1, 2024, 'Home A', 'Away A', true, true);
-			const g2 = await createTestGame(1, 2024, 'Home B', 'Away B', true, true);
+			const g1 = await createTestGame(1, 2024, 'Home A', 'Away A', true);
+			const g2 = await createTestGame(1, 2024, 'Home B', 'Away B', true);
 			const id1 = (g1 as { game_id: number }).game_id;
 			const id2 = (g2 as { game_id: number }).game_id;
 
@@ -312,7 +314,7 @@ describe('User Database Functions', () => {
 			await addPickedGame({ game: id1, pick: 'home_team' }, '1');
 			await addPickedGame({ game: id2, pick: 'away_team' }, '1');
 
-			const entries = await returnLeaderboard(2024);
+			const entries = await returnLeaderboard(2024, 1);
 			const user1 = entries.find(e => e.userId === 1)!;
 
 			expect(user1.percentage).toBeCloseTo(0.5);
@@ -320,7 +322,7 @@ describe('User Database Functions', () => {
 
 		it('returns null percentage for user with zero picks', async () => {
 			// User 2 has no picks — still appears due to LEFT JOIN
-			const entries = await returnLeaderboard(2024);
+			const entries = await returnLeaderboard(2024, 1);
 			const user2 = entries.find(e => e.userId === 2)!;
 
 			expect(user2).toBeDefined();
@@ -331,8 +333,8 @@ describe('User Database Functions', () => {
 
 		it('orders tied users by correct count descending', async () => {
 			await createTestWeek(1, 2024, 'regular');
-			const g1 = await createTestGame(1, 2024, 'Home A', 'Away A', true, true);
-			const g2 = await createTestGame(1, 2024, 'Home B', 'Away B', true, true);
+			const g1 = await createTestGame(1, 2024, 'Home A', 'Away A', true);
+			const g2 = await createTestGame(1, 2024, 'Home B', 'Away B', true);
 			const id1 = (g1 as { game_id: number }).game_id;
 			const id2 = (g2 as { game_id: number }).game_id;
 
@@ -345,7 +347,7 @@ describe('User Database Functions', () => {
 			await addPickedGame({ game: id1, pick: 'home_team' }, '2');
 			await addPickedGame({ game: id2, pick: 'away_team' }, '2');
 
-			const entries = await returnLeaderboard(2024);
+			const entries = await returnLeaderboard(2024, 1);
 
 			expect(entries[0].userId).toBe(1);
 			expect(entries[0].correct).toBe(2);
@@ -354,7 +356,7 @@ describe('User Database Functions', () => {
 		});
 
 		it('returns empty array for a year with no data', async () => {
-			const entries = await returnLeaderboard(1999);
+			const entries = await returnLeaderboard(1999, 1);
 
 			// All users appear (LEFT JOIN) but with zero picks
 			entries.forEach(e => {
@@ -366,8 +368,8 @@ describe('User Database Functions', () => {
 		it('does not include picks from other years', async () => {
 			await createTestWeek(1, 2024, 'regular');
 			await createTestWeek(1, 2025, 'regular');
-			const g2024 = await createTestGame(1, 2024, 'Home A', 'Away A', true, true);
-			const g2025 = await createTestGame(1, 2025, 'Home B', 'Away B', true, true);
+			const g2024 = await createTestGame(1, 2024, 'Home A', 'Away A', true);
+			const g2025 = await createTestGame(1, 2025, 'Home B', 'Away B', true);
 			const id2024 = (g2024 as { game_id: number }).game_id;
 			const id2025 = (g2025 as { game_id: number }).game_id;
 
@@ -378,7 +380,7 @@ describe('User Database Functions', () => {
 			await addPickedGame({ game: id2024, pick: 'home_team' }, '1');
 			await addPickedGame({ game: id2025, pick: 'home_team' }, '1');
 
-			const entries2024 = await returnLeaderboard(2024);
+			const entries2024 = await returnLeaderboard(2024, 1);
 			const user1in2024 = entries2024.find(e => e.userId === 1)!;
 
 			// Only the 2024 pick should count
@@ -388,16 +390,16 @@ describe('User Database Functions', () => {
 
 		it('does not count voided picks on pending games as pending', async () => {
 			await createTestWeek(1, 2024, 'regular');
-			const g1 = await createTestGame(1, 2024, 'Home A', 'Away A', true, false);
+			const g1 = await createTestGame(1, 2024, 'Home A', 'Away A', false);
 			const id1 = (g1 as { game_id: number }).game_id;
 
 			// Game is still pending (winningTeam = 'pending' by default)
 			await db.execute(sql`
-				INSERT INTO "user"."games" (user_id, game_id, team_chosen)
-				VALUES (1, ${id1}, 'voided')
+				INSERT INTO "user"."games" (user_id, game_id, league_id, team_chosen)
+				VALUES (1, ${id1}, 1, 'voided')
 			`);
 
-			const entries = await returnLeaderboard(2024);
+			const entries = await returnLeaderboard(2024, 1);
 			const user1 = entries.find(e => e.userId === 1)!;
 
 			expect(user1.pending).toBe(0);
@@ -407,8 +409,8 @@ describe('User Database Functions', () => {
 
 		it('does not count voided picks as incorrect', async () => {
 			await createTestWeek(1, 2024, 'regular');
-			const g1 = await createTestGame(1, 2024, 'Home A', 'Away A', true, true);
-			const g2 = await createTestGame(1, 2024, 'Home B', 'Away B', true, false);
+			const g1 = await createTestGame(1, 2024, 'Home A', 'Away A', true);
+			const g2 = await createTestGame(1, 2024, 'Home B', 'Away B', false);
 			const id1 = (g1 as { game_id: number }).game_id;
 			const id2 = (g2 as { game_id: number }).game_id;
 
@@ -418,11 +420,11 @@ describe('User Database Functions', () => {
 			// User 1 has one real correct pick and one voided pick on a completed game
 			await addPickedGame({ game: id1, pick: 'home_team' }, '1');
 			await db.execute(sql`
-				INSERT INTO "user"."games" (user_id, game_id, team_chosen)
-				VALUES (1, ${id2}, 'voided')
+				INSERT INTO "user"."games" (user_id, game_id, league_id, team_chosen)
+				VALUES (1, ${id2}, 1, 'voided')
 			`);
 
-			const entries = await returnLeaderboard(2024);
+			const entries = await returnLeaderboard(2024, 1);
 			const user1 = entries.find(e => e.userId === 1)!;
 
 			// Voided pick on g2 should not appear in incorrect count
@@ -439,18 +441,18 @@ describe('User Database Functions', () => {
 
 		it('returnUserGames excludes voided picks', async () => {
 			await createTestWeek(1, 2024, 'regular');
-			const g1 = await createTestGame(1, 2024, 'Team A', 'Team B', true, false);
-			const g2 = await createTestGame(1, 2024, 'Team C', 'Team D', true, false);
+			const g1 = await createTestGame(1, 2024, 'Team A', 'Team B', false);
+			const g2 = await createTestGame(1, 2024, 'Team C', 'Team D', false);
 			const id1 = (g1 as { game_id: number }).game_id;
 			const id2 = (g2 as { game_id: number }).game_id;
 
 			await addPickedGame({ game: id1, pick: 'home_team' }, '1');
 			await db.execute(sql`
-				INSERT INTO "user"."games" (user_id, game_id, team_chosen)
-				VALUES (1, ${id2}, 'voided')
+				INSERT INTO "user"."games" (user_id, game_id, league_id, team_chosen)
+				VALUES (1, ${id2}, 1, 'voided')
 			`);
 
-			const picks = await returnUserGames({ year: 2024, week: 1 }, '1');
+			const picks = await returnUserGames({ year: 2024, week: 1 }, '1', 1);
 
 			expect(picks.length).toBe(1);
 			expect(picks[0].gameId).toBe(id1);
@@ -459,18 +461,18 @@ describe('User Database Functions', () => {
 
 		it('returnUserPickCount excludes voided picks', async () => {
 			await createTestWeek(1, 2024, 'regular');
-			const g1 = await createTestGame(1, 2024, 'Team A', 'Team B', true, false);
-			const g2 = await createTestGame(1, 2024, 'Team C', 'Team D', true, false);
+			const g1 = await createTestGame(1, 2024, 'Team A', 'Team B', false);
+			const g2 = await createTestGame(1, 2024, 'Team C', 'Team D', false);
 			const id1 = (g1 as { game_id: number }).game_id;
 			const id2 = (g2 as { game_id: number }).game_id;
 
 			await addPickedGame({ game: id1, pick: 'home_team' }, '1');
 			await db.execute(sql`
-				INSERT INTO "user"."games" (user_id, game_id, team_chosen)
-				VALUES (1, ${id2}, 'voided')
+				INSERT INTO "user"."games" (user_id, game_id, league_id, team_chosen)
+				VALUES (1, ${id2}, 1, 'voided')
 			`);
 
-			const count = await returnUserPickCount(1, 2024, 1);
+			const count = await returnUserPickCount(1, 2024, 1, 1);
 
 			// Only 1 non-voided pick should be counted
 			expect(count).toBe(1);
@@ -478,8 +480,8 @@ describe('User Database Functions', () => {
 
 		it('returnWeekScores excludes voided picks from totals', async () => {
 			await createTestWeek(1, 2024, 'regular');
-			const g1 = await createTestGame(1, 2024, 'Home A', 'Away A', true, true);
-			const g2 = await createTestGame(1, 2024, 'Home B', 'Away B', true, true);
+			const g1 = await createTestGame(1, 2024, 'Home A', 'Away A', true);
+			const g2 = await createTestGame(1, 2024, 'Home B', 'Away B', true);
 			const id1 = (g1 as { game_id: number }).game_id;
 			const id2 = (g2 as { game_id: number }).game_id;
 
@@ -489,11 +491,11 @@ describe('User Database Functions', () => {
 			// User 1: one correct pick and one voided pick on a completed game
 			await addPickedGame({ game: id1, pick: 'home_team' }, '1');
 			await db.execute(sql`
-				INSERT INTO "user"."games" (user_id, game_id, team_chosen)
-				VALUES (1, ${id2}, 'voided')
+				INSERT INTO "user"."games" (user_id, game_id, league_id, team_chosen)
+				VALUES (1, ${id2}, 1, 'voided')
 			`);
 
-			const scores = await returnWeekScores(2024, 1);
+			const scores = await returnWeekScores(2024, 1, 1);
 			const user1 = scores.find(s => s.userId === 1)!;
 
 			expect(user1.correct).toBe(1);
@@ -504,8 +506,8 @@ describe('User Database Functions', () => {
 
 		it('returnUserPickHistory excludes voided picks from total and incorrect counts', async () => {
 			await createTestWeek(1, 2024, 'regular');
-			const g1 = await createTestGame(1, 2024, 'Home A', 'Away A', true, true);
-			const g2 = await createTestGame(1, 2024, 'Home B', 'Away B', true, true);
+			const g1 = await createTestGame(1, 2024, 'Home A', 'Away A', true);
+			const g2 = await createTestGame(1, 2024, 'Home B', 'Away B', true);
 			const id1 = (g1 as { game_id: number }).game_id;
 			const id2 = (g2 as { game_id: number }).game_id;
 
@@ -515,11 +517,11 @@ describe('User Database Functions', () => {
 			// User 1: one correct pick and one voided pick on a completed game
 			await addPickedGame({ game: id1, pick: 'home_team' }, '1');
 			await db.execute(sql`
-				INSERT INTO "user"."games" (user_id, game_id, team_chosen)
-				VALUES (1, ${id2}, 'voided')
+				INSERT INTO "user"."games" (user_id, game_id, league_id, team_chosen)
+				VALUES (1, ${id2}, 1, 'voided')
 			`);
 
-			const history = await returnUserPickHistory(2024, '1');
+			const history = await returnUserPickHistory(2024, '1', 1);
 			expect(history.length).toBe(1);
 			const week1 = history[0];
 
@@ -548,8 +550,8 @@ describe('User Database Functions', () => {
 		it('counts total and correct picks across all years', async () => {
 			await createTestWeek(1, 2024, 'regular');
 			await createTestWeek(1, 2025, 'regular');
-			const g1 = await createTestGame(1, 2024, 'Home A', 'Away A', true, true);
-			const g2 = await createTestGame(1, 2025, 'Home B', 'Away B', true, true);
+			const g1 = await createTestGame(1, 2024, 'Home A', 'Away A', true);
+			const g2 = await createTestGame(1, 2025, 'Home B', 'Away B', true);
 			const id1 = (g1 as { game_id: number }).game_id;
 			const id2 = (g2 as { game_id: number }).game_id;
 
@@ -574,7 +576,7 @@ describe('User Database Functions', () => {
 
 		it('excludes voided picks from total', async () => {
 			await createTestWeek(1, 2024, 'regular');
-			const g1 = await createTestGame(1, 2024, 'Home A', 'Away A', true, false);
+			const g1 = await createTestGame(1, 2024, 'Home A', 'Away A', false);
 			const id1 = (g1 as { game_id: number }).game_id;
 
 			await addPickedGame({ game: id1, pick: 'home_team' }, '1');

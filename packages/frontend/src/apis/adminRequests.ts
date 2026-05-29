@@ -1,7 +1,6 @@
 import type { InferResponseType } from 'hono/client';
 import type {
   WeekIdentifier,
-  PickedGamesRequest,
   ProfileData,
   MarkGameCompleteRequest,
   CorrectGameScoreRequest,
@@ -295,13 +294,7 @@ export async function sendAdminBroadcast(request: AdminBroadcastRequest): Promis
   }
 }
 
-export async function setPickedGames(pickedData: PickedGamesRequest): Promise<SetPicksResponse> {
-  try {
-    const res = await client.api.admin.picks.$post({ json: pickedData });
-    if (!res.ok) return { success: false, error: await extractError(res) };
-    const data = await res.json();
-    return { success: true, data };
-  } catch {
-    return { success: false, error: 'Request failed' };
-  }
+// Phase 4: replace with per-league game selection via /api/admin/leagues/:leagueId/games
+export async function setPickedGames(_pickedData: { year: number; week: number; games: number[] }): Promise<SetPicksResponse> {
+  return { success: false, error: 'Game selection is now per-league (Phase 4)' };
 }

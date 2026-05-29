@@ -7,7 +7,6 @@ function makeGame(overrides: Partial<AdminGameWire> = {}): AdminGameWire {
   return {
     gameId: 1,
     cfbdGameId: null,
-    picked: true,
     weekNumber: 1,
     year: 2025,
     seasonType: 'regular',
