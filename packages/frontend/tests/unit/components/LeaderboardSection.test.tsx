@@ -126,7 +126,7 @@ describe('LeaderboardSection', () => {
 		renderWithProviders(<LeaderboardSection />);
 
 		await waitFor(() => {
-			expect(mockGetLeaderboard).toHaveBeenCalledWith(currentSeason);
+			expect(mockGetLeaderboard).toHaveBeenCalledWith(currentSeason, 1);
 		});
 	});
 
@@ -141,7 +141,7 @@ describe('LeaderboardSection', () => {
 		await user.click(screen.getByRole('option', { name: `${currentSeason - 1} Season` }));
 
 		await waitFor(() => {
-			expect(mockGetLeaderboard).toHaveBeenCalledWith(currentSeason - 1);
+			expect(mockGetLeaderboard).toHaveBeenCalledWith(currentSeason - 1, 1);
 		});
 	});
 

@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { getUserPicks, postUserPicks } from '../../apis/userRequests';
+import { useLeague } from '../../contexts/LeagueContext';
 import { logger } from '../../utils/logger';
 
 export interface SnackbarState {
@@ -24,6 +25,8 @@ export interface UsePickSubmitReturn {
 }
 
 export function usePickSubmit({ selectedYear, selectedWeek }: UsePickSubmitParams): UsePickSubmitReturn {
+  const { activeLeague } = useLeague();
+  const leagueId = activeLeague?.leagueId ?? 1;
   const [userPicks, setUserPicks] = useState<Map<number, 'home_team' | 'away_team'>>(new Map());
   const [savedPickIds, setSavedPickIds] = useState<Set<number>>(new Set());
   const [submitting, setSubmitting] = useState<boolean>(false);
@@ -41,7 +44,7 @@ export function usePickSubmit({ selectedYear, selectedWeek }: UsePickSubmitParam
 
     async function loadPicks() {
       try {
-        const picksResult = await getUserPicks({ year: selectedYear, week: selectedWeek });
+        const picksResult = await getUserPicks({ year: selectedYear, week: selectedWeek }, leagueId);
 
         if (cancelled) return;
 
@@ -73,7 +76,7 @@ export function usePickSubmit({ selectedYear, selectedWeek }: UsePickSubmitParam
     return () => {
       cancelled = true;
     };
-  }, [selectedYear, selectedWeek]);
+  }, [selectedYear, selectedWeek, leagueId]);
 
   function handlePickChange(gameId: number, pick: 'home_team' | 'away_team') {
     setUserPicks(prev => {
@@ -100,7 +103,7 @@ export function usePickSubmit({ selectedYear, selectedWeek }: UsePickSubmitParam
       const result = await postUserPicks({
         year: selectedYear,
         week: selectedWeek,
-        leagueId: 1, // Phase 4: replace with active league from league switcher
+        leagueId,
         games: picksArray,
       });
 

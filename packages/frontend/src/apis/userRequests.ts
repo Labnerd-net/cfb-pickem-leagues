@@ -68,10 +68,10 @@ export interface UserGameResponse {
   error?: string;
 }
 
-export async function getUserPicks(weekData: WeekIdentifier): Promise<UserGameResponse> {
+export async function getUserPicks(weekData: WeekIdentifier, leagueId: number): Promise<UserGameResponse> {
   try {
     const res = await client.api.user.picks.$get({
-      query: { year: String(weekData.year), weekNumber: String(weekData.week), leagueId: '1' }, // Phase 4: use active leagueId
+      query: { year: String(weekData.year), weekNumber: String(weekData.week), leagueId: String(leagueId) },
     });
     if (!res.ok) return { success: false, error: await extractError(res) };
     const body = await res.json();
@@ -87,10 +87,10 @@ export interface AdminGameResponse {
   error?: string;
 }
 
-export async function getPickedGames(weekData: WeekIdentifier): Promise<AdminGameResponse> {
+export async function getPickedGames(weekData: WeekIdentifier, leagueId: number): Promise<AdminGameResponse> {
   try {
     const res = await client.api.user.games.$get({
-      query: { year: String(weekData.year), weekNumber: String(weekData.week), leagueId: '1' }, // Phase 4: use active leagueId
+      query: { year: String(weekData.year), weekNumber: String(weekData.week), leagueId: String(leagueId) },
     });
     if (!res.ok) return { success: false, error: await extractError(res) };
     const body = await res.json();
@@ -106,9 +106,9 @@ export interface PickHistoryResponse {
   error?: string;
 }
 
-export async function getUserPickHistory(year: number): Promise<PickHistoryResponse> {
+export async function getUserPickHistory(year: number, leagueId: number): Promise<PickHistoryResponse> {
   try {
-    const res = await client.api.user.history.$get({ query: { year: String(year), leagueId: '1' } }); // Phase 4: use active leagueId
+    const res = await client.api.user.history.$get({ query: { year: String(year), leagueId: String(leagueId) } });
     if (!res.ok) return { success: false, error: await extractError(res) };
     const data = await res.json();
     return { success: true, data };

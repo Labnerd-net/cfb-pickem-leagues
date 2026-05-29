@@ -1,6 +1,7 @@
 import { render, type RenderOptions } from '@testing-library/react';
 import { MemoryRouter } from 'react-router';
 import { AuthProvider } from '../src/contexts/auth/AuthProvider.js';
+import { LeagueProvider } from '../src/contexts/LeagueContext.js';
 import type { ReactElement, ReactNode } from 'react';
 
 interface CustomRenderOptions extends Omit<RenderOptions, 'wrapper'> {
@@ -24,7 +25,9 @@ export function renderWithProviders(
 	function Wrapper({ children }: { children: ReactNode }) {
 		return (
 			<MemoryRouter initialEntries={initialEntries}>
-				<AuthProvider>{children}</AuthProvider>
+				<AuthProvider>
+					<LeagueProvider>{children}</LeagueProvider>
+				</AuthProvider>
 			</MemoryRouter>
 		);
 	}

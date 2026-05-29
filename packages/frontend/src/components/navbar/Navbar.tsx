@@ -4,6 +4,7 @@ import SettingsIcon from '@mui/icons-material/Settings';
 import { useNavigate } from 'react-router';
 import ThemeToggle from '../theme/ThemeToggle';
 import { useAuth } from '../../contexts/auth/AuthContext';
+import LeagueSwitcher from '../LeagueSwitcher';
 import './Navbar.css';
 
 export default function Navbar() {
@@ -82,6 +83,13 @@ export default function Navbar() {
 
         {/* Spacer */}
         <Box sx={{ flexGrow: 1 }} />
+
+        {/* League Switcher */}
+        {user && (
+          <Box sx={{ mr: 2 }}>
+            <LeagueSwitcher />
+          </Box>
+        )}
 
         {/* User Info */}
         {user && (

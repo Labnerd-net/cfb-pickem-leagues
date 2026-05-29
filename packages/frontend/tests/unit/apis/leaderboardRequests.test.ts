@@ -17,7 +17,7 @@ const mockEntries = [
 
 describe('getLeaderboard', () => {
 	it('returns success with data on 200', async () => {
-		const result = await getLeaderboard(2025);
+		const result = await getLeaderboard(2025, 1);
 
 		expect(result.success).toBe(true);
 		expect(result.data).toEqual(mockEntries);
@@ -30,7 +30,7 @@ describe('getLeaderboard', () => {
 			),
 		);
 
-		const result = await getLeaderboard(2025);
+		const result = await getLeaderboard(2025, 1);
 
 		expect(result.success).toBe(false);
 		expect(result.error).toBe('Unauthorized');
@@ -43,7 +43,7 @@ describe('getLeaderboard', () => {
 			),
 		);
 
-		const result = await getLeaderboard(2025);
+		const result = await getLeaderboard(2025, 1);
 
 		expect(result.success).toBe(false);
 		expect(result.error).toBe('Request failed');
@@ -56,7 +56,7 @@ const mockScores = [
 
 describe('getWeekScores', () => {
 	it('returns success with data on 200', async () => {
-		const result = await getWeekScores(2025, 1);
+		const result = await getWeekScores(2025, 1, 1);
 
 		expect(result.success).toBe(true);
 		expect(result.data).toEqual(mockScores);
@@ -69,7 +69,7 @@ describe('getWeekScores', () => {
 			),
 		);
 
-		const result = await getWeekScores(2025, 1);
+		const result = await getWeekScores(2025, 1, 1);
 
 		expect(result.success).toBe(false);
 		expect(result.error).toBe('Unauthorized');
@@ -82,7 +82,7 @@ describe('getWeekScores', () => {
 			),
 		);
 
-		const result = await getWeekScores(2025, 1);
+		const result = await getWeekScores(2025, 1, 1);
 
 		expect(result.success).toBe(false);
 		expect(result.error).toBe('Request failed');

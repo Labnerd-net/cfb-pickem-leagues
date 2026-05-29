@@ -24,6 +24,8 @@ import {
 } from '../apis/userRequests';
 import { resendVerificationEmail } from '../apis/authRequests';
 import { useAuth } from '../contexts/auth/AuthContext';
+import { useLeague } from '../contexts/LeagueContext';
+import JoinLeagueDialog from '../components/JoinLeagueDialog';
 
 const NOTIFICATION_TYPES: { value: Exclude<NotificationType, 'admin_broadcast'>; label: string }[] = [
   { value: 'games_ready', label: 'Games Ready' },
@@ -57,6 +59,8 @@ type ChangePasswordForm = z.infer<typeof changePasswordSchema>;
 
 export default function Settings() {
   const { user, login } = useAuth();
+  const { leagues, activeLeague, refetchLeagues } = useLeague();
+  const [joinDialogOpen, setJoinDialogOpen] = useState(false);
   const [settings, setSettings] = useState<NotificationSettings | null>(null);
   const [channels, setChannels] = useState<BroadcastChannelInfo | null>(null);
   const [loading, setLoading] = useState(true);
@@ -255,6 +259,32 @@ export default function Settings() {
           </Typography>
         )}
       </Box>
+
+      {/* Leagues section */}
+      <Typography variant="h6" mt={4} mb={1}>
+        Leagues
+      </Typography>
+      {leagues.length > 0 ? (
+        <Stack spacing={0.5} mb={2}>
+          {leagues.map(l => (
+            <Typography key={l.leagueId} variant="body2" sx={{ fontWeight: l.leagueId === activeLeague?.leagueId ? 700 : 400 }}>
+              {l.name}{l.leagueId === activeLeague?.leagueId ? ' (active)' : ''}
+            </Typography>
+          ))}
+        </Stack>
+      ) : (
+        <Typography variant="body2" color="text.secondary" mb={2}>
+          You're not in any leagues yet.
+        </Typography>
+      )}
+      <Button variant="outlined" size="small" onClick={() => setJoinDialogOpen(true)}>
+        Join another league
+      </Button>
+      <JoinLeagueDialog
+        open={joinDialogOpen}
+        onClose={() => setJoinDialogOpen(false)}
+        onJoined={refetchLeagues}
+      />
 
       {/* Account section */}
       <Typography variant="h6" mt={4} mb={1}>
