@@ -13,5 +13,5 @@ export default defineConfig({
   schema: './src/db/schema',
   dialect: 'postgresql',
   dbCredentials: { url: dbUrl },
-  schemaFilter: ['user', 'admin'], // Include specific schemas
+  schemaFilter: ['user', 'admin', 'public'],
 });
