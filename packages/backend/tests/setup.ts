@@ -126,15 +126,17 @@ vi.mock('../src/db/index.ts', async () => {
 
 		-- User schema: notification log (deduplication)
 		-- user_id = 0 is used as a sentinel for broadcast channel entries (no FK)
+		-- league_id = 0 is used as a sentinel for site-wide (non-league-scoped) notifications
 		CREATE TABLE "user".notification_log (
 			id SERIAL PRIMARY KEY,
 			user_id INTEGER NOT NULL,
+			league_id INTEGER NOT NULL,
 			year INTEGER NOT NULL,
 			week_number INTEGER NOT NULL,
 			notification_type TEXT NOT NULL,
 			channel TEXT NOT NULL,
 			sent_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,
-			CONSTRAINT notification_log_unique UNIQUE (user_id, year, week_number, notification_type, channel)
+			CONSTRAINT notification_log_unique UNIQUE (user_id, league_id, year, week_number, notification_type, channel)
 		);
 
 		-- Public schema: league members

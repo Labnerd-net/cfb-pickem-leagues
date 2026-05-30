@@ -173,14 +173,15 @@ export async function createTestNotificationPreference(
  */
 export async function createTestNotificationLog(
 	userId: number,
+	leagueId: number,
 	year: number,
 	weekNumber: number,
 	notificationType: NotificationType,
 	channel: NotificationChannel,
 ) {
 	await db.execute(sql`
-		INSERT INTO "user"."notification_log" (user_id, year, week_number, notification_type, channel)
-		VALUES (${userId}, ${year}, ${weekNumber}, ${notificationType}, ${channel})
-		ON CONFLICT (user_id, year, week_number, notification_type, channel) DO NOTHING
+		INSERT INTO "user"."notification_log" (user_id, league_id, year, week_number, notification_type, channel)
+		VALUES (${userId}, ${leagueId}, ${year}, ${weekNumber}, ${notificationType}, ${channel})
+		ON CONFLICT (user_id, league_id, year, week_number, notification_type, channel) DO NOTHING
 	`);
 }

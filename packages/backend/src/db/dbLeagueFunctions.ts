@@ -1,6 +1,6 @@
 import { randomBytes } from 'crypto';
 import { eq, and, count } from 'drizzle-orm';
-import { leagues, leagueMembers } from './schema/leagues.js';
+import { leagues, leagueMembers, leagueGames } from './schema/leagues.js';
 import { users } from './schema/users.js';
 import { db } from './index.js';
 import logger from '../utils/logger.js';
@@ -175,6 +175,22 @@ export async function regenerateInviteCode(leagueId: number): Promise<string> {
     return newCode;
   } catch (err) {
     logger.error({ err }, 'regenerateInviteCode failed');
+    throw err;
+  }
+}
+
+// ------------------------------------------------------------------
+// Return all leagueIds that contain a specific game.
+// Used after global score corrections to dispatch per-league.
+// ------------------------------------------------------------------
+export async function getLeaguesForGame(gameId: number): Promise<{ leagueId: number }[]> {
+  try {
+    return await db
+      .select({ leagueId: leagueGames.leagueId })
+      .from(leagueGames)
+      .where(eq(leagueGames.gameId, gameId));
+  } catch (err) {
+    logger.error({ err }, 'getLeaguesForGame failed');
     throw err;
   }
 }

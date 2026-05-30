@@ -228,7 +228,7 @@ export default function LeagueAdminSection() {
           game={correctionGame}
           onClose={() => setCorrectionGame(null)}
           onSave={async (homePoints, awayPoints) => {
-            const result = await correctLeagueGameScore(leagueId, correctionGame.gameId, {
+            const result = await correctLeagueGameScore(leagueId, correctionGame.gameId, weekHook.selectedYear!, weekHook.selectedWeek!, {
               homePoints,
               awayPoints,
             });

@@ -7,9 +7,10 @@ import { seedTestData, cleanDatabase, createTestGame, testDb } from '../db-utils
 
 vi.mock('../../src/notifications/dispatcher.js', () => ({
   dispatchNotification: vi.fn().mockResolvedValue(undefined),
+  dispatchGameComplete: vi.fn().mockResolvedValue(undefined),
 }));
 
-import { dispatchNotification } from '../../src/notifications/dispatcher.js';
+import { dispatchGameComplete } from '../../src/notifications/dispatcher.js';
 import adminRoutes from '../../src/routes/admin.js';
 
 const TEST_JWT_SECRET = 'test-secret-key-do-not-use-in-production';
@@ -61,7 +62,7 @@ describe('PATCH /api/admin/games/:gameId/score', () => {
   beforeEach(async () => {
     await cleanDatabase();
     await seedTestData();
-    vi.mocked(dispatchNotification).mockClear();
+    vi.mocked(dispatchGameComplete).mockClear();
   });
 
   it('returns 401 without auth token', async () => {
@@ -175,11 +176,12 @@ describe('PATCH /api/admin/games/:gameId/score', () => {
     expect(body.game.homePoints).toBe(28);
   });
 
-  it('does not dispatch rankings_updated (Phase 6 handles per-league notifications)', async () => {
+  it('does not dispatch when the game is in no leagues', async () => {
     const game = await createTestGame(1, 2024, 'Alabama', 'Georgia', false);
     const token = await makeAdminToken();
     await correctRequest(game.game_id as number, 28, 21, token);
 
-    expect(dispatchNotification).not.toHaveBeenCalled();
+    // Game not added to any league pool, so no per-league dispatch
+    expect(dispatchGameComplete).not.toHaveBeenCalled();
   });
 });

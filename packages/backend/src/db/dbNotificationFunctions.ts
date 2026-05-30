@@ -1,5 +1,7 @@
 import { and, desc, eq, isNotNull, isNull, or, sql } from 'drizzle-orm';
 import { users, notificationPreferences, notificationLog } from './schema/users.js';
+import { leagueMembers, leagues, leagueGames } from './schema/leagues.js';
+import { adminGames } from './schema/admin.js';
 import { db } from './index.js';
 import logger from '../utils/logger.js';
 import type {
@@ -90,15 +92,18 @@ interface EmailOptedInUser {
 }
 
 // ------------------------------------------------------------------
-// Return users opted in to an email notification type
-// Users with no preference row are treated as opted-in by default
+// Return users opted in to an email notification type.
+// When leagueId > 0, results are filtered to that league's members.
+// When leagueId = 0 (site-wide sentinel), returns all opted-in users.
+// Users with no preference row are treated as opted-in by default.
 // ------------------------------------------------------------------
 export async function returnEmailOptedInUsers(
-  notificationType: NotificationType
+  notificationType: NotificationType,
+  leagueId: number
 ): Promise<EmailOptedInUser[]> {
-  logger.debug({ notificationType }, 'returnEmailOptedInUsers');
+  logger.debug({ notificationType, leagueId }, 'returnEmailOptedInUsers');
   try {
-    const rows = await db
+    let query = db
       .select({
         userId: users.userId,
         email: users.email,
@@ -106,6 +111,16 @@ export async function returnEmailOptedInUsers(
         prefEnabled: notificationPreferences.enabled,
       })
       .from(users)
+      .$dynamic();
+
+    if (leagueId > 0) {
+      query = query.innerJoin(leagueMembers, and(
+        eq(leagueMembers.userId, users.userId),
+        eq(leagueMembers.leagueId, leagueId)
+      ));
+    }
+
+    const rows = await query
       .leftJoin(
         notificationPreferences,
         and(
@@ -134,22 +149,24 @@ export async function returnEmailOptedInUsers(
 
 // ------------------------------------------------------------------
 // Bulk-check which users already have a sent log entry for a given
-// (year, weekNumber, notificationType, channel) tuple.
+// (leagueId, year, weekNumber, notificationType, channel) tuple.
 // Returns a Set of userIds — O(1) lookup for the dispatcher loop.
 // ------------------------------------------------------------------
 export async function returnSentNotificationUserIds(
+  leagueId: number,
   year: number,
   weekNumber: number,
   notificationType: NotificationType,
   channel: NotificationChannel
 ): Promise<Set<number>> {
-  logger.debug({ year, weekNumber, notificationType, channel }, 'returnSentNotificationUserIds');
+  logger.debug({ leagueId, year, weekNumber, notificationType, channel }, 'returnSentNotificationUserIds');
   try {
     const rows = await db
       .select({ userId: notificationLog.userId })
       .from(notificationLog)
       .where(
         and(
+          eq(notificationLog.leagueId, leagueId),
           eq(notificationLog.year, year),
           eq(notificationLog.weekNumber, weekNumber),
           eq(notificationLog.notificationType, notificationType),
@@ -165,20 +182,22 @@ export async function returnSentNotificationUserIds(
 
 // ------------------------------------------------------------------
 // Log a sent notification (on conflict do nothing = idempotent)
-// For broadcast channels, use userId = 0 as sentinel
+// For broadcast channels, use userId = 0 as sentinel.
+// For site-wide notifications (admin broadcast), use leagueId = 0.
 // ------------------------------------------------------------------
 export async function addNotificationLog(
   userId: number,
+  leagueId: number,
   year: number,
   weekNumber: number,
   notificationType: NotificationType,
   channel: NotificationChannel
 ): Promise<void> {
-  logger.debug({ userId, year, weekNumber, notificationType, channel }, 'addNotificationLog');
+  logger.debug({ userId, leagueId, year, weekNumber, notificationType, channel }, 'addNotificationLog');
   try {
     await db
       .insert(notificationLog)
-      .values({ userId, year, weekNumber, notificationType, channel })
+      .values({ userId, leagueId, year, weekNumber, notificationType, channel })
       .onConflictDoNothing();
   } catch (e) {
     logger.error({ err: e }, 'addNotificationLog failed');
@@ -188,16 +207,18 @@ export async function addNotificationLog(
 
 // ------------------------------------------------------------------
 // Check whether a notification has already been sent
-// For broadcast channels, pass userId = 0
+// For broadcast channels, pass userId = 0.
+// For site-wide notifications, pass leagueId = 0.
 // ------------------------------------------------------------------
 export async function hasNotificationBeenSent(
   userId: number,
+  leagueId: number,
   year: number,
   weekNumber: number,
   notificationType: NotificationType,
   channel: NotificationChannel
 ): Promise<boolean> {
-  logger.debug({ userId, year, weekNumber, notificationType, channel }, 'hasNotificationBeenSent');
+  logger.debug({ userId, leagueId, year, weekNumber, notificationType, channel }, 'hasNotificationBeenSent');
   try {
     const rows = await db
       .select({ id: notificationLog.id })
@@ -205,6 +226,7 @@ export async function hasNotificationBeenSent(
       .where(
         and(
           eq(notificationLog.userId, userId),
+          eq(notificationLog.leagueId, leagueId),
           eq(notificationLog.year, year),
           eq(notificationLog.weekNumber, weekNumber),
           eq(notificationLog.notificationType, notificationType),
@@ -272,6 +294,37 @@ export async function returnNotificationLogs(
     return { entries, total };
   } catch (e) {
     logger.error({ err: e }, 'returnNotificationLogs failed');
+    throw e;
+  }
+}
+
+// ------------------------------------------------------------------
+// Return leagues that have at least one game for the given week.
+// Used by the cron to iterate over active leagues.
+// ------------------------------------------------------------------
+export async function getActiveLeaguesForWeek(
+  year: number,
+  weekNumber: number
+): Promise<{ leagueId: number; name: string }[]> {
+  logger.debug({ year, weekNumber }, 'getActiveLeaguesForWeek');
+  try {
+    const rows = await db
+      .selectDistinct({
+        leagueId: leagues.leagueId,
+        name: leagues.name,
+      })
+      .from(leagueGames)
+      .innerJoin(adminGames, eq(leagueGames.gameId, adminGames.gameId))
+      .innerJoin(leagues, eq(leagueGames.leagueId, leagues.leagueId))
+      .where(
+        and(
+          eq(adminGames.year, year),
+          eq(adminGames.weekNumber, weekNumber)
+        )
+      );
+    return rows;
+  } catch (e) {
+    logger.error({ err: e }, 'getActiveLeaguesForWeek failed');
     throw e;
   }
 }

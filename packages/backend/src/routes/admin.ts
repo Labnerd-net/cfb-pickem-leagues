@@ -6,6 +6,9 @@ import { bcryptSaltRounds } from '../utils/envVars.js';
 import * as dbAdminFunctions from '../db/dbAdminFunctions.js';
 import { returnUsers, updateUserRoles, updateUserPassword, returnUserPickTotals } from '../db/dbUserFunctions.js';
 import { returnNotificationLogs } from '../db/dbNotificationFunctions.js';
+import { getLeaguesForGame } from '../db/dbLeagueFunctions.js';
+import { getGamesForLeagueWeek } from '../db/dbAdminFunctions.js';
+import { isWeekComplete } from '../cron/cronLogic.js';
 import { getGameData, getWeekData } from '../api/index.js';
 import type { JwtData } from '@shared/types/cfb-pickem-api.js';
 import { authMiddleware, requireRole } from '../utils/middleware.js';
@@ -13,12 +16,13 @@ import { apiRateLimit } from '../utils/rateLimiter.js';
 import { z } from 'zod';
 import { zValidator } from '@hono/zod-validator';
 import { updateUserRolesValidator, weekIdentifierValidator, markGameCompleteValidator, yearQueryValidator, weekIdentifierQueryValidator, correctGameScoreParamValidator, correctGameScoreBodyValidator, adminBroadcastBodyValidator, resetPasswordParamValidator, resetPasswordBodyValidator } from '../utils/zValidate.js';
-import { dispatchAdminBroadcast } from '../notifications/dispatcher.js';
+import { dispatchAdminBroadcast, dispatchGameComplete } from '../notifications/dispatcher.js';
 import { getNow } from '../utils/clock.js';
 import { sendNtfyNotification } from '../notifications/ntfySender.js';
 import { sendTelegramNotification } from '../notifications/telegramSender.js';
 import { sendDiscordNotification } from '../notifications/discordSender.js';
 import { ntfyEnabled, telegramEnabled, discordEnabled } from '../utils/envVars.js';
+import logger from '../utils/logger.js';
 
 type Variables = {
   jwtPayload: JwtData;
@@ -185,7 +189,14 @@ const admin = new Hono<{ Variables: Variables }>()
       const updated = await dbAdminFunctions.correctGameScore(gameId, homePoints, awayPoints, correctedBy);
       if (!updated) throw new HTTPException(404, { message: 'Game not found' });
 
-      // Note: rankings_updated notification is per-league and will be dispatched in Phase 6
+      const affectedLeagues = await getLeaguesForGame(gameId);
+      for (const { leagueId } of affectedLeagues) {
+        const leagueGames = await getGamesForLeagueWeek(leagueId, updated.year, updated.weekNumber);
+        if (isWeekComplete(leagueGames)) {
+          dispatchGameComplete(leagueId, updated.year, updated.weekNumber)
+            .catch(err => logger.error({ err, leagueId }, 'rankings_updated dispatch failed after score correction'));
+        }
+      }
 
       return c.json({ game: updated });
     }

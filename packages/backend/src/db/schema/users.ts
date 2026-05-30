@@ -99,6 +99,7 @@ export const notificationLog = userSchema.table(
   {
     id: serial('id').primaryKey(),
     userId: integer('user_id').notNull(),
+    leagueId: integer('league_id').notNull(),
     year: integer('year').notNull(),
     weekNumber: integer('week_number').notNull(),
     notificationType: text('notification_type').notNull(),
@@ -108,6 +109,7 @@ export const notificationLog = userSchema.table(
   table => [
     unique('notification_log_unique').on(
       table.userId,
+      table.leagueId,
       table.year,
       table.weekNumber,
       table.notificationType,

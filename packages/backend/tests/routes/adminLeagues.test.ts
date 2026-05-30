@@ -300,7 +300,7 @@ describe('PATCH /api/admin/leagues/:leagueId/games/:gameId/score', () => {
 
   it('returns 404 for unknown gameId', async () => {
     const token = await makeAdminToken();
-    const res = await app.request('/api/admin/leagues/1/games/999999/score', {
+    const res = await app.request('/api/admin/leagues/1/games/999999/score?year=2024&weekNumber=1', {
       method: 'PATCH',
       headers: { Cookie: `auth_token=${token}`, 'Content-Type': 'application/json' },
       body: JSON.stringify({ homePoints: 28, awayPoints: 21 }),
@@ -312,7 +312,7 @@ describe('PATCH /api/admin/leagues/:leagueId/games/:gameId/score', () => {
     const game = await createTestGame(1, 2024, 'Alabama', 'Georgia');
     await createLeagueGame(1, game.game_id as number);
     const token = await makeAdminToken();
-    const res = await app.request(`/api/admin/leagues/1/games/${game.game_id as number}/score`, {
+    const res = await app.request(`/api/admin/leagues/1/games/${game.game_id as number}/score?year=2024&weekNumber=1`, {
       method: 'PATCH',
       headers: { Cookie: `auth_token=${token}`, 'Content-Type': 'application/json' },
       body: JSON.stringify({ homePoints: 28, awayPoints: 21 }),
@@ -331,7 +331,7 @@ describe('PATCH /api/admin/leagues/:leagueId/games/:gameId/score', () => {
     await testDb.execute(sql`UPDATE "admin"."games" SET home_points = 14, away_points = 7 WHERE game_id = ${game.game_id as number}`);
 
     const token = await makeAdminToken();
-    await app.request(`/api/admin/leagues/1/games/${game.game_id as number}/score`, {
+    await app.request(`/api/admin/leagues/1/games/${game.game_id as number}/score?year=2024&weekNumber=1`, {
       method: 'PATCH',
       headers: { Cookie: `auth_token=${token}`, 'Content-Type': 'application/json' },
       body: JSON.stringify({ homePoints: 28, awayPoints: 21 }),

@@ -1,4 +1,6 @@
 import { returnCurrentWeek, returnGamesForWeek, upsertGameForWeek } from '../db/dbAdminFunctions.js';
+import { getActiveLeaguesForWeek } from '../db/dbNotificationFunctions.js';
+import { getGamesForLeagueWeek } from '../db/dbAdminFunctions.js';
 import { dispatchNotification } from '../notifications/dispatcher.js';
 import { getGameData } from '../api/index.js';
 import logger from '../utils/logger.js';
@@ -16,16 +18,17 @@ import {
 //
 // On restart mid-week the only observable side effects are:
 //   - An immediate CFBD API refresh (lastRefreshAt reset → shouldRefreshScores returns true)
-//   - Re-evaluation of notification windows (hardCapStart, reminder24hSentForWeek reset)
+//   - Re-evaluation of notification windows (hardCapStart, per-league reminder/completion Sets reset)
 //
 // User-facing safety net: dispatcher.ts calls hasNotificationBeenSent() before every send,
 // which checks the DB, so notifications are never double-sent regardless of in-memory state.
 // Persisting this state to a DB table is not necessary at current scale.
 let lastRefreshAt: Date | null = null;
 let hardCapStart: Date | null = null;
-let scoresCompletedForWeek: string | null = null; // key: "year-week"
 let lastWeekKey: string | null = null;
-let reminder24hSentForWeek: string | null = null; // key: "year-week"
+let scoresCompletedForLeague = new Set<string>(); // key: "leagueId-year-weekNumber"
+let reminder24hSentForLeague = new Set<string>();  // key: "leagueId-year-weekNumber"
+let reminder1hSentForLeague = new Set<string>();   // key: "leagueId-year-weekNumber"
 
 export async function runCronTick(): Promise<void> {
   const now = getNow();
@@ -45,44 +48,30 @@ export async function runCronTick(): Promise<void> {
   if (weekKey !== lastWeekKey) {
     hardCapStart = null;
     lastRefreshAt = null;
-    reminder24hSentForWeek = null;
+    scoresCompletedForLeague = new Set();
+    reminder24hSentForLeague = new Set();
+    reminder1hSentForLeague = new Set();
     lastWeekKey = weekKey;
     logger.info({ weekKey }, 'Week changed, resetting cron state');
   }
 
-  // 2. Get games for the current week (Phase 6 will scope this per-league)
-  const games = await returnGamesForWeek(identifier);
-  if (games.length === 0) return;
+  // 2. Get active leagues for this week
+  const activeLeagues = await getActiveLeaguesForWeek(week.year, week.weekNumber);
+  if (activeLeagues.length === 0) return;
 
-  // 3. Picks reminders
-  const firstKickoff = getFirstKickoff(games);
-  if (shouldSend24hrReminder({ now, firstKickoff }) && reminder24hSentForWeek !== weekKey) {
-    reminder24hSentForWeek = weekKey;
-    dispatchNotification({
-      notificationType: 'picks_reminder_24h',
-      year: week.year,
-      weekNumber: week.weekNumber,
-      firstKickoffTime: firstKickoff ?? undefined,
-    }).catch(err => logger.error({ err }, 'picks_reminder_24h dispatch failed'));
-  }
-  if (shouldSendPicksReminder({ now, firstKickoff })) {
-    dispatchNotification({
-      notificationType: 'picks_reminder_1h',
-      year: week.year,
-      weekNumber: week.weekNumber,
-      firstKickoffTime: firstKickoff ?? undefined,
-    }).catch(err => logger.error({ err }, 'picks_reminder_1h dispatch failed'));
-  }
+  // 3. Get global games for hard cap / last-kickoff tracking
+  const globalGames = await returnGamesForWeek(identifier);
+  if (globalGames.length === 0) return;
 
   // 4. Score refresh
-  const lastKickoff = getLastKickoff(games);
+  const lastKickoff = getLastKickoff(globalGames);
 
-  // Start hard cap timer the first time we detect last kickoff is in the past
   if (lastKickoff && now >= lastKickoff && !hardCapStart) {
     hardCapStart = now;
     logger.info({ weekKey, lastKickoff }, 'hardCapStart set');
   }
 
+  let didRefresh = false;
   if (shouldRefreshScores({ now, lastKickoff, lastRefreshAt, hardCapStart })) {
     logger.info({ weekKey }, 'Refreshing scores');
     try {
@@ -91,15 +80,63 @@ export async function runCronTick(): Promise<void> {
         await Promise.all(gameData.map(g => upsertGameForWeek(g)));
       }
       lastRefreshAt = getNow();
-
-      // Re-fetch to check completion (Phase 6 will dispatch rankings_updated per-league)
-      const updatedGames = await returnGamesForWeek(identifier);
-      if (isWeekComplete(updatedGames) && scoresCompletedForWeek !== weekKey) {
-        scoresCompletedForWeek = weekKey;
-        // Phase 6: dispatch rankings_updated per-league
-      }
+      didRefresh = true;
     } catch (e) {
       logger.error({ err: e, weekKey }, 'Score refresh failed');
+    }
+  }
+
+  // 5. Per-league loop — completion check and reminder checks
+  for (const league of activeLeagues) {
+    const leagueWeekKey = `${league.leagueId}-${week.year}-${week.weekNumber}`;
+
+    let leagueGames;
+    try {
+      leagueGames = await getGamesForLeagueWeek(league.leagueId, week.year, week.weekNumber);
+    } catch (e) {
+      logger.error({ err: e, leagueId: league.leagueId, weekKey }, 'Failed to fetch league games');
+      continue;
+    }
+
+    if (leagueGames.length === 0) continue;
+
+    // Completion check — only after a fresh score refresh
+    if (didRefresh && !scoresCompletedForLeague.has(leagueWeekKey) && isWeekComplete(leagueGames)) {
+      scoresCompletedForLeague.add(leagueWeekKey);
+      dispatchNotification({
+        notificationType: 'rankings_updated',
+        leagueId: league.leagueId,
+        leagueName: league.name,
+        year: week.year,
+        weekNumber: week.weekNumber,
+      }).catch(err => logger.error({ err, leagueId: league.leagueId }, 'rankings_updated dispatch failed'));
+    }
+
+    // Reminder checks
+    const firstKickoff = getFirstKickoff(leagueGames);
+
+    if (shouldSend24hrReminder({ now, firstKickoff }) && !reminder24hSentForLeague.has(leagueWeekKey)) {
+      reminder24hSentForLeague.add(leagueWeekKey);
+      dispatchNotification({
+        notificationType: 'picks_reminder_24h',
+        leagueId: league.leagueId,
+        leagueName: league.name,
+        year: week.year,
+        weekNumber: week.weekNumber,
+        firstKickoffTime: firstKickoff ?? undefined,
+      }).catch(err => logger.error({ err, leagueId: league.leagueId }, 'picks_reminder_24h dispatch failed'));
+    }
+
+    if (shouldSendPicksReminder({ now, firstKickoff }) && !reminder1hSentForLeague.has(leagueWeekKey)) {
+      reminder1hSentForLeague.add(leagueWeekKey);
+      dispatchNotification({
+        notificationType: 'picks_reminder_1h',
+        leagueId: league.leagueId,
+        leagueName: league.name,
+        year: week.year,
+        weekNumber: week.weekNumber,
+        firstKickoffTime: firstKickoff ?? undefined,
+      }).catch(err => logger.error({ err, leagueId: league.leagueId }, 'picks_reminder_1h dispatch failed'));
     }
   }
 }
