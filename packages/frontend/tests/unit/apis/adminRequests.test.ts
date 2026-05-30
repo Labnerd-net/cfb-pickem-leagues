@@ -238,7 +238,7 @@ describe('Admin API Requests', () => {
 
 	describe('correctLeagueGameScore', () => {
 		it('returns success with updated game on 200', async () => {
-			const result = await correctLeagueGameScore(1, 1, { homePoints: 24, awayPoints: 17 });
+			const result = await correctLeagueGameScore(1, 1, 2024, 1, { homePoints: 24, awayPoints: 17 });
 
 			expect(result.success).toBe(true);
 			expect(result.data?.homePoints).toBe(24);
@@ -253,7 +253,7 @@ describe('Admin API Requests', () => {
 				),
 			);
 
-			const result = await correctLeagueGameScore(1, 99, { homePoints: 24, awayPoints: 17 });
+			const result = await correctLeagueGameScore(1, 99, 2024, 1, { homePoints: 24, awayPoints: 17 });
 
 			expect(result.success).toBe(false);
 			expect(result.error).toBe('Game not found');
@@ -266,7 +266,7 @@ describe('Admin API Requests', () => {
 				),
 			);
 
-			const result = await correctLeagueGameScore(1, 1, { homePoints: 24, awayPoints: 17 });
+			const result = await correctLeagueGameScore(1, 1, 2024, 1, { homePoints: 24, awayPoints: 17 });
 
 			expect(result.success).toBe(false);
 			expect(result.error).toBe('Request failed');

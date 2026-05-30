@@ -404,11 +404,14 @@ export interface CorrectLeagueGameScoreResponse {
 export async function correctLeagueGameScore(
   leagueId: number,
   gameId: number,
+  year: number,
+  weekNumber: number,
   body: CorrectGameScoreRequest,
 ): Promise<CorrectLeagueGameScoreResponse> {
   try {
     const res = await client.api.admin.leagues[':leagueId'].games[':gameId'].score.$patch({
       param: { leagueId: String(leagueId), gameId: String(gameId) },
+      query: { year: String(year), weekNumber: String(weekNumber) },
       json: body,
     });
     if (!res.ok) return { success: false, error: await extractError(res) };

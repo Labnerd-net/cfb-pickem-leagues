@@ -30,10 +30,12 @@ export function gamesReadyTemplate({ year, weekNumber }: { year: number; weekNum
 export function picksReminderTemplate({
   year,
   weekNumber,
+  leagueName,
   firstKickoffTime,
 }: {
   year: number;
   weekNumber: number;
+  leagueName: string;
   firstKickoffTime: Date;
 }): EmailTemplate {
   const kickoffStr = firstKickoffTime.toLocaleString('en-US', {
@@ -45,10 +47,10 @@ export function picksReminderTemplate({
     minute: '2-digit',
     timeZoneName: 'short',
   });
-  const subject = `CFB Pick'em — 1 hour until kickoff! Make your picks`;
-  const textBody = `The first game of Week ${weekNumber} (${year}) kicks off at ${kickoffStr}. You have about 1 hour left to make your picks!`;
+  const subject = `[${leagueName}] Picks reminder — Week ${weekNumber} locks in 1 hour`;
+  const textBody = `The first game of Week ${weekNumber} (${year}) in ${leagueName} kicks off at ${kickoffStr}. You have about 1 hour left to make your picks!`;
   const htmlBody = `
-    <h2>Picks Deadline Reminder</h2>
+    <h2>Picks Deadline Reminder — ${escapeHtml(leagueName)}</h2>
     <p>The first game of Week ${weekNumber} of the ${year} season kicks off at <strong>${kickoffStr}</strong>.</p>
     <p>You have about 1 hour left — log in and lock in your picks!</p>
   `.trim();
@@ -59,10 +61,12 @@ export function picksReminderTemplate({
 export function picksReminder24hTemplate({
   year,
   weekNumber,
+  leagueName,
   firstKickoffTime,
 }: {
   year: number;
   weekNumber: number;
+  leagueName: string;
   firstKickoffTime: Date;
 }): EmailTemplate {
   const kickoffStr = firstKickoffTime.toLocaleString('en-US', {
@@ -74,10 +78,10 @@ export function picksReminder24hTemplate({
     minute: '2-digit',
     timeZoneName: 'short',
   });
-  const subject = `CFB Pick'em — 24 hours until kickoff! Make your picks`;
-  const textBody = `The first game of Week ${weekNumber} (${year}) kicks off at ${kickoffStr}. You have about 24 hours left to make your picks!`;
+  const subject = `[${leagueName}] Picks reminder — Week ${weekNumber} locks in 24 hours`;
+  const textBody = `The first game of Week ${weekNumber} (${year}) in ${leagueName} kicks off at ${kickoffStr}. You have about 24 hours left to make your picks!`;
   const htmlBody = `
-    <h2>Picks Deadline Reminder</h2>
+    <h2>Picks Deadline Reminder — ${escapeHtml(leagueName)}</h2>
     <p>The first game of Week ${weekNumber} of the ${year} season kicks off at <strong>${kickoffStr}</strong>.</p>
     <p>You have about 24 hours — log in and lock in your picks!</p>
   `.trim();
@@ -88,20 +92,22 @@ export function picksReminder24hTemplate({
 export function rankingsUpdatedTemplate({
   year,
   weekNumber,
+  leagueName,
   leaderboard,
 }: {
   year: number;
   weekNumber: number;
+  leagueName: string;
   leaderboard: LeaderboardEntry[];
 }): EmailTemplate {
-  const subject = `CFB Pick'em — Week ${weekNumber} results are in`;
+  const subject = `[${leagueName}] Week ${weekNumber} results are in`;
 
   const leaderboardTextLines = leaderboard.map((e, i) => {
     const pct = e.percentage !== null ? ` (${Math.round(e.percentage * 100)}%)` : '';
     return `${i + 1}. ${e.displayName}: ${e.correct}/${e.total}${pct}`;
   });
   const textBody = [
-    `All games for Week ${weekNumber} of the ${year} season are complete.`,
+    `All games for Week ${weekNumber} of the ${year} season in ${leagueName} are complete.`,
     '',
     'Standings:',
     ...leaderboardTextLines,
@@ -115,8 +121,8 @@ export function rankingsUpdatedTemplate({
     .join('');
 
   const htmlBody = `
-    <h2>Week ${weekNumber} Results Are In</h2>
-    <p>All games for Week ${weekNumber} of the ${year} CFB season are now complete.</p>
+    <h2>Week ${weekNumber} Results Are In — ${escapeHtml(leagueName)}</h2>
+    <p>All games for Week ${weekNumber} of the ${year} CFB season in <strong>${escapeHtml(leagueName)}</strong> are now complete.</p>
     <table border="1" cellpadding="6" cellspacing="0" style="border-collapse:collapse;font-family:sans-serif;font-size:14px;">
       <thead><tr><th>#</th><th>Name</th><th>Correct/Finished</th><th>%</th></tr></thead>
       <tbody>${leaderboardRows}</tbody>

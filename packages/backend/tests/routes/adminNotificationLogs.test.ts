@@ -32,9 +32,9 @@ describe('GET /api/admin/notification-logs', () => {
 	beforeAll(async () => {
 		await seedTestData();
 		// Insert a broadcast log entry (userId=0)
-		await createTestNotificationLog(0, 2024, 1, 'games_ready', 'ntfy');
+		await createTestNotificationLog(0, 0, 2024, 1, 'games_ready', 'ntfy');
 		// Insert a real user log entry (userId=1, admin user)
-		await createTestNotificationLog(1, 2024, 1, 'games_ready', 'email');
+		await createTestNotificationLog(1, 1, 2024, 1, 'games_ready', 'email');
 	});
 
 	it('should return 401 with no auth token', async () => {

@@ -17,6 +17,10 @@ import {
   markGameComplete,
   correctGameScore,
 } from '../db/dbAdminFunctions.js';
+import { dispatchGameComplete } from '../notifications/dispatcher.js';
+import {
+  isWeekComplete,
+} from '../cron/cronLogic.js';
 import logger from '../utils/logger.js';
 
 type Variables = {
@@ -66,8 +70,15 @@ const adminLeagues = new Hono<{ Variables: Variables }>()
       if (failed.length > 0)
         logger.error({ count: failed.length }, 'Some games failed to mark complete');
 
-      // Phase 6 will dispatch rankings_updated per league once all games are complete
-      return c.json({ completed: results.length - failed.length });
+      const completedCount = results.length - failed.length;
+      if (completedCount > 0) {
+        const refreshedGames = await getGamesForLeagueWeek(leagueId, year, weekNumber);
+        if (isWeekComplete(refreshedGames)) {
+          dispatchGameComplete(leagueId, year, weekNumber)
+            .catch(err => logger.error({ err, leagueId }, 'rankings_updated dispatch failed after mark complete'));
+        }
+      }
+      return c.json({ completed: completedCount });
     }
   )
 
@@ -119,16 +130,22 @@ const adminLeagues = new Hono<{ Variables: Variables }>()
     authMiddleware,
     leagueGameParamValidator,
     requireLeagueMembership('admin'),
+    weekIdentifierQueryValidator,
     correctGameScoreBodyValidator,
     async c => {
-      const { gameId } = c.req.valid('param');
+      const { leagueId, gameId } = c.req.valid('param');
       const { homePoints, awayPoints } = c.req.valid('json');
       const correctedBy = c.get('jwtPayload').sub;
 
       const updated = await correctGameScore(gameId, homePoints, awayPoints, correctedBy);
       if (!updated) throw new HTTPException(404, { message: 'Game not found' });
 
-      // Phase 6 will dispatch rankings_updated per league
+      const leagueGames = await getGamesForLeagueWeek(leagueId, updated.year, updated.weekNumber);
+      if (isWeekComplete(leagueGames)) {
+        dispatchGameComplete(leagueId, updated.year, updated.weekNumber)
+          .catch(err => logger.error({ err, leagueId }, 'rankings_updated dispatch failed after score correction'));
+      }
+
       return c.json({ game: updated });
     }
   );
