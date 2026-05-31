@@ -116,6 +116,23 @@ export async function removeMember(
   }
 }
 
+export async function updateLeagueName(
+  leagueId: number,
+  name: string,
+): Promise<MemberMutationResponse> {
+  try {
+    const res = await client.api.leagues[':leagueId'].$patch({
+      param: { leagueId: String(leagueId) },
+      json: { name },
+    });
+    const status = res.status;
+    if (!res.ok) return { success: false, error: await extractError(res), status };
+    return { success: true };
+  } catch {
+    return { success: false, error: 'Request failed' };
+  }
+}
+
 export interface RegenerateInviteCodeResponse {
   success: boolean;
   data?: string;

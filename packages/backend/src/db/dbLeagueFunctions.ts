@@ -166,6 +166,16 @@ export async function removeMember(leagueId: number, userId: number) {
   }
 }
 
+export async function updateLeagueName(leagueId: number, name: string): Promise<boolean> {
+  try {
+    const result = await db.update(leagues).set({ name }).where(eq(leagues.leagueId, leagueId));
+    return (result.rowCount ?? 0) > 0;
+  } catch (err) {
+    logger.error({ err }, 'updateLeagueName failed');
+    throw err;
+  }
+}
+
 export async function regenerateInviteCode(leagueId: number): Promise<string> {
   try {
     const newCode = generateInviteCode();

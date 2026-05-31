@@ -9,6 +9,7 @@ import {
   leagueIdParamValidator,
   memberParamValidator,
   updateMemberRoleValidator,
+  updateLeagueNameValidator,
 } from '../utils/zValidate.js';
 import {
   createLeague,
@@ -23,6 +24,7 @@ import {
   updateMemberRole,
   removeMember,
   regenerateInviteCode,
+  updateLeagueName,
 } from '../db/dbLeagueFunctions.js';
 
 type Variables = {
@@ -173,6 +175,23 @@ const leaguesRoute = new Hono<{ Variables: Variables }>()
 
       await removeMember(leagueId, userId);
       return c.json({ success: true });
+    }
+  )
+
+  // Rename a league (league admin only)
+  .patch(
+    '/:leagueId',
+    apiRateLimit,
+    authMiddleware,
+    leagueIdParamValidator,
+    requireLeagueMembership('admin'),
+    updateLeagueNameValidator,
+    async c => {
+      const { leagueId } = c.req.valid('param');
+      const { name } = c.req.valid('json');
+      const updated = await updateLeagueName(leagueId, name);
+      if (!updated) throw new HTTPException(404, { message: 'League not found' });
+      return c.json({ name });
     }
   )
 

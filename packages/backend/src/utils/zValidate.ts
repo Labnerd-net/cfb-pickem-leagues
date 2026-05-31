@@ -147,6 +147,7 @@ export const createLeagueValidator = zValidator('json', createLeagueSchema);
 export const joinLeagueValidator = zValidator('json', joinLeagueSchema);
 export const leagueIdParamValidator = zValidator('param', leagueIdParamSchema);
 export const memberParamValidator = zValidator('param', memberParamSchema);
+export const updateLeagueNameValidator = zValidator('json', z.object({ name: z.string().trim().min(1).max(80) }));
 export const updateMemberRoleValidator = zValidator('json', updateMemberRoleSchema);
 
 // League-game param validator (leagueId + gameId in path)

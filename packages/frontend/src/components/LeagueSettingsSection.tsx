@@ -17,16 +17,19 @@ import {
   TableCell,
   TableHead,
   TableRow,
+  TextField,
   Tooltip,
   Typography,
 } from '@mui/material';
 import ContentCopyIcon from '@mui/icons-material/ContentCopy';
+import EditIcon from '@mui/icons-material/Edit';
 import type { LeagueMemberData } from '@shared/types/cfb-pickem-api.js';
 import {
   getLeagueMembers,
   updateMemberRole,
   removeMember,
   regenerateInviteCode,
+  updateLeagueName,
 } from '../apis/leagueRequests';
 import { useAuth } from '../contexts/auth/AuthContext';
 import { useLeague } from '../contexts/LeagueContext';
@@ -36,6 +39,7 @@ interface LeagueSettingsSectionProps {
   leagueName: string;
   inviteCode?: string;
   onInviteCodeChange: (newCode: string) => void;
+  onNameChange?: (newName: string) => void;
 }
 
 export default function LeagueSettingsSection({
@@ -43,6 +47,7 @@ export default function LeagueSettingsSection({
   leagueName,
   inviteCode,
   onInviteCodeChange,
+  onNameChange,
 }: LeagueSettingsSectionProps) {
   const { user } = useAuth();
   const { refetchLeagues } = useLeague();
@@ -55,6 +60,9 @@ export default function LeagueSettingsSection({
   const [copied, setCopied] = useState(false);
   const [regenDialogOpen, setRegenDialogOpen] = useState(false);
   const [regening, setRegening] = useState(false);
+  const [editingName, setEditingName] = useState(false);
+  const [nameValue, setNameValue] = useState(leagueName);
+  const [savingName, setSavingName] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -80,6 +88,21 @@ export default function LeagueSettingsSection({
       setTimeout(() => setCopied(false), 2000);
     } catch {
       // ignore clipboard errors
+    }
+  }
+
+  async function handleSaveName() {
+    const trimmed = nameValue.trim();
+    if (!trimmed || trimmed === leagueName) { setEditingName(false); return; }
+    setSavingName(true);
+    const result = await updateLeagueName(leagueId, trimmed);
+    setSavingName(false);
+    if (result.success) {
+      setEditingName(false);
+      onNameChange?.(trimmed);
+      await refetchLeagues();
+    } else {
+      setMutationError(result.error ?? 'Failed to rename league');
     }
   }
 
@@ -128,9 +151,33 @@ export default function LeagueSettingsSection({
 
   return (
     <Box>
-      <Typography variant="h6" gutterBottom>
-        {leagueName}
-      </Typography>
+      {editingName ? (
+        <Stack direction="row" spacing={1} alignItems="center" sx={{ mb: 2 }}>
+          <TextField
+            size="small"
+            value={nameValue}
+            onChange={e => setNameValue(e.target.value)}
+            onKeyDown={e => { if (e.key === 'Enter') handleSaveName(); if (e.key === 'Escape') setEditingName(false); }}
+            autoFocus
+            inputProps={{ maxLength: 80 }}
+          />
+          <Button size="small" variant="contained" onClick={handleSaveName} disabled={savingName || !nameValue.trim()}>
+            {savingName ? <CircularProgress size={16} /> : 'Save'}
+          </Button>
+          <Button size="small" onClick={() => { setEditingName(false); setNameValue(leagueName); }} disabled={savingName}>
+            Cancel
+          </Button>
+        </Stack>
+      ) : (
+        <Stack direction="row" spacing={0.5} alignItems="center" sx={{ mb: 2 }}>
+          <Typography variant="h6">{leagueName}</Typography>
+          <Tooltip title="Rename league">
+            <IconButton size="small" onClick={() => { setNameValue(leagueName); setEditingName(true); }}>
+              <EditIcon fontSize="small" />
+            </IconButton>
+          </Tooltip>
+        </Stack>
+      )}
 
       {inviteCode && (
         <Box sx={{ mb: 3 }}>
