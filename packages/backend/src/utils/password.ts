@@ -1,4 +1,4 @@
-const ITERATIONS = 200_000;
+const ITERATIONS = 100_000;
 const KEY_LENGTH = 32;
 
 export async function hashPassword(password: string): Promise<string> {
