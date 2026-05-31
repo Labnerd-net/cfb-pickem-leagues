@@ -5,6 +5,7 @@ import { setCookie, deleteCookie } from 'hono/cookie';
 import { hashPassword, verifyPassword } from '../utils/password.js';
 import { randomBytes } from 'crypto';
 import * as dbUserFunctions from '../db/dbUserFunctions.js';
+import { createLeague } from '../db/dbLeagueFunctions.js';
 import {
   setEmailVerificationToken,
   markEmailVerified,
@@ -57,11 +58,17 @@ const auth = new Hono<{ Variables: Variables }>()
     // First user ever (active + soft-deleted) gets admin. Counting both tables
     // prevents re-opening the bootstrap window if the sole admin deletes their account.
     const totalEverRegistered = await dbUserFunctions.returnTotalUserCount();
-    const roles = totalEverRegistered === 0 ? ['user', 'admin'] : ['user'];
+    const isFirstUser = totalEverRegistered === 0;
+    const roles = isFirstUser ? ['user', 'admin'] : ['user'];
     const user = { email, passwordHash, roles, displayName: displayName.trim() } as UserData;
     const result = await dbUserFunctions.addUser(user);
     if (!result || !(result.length > 0)) {
       throw new Error(`Could not add new user with email=${email}`);
+    }
+
+    // First admin gets a Default League automatically so they're not stuck on the join prompt.
+    if (isFirstUser) {
+      await createLeague('Default League', result[0].userId);
     }
 
     // Send verification email (fire-and-forget)
