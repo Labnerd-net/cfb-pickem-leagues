@@ -7,21 +7,24 @@ import type { Role, SeasonType, Team } from '@shared/types/cfb-pickem-api.js';
 // ------------------------------------------------------------------
 // DB instance
 // ------------------------------------------------------------------
-const pgUser = process.env.DB_USER || 'postgres';
-const pgPassword = process.env.DB_PASSWORD || 'postgres';
-const pgHost = process.env.DB_HOST || 'localhost';
-const pgPort = process.env.DB_PORT || '5432';
-const pgName = process.env.DB_NAME || 'cfb-pickem';
-const sslConfig = process.env.DB_SSL === 'true' ? { ssl: { rejectUnauthorized: false } } : {};
+function getPoolConfig() {
+  if (process.env.NODE_ENV !== 'test') {
+    const connString =
+      process.env.NODE_ENV === 'production' ? process.env.PROD_DB : process.env.DEV_DB;
+    if (connString) return { connectionString: connString };
+  }
+  const sslConfig = process.env.DB_SSL === 'true' ? { ssl: { rejectUnauthorized: false } } : {};
+  return {
+    host: process.env.DB_HOST || 'localhost',
+    port: Number(process.env.DB_PORT || '5432'),
+    user: process.env.DB_USER || 'postgres',
+    password: process.env.DB_PASSWORD || 'postgres',
+    database: process.env.DB_NAME || 'cfb-pickem',
+    ...sslConfig,
+  };
+}
 
-const pool = new Pool({
-  host: pgHost,
-  port: Number(pgPort),
-  user: pgUser,
-  password: pgPassword,
-  database: pgName,
-  ...sslConfig,
-});
+const pool = new Pool(getPoolConfig());
 
 export const db = drizzle(pool);
 

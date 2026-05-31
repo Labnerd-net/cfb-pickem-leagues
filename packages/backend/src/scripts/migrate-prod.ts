@@ -5,23 +5,14 @@ import pkg from 'pg';
 const { Pool } = pkg;
 
 async function runMigrations() {
-  const pgUser = process.env.DB_USER || 'postgres';
-  const pgPassword = process.env.DB_PASSWORD || 'postgres';
-  const pgHost = process.env.DB_HOST || 'localhost';
-  const pgPort = process.env.DB_PORT || '5432';
-  const pgName = process.env.DB_NAME || 'cfb-pickem';
-
-  // Set DB_SSL=true to enable SSL (e.g. for external managed databases with self-signed certs)
-  const sslConfig = process.env.DB_SSL === 'true' ? { ssl: { rejectUnauthorized: false } } : {};
+  if (!process.env.PROD_DB) {
+    console.error('❌ PROD_DB environment variable is not set');
+    process.exit(1);
+  }
 
   const pool = new Pool({
-    user: pgUser,
-    password: pgPassword,
-    host: pgHost,
-    port: Number(pgPort),
-    database: pgName,
-    max: 1, // Limit connections during migration
-    ...sslConfig,
+    connectionString: process.env.PROD_DB,
+    max: 1,
   });
 
   const db = drizzle(pool);
