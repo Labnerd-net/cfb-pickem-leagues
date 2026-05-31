@@ -17,7 +17,11 @@ interface KVNamespace {
   put(key: string, value: string, options?: { expirationTtl?: number }): Promise<void>;
 }
 
-type Bindings = { RATE_LIMIT_KV: KVNamespace };
+interface Fetcher {
+  fetch(request: Request): Promise<Response>;
+}
+
+type Bindings = { RATE_LIMIT_KV: KVNamespace; ASSETS: Fetcher };
 
 const app = new Hono<{ Bindings: Bindings }>();
 
