@@ -366,46 +366,40 @@ export async function markGameComplete(
 // ------------------------------------------------------------------
 // Correct a game's final score and record the change in the audit log
 // ------------------------------------------------------------------
+export async function getGameById(gameId: number): Promise<AdminDbGameData | null> {
+  const rows = await db.select().from(adminGames).where(eq(adminGames.gameId, gameId));
+  return rows[0] ?? null;
+}
+
 export async function correctGameScore(
   gameId: number,
   homePoints: number,
   awayPoints: number,
+  winningTeam: Team,
+  oldHomePoints: number | null,
+  oldAwayPoints: number | null,
   correctedBy: number
 ): Promise<AdminDbGameData | null> {
   logger.debug({ gameId, homePoints, awayPoints, correctedBy }, 'correctGameScore');
   try {
-    return await db.transaction(async tx => {
-      const currentRows = await tx
-        .select()
-        .from(adminGames)
-        .where(eq(adminGames.gameId, gameId));
-      if (currentRows.length === 0) return null;
-      const current = currentRows[0];
+    const updated = await db
+      .update(adminGames)
+      .set({ completed: true, homePoints, awayPoints, winningTeam })
+      .where(eq(adminGames.gameId, gameId))
+      .returning();
 
-      let winningTeam: Team = 'pending';
-      if (homePoints > awayPoints) {
-        winningTeam = 'home_team';
-      } else if (awayPoints > homePoints) {
-        winningTeam = 'away_team';
-      }
+    if (updated.length === 0) return null;
 
-      const updated = await tx
-        .update(adminGames)
-        .set({ completed: true, homePoints, awayPoints, winningTeam })
-        .where(eq(adminGames.gameId, gameId))
-        .returning();
-
-      await tx.insert(scoreCorrections).values({
-        gameId,
-        correctedBy,
-        oldHomePoints: current.homePoints,
-        oldAwayPoints: current.awayPoints,
-        newHomePoints: homePoints,
-        newAwayPoints: awayPoints,
-      });
-
-      return updated.length > 0 ? updated[0] : null;
+    await db.insert(scoreCorrections).values({
+      gameId,
+      correctedBy,
+      oldHomePoints,
+      oldAwayPoints,
+      newHomePoints: homePoints,
+      newAwayPoints: awayPoints,
     });
+
+    return updated[0];
   } catch (e) {
     logger.error({ err: e }, 'correctGameScore failed');
     throw e;

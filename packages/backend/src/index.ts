@@ -1,10 +1,8 @@
-import { serve } from '@hono/node-server';
 import { Hono } from 'hono';
 import { HTTPException } from 'hono/http-exception';
 import { cors } from 'hono/cors';
 import { prettyJSON } from 'hono/pretty-json';
-import cron from 'node-cron';
-import { clientURLs, serverPort } from './utils/envVars.js';
+import { clientURLs } from './utils/envVars.js';
 import authRoutes from './routes/auth.js';
 import adminRoutes from './routes/admin.js';
 import userRoutes from './routes/user.js';
@@ -13,9 +11,15 @@ import leaguesRoute from './routes/leagues.js';
 import adminLeaguesRoute from './routes/adminLeagues.js';
 import { logger } from './utils/middleware.js';
 import pinoLogger from './utils/logger.js';
-import { runCronTick } from './cron/cronTick.js';
 
-const app = new Hono();
+interface KVNamespace {
+  get(key: string): Promise<string | null>;
+  put(key: string, value: string, options?: { expirationTtl?: number }): Promise<void>;
+}
+
+type Bindings = { RATE_LIMIT_KV: KVNamespace };
+
+const app = new Hono<{ Bindings: Bindings }>();
 
 app.use(
   '*',
@@ -54,21 +58,5 @@ app.onError((err, c) => {
   return c.json({ error: 'An unexpected error occurred' }, 500);
 });
 
-serve(
-  {
-    fetch: app.fetch,
-    hostname: '0.0.0.0', // Listen on all network interfaces
-    port: serverPort,
-  },
-  info => {
-    pinoLogger.info(
-      { port: info.port, dbHost: process.env.DB_HOST ?? 'localhost' },
-      'Server started'
-    );
-    cron.schedule('*/15 * * * *', () => {
-      runCronTick().catch(err => pinoLogger.error(err, 'cron tick failed'));
-    });
-  }
-);
-
+export { app };
 export type AppType = typeof routes;

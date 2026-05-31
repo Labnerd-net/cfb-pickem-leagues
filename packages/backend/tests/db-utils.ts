@@ -1,6 +1,6 @@
 import { sql } from 'drizzle-orm';
 import type { NotificationChannel, NotificationType, Role } from '@shared/types/cfb-pickem-api.js';
-import bcrypt from 'bcryptjs';
+import { hashPassword } from '../src/utils/password.js';
 import { db } from '../src/db/index.js';
 
 // Re-export the mocked db instance for tests
@@ -38,7 +38,7 @@ export async function seedTestData() {
 	`);
 
 	// Insert a test admin user
-	const passwordHash = await bcrypt.hash('password123', 10);
+	const passwordHash = await hashPassword('password123');
 	await db.execute(sql`
 		INSERT INTO "user"."users" (user_id, email, display_name, password_hash, roles)
 		VALUES (1, 'admin@test.com', 'Test Admin', ${passwordHash}, ARRAY['admin', 'user']::text[])
@@ -75,7 +75,7 @@ export async function createTestUser(
 	roles: Role[],
 	password = 'password123',
 ) {
-	const passwordHash = await bcrypt.hash(password, 10);
+	const passwordHash = await hashPassword(password);
 	const result = await db.execute(sql`
 		INSERT INTO "user"."users" (email, display_name, password_hash, roles)
 		VALUES (${email}, ${displayName}, ${passwordHash}, ${sql.raw(`ARRAY[${roles.map((r) => `'${r}'`).join(',')}]::text[]`)})

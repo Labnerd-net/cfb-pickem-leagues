@@ -2,13 +2,13 @@
 
 ## Current Feature Spec File
 
-Title:
-Spec file:
-Branch:
+Title: Migrate Backend to Cloudflare Workers
+Spec file: context/specs/migrate-backend-cloudflare-workers.md
+Branch: claude/feature/migrate-backend-cloudflare-workers
 
 ## Current Feature Plan File
 
-Plan File:
+Plan File: context/features/migrate-backend-cloudflare-workers.md
 
 ## History
 

@@ -9,15 +9,12 @@ export interface PasswordValidationResult {
 
 /**
  * Validates password meets minimum requirements:
- * - At least 8 characters long
- * - At most 72 characters (bcrypt silently truncates inputs above 72 bytes,
- *   producing a weaker hash with no error; existing users with longer passwords
- *   were hashed at 72 bytes and are unaffected, but they will need to reset if
- *   they exceed this limit going forward)
+ * - At least 8 characters
+ * - At most 128 characters (upper bound to prevent DoS via excessively long inputs)
  */
 export function validatePassword(password: string): PasswordValidationResult {
   const MIN_LENGTH = 8;
-  const MAX_LENGTH = 72;
+  const MAX_LENGTH = 128;
 
   if (password.length < MIN_LENGTH) {
     return {

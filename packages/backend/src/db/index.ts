@@ -1,32 +1,20 @@
 import 'dotenv/config';
-import { Pool } from 'pg';
-import { drizzle } from 'drizzle-orm/node-postgres';
+import { neon } from '@neondatabase/serverless';
+import { drizzle } from 'drizzle-orm/neon-http';
 import { customType } from 'drizzle-orm/pg-core';
 import type { Role, SeasonType, Team } from '@shared/types/cfb-pickem-api.js';
 
 // ------------------------------------------------------------------
 // DB instance
 // ------------------------------------------------------------------
-function getPoolConfig() {
-  if (process.env.NODE_ENV !== 'test') {
-    const connString =
-      process.env.NODE_ENV === 'production' ? process.env.PROD_DB : process.env.DEV_DB;
-    if (connString) return { connectionString: connString };
-  }
-  const sslConfig = process.env.DB_SSL === 'true' ? { ssl: { rejectUnauthorized: false } } : {};
-  return {
-    host: process.env.DB_HOST || 'localhost',
-    port: Number(process.env.DB_PORT || '5432'),
-    user: process.env.DB_USER || 'postgres',
-    password: process.env.DB_PASSWORD || 'postgres',
-    database: process.env.DB_NAME || 'cfb-pickem',
-    ...sslConfig,
-  };
-}
+// process.env is available in Workers via nodejs_compat + nodejs_compat_populate_process_env.
+// In test, PGlite is injected via vi.mock('src/db/index.ts') — this module is not evaluated.
+const connString = process.env.NODE_ENV === 'production'
+  ? process.env.PROD_DB ?? ''
+  : process.env.DEV_DB ?? process.env.PROD_DB ?? '';
 
-const pool = new Pool(getPoolConfig());
-
-export const db = drizzle(pool);
+const sql = neon(connString);
+export const db = drizzle({ client: sql });
 
 export const columnSeason = customType<{ data: SeasonType }>({
   dataType() {

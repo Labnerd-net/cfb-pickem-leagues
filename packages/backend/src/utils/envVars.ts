@@ -10,7 +10,6 @@ const envSchema = z
     JWT_SECRET: z.string().min(1, 'JWT_SECRET is required'),
     JWT_ALGORITHM: z.string().default('HS256'),
     JWT_EXPIRATION_DAYS: z.coerce.number().default(7),
-    JWT_SALT_ROUNDS: z.coerce.number().default(10),
 
     CFBD_API_KEY: z.string().min(1, 'CFBD_API_KEY is required. Get your key at https://collegefootballdata.com/'),
 
@@ -63,8 +62,6 @@ export const jwtExpirationDays = env.JWT_EXPIRATION_DAYS;
 export function getJwtExpirationSeconds(): number {
   return Math.floor(Date.now() / 1000) + jwtExpirationDays * 24 * 60 * 60;
 }
-
-export const bcryptSaltRounds = env.JWT_SALT_ROUNDS;
 
 // cfbd = college football data = https://collegefootballdata.com/
 export const cfbdApiKey = env.CFBD_API_KEY;

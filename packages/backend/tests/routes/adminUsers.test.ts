@@ -2,7 +2,7 @@ import { describe, it, expect, beforeAll, beforeEach } from 'vitest';
 import { Hono } from 'hono';
 import { HTTPException } from 'hono/http-exception';
 import { sign } from 'hono/jwt';
-import * as bcrypt from 'bcryptjs';
+import { verifyPassword } from '../../src/utils/password.js';
 import { seedTestData, testDb } from '../db-utils.js';
 import { sql } from 'drizzle-orm';
 import adminRoutes from '../../src/routes/admin.js';
@@ -277,11 +277,11 @@ describe('PATCH /api/admin/users/:id/password', () => {
 		const res = await app.request('/api/admin/users/2/password', {
 			method: 'PATCH',
 			headers: { Cookie: `auth_token=${token}`, 'Content-Type': 'application/json' },
-			body: JSON.stringify({ password: 'a'.repeat(73) }),
+			body: JSON.stringify({ password: 'a'.repeat(129) }),
 		});
 		expect(res.status).toBe(400);
 		const body = await res.json() as { error: string };
-		expect(body.error).toContain('72 characters');
+		expect(body.error).toContain('128 characters');
 	});
 
 	it('returns 200 and updates the password hash on success', async () => {
@@ -296,6 +296,6 @@ describe('PATCH /api/admin/users/:id/password', () => {
 
 		const rows = await testDb.execute(sql`SELECT password_hash FROM "user"."users" WHERE user_id = 2`);
 		const hash = (rows.rows[0] as { password_hash: string }).password_hash;
-		expect(await bcrypt.compare(newPassword, hash)).toBe(true);
+		expect(await verifyPassword(newPassword, hash)).toBe(true);
 	});
 });

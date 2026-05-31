@@ -1,8 +1,7 @@
 import { Hono } from 'hono';
 import { HTTPException } from 'hono/http-exception';
-import * as bcrypt from 'bcryptjs';
+import { hashPassword } from '../utils/password.js';
 import { validatePassword } from '../utils/passwordValidation.js';
-import { bcryptSaltRounds } from '../utils/envVars.js';
 import * as dbAdminFunctions from '../db/dbAdminFunctions.js';
 import { returnUsers, updateUserRoles, updateUserPassword, returnUserPickTotals } from '../db/dbUserFunctions.js';
 import { returnNotificationLogs } from '../db/dbNotificationFunctions.js';
@@ -10,7 +9,7 @@ import { getLeaguesForGame } from '../db/dbLeagueFunctions.js';
 import { getGamesForLeagueWeek } from '../db/dbAdminFunctions.js';
 import { isWeekComplete } from '../cron/cronLogic.js';
 import { getGameData, getWeekData } from '../api/index.js';
-import type { JwtData } from '@shared/types/cfb-pickem-api.js';
+import type { JwtData, Team } from '@shared/types/cfb-pickem-api.js';
 import { authMiddleware, requireRole } from '../utils/middleware.js';
 import { apiRateLimit } from '../utils/rateLimiter.js';
 import { z } from 'zod';
@@ -71,7 +70,7 @@ const admin = new Hono<{ Variables: Variables }>()
       const validation = validatePassword(password);
       if (!validation.valid)
         throw new HTTPException(400, { message: validation.error! });
-      const passwordHash = await bcrypt.hash(password, bcryptSaltRounds);
+      const passwordHash = await hashPassword(password);
       const found = await updateUserPassword(targetId, passwordHash);
       if (!found) throw new HTTPException(404, { message: 'User not found' });
       return c.json({ status: 'password updated' });
@@ -186,7 +185,17 @@ const admin = new Hono<{ Variables: Variables }>()
       const { homePoints, awayPoints } = c.req.valid('json');
       const correctedBy = c.get('jwtPayload').sub;
 
-      const updated = await dbAdminFunctions.correctGameScore(gameId, homePoints, awayPoints, correctedBy);
+      const current = await dbAdminFunctions.getGameById(gameId);
+      if (!current) throw new HTTPException(404, { message: 'Game not found' });
+
+      let winningTeam: Team = 'pending';
+      if (homePoints > awayPoints) winningTeam = 'home_team';
+      else if (awayPoints > homePoints) winningTeam = 'away_team';
+
+      const updated = await dbAdminFunctions.correctGameScore(
+        gameId, homePoints, awayPoints, winningTeam,
+        current.homePoints, current.awayPoints, correctedBy
+      );
       if (!updated) throw new HTTPException(404, { message: 'Game not found' });
 
       const affectedLeagues = await getLeaguesForGame(gameId);

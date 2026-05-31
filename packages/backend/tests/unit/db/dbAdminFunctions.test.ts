@@ -188,7 +188,7 @@ describe('Admin Database Functions', () => {
 
 	describe('correctGameScore', () => {
 		it('should return null for a non-existent gameId', async () => {
-			const result = await correctGameScore(999999, 28, 21, 1);
+			const result = await correctGameScore(999999, 28, 21, 'home_team', null, null, 1);
 			expect(result).toBeNull();
 		});
 
@@ -196,7 +196,7 @@ describe('Admin Database Functions', () => {
 			const row = await createTestGame(1, 2024, 'Alabama', 'Georgia', false);
 			const id = (row as { game_id: number }).game_id;
 
-			const updated = await correctGameScore(id, 28, 21, 1);
+			const updated = await correctGameScore(id, 28, 21, 'home_team', null, null, 1);
 
 			expect(updated).not.toBeNull();
 			expect(updated!.homePoints).toBe(28);
@@ -218,7 +218,7 @@ describe('Admin Database Functions', () => {
 			const row = await createTestGame(1, 2024, 'Auburn', 'LSU', false);
 			const id = (row as { game_id: number }).game_id;
 
-			const updated = await correctGameScore(id, 14, 14, 1);
+			const updated = await correctGameScore(id, 14, 14, 'pending', null, null, 1);
 
 			expect(updated!.winningTeam).toBe('pending');
 		});

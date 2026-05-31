@@ -2,7 +2,7 @@ import { Hono } from 'hono';
 import { HTTPException } from 'hono/http-exception';
 import { sign } from 'hono/jwt';
 import { setCookie, deleteCookie } from 'hono/cookie';
-import * as bcrypt from 'bcryptjs';
+import { hashPassword, verifyPassword } from '../utils/password.js';
 import { randomBytes } from 'crypto';
 import * as dbUserFunctions from '../db/dbUserFunctions.js';
 import {
@@ -11,7 +11,6 @@ import {
 } from '../db/dbNotificationFunctions.js';
 import type { JwtData, UserData } from '@shared/types/cfb-pickem-api.js';
 import {
-  bcryptSaltRounds,
   clientURLs,
   jwtAlgorithm,
   getJwtExpirationSeconds,
@@ -54,7 +53,7 @@ const auth = new Hono<{ Variables: Variables }>()
     const existing = await dbUserFunctions.returnUserByEmail(email);
     if (existing?.length) throw new HTTPException(409, { message: 'User already exists' });
 
-    const passwordHash = await bcrypt.hash(password, bcryptSaltRounds);
+    const passwordHash = await hashPassword(password);
     // First user ever (active + soft-deleted) gets admin. Counting both tables
     // prevents re-opening the bootstrap window if the sole admin deletes their account.
     const totalEverRegistered = await dbUserFunctions.returnTotalUserCount();
@@ -99,7 +98,7 @@ const auth = new Hono<{ Variables: Variables }>()
     const user = await dbUserFunctions.returnUserByEmail(email);
     if (!user || user.length === 0)
       throw new HTTPException(401, { message: 'Invalid credentials' });
-    const isValid = await bcrypt.compare(password, user[0].passwordHash);
+    const isValid = await verifyPassword(password, user[0].passwordHash);
     if (!isValid) throw new HTTPException(401, { message: 'Invalid credentials' });
     const payload = {
       sub: user[0].userId,

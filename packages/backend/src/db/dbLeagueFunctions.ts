@@ -12,14 +12,12 @@ function generateInviteCode(): string {
 
 export async function createLeague(name: string, createdBy: number) {
   try {
-    return await db.transaction(async tx => {
-      const [league] = await tx
-        .insert(leagues)
-        .values({ name, inviteCode: generateInviteCode(), createdBy })
-        .returning();
-      await tx.insert(leagueMembers).values({ leagueId: league.leagueId, userId: createdBy, role: 'admin' });
-      return league;
-    });
+    const [league] = await db
+      .insert(leagues)
+      .values({ name, inviteCode: generateInviteCode(), createdBy })
+      .returning();
+    await db.insert(leagueMembers).values({ leagueId: league.leagueId, userId: createdBy, role: 'admin' });
+    return league;
   } catch (err) {
     logger.error({ err }, 'createLeague failed');
     throw err;

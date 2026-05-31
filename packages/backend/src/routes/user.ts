@@ -2,7 +2,7 @@ import { Hono } from 'hono';
 import { HTTPException } from 'hono/http-exception';
 import { sign } from 'hono/jwt';
 import { setCookie } from 'hono/cookie';
-import * as bcrypt from 'bcryptjs';
+import { hashPassword, verifyPassword } from '../utils/password.js';
 import * as dbUserFunctions from '../db/dbUserFunctions.js';
 import {
   returnWeeksByYear,
@@ -29,7 +29,6 @@ import {
   ntfyEnabled, ntfyTopicUrl,
   telegramEnabled, telegramInviteUrl,
   discordEnabled, discordInviteUrl,
-  bcryptSaltRounds,
   jwtAlgorithm,
   getJwtExpirationSeconds,
   jwtSecret,
@@ -80,7 +79,7 @@ const user = new Hono<{ Variables: Variables }>()
       if (!user || user.length === 0)
         throw new HTTPException(404, { message: 'User not found' });
 
-      const isValid = await bcrypt.compare(currentPassword, user[0].passwordHash);
+      const isValid = await verifyPassword(currentPassword, user[0].passwordHash);
       if (!isValid)
         throw new HTTPException(401, { message: 'Current password is incorrect' });
 
@@ -88,7 +87,7 @@ const user = new Hono<{ Variables: Variables }>()
       if (!passwordValidation.valid)
         throw new HTTPException(400, { message: passwordValidation.error! });
 
-      updateFields.passwordHash = await bcrypt.hash(newPassword, bcryptSaltRounds);
+      updateFields.passwordHash = await hashPassword(newPassword);
     }
 
     const updated = await dbUserFunctions.updateUserProfile(payload.sub, updateFields);

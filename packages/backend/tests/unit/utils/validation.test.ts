@@ -50,13 +50,13 @@ describe('Password Validation', () => {
 		expect(result.error).toContain('at least 8 characters');
 	});
 
-	it('should accept passwords at the bcrypt max length', () => {
-		expect(validatePassword('a'.repeat(72)).valid).toBe(true);
+	it('should accept passwords up to the max length', () => {
+		expect(validatePassword('a'.repeat(128)).valid).toBe(true);
 	});
 
-	it('should reject passwords exceeding bcrypt max length', () => {
-		const result = validatePassword('a'.repeat(73));
+	it('should reject passwords exceeding max length', () => {
+		const result = validatePassword('a'.repeat(129));
 		expect(result.valid).toBe(false);
-		expect(result.error).toContain('72');
+		expect(result.error).toContain('128');
 	});
 });
