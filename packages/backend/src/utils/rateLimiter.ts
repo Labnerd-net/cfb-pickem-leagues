@@ -11,21 +11,20 @@ interface RateLimitEntry {
   resetAt: number;
 }
 
-// In-memory store for rate limiting (use Redis in production for distributed systems)
 const store = new Map<string, RateLimitEntry>();
 
-// Cleanup old entries every 5 minutes to prevent memory leaks
-let cleanupInterval: ReturnType<typeof setInterval> | undefined = setInterval(
-  () => {
+// Lazily started inside the first in-memory request — Workers forbids setInterval at module scope.
+let cleanupInterval: ReturnType<typeof setInterval> | undefined;
+
+function ensureCleanupInterval() {
+  if (cleanupInterval !== undefined) return;
+  cleanupInterval = setInterval(() => {
     const now = Date.now();
     for (const [key, entry] of store.entries()) {
-      if (entry.resetAt < now) {
-        store.delete(key);
-      }
+      if (entry.resetAt < now) store.delete(key);
     }
-  },
-  5 * 60 * 1000
-);
+  }, 5 * 60 * 1000);
+}
 
 export interface RateLimitConfig {
   windowMs: number; // Time window in milliseconds
@@ -85,6 +84,7 @@ export function rateLimit(config: RateLimitConfig) {
       c.header('X-RateLimit-Reset', new Date(entry.resetAt).toISOString());
     } else {
       // Local dev path: in-memory store
+      ensureCleanupInterval();
       let entry = store.get(key);
 
       if (!entry || entry.resetAt < now) {
