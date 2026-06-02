@@ -336,34 +336,6 @@ export async function returnCurrentWeek(today: Date): Promise<AdminWeekData | nu
 }
 
 // ------------------------------------------------------------------
-// Mark a game as complete with final scores
-// ------------------------------------------------------------------
-export async function markGameComplete(
-  gameId: number,
-  homePoints: number,
-  awayPoints: number
-): Promise<AdminDbGameData | null> {
-  logger.debug({ gameId, homePoints, awayPoints }, 'markGameComplete');
-  try {
-    let winningTeam: Team = 'pending';
-    if (homePoints > awayPoints) {
-      winningTeam = 'home_team';
-    } else if (awayPoints > homePoints) {
-      winningTeam = 'away_team';
-    }
-    const updated = await db
-      .update(adminGames)
-      .set({ completed: true, homePoints, awayPoints, winningTeam })
-      .where(eq(adminGames.gameId, gameId))
-      .returning();
-    return updated.length > 0 ? updated[0] : null;
-  } catch (e) {
-    logger.error({ err: e }, 'markGameComplete failed');
-    throw e;
-  }
-}
-
-// ------------------------------------------------------------------
 // Correct a game's final score and record the change in the audit log
 // ------------------------------------------------------------------
 export async function getGameById(gameId: number): Promise<AdminDbGameData | null> {
@@ -402,6 +374,25 @@ export async function correctGameScore(
     return updated[0];
   } catch (e) {
     logger.error({ err: e }, 'correctGameScore failed');
+    throw e;
+  }
+}
+
+// ------------------------------------------------------------------
+// Return cfbdGameId values for games that have been manually corrected.
+// Used by sync-results to skip corrected games so corrections aren't overwritten.
+// ------------------------------------------------------------------
+export async function getCorrectedCfbdGameIds(year: number, weekNumber: number): Promise<Set<number>> {
+  logger.debug({ year, weekNumber }, 'getCorrectedCfbdGameIds');
+  try {
+    const rows = await db
+      .selectDistinct({ cfbdGameId: adminGames.cfbdGameId })
+      .from(scoreCorrections)
+      .innerJoin(adminGames, eq(scoreCorrections.gameId, adminGames.gameId))
+      .where(and(eq(adminGames.year, year), eq(adminGames.weekNumber, weekNumber)));
+    return new Set(rows.map(r => r.cfbdGameId).filter((id): id is number => id !== null));
+  } catch (e) {
+    logger.error({ err: e }, 'getCorrectedCfbdGameIds failed');
     throw e;
   }
 }

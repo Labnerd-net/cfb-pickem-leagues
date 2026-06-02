@@ -18,13 +18,14 @@ import AdminPanelSettingsIcon from '@mui/icons-material/AdminPanelSettings';
 import WeekSelector from './WeekSelector';
 import { useWeekManagement } from './useWeekManagement';
 import { useGameManagement } from './useGameManagement';
-import MarkCompleteCard from './MarkCompleteCard';
+import { syncWeekResults } from '../../apis/adminRequests';
 
 export default function AdminSection() {
   const weekHook = useWeekManagement();
   const gameHook = useGameManagement(weekHook.selectedYear, weekHook.selectedWeek);
   const [resetDialogOpen, setResetDialogOpen] = useState(false);
   const [resetting, setResetting] = useState(false);
+  const [syncing, setSyncing] = useState(false);
 
   const loading = weekHook.weekLoading || gameHook.gameLoading;
   const importing = gameHook.importing;
@@ -105,17 +106,41 @@ export default function AdminSection() {
                       variant="outlined"
                       size="small"
                       onClick={gameHook.handleImportGames}
-                      disabled={importing || loading}
+                      disabled={importing || loading || syncing}
                       startIcon={importing ? <CircularProgress size={16} /> : undefined}
                     >
                       {importing ? 'Re-importing...' : 'Re-import'}
                     </Button>
                     <Button
                       variant="outlined"
+                      color="primary"
+                      size="small"
+                      disabled={importing || loading || syncing}
+                      startIcon={syncing ? <CircularProgress size={16} /> : undefined}
+                      onClick={async () => {
+                        setSyncing(true);
+                        const result = await syncWeekResults(weekHook.selectedYear!, weekHook.selectedWeek!);
+                        setSyncing(false);
+                        if (result.success && result.data) {
+                          const { gamesCompleted, gamesSkipped, leaguesNotified } = result.data;
+                          gameHook.setImportFeedback({
+                            severity: 'success',
+                            message: `Synced: ${gamesCompleted} game(s) completed, ${gamesSkipped} skipped (corrected), ${leaguesNotified} league(s) notified`,
+                          });
+                          gameHook.loadGames();
+                        } else {
+                          gameHook.setImportFeedback({ severity: 'error', message: result.error ?? 'Sync failed' });
+                        }
+                      }}
+                    >
+                      {syncing ? 'Syncing...' : 'Sync Results'}
+                    </Button>
+                    <Button
+                      variant="outlined"
                       color="error"
                       size="small"
                       onClick={() => setResetDialogOpen(true)}
-                      disabled={importing || loading || resetting}
+                      disabled={importing || loading || resetting || syncing}
                     >
                       Reset Year
                     </Button>
@@ -161,8 +186,6 @@ export default function AdminSection() {
           )}
         </Box>
       </DashboardCard>
-
-      <MarkCompleteCard />
 
       {/* Success/Error Messages */}
       <Snackbar

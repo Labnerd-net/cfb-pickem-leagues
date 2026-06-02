@@ -6,6 +6,7 @@ import * as dbAdminFunctions from '../db/dbAdminFunctions.js';
 import { returnUsers, updateUserRoles, updateUserPassword, returnUserPickTotals } from '../db/dbUserFunctions.js';
 import { returnNotificationLogs } from '../db/dbNotificationFunctions.js';
 import { getLeaguesForGame } from '../db/dbLeagueFunctions.js';
+import { getActiveLeaguesForWeek } from '../db/dbNotificationFunctions.js';
 import { getGamesForLeagueWeek } from '../db/dbAdminFunctions.js';
 import { isWeekComplete } from '../cron/cronLogic.js';
 import { getGameData, getWeekData } from '../api/index.js';
@@ -14,7 +15,7 @@ import { authMiddleware, requireRole } from '../utils/middleware.js';
 import { apiRateLimit } from '../utils/rateLimiter.js';
 import { z } from 'zod';
 import { zValidator } from '@hono/zod-validator';
-import { updateUserRolesValidator, weekIdentifierValidator, markGameCompleteValidator, yearQueryValidator, weekIdentifierQueryValidator, correctGameScoreParamValidator, correctGameScoreBodyValidator, adminBroadcastBodyValidator, resetPasswordParamValidator, resetPasswordBodyValidator } from '../utils/zValidate.js';
+import { updateUserRolesValidator, weekIdentifierValidator, yearQueryValidator, weekIdentifierQueryValidator, correctGameScoreParamValidator, correctGameScoreBodyValidator, adminBroadcastBodyValidator, resetPasswordParamValidator, resetPasswordBodyValidator } from '../utils/zValidate.js';
 import { dispatchAdminBroadcast, dispatchGameComplete } from '../notifications/dispatcher.js';
 import { getNow } from '../utils/clock.js';
 import logger from '../utils/logger.js';
@@ -149,24 +150,66 @@ const admin = new Hono<{ Variables: Variables }>()
     const weekGames = await dbAdminFunctions.returnGamesForWeek({ year, week: weekNumber });
     return c.json({ weekGames });
   })
-  // Mark a game complete with final scores
+  // Sync game results from CFBD for a week — re-fetches scores and marks completed games.
+  // Skips games that have been manually corrected. Dispatches rankings_updated per league
+  // when all of that league's games for the week become complete.
   .post(
-    '/games/complete',
+    '/weeks/sync-results',
     apiRateLimit,
     authMiddleware,
     requireRole('admin'),
-    markGameCompleteValidator,
+    weekIdentifierQueryValidator,
     async c => {
-      const { gameId, homePoints, awayPoints } = c.req.valid('json');
-      const gameRows = await dbAdminFunctions.returnGame(gameId);
-      if (!gameRows || gameRows.length === 0)
-        throw new HTTPException(404, { message: 'Game not found' });
-      const updated = await dbAdminFunctions.markGameComplete(gameId, homePoints, awayPoints);
-      if (!updated) throw new HTTPException(404, { message: 'Game not found' });
+      const { year, weekNumber } = c.req.valid('query');
+      const weekIdentifier = { year, week: weekNumber };
+      const weekQuery = await dbAdminFunctions.enrichWeekIdentifier(weekIdentifier);
 
-      // Note: rankings_updated notification is per-league and will be dispatched in Phase 6
+      let cfbdWeek: number | undefined;
+      if (weekQuery.seasonType === 'postseason') {
+        const regularCount = await dbAdminFunctions.getMaxRegularWeek(weekQuery.year);
+        cfbdWeek = weekQuery.week - regularCount;
+      }
 
-      return c.json({ game: updated });
+      let gameData;
+      try {
+        gameData = await getGameData(weekQuery, undefined, cfbdWeek);
+      } catch (e) {
+        const msg = e instanceof Error ? e.message : String(e);
+        throw new HTTPException(502, { message: `External API error: ${msg}` });
+      }
+      if (!gameData?.length) {
+        throw new HTTPException(422, { message: 'No games returned from external API for this week' });
+      }
+
+      const correctedIds = await dbAdminFunctions.getCorrectedCfbdGameIds(year, weekNumber);
+
+      let gamesCompleted = 0;
+      let gamesSkipped = 0;
+      await Promise.all(
+        gameData.map(async game => {
+          if (game.cfbdGameId !== null && correctedIds.has(game.cfbdGameId)) {
+            gamesSkipped++;
+            return;
+          }
+          await dbAdminFunctions.upsertGameForWeek(game);
+          if (game.completed) gamesCompleted++;
+        })
+      );
+
+      const activeLeagues = await getActiveLeaguesForWeek(year, weekNumber);
+      let leaguesNotified = 0;
+      for (const { leagueId } of activeLeagues) {
+        const leagueGames = await getGamesForLeagueWeek(leagueId, year, weekNumber);
+        if (isWeekComplete(leagueGames)) {
+          leaguesNotified++;
+          waitUntil(c,
+            dispatchGameComplete(leagueId, year, weekNumber)
+              .catch(err => logger.error({ err, leagueId }, 'rankings_updated dispatch failed after sync'))
+          );
+        }
+      }
+
+      return c.json({ gamesChecked: gameData.length, gamesCompleted, gamesSkipped, leaguesNotified });
     }
   )
   // Correct a game's final score (production-safe; writes audit row)
