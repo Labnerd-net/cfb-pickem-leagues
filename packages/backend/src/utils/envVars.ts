@@ -49,13 +49,13 @@ const localClientURLs = [
   'http://localhost:3001',
   'http://localhost:8080',
 ];
-const envClientURLs = env.CLIENT_URL?.split(',');
-export const clientURLs = envClientURLs || localClientURLs;
+
+export let clientURLs = env.CLIENT_URL?.split(',') || localClientURLs;
 
 export const serverPort = env.SERVER_PORT;
 
-export const jwtSecret = env.JWT_SECRET;
-export const jwtAlgorithm = env.JWT_ALGORITHM as AlgorithmTypes;
+export let jwtSecret = env.JWT_SECRET;
+export let jwtAlgorithm = env.JWT_ALGORITHM as AlgorithmTypes;
 export const jwtExpirationDays = env.JWT_EXPIRATION_DAYS;
 
 // Helper function to calculate JWT expiration (call this when creating tokens)
@@ -64,7 +64,7 @@ export function getJwtExpirationSeconds(): number {
 }
 
 // cfbd = college football data = https://collegefootballdata.com/
-export const cfbdApiKey = env.CFBD_API_KEY;
+export let cfbdApiKey = env.CFBD_API_KEY;
 
 export const logLevel = env.LOG_LEVEL;
 
@@ -83,23 +83,47 @@ export const ignorePickDeadline = env.PICKS_IGNORE_DEADLINE === 'true';
 export const trustProxy = env.TRUST_PROXY === 'true';
 
 // Resend email configuration
-export const resendApiKey = env.RESEND_API_KEY;
-export const notificationFromEmail = env.NOTIFICATION_FROM_EMAIL;
-export const notificationsEnabled = resendApiKey !== '' && notificationFromEmail !== '';
+export let resendApiKey = env.RESEND_API_KEY;
+export let notificationFromEmail = env.NOTIFICATION_FROM_EMAIL;
+export let notificationsEnabled = resendApiKey !== '' && notificationFromEmail !== '';
 // Set to 'true' in dev to skip sending emails
 export const skipEmailSend = env.SKIP_EMAIL_SEND === 'true';
 
 // Broadcast notification channels (admin-configured)
-export const ntfyTopicUrl = env.NTFY_TOPIC_URL;
-export const ntfyEnabled = ntfyTopicUrl !== '';
+export let ntfyTopicUrl = env.NTFY_TOPIC_URL;
+export let ntfyEnabled = ntfyTopicUrl !== '';
 
-export const telegramBotToken = env.TELEGRAM_BOT_TOKEN;
-export const telegramChatId = env.TELEGRAM_CHAT_ID;
-export const telegramEnabled = telegramBotToken !== '' && telegramChatId !== '';
+export let telegramBotToken = env.TELEGRAM_BOT_TOKEN;
+export let telegramChatId = env.TELEGRAM_CHAT_ID;
+export let telegramEnabled = telegramBotToken !== '' && telegramChatId !== '';
 // Public-facing invite link shown to users in Settings (e.g. https://t.me/yourchannel)
-export const telegramInviteUrl = env.TELEGRAM_INVITE_URL;
+export let telegramInviteUrl = env.TELEGRAM_INVITE_URL;
 
-export const discordWebhookUrl = env.DISCORD_WEBHOOK_URL;
-export const discordEnabled = discordWebhookUrl !== '';
+export let discordWebhookUrl = env.DISCORD_WEBHOOK_URL;
+export let discordEnabled = discordWebhookUrl !== '';
 // Public-facing invite link shown to users in Settings (e.g. https://discord.gg/abc123)
-export const discordInviteUrl = env.DISCORD_INVITE_URL;
+export let discordInviteUrl = env.DISCORD_INVITE_URL;
+
+// Called at the top of each Workers fetch/scheduled handler to ensure secrets
+// (which aren't in process.env at module init time) are applied before any request logic runs.
+export function reinitializeSecrets(workerEnv: Record<string, string | undefined>): void {
+  const merged = { ...process.env, ...workerEnv };
+  const parsed = validateEnv(merged as NodeJS.ProcessEnv);
+
+  clientURLs = parsed.CLIENT_URL?.split(',') || localClientURLs;
+  jwtSecret = parsed.JWT_SECRET;
+  jwtAlgorithm = parsed.JWT_ALGORITHM as AlgorithmTypes;
+  cfbdApiKey = parsed.CFBD_API_KEY;
+  resendApiKey = parsed.RESEND_API_KEY;
+  notificationFromEmail = parsed.NOTIFICATION_FROM_EMAIL;
+  notificationsEnabled = resendApiKey !== '' && notificationFromEmail !== '';
+  ntfyTopicUrl = parsed.NTFY_TOPIC_URL;
+  ntfyEnabled = ntfyTopicUrl !== '';
+  telegramBotToken = parsed.TELEGRAM_BOT_TOKEN;
+  telegramChatId = parsed.TELEGRAM_CHAT_ID;
+  telegramEnabled = telegramBotToken !== '' && telegramChatId !== '';
+  telegramInviteUrl = parsed.TELEGRAM_INVITE_URL;
+  discordWebhookUrl = parsed.DISCORD_WEBHOOK_URL;
+  discordEnabled = discordWebhookUrl !== '';
+  discordInviteUrl = parsed.DISCORD_INVITE_URL;
+}
