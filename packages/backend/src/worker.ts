@@ -5,7 +5,8 @@ import pinoLogger from './utils/logger.js';
 import { reinitializeSecrets } from './utils/envVars.js';
 
 interface Env {
-  RATE_LIMIT_KV: KVNamespace;
+  AUTH_RATE_LIMITER: RateLimit;
+  API_RATE_LIMITER: RateLimit;
   ASSETS: Fetcher;
   [key: string]: unknown;
 }
