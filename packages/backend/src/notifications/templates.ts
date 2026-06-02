@@ -47,6 +47,14 @@ function htmlWrapper(content: string): string {
   `.trim();
 }
 
+export function adminBroadcastTemplate({ subject, message }: { subject: string; message: string }): EmailTemplate {
+  const htmlBody = htmlWrapper(`
+    <h2 style="margin-top:0;">${escapeHtml(subject)}</h2>
+    <p>${escapeHtml(message).replace(/\n/g, '<br>')}</p>
+  `);
+  return { subject, htmlBody, textBody: message };
+}
+
 export function verificationEmailTemplate({ verifyUrl }: { verifyUrl: string }): EmailTemplate {
   const subject = `CFB Pick'em — Verify your email address`;
   const textBody = `Welcome to CFB Pick'em! Verify your email address by visiting: ${verifyUrl}`;

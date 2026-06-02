@@ -15,7 +15,7 @@ import {
   picksReminderTemplate,
   picksReminder24hTemplate,
   rankingsUpdatedTemplate,
-  escapeHtml,
+  adminBroadcastTemplate,
 } from './templates.js';
 import logger from '../utils/logger.js';
 import { getNow } from '../utils/clock.js';
@@ -219,9 +219,7 @@ export async function dispatchAdminBroadcast(
         if (!user.emailVerified || !user.email) continue;
         const sent = await sendEmail({
           to: user.email,
-          subject,
-          htmlBody: escapeHtml(message),
-          textBody: message,
+          ...adminBroadcastTemplate({ subject, message }),
         });
         if (sent) {
           await addNotificationLog(user.userId, SITE_WIDE_LEAGUE_ID, year, weekNumber, 'admin_broadcast', 'email');
