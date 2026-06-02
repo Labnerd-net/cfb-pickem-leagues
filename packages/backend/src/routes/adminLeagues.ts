@@ -1,13 +1,12 @@
 import { Hono } from 'hono';
 import { HTTPException } from 'hono/http-exception';
-import type { JwtData, Team } from '@shared/types/cfb-pickem-api.js';
+import type { JwtData } from '@shared/types/cfb-pickem-api.js';
 import { authMiddleware, requireLeagueMembership } from '../utils/middleware.js';
 import { apiRateLimit } from '../utils/rateLimiter.js';
 import {
   leagueIdParamValidator,
   leagueGameParamValidator,
   weekIdentifierQueryValidator,
-  correctGameScoreBodyValidator,
 } from '../utils/zValidate.js';
 import {
   getGlobalGamesWithLeagueStatus,
@@ -15,8 +14,6 @@ import {
   removeGameFromLeague,
   getGamesForLeagueWeek,
   markGameComplete,
-  getGameById,
-  correctGameScore,
 } from '../db/dbAdminFunctions.js';
 import { dispatchGameComplete } from '../notifications/dispatcher.js';
 import {
@@ -124,45 +121,6 @@ const adminLeagues = new Hono<{ Variables: Variables }>()
         throw e;
       }
       return c.json({ success: true });
-    }
-  )
-
-  // Score correction for a game in the league's pool (global fact; audit logged)
-  .patch(
-    '/:leagueId/games/:gameId/score',
-    apiRateLimit,
-    authMiddleware,
-    leagueGameParamValidator,
-    requireLeagueMembership('admin'),
-    weekIdentifierQueryValidator,
-    correctGameScoreBodyValidator,
-    async c => {
-      const { leagueId, gameId } = c.req.valid('param');
-      const { homePoints, awayPoints } = c.req.valid('json');
-      const correctedBy = c.get('jwtPayload').sub;
-
-      const current = await getGameById(gameId);
-      if (!current) throw new HTTPException(404, { message: 'Game not found' });
-
-      let winningTeam: Team = 'pending';
-      if (homePoints > awayPoints) winningTeam = 'home_team';
-      else if (awayPoints > homePoints) winningTeam = 'away_team';
-
-      const updated = await correctGameScore(
-        gameId, homePoints, awayPoints, winningTeam,
-        current.homePoints, current.awayPoints, correctedBy
-      );
-      if (!updated) throw new HTTPException(404, { message: 'Game not found' });
-
-      const leagueGames = await getGamesForLeagueWeek(leagueId, updated.year, updated.weekNumber);
-      if (isWeekComplete(leagueGames)) {
-        waitUntil(c, 
-          dispatchGameComplete(leagueId, updated.year, updated.weekNumber)
-            .catch(err => logger.error({ err, leagueId }, 'rankings_updated dispatch failed after score correction'))
-        );
-      }
-
-      return c.json({ game: updated });
     }
   );
 

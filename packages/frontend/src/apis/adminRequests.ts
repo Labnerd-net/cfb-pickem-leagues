@@ -391,33 +391,3 @@ export async function markLeagueWeekComplete(
     return { success: false, error: 'Request failed' };
   }
 }
-
-type LeagueScoreRPC = InferResponseType<AdminLeaguesClient[':leagueId']['games'][':gameId']['score']['$patch'], 200>;
-export type LeagueGameCorrectedWire = LeagueScoreRPC['game'];
-
-export interface CorrectLeagueGameScoreResponse {
-  success: boolean;
-  data?: LeagueGameCorrectedWire;
-  error?: string;
-}
-
-export async function correctLeagueGameScore(
-  leagueId: number,
-  gameId: number,
-  year: number,
-  weekNumber: number,
-  body: CorrectGameScoreRequest,
-): Promise<CorrectLeagueGameScoreResponse> {
-  try {
-    const res = await client.api.admin.leagues[':leagueId'].games[':gameId'].score.$patch({
-      param: { leagueId: String(leagueId), gameId: String(gameId) },
-      query: { year: String(year), weekNumber: String(weekNumber) },
-      json: body,
-    });
-    if (!res.ok) return { success: false, error: await extractError(res) };
-    const data = await res.json();
-    return { success: true, data: data.game };
-  } catch {
-    return { success: false, error: 'Request failed' };
-  }
-}

@@ -19,17 +19,20 @@ import WeekSelector from './WeekSelector';
 import ScoreCorrectionDialog from './ScoreCorrectionDialog';
 import { useWeekManagement } from './useWeekManagement';
 import { useLeague } from '../../contexts/LeagueContext';
+import { useAuth } from '../../contexts/auth/AuthContext';
 import {
   getLeagueGamesForWeek,
   addGameToLeague,
   removeGameFromLeague,
   markLeagueWeekComplete,
-  correctLeagueGameScore,
+  correctGameScore,
   type LeagueGameWire,
 } from '../../apis/adminRequests';
 import { logger } from '../../utils/logger';
 
 export default function LeagueAdminSection() {
+  const { user } = useAuth();
+  const isPlatformAdmin = user?.roles.includes('admin') ?? false;
   const { activeLeague } = useLeague();
   const leagueId = activeLeague?.leagueId ?? 0;
   const weekHook = useWeekManagement();
@@ -198,6 +201,7 @@ export default function LeagueAdminSection() {
                       game={game}
                       onToggle={handleToggleGame}
                       onCorrect={() => setCorrectionGame(game)}
+                      canCorrect={isPlatformAdmin}
                     />
                   ))}
                 </Box>
@@ -228,7 +232,7 @@ export default function LeagueAdminSection() {
           game={correctionGame}
           onClose={() => setCorrectionGame(null)}
           onSave={async (homePoints, awayPoints) => {
-            const result = await correctLeagueGameScore(leagueId, correctionGame.gameId, weekHook.selectedYear!, weekHook.selectedWeek!, {
+            const result = await correctGameScore(correctionGame.gameId, {
               homePoints,
               awayPoints,
             });
@@ -253,9 +257,10 @@ interface LeagueGameRowProps {
   game: LeagueGameWire;
   onToggle: (game: LeagueGameWire, checked: boolean) => void;
   onCorrect: () => void;
+  canCorrect: boolean;
 }
 
-function LeagueGameRow({ game, onToggle, onCorrect }: LeagueGameRowProps) {
+function LeagueGameRow({ game, onToggle, onCorrect, canCorrect }: LeagueGameRowProps) {
   return (
     <Paper
       elevation={2}
@@ -284,14 +289,16 @@ function LeagueGameRow({ game, onToggle, onCorrect }: LeagueGameRowProps) {
           <Typography variant="caption" sx={{ fontFamily: '"Work Sans", sans-serif', fontWeight: 600 }}>
             IN LEAGUE
           </Typography>
-          <IconButton
-            size="small"
-            onClick={e => { e.stopPropagation(); onCorrect(); }}
-            sx={{ ml: 0.5, color: 'text.secondary' }}
-            title="Correct score"
-          >
-            <EditIcon sx={{ fontSize: 14 }} />
-          </IconButton>
+          {canCorrect && (
+            <IconButton
+              size="small"
+              onClick={e => { e.stopPropagation(); onCorrect(); }}
+              sx={{ ml: 0.5, color: 'text.secondary' }}
+              title="Correct score"
+            >
+              <EditIcon sx={{ fontSize: 14 }} />
+            </IconButton>
+          )}
         </Box>
       )}
 
