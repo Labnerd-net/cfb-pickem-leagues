@@ -1,9 +1,9 @@
-import { describe, it, expect, beforeAll, vi, afterEach } from 'vitest';
+import { describe, it, expect, beforeAll, beforeEach, vi, afterEach } from 'vitest';
 import { Hono } from 'hono';
 import { HTTPException } from 'hono/http-exception';
 import { sign } from 'hono/jwt';
 import { sql } from 'drizzle-orm';
-import { seedTestData, createTestGame, testDb } from '../db-utils.js';
+import { seedTestData, cleanDatabase, createTestGame, createLeagueGame, testDb } from '../db-utils.js';
 import adminRoutes from '../../src/routes/admin.js';
 
 vi.mock('../../src/api/index.js', () => ({
@@ -11,7 +11,13 @@ vi.mock('../../src/api/index.js', () => ({
   getGameData: vi.fn(),
 }));
 
+vi.mock('../../src/notifications/dispatcher.js', () => ({
+  dispatchNotification: vi.fn().mockResolvedValue(undefined),
+  dispatchGameComplete: vi.fn().mockResolvedValue(undefined),
+}));
+
 import { getGameData, getWeekData } from '../../src/api/index.js';
+import { dispatchGameComplete } from '../../src/notifications/dispatcher.js';
 
 const TEST_JWT_SECRET = 'test-secret-key-do-not-use-in-production';
 
@@ -228,5 +234,120 @@ describe('POST /api/admin/year/:year', () => {
     expect(res.status).toBe(200);
     const body = await res.json();
     expect(body.status).toBe('added all weeks');
+  });
+});
+
+describe('POST /api/admin/weeks/sync-results', () => {
+  beforeEach(async () => {
+    await cleanDatabase();
+    await seedTestData();
+    vi.mocked(dispatchGameComplete).mockClear();
+  });
+
+  afterEach(() => {
+    vi.clearAllMocks();
+  });
+
+  async function makeUserToken() {
+    return sign(
+      { sub: 2, email: 'user@test.com', displayName: 'Test User', roles: ['user'], exp: Math.floor(Date.now() / 1000) + 3600 },
+      TEST_JWT_SECRET,
+      'HS256',
+    );
+  }
+
+  it('returns 403 for non-admin users', async () => {
+    const token = await makeUserToken();
+    const res = await app.request('/api/admin/weeks/sync-results?year=2024&weekNumber=1', {
+      method: 'POST',
+      headers: { Cookie: `auth_token=${token}` },
+    });
+    expect(res.status).toBe(403);
+  });
+
+  it('returns 422 when CFBD returns no games', async () => {
+    vi.mocked(getGameData).mockResolvedValue([]);
+    const token = await makeAdminToken();
+    const res = await app.request('/api/admin/weeks/sync-results?year=2024&weekNumber=1', {
+      method: 'POST',
+      headers: { Cookie: `auth_token=${token}` },
+    });
+    expect(res.status).toBe(422);
+  });
+
+  it('returns 502 when CFBD throws', async () => {
+    vi.mocked(getGameData).mockRejectedValue(new Error('CFBD unavailable'));
+    const token = await makeAdminToken();
+    const res = await app.request('/api/admin/weeks/sync-results?year=2024&weekNumber=1', {
+      method: 'POST',
+      headers: { Cookie: `auth_token=${token}` },
+    });
+    expect(res.status).toBe(502);
+  });
+
+  it('upserts completed games and returns correct summary', async () => {
+    vi.mocked(getGameData).mockResolvedValue([
+      { gameId: 0, cfbdGameId: 101, weekNumber: 1, year: 2024, seasonType: 'regular', completed: true, homeTeam: 'Alabama', awayTeam: 'Georgia', homePoints: 28, awayPoints: 21, winningTeam: 'home_team', spread: null, startTime: null },
+      { gameId: 0, cfbdGameId: 102, weekNumber: 1, year: 2024, seasonType: 'regular', completed: false, homeTeam: 'Ohio State', awayTeam: 'Michigan', homePoints: null, awayPoints: null, winningTeam: 'pending', spread: null, startTime: null },
+    ]);
+    const token = await makeAdminToken();
+    const res = await app.request('/api/admin/weeks/sync-results?year=2024&weekNumber=1', {
+      method: 'POST',
+      headers: { Cookie: `auth_token=${token}` },
+    });
+    expect(res.status).toBe(200);
+    const body = await res.json() as { gamesChecked: number; gamesCompleted: number; gamesSkipped: number; leaguesNotified: number };
+    expect(body.gamesChecked).toBe(2);
+    expect(body.gamesCompleted).toBe(1);
+    expect(body.gamesSkipped).toBe(0);
+  });
+
+  it('skips games with a correction audit entry', async () => {
+    // Insert a game with a cfbdGameId and a score correction audit row
+    const row = await createTestGame(1, 2024, 'Oregon', 'Washington');
+    const gameId = (row as { game_id: number }).game_id;
+    const cfbdId = 999;
+    await testDb.execute(sql`UPDATE "admin"."games" SET cfbd_game_id = ${cfbdId} WHERE game_id = ${gameId}`);
+    await testDb.execute(sql`
+      INSERT INTO "admin"."score_corrections" (game_id, corrected_by, new_home_points, new_away_points)
+      VALUES (${gameId}, 1, 35, 28)
+    `);
+
+    vi.mocked(getGameData).mockResolvedValue([
+      { gameId: 0, cfbdGameId: cfbdId, weekNumber: 1, year: 2024, seasonType: 'regular', completed: true, homeTeam: 'Oregon', awayTeam: 'Washington', homePoints: 10, awayPoints: 7, winningTeam: 'home_team', spread: null, startTime: null },
+    ]);
+
+    const token = await makeAdminToken();
+    const res = await app.request('/api/admin/weeks/sync-results?year=2024&weekNumber=1', {
+      method: 'POST',
+      headers: { Cookie: `auth_token=${token}` },
+    });
+    expect(res.status).toBe(200);
+    const body = await res.json() as { gamesSkipped: number };
+    expect(body.gamesSkipped).toBe(1);
+
+    // Verify the corrected score was NOT overwritten
+    const rows = await testDb.execute(sql`SELECT home_points FROM "admin"."games" WHERE game_id = ${gameId}`);
+    expect(rows.rows[0].home_points).toBeNull(); // original null, not overwritten to 10
+  });
+
+  it('dispatches rankings_updated for leagues where all games are complete after sync', async () => {
+    const game = await createTestGame(1, 2024, 'Texas', 'Oklahoma');
+    const gameId = (game as { game_id: number }).game_id;
+    const cfbdId = 777;
+    await testDb.execute(sql`UPDATE "admin"."games" SET cfbd_game_id = ${cfbdId} WHERE game_id = ${gameId}`);
+    await createLeagueGame(1, gameId);
+
+    vi.mocked(getGameData).mockResolvedValue([
+      { gameId: 0, cfbdGameId: cfbdId, weekNumber: 1, year: 2024, seasonType: 'regular', completed: true, homeTeam: 'Texas', awayTeam: 'Oklahoma', homePoints: 45, awayPoints: 14, winningTeam: 'home_team', spread: null, startTime: null },
+    ]);
+
+    const token = await makeAdminToken();
+    await app.request('/api/admin/weeks/sync-results?year=2024&weekNumber=1', {
+      method: 'POST',
+      headers: { Cookie: `auth_token=${token}` },
+    });
+
+    expect(dispatchGameComplete).toHaveBeenCalledWith(1, 2024, 1);
   });
 });

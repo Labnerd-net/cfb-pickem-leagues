@@ -34,65 +34,6 @@ async function makeAdminToken() {
   );
 }
 
-function completeRequest(gameId: number, homePoints: number, awayPoints: number, token: string) {
-  return app.request('/api/admin/games/complete', {
-    method: 'POST',
-    headers: { Cookie: `auth_token=${token}`, 'Content-Type': 'application/json' },
-    body: JSON.stringify({ gameId, homePoints, awayPoints }),
-  });
-}
-
-describe('POST /api/admin/games/complete', () => {
-  beforeEach(async () => {
-    await cleanDatabase();
-    await seedTestData();
-    vi.mocked(dispatchNotification).mockClear();
-  });
-
-  it('returns 404 when game does not exist', async () => {
-    const token = await makeAdminToken();
-    const res = await completeRequest(99999, 28, 14, token);
-    expect(res.status).toBe(404);
-  });
-
-  it('marks a game complete with home team winning', async () => {
-    const row = await createTestGame(1, 2024, 'Alabama', 'Georgia', false, null);
-    const gameId = (row as { game_id: number }).game_id;
-
-    const token = await makeAdminToken();
-    const res = await completeRequest(gameId, 28, 21, token);
-
-    expect(res.status).toBe(200);
-    const body = (await res.json()) as { game: { completed: boolean; winningTeam: string; homePoints: number; awayPoints: number } };
-    expect(body.game.completed).toBe(true);
-    expect(body.game.winningTeam).toBe('home_team');
-    expect(body.game.homePoints).toBe(28);
-    expect(body.game.awayPoints).toBe(21);
-  });
-
-  it('marks a game complete with away team winning', async () => {
-    const row = await createTestGame(1, 2024, 'Michigan', 'Ohio State', false, null);
-    const gameId = (row as { game_id: number }).game_id;
-
-    const token = await makeAdminToken();
-    const res = await completeRequest(gameId, 13, 30, token);
-
-    expect(res.status).toBe(200);
-    const body = (await res.json()) as { game: { winningTeam: string } };
-    expect(body.game.winningTeam).toBe('away_team');
-  });
-
-  it('does not dispatch rankings_updated (Phase 6 handles per-league notifications)', async () => {
-    const rowA = await createTestGame(1, 2024, 'Oregon', 'Washington', false, null);
-    const gameIdA = (rowA as { game_id: number }).game_id;
-
-    const token = await makeAdminToken();
-    await completeRequest(gameIdA, 35, 21, token);
-
-    expect(dispatchNotification).not.toHaveBeenCalled();
-  });
-});
-
 describe('Pick deadline with DEV_CURRENT_TIME', () => {
   let origDevTime: string | undefined;
 

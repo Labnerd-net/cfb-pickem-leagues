@@ -12,15 +12,7 @@ import {
   getGlobalGamesWithLeagueStatus,
   addGameToLeague,
   removeGameFromLeague,
-  getGamesForLeagueWeek,
-  markGameComplete,
 } from '../db/dbAdminFunctions.js';
-import { dispatchGameComplete } from '../notifications/dispatcher.js';
-import {
-  isWeekComplete,
-} from '../cron/cronLogic.js';
-import logger from '../utils/logger.js';
-import { waitUntil } from '../utils/waitUntil.js';
 
 type Variables = {
   jwtPayload: JwtData;
@@ -42,44 +34,6 @@ const adminLeagues = new Hono<{ Variables: Variables }>()
       const { year, weekNumber } = c.req.valid('query');
       const games = await getGlobalGamesWithLeagueStatus(leagueId, year, weekNumber);
       return c.json({ games });
-    }
-  )
-
-  // Add a game to the league pool — must come before /:leagueId/games/:gameId to avoid ambiguity
-  .post(
-    '/:leagueId/games/complete',
-    apiRateLimit,
-    authMiddleware,
-    leagueIdParamValidator,
-    requireLeagueMembership('admin'),
-    weekIdentifierQueryValidator,
-    async c => {
-      const { leagueId } = c.req.valid('param');
-      const { year, weekNumber } = c.req.valid('query');
-      const leagueGameList = await getGamesForLeagueWeek(leagueId, year, weekNumber);
-      if (leagueGameList.length === 0)
-        throw new HTTPException(422, { message: 'No games in league pool for this week' });
-
-      const results = await Promise.allSettled(
-        leagueGameList
-          .filter(g => !g.completed && g.homePoints !== null && g.awayPoints !== null)
-          .map(g => markGameComplete(g.gameId, g.homePoints!, g.awayPoints!))
-      );
-      const failed = results.filter(r => r.status === 'rejected');
-      if (failed.length > 0)
-        logger.error({ count: failed.length }, 'Some games failed to mark complete');
-
-      const completedCount = results.length - failed.length;
-      if (completedCount > 0) {
-        const refreshedGames = await getGamesForLeagueWeek(leagueId, year, weekNumber);
-        if (isWeekComplete(refreshedGames)) {
-          waitUntil(c, 
-            dispatchGameComplete(leagueId, year, weekNumber)
-              .catch(err => logger.error({ err, leagueId }, 'rankings_updated dispatch failed after mark complete'))
-          );
-        }
-      }
-      return c.json({ completed: completedCount });
     }
   )
 

@@ -2,7 +2,6 @@ import type { InferResponseType } from 'hono/client';
 import type {
   WeekIdentifier,
   ProfileData,
-  MarkGameCompleteRequest,
   CorrectGameScoreRequest,
   NotificationChannel,
   NotificationLogEntry,
@@ -19,7 +18,6 @@ type GetGamesRPC            = InferResponseType<typeof client.api.admin.games.$g
 type GetUsersRPC            = InferResponseType<typeof client.api.admin.users.$get, 200>;
 type AdminUsersClient       = typeof client.api.admin.users;
 type UpdateUserRolesRPC     = InferResponseType<AdminUsersClient[':id']['roles']['$patch'], 200>;
-type MarkGameCompleteRPC    = InferResponseType<typeof client.api.admin.games.complete.$post, 200>;
 type AdminGamesClient       = typeof client.api.admin.games;
 type CorrectGameScoreRPC    = InferResponseType<AdminGamesClient[':gameId']['score']['$patch'], 200>;
 type AdminClient            = typeof client.api.admin;
@@ -191,24 +189,6 @@ export async function resetUserPassword(
   }
 }
 
-export interface MarkGameCompleteResponse {
-  success: boolean;
-  data?: AdminDbGameDataWire;
-  error?: string;
-}
-
-export async function markGameComplete(
-  request: MarkGameCompleteRequest
-): Promise<MarkGameCompleteResponse> {
-  try {
-    const res = await client.api.admin.games.complete.$post({ json: request });
-    if (!res.ok) return { success: false, error: await extractError(res) };
-    const body = (await res.json()) as MarkGameCompleteRPC;
-    return { success: true, data: body.game };
-  } catch {
-    return { success: false, error: 'Request failed' };
-  }
-}
 
 export interface GetNotificationLogsResponse {
   success: boolean;
@@ -368,25 +348,20 @@ export async function removeGameFromLeague(
   }
 }
 
-export interface MarkLeagueWeekCompleteResponse {
+export interface SyncWeekResultsResponse {
   success: boolean;
-  data?: { completed: number };
+  data?: { gamesChecked: number; gamesCompleted: number; gamesSkipped: number; leaguesNotified: number };
   error?: string;
 }
 
-export async function markLeagueWeekComplete(
-  leagueId: number,
-  year: number,
-  weekNumber: number,
-): Promise<MarkLeagueWeekCompleteResponse> {
+export async function syncWeekResults(year: number, weekNumber: number): Promise<SyncWeekResultsResponse> {
   try {
-    const res = await client.api.admin.leagues[':leagueId'].games.complete.$post({
-      param: { leagueId: String(leagueId) },
+    const res = await client.api.admin.weeks['sync-results'].$post({
       query: { year: String(year), weekNumber: String(weekNumber) },
     });
     if (!res.ok) return { success: false, error: await extractError(res) };
-    const body = await res.json();
-    return { success: true, data: body };
+    const data = await res.json();
+    return { success: true, data };
   } catch {
     return { success: false, error: 'Request failed' };
   }

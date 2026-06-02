@@ -2,7 +2,6 @@ import { useEffect, useState } from 'react';
 import {
   Alert,
   Box,
-  Button,
   Checkbox,
   CircularProgress,
   FormControlLabel,
@@ -24,7 +23,6 @@ import {
   getLeagueGamesForWeek,
   addGameToLeague,
   removeGameFromLeague,
-  markLeagueWeekComplete,
   correctGameScore,
   type LeagueGameWire,
 } from '../../apis/adminRequests';
@@ -40,7 +38,6 @@ export default function LeagueAdminSection() {
   const [games, setGames] = useState<LeagueGameWire[]>([]);
   const [gamesLoading, setGamesLoading] = useState(false);
   const [gamesError, setGamesError] = useState<string | null>(null);
-  const [completing, setCompleting] = useState(false);
   const [snackbar, setSnackbar] = useState<{ open: boolean; message: string; severity: 'success' | 'error' }>({
     open: false,
     message: '',
@@ -49,20 +46,6 @@ export default function LeagueAdminSection() {
 
   // Score correction dialog state
   const [correctionGame, setCorrectionGame] = useState<LeagueGameWire | null>(null);
-
-  async function loadGames() {
-    if (!leagueId || !weekHook.selectedYear || !weekHook.selectedWeek) return;
-    setGamesLoading(true);
-    setGamesError(null);
-    const result = await getLeagueGamesForWeek(leagueId, weekHook.selectedYear, weekHook.selectedWeek);
-    if (result.success && result.data) {
-      setGames(result.data);
-    } else {
-      setGames([]);
-      setGamesError(result.error ?? 'Failed to load games');
-    }
-    setGamesLoading(false);
-  }
 
   useEffect(() => {
     let cancelled = false;
@@ -109,23 +92,6 @@ export default function LeagueAdminSection() {
     }
   }
 
-  async function handleMarkComplete() {
-    setCompleting(true);
-    const result = await markLeagueWeekComplete(leagueId, weekHook.selectedYear, weekHook.selectedWeek);
-    setCompleting(false);
-    if (result.success) {
-      setSnackbar({
-        open: true,
-        message: `Marked ${result.data?.completed ?? 0} game(s) complete`,
-        severity: 'success',
-      });
-      await loadGames();
-    } else {
-      setSnackbar({ open: true, message: result.error ?? 'Failed to mark complete', severity: 'error' });
-    }
-  }
-
-  const inLeagueGames = games.filter(g => g.inLeague);
   const loading = weekHook.weekLoading || gamesLoading;
 
   return (
@@ -166,19 +132,6 @@ export default function LeagueAdminSection() {
 
           {weekHook.weeks.length > 0 && (
             <Box sx={{ mt: 4, pt: 4, borderTop: 2, borderColor: 'divider' }}>
-              {/* Actions row */}
-              <Box sx={{ display: 'flex', justifyContent: 'flex-end', mb: 2 }}>
-                <Button
-                  variant="outlined"
-                  size="small"
-                  disabled={completing || loading || inLeagueGames.length === 0}
-                  onClick={handleMarkComplete}
-                  startIcon={completing ? <CircularProgress size={16} /> : undefined}
-                >
-                  {completing ? 'Marking...' : 'Mark Week Complete'}
-                </Button>
-              </Box>
-
               {gamesError && (
                 <Alert severity="error" sx={{ mb: 2 }}>{gamesError}</Alert>
               )}
