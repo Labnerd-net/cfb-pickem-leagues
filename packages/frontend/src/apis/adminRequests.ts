@@ -144,11 +144,6 @@ export async function getUsers(): Promise<GetUsersResponse> {
   }
 }
 
-export interface SetPicksResponse {
-  success: boolean;
-  data?: { status: string };
-  error?: string;
-}
 
 export interface UpdateUserRolesResponse {
   success: boolean;
@@ -272,11 +267,6 @@ export async function sendAdminBroadcast(request: AdminBroadcastRequest): Promis
   } catch {
     return { success: false, error: 'Request failed' };
   }
-}
-
-// Phase 4: replace with per-league game selection via /api/admin/leagues/:leagueId/games
-export async function setPickedGames(_pickedData: { year: number; week: number; games: number[] }): Promise<SetPicksResponse> {
-  return { success: false, error: 'Game selection is now per-league (Phase 4)' };
 }
 
 // --- League Admin endpoints ---

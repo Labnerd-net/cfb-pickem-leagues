@@ -147,13 +147,7 @@ export default function AdminSection() {
                   </Box>
                   <GamesList
                     games={gameHook.games}
-                    selectedGameIds={gameHook.selectedGameIds}
-                    onGameSelect={gameHook.handleGameSelection}
-                    onSelectAll={gameHook.handleSelectAll}
-                    onDeselectAll={gameHook.handleDeselectAll}
-                    onSaveSelection={gameHook.handleSavePickedGames}
                     onGameCorrected={gameHook.handleGameCorrected}
-                    loading={loading}
                   />
                 </>
               ) : (
@@ -186,18 +180,6 @@ export default function AdminSection() {
           )}
         </Box>
       </DashboardCard>
-
-      {/* Success/Error Messages */}
-      <Snackbar
-        open={!!gameHook.successMessage}
-        autoHideDuration={6000}
-        onClose={gameHook.clearMessages}
-        anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
-      >
-        <Alert onClose={gameHook.clearMessages} severity="success" sx={{ width: '100%' }}>
-          {gameHook.successMessage}
-        </Alert>
-      </Snackbar>
 
       <Snackbar
         open={!!gameHook.errorMessage}
