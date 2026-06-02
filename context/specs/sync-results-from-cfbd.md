@@ -22,7 +22,7 @@ Replace the manual "mark game complete" flow with a platform-admin-only "sync re
 ## Possible Edge Cases
 
 - A sync runs mid-game: some games complete, others still in progress. Only fully completed games flip; the week stays open for those leagues until the next sync.
-- A game was previously manually corrected via `correctGameScore`. The sync would overwrite the corrected score with whatever CFBD returns. The sync should skip games that have a correction audit log entry, or at minimum warn the admin before overwriting.
+- A game was previously manually corrected via `correctGameScore`. The sync must skip any game that has a correction audit log entry — the corrected score takes precedence over whatever CFBD returns.
 - Multiple leagues share the same game in their pool. The notification should fire per league independently once that league's full pool is complete.
 - CFBD API is slow or times out during sync. The response should not hang; handle timeout gracefully and report partial results.
 - A week has no leagues with games yet. Sync still updates the global game cache; no notifications fire.
@@ -37,11 +37,11 @@ Replace the manual "mark game complete" flow with a platform-admin-only "sync re
 - [ ] The "mark week complete" button and endpoint are removed from the league admin UI and API.
 - [ ] Sync endpoint returns a meaningful summary (games checked, games updated, leagues notified).
 - [ ] Sync is inaccessible to league admins (403 if attempted).
-- [ ] Score corrections made via `correctGameScore` are not blindly overwritten by a sync.
+- [ ] Games with a correction audit log entry are skipped during sync; their corrected scores are preserved.
 
 ## Open Questions
 
-- Should sync skip games with a correction audit log entry, or should it overwrite and require the admin to re-correct? Skipping is safer but means corrections persist even if CFBD later posts the right score.
+- ~~Should sync skip games with a correction audit log entry?~~ **Decided: skip them.** Corrected scores take precedence over CFBD data.
 - Should there be a cron job that auto-syncs results on a schedule (e.g. Sunday night), or always manual? A cron would reduce admin burden but adds complexity and could silently overwrite corrections.
 - Should the sync UI show a diff of what changed (which games flipped, what scores came in) before confirming, or just do it immediately?
 
@@ -49,7 +49,7 @@ Replace the manual "mark game complete" flow with a platform-admin-only "sync re
 
 - Unit test the sync logic: verify that games already completed are not re-dispatched, that `isWeekComplete` is checked per league, and that notifications fire only when the full pool is done.
 - Test the CFBD timeout/error path returns a useful error response rather than hanging.
-- Test that a game with a correction audit entry is handled correctly per whatever policy is decided in Open Questions.
+- Test that a game with a correction audit entry is skipped during sync and its corrected score is preserved.
 - Test the 403 response when a league admin attempts to call the sync endpoint.
 
 ## Personal Opinion
