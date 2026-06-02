@@ -202,8 +202,10 @@ const admin = new Hono<{ Variables: Variables }>()
       for (const { leagueId } of affectedLeagues) {
         const leagueGames = await getGamesForLeagueWeek(leagueId, updated.year, updated.weekNumber);
         if (isWeekComplete(leagueGames)) {
-          dispatchGameComplete(leagueId, updated.year, updated.weekNumber)
-            .catch(err => logger.error({ err, leagueId }, 'rankings_updated dispatch failed after score correction'));
+          c.executionCtx.waitUntil(
+            dispatchGameComplete(leagueId, updated.year, updated.weekNumber)
+              .catch(err => logger.error({ err, leagueId }, 'rankings_updated dispatch failed after score correction'))
+          );
         }
       }
 
