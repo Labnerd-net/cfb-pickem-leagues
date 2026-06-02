@@ -201,6 +201,21 @@ export interface BroadcastChannelInfo {
   discord: { inviteUrl: string | null } | null;
 }
 
+export interface LeagueChannelConfig {
+  ntfyTopicUrl: string | null;
+  telegramBotToken: string | null;
+  telegramChatId: string | null;
+  telegramInviteUrl: string | null;
+  discordWebhookUrl: string | null;
+  discordInviteUrl: string | null;
+}
+
+export interface LeagueBroadcastRequest {
+  subject: string;
+  message: string;
+  overrideEmailPreferences: boolean;
+}
+
 export interface UpdateProfileRequest {
   displayName?: string;
   currentPassword?: string;

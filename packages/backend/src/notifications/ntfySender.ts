@@ -1,22 +1,22 @@
 import logger from '../utils/logger.js';
-import { ntfyEnabled, ntfyTopicUrl } from '../utils/envVars.js';
 
 interface SendNtfyParams {
+  topicUrl: string;
   title: string;
   message: string;
 }
 
 export async function sendNtfyNotification(params: SendNtfyParams): Promise<boolean> {
-  if (!ntfyEnabled) {
-    logger.warn('ntfy notification skipped: NTFY_TOPIC_URL not configured');
+  if (!params.topicUrl) {
+    logger.warn('ntfy notification skipped: topicUrl not configured');
     return false;
   }
 
   let parsed: URL;
   try {
-    parsed = new URL(ntfyTopicUrl);
+    parsed = new URL(params.topicUrl);
   } catch {
-    logger.error({ ntfyTopicUrl }, 'Invalid NTFY_TOPIC_URL');
+    logger.error({ topicUrl: params.topicUrl }, 'Invalid ntfy topicUrl');
     return false;
   }
 
@@ -41,7 +41,7 @@ export async function sendNtfyNotification(params: SendNtfyParams): Promise<bool
     'Content-Type': 'text/plain',
     // ntfy Title is an HTTP header; undici rejects values with chars > 255.
     // Replace common Unicode punctuation with ASCII equivalents.
-    Title: params.title.replace(/[\u2013\u2014]/g, '-').replace(/[^\x00-\xFF]/g, ''),
+    Title: params.title.replace(/[–—]/g, '-').replace(/[^\x00-\xFF]/g, ''),
   };
   if (authHeader) {
     headers['Authorization'] = authHeader;

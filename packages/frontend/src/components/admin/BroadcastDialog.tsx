@@ -57,7 +57,7 @@ export default function BroadcastDialog({ open, onClose }: BroadcastDialogProps)
 
   return (
     <Dialog open={open} onClose={handleClose} maxWidth="sm" fullWidth>
-      <DialogTitle>Send Notification to All Users</DialogTitle>
+      <DialogTitle>Send Notification to All Users (Email Only)</DialogTitle>
       <DialogContent sx={{ display: 'flex', flexDirection: 'column', gap: 2, pt: 2 }}>
         {broadcastSuccess ? (
           <Alert severity="success">Notification sent successfully.</Alert>

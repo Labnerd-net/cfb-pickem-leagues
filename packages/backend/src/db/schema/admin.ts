@@ -14,6 +14,7 @@ import {
   unique,
 } from 'drizzle-orm/pg-core';
 import { relations } from 'drizzle-orm';
+// import { relations } from 'drizzle-orm'; // for drizzle-kit generate
 import { columnSeason, columnTeam } from '../index.js';
 // import { columnSeason, columnTeam } from '../index'; // for drizzle-kit generate
 

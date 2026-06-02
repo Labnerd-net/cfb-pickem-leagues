@@ -22,13 +22,6 @@ const envSchema = z
     RESEND_API_KEY: z.string().default(''),
     NOTIFICATION_FROM_EMAIL: z.string().default(''),
     SKIP_EMAIL_SEND: z.string().optional(),
-
-    NTFY_TOPIC_URL: z.string().default(''),
-    TELEGRAM_BOT_TOKEN: z.string().default(''),
-    TELEGRAM_CHAT_ID: z.string().default(''),
-    TELEGRAM_INVITE_URL: z.string().default(''),
-    DISCORD_WEBHOOK_URL: z.string().default(''),
-    DISCORD_INVITE_URL: z.string().default(''),
   })
 
 export function validateEnv(env: NodeJS.ProcessEnv) {
@@ -89,21 +82,6 @@ export let notificationsEnabled = resendApiKey !== '' && notificationFromEmail !
 // Set to 'true' in dev to skip sending emails
 export const skipEmailSend = env.SKIP_EMAIL_SEND === 'true';
 
-// Broadcast notification channels (admin-configured)
-export let ntfyTopicUrl = env.NTFY_TOPIC_URL;
-export let ntfyEnabled = ntfyTopicUrl !== '';
-
-export let telegramBotToken = env.TELEGRAM_BOT_TOKEN;
-export let telegramChatId = env.TELEGRAM_CHAT_ID;
-export let telegramEnabled = telegramBotToken !== '' && telegramChatId !== '';
-// Public-facing invite link shown to users in Settings (e.g. https://t.me/yourchannel)
-export let telegramInviteUrl = env.TELEGRAM_INVITE_URL;
-
-export let discordWebhookUrl = env.DISCORD_WEBHOOK_URL;
-export let discordEnabled = discordWebhookUrl !== '';
-// Public-facing invite link shown to users in Settings (e.g. https://discord.gg/abc123)
-export let discordInviteUrl = env.DISCORD_INVITE_URL;
-
 // Called at the top of each Workers fetch/scheduled handler to ensure secrets
 // (which aren't in process.env at module init time) are applied before any request logic runs.
 export function reinitializeSecrets(workerEnv: Record<string, string | undefined>): void {
@@ -117,13 +95,4 @@ export function reinitializeSecrets(workerEnv: Record<string, string | undefined
   resendApiKey = parsed.RESEND_API_KEY;
   notificationFromEmail = parsed.NOTIFICATION_FROM_EMAIL;
   notificationsEnabled = resendApiKey !== '' && notificationFromEmail !== '';
-  ntfyTopicUrl = parsed.NTFY_TOPIC_URL;
-  ntfyEnabled = ntfyTopicUrl !== '';
-  telegramBotToken = parsed.TELEGRAM_BOT_TOKEN;
-  telegramChatId = parsed.TELEGRAM_CHAT_ID;
-  telegramEnabled = telegramBotToken !== '' && telegramChatId !== '';
-  telegramInviteUrl = parsed.TELEGRAM_INVITE_URL;
-  discordWebhookUrl = parsed.DISCORD_WEBHOOK_URL;
-  discordEnabled = discordWebhookUrl !== '';
-  discordInviteUrl = parsed.DISCORD_INVITE_URL;
 }

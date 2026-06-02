@@ -5,7 +5,7 @@ import {
   returnSentNotificationUserIds,
 } from '../db/dbNotificationFunctions.js';
 import { returnLeaderboard, returnUsers } from '../db/dbUserFunctions.js';
-import { getLeagueById } from '../db/dbLeagueFunctions.js';
+import { getLeagueById, getLeagueChannels, getLeagueMembersWithEmail } from '../db/dbLeagueFunctions.js';
 import { sendEmail } from './emailSender.js';
 import { sendNtfyNotification } from './ntfySender.js';
 import { sendTelegramNotification } from './telegramSender.js';
@@ -19,8 +19,7 @@ import {
 } from './templates.js';
 import logger from '../utils/logger.js';
 import { getNow } from '../utils/clock.js';
-import { ntfyEnabled, telegramEnabled, discordEnabled } from '../utils/envVars.js';
-import type { LeaderboardEntry, NotificationType } from '@shared/types/cfb-pickem-api.js';
+import type { LeaderboardEntry, NotificationType, LeagueChannelConfig } from '@shared/types/cfb-pickem-api.js';
 
 // Sentinel userId for broadcast channel deduplication log entries
 const BROADCAST_USER_ID = 0;
@@ -61,16 +60,13 @@ export async function dispatchNotification(params: DispatchParams): Promise<void
     for (const user of users) {
       try {
         if (!user.emailVerified || !user.email) continue;
-
         if (alreadySentUserIds.has(user.userId)) continue;
-
         const sent = await sendEmail({
           to: user.email,
           subject: template.subject,
           htmlBody: template.htmlBody,
           textBody: template.textBody,
         });
-
         if (sent) {
           await addNotificationLog(user.userId, leagueId, year, weekNumber, notificationType, 'email');
         }
@@ -83,13 +79,20 @@ export async function dispatchNotification(params: DispatchParams): Promise<void
   }
 
   // ----------------------------------------------------------------
-  // ntfy broadcast channel
+  // League broadcast channels — fetch config from DB
   // ----------------------------------------------------------------
-  if (ntfyEnabled) {
+  let channels: LeagueChannelConfig | undefined;
+  try {
+    channels = await getLeagueChannels(leagueId);
+  } catch (e) {
+    logger.error({ err: e, leagueId }, 'Failed to fetch league channel config');
+  }
+
+  if (channels?.ntfyTopicUrl) {
     try {
       const alreadySent = await hasNotificationBeenSent(BROADCAST_USER_ID, leagueId, year, weekNumber, notificationType, 'ntfy');
       if (!alreadySent) {
-        const sent = await sendNtfyNotification({ title: template.subject, message: template.textBody });
+        const sent = await sendNtfyNotification({ topicUrl: channels.ntfyTopicUrl, title: template.subject, message: template.textBody });
         if (sent) {
           await addNotificationLog(BROADCAST_USER_ID, leagueId, year, weekNumber, notificationType, 'ntfy');
         }
@@ -99,14 +102,16 @@ export async function dispatchNotification(params: DispatchParams): Promise<void
     }
   }
 
-  // ----------------------------------------------------------------
-  // Telegram broadcast channel
-  // ----------------------------------------------------------------
-  if (telegramEnabled) {
+  if (channels?.telegramBotToken && channels?.telegramChatId) {
     try {
       const alreadySent = await hasNotificationBeenSent(BROADCAST_USER_ID, leagueId, year, weekNumber, notificationType, 'telegram');
       if (!alreadySent) {
-        const sent = await sendTelegramNotification({ title: template.subject, message: template.textBody });
+        const sent = await sendTelegramNotification({
+          botToken: channels.telegramBotToken,
+          chatId: channels.telegramChatId,
+          title: template.subject,
+          message: template.textBody,
+        });
         if (sent) {
           await addNotificationLog(BROADCAST_USER_ID, leagueId, year, weekNumber, notificationType, 'telegram');
         }
@@ -116,14 +121,11 @@ export async function dispatchNotification(params: DispatchParams): Promise<void
     }
   }
 
-  // ----------------------------------------------------------------
-  // Discord broadcast channel
-  // ----------------------------------------------------------------
-  if (discordEnabled) {
+  if (channels?.discordWebhookUrl) {
     try {
       const alreadySent = await hasNotificationBeenSent(BROADCAST_USER_ID, leagueId, year, weekNumber, notificationType, 'discord');
       if (!alreadySent) {
-        const sent = await sendDiscordNotification({ title: template.subject, message: template.textBody });
+        const sent = await sendDiscordNotification({ webhookUrl: channels.discordWebhookUrl, title: template.subject, message: template.textBody });
         if (sent) {
           await addNotificationLog(BROADCAST_USER_ID, leagueId, year, weekNumber, notificationType, 'discord');
         }
@@ -187,9 +189,8 @@ function buildTemplate(
 }
 
 // ------------------------------------------------------------------
-// Dispatch a free-form admin broadcast to all users and broadcast channels.
+// Platform admin broadcast — email only, site-wide.
 // No deduplication — each call is an intentional unique send.
-// year/weekNumber are the resolved week context for the notification log.
 // ------------------------------------------------------------------
 export async function dispatchAdminBroadcast(
   subject: string,
@@ -200,9 +201,6 @@ export async function dispatchAdminBroadcast(
 ): Promise<void> {
   logger.info({ year, weekNumber, overrideEmailPreferences }, 'dispatchAdminBroadcast started');
 
-  // ----------------------------------------------------------------
-  // Email channel
-  // ----------------------------------------------------------------
   try {
     let emailUsers: { userId: number; email: string; emailVerified: boolean }[];
     if (overrideEmailPreferences) {
@@ -232,47 +230,100 @@ export async function dispatchAdminBroadcast(
     logger.error({ err: e }, 'Failed to fetch users for admin broadcast email');
   }
 
-  // ----------------------------------------------------------------
-  // ntfy broadcast channel
-  // ----------------------------------------------------------------
-  if (ntfyEnabled) {
-    try {
-      const sent = await sendNtfyNotification({ title: subject, message });
-      if (sent) {
-        await addNotificationLog(BROADCAST_USER_ID, SITE_WIDE_LEAGUE_ID, year, weekNumber, 'admin_broadcast', 'ntfy');
-      }
-    } catch (e) {
-      logger.error({ err: e }, 'Failed to send admin broadcast ntfy notification');
-    }
-  }
-
-  // ----------------------------------------------------------------
-  // Telegram broadcast channel
-  // ----------------------------------------------------------------
-  if (telegramEnabled) {
-    try {
-      const sent = await sendTelegramNotification({ title: subject, message });
-      if (sent) {
-        await addNotificationLog(BROADCAST_USER_ID, SITE_WIDE_LEAGUE_ID, year, weekNumber, 'admin_broadcast', 'telegram');
-      }
-    } catch (e) {
-      logger.error({ err: e }, 'Failed to send admin broadcast Telegram notification');
-    }
-  }
-
-  // ----------------------------------------------------------------
-  // Discord broadcast channel
-  // ----------------------------------------------------------------
-  if (discordEnabled) {
-    try {
-      const sent = await sendDiscordNotification({ title: subject, message });
-      if (sent) {
-        await addNotificationLog(BROADCAST_USER_ID, SITE_WIDE_LEAGUE_ID, year, weekNumber, 'admin_broadcast', 'discord');
-      }
-    } catch (e) {
-      logger.error({ err: e }, 'Failed to send admin broadcast Discord notification');
-    }
-  }
-
   logger.info({ year, weekNumber }, 'dispatchAdminBroadcast complete');
+}
+
+// ------------------------------------------------------------------
+// League admin broadcast — email + league-configured channels.
+// No deduplication — each call is an intentional unique send.
+// ------------------------------------------------------------------
+export async function dispatchLeagueBroadcast(
+  leagueId: number,
+  leagueName: string,
+  subject: string,
+  message: string,
+  overrideEmailPreferences: boolean,
+  year: number,
+  weekNumber: number
+): Promise<void> {
+  logger.info({ leagueId, year, weekNumber, overrideEmailPreferences }, 'dispatchLeagueBroadcast started');
+
+  // ----------------------------------------------------------------
+  // Email channel — league members only
+  // ----------------------------------------------------------------
+  try {
+    const emailUsers = overrideEmailPreferences
+      ? await getLeagueMembersWithEmail(leagueId)
+      : await returnEmailOptedInUsers('admin_broadcast', leagueId);
+
+    const leagueBroadcastSubject = `[${leagueName}] ${subject}`;
+    for (const user of emailUsers) {
+      try {
+        if (!user.emailVerified || !user.email) continue;
+        const sent = await sendEmail({
+          to: user.email,
+          ...adminBroadcastTemplate({ subject: leagueBroadcastSubject, message }),
+        });
+        if (sent) {
+          await addNotificationLog(user.userId, leagueId, year, weekNumber, 'admin_broadcast', 'email');
+        }
+      } catch (e) {
+        logger.error({ err: e, userId: user.userId }, 'Failed to send league broadcast email to user');
+      }
+    }
+  } catch (e) {
+    logger.error({ err: e, leagueId }, 'Failed to fetch league members for broadcast email');
+  }
+
+  // ----------------------------------------------------------------
+  // League broadcast channels
+  // ----------------------------------------------------------------
+  let channels: LeagueChannelConfig | undefined;
+  try {
+    channels = await getLeagueChannels(leagueId);
+  } catch (e) {
+    logger.error({ err: e, leagueId }, 'Failed to fetch league channel config');
+  }
+
+  const broadcastTitle = `[${leagueName}] ${subject}`;
+
+  if (channels?.ntfyTopicUrl) {
+    try {
+      const sent = await sendNtfyNotification({ topicUrl: channels.ntfyTopicUrl, title: broadcastTitle, message });
+      if (sent) {
+        await addNotificationLog(BROADCAST_USER_ID, leagueId, year, weekNumber, 'admin_broadcast', 'ntfy');
+      }
+    } catch (e) {
+      logger.error({ err: e, leagueId }, 'Failed to send league broadcast ntfy notification');
+    }
+  }
+
+  if (channels?.telegramBotToken && channels?.telegramChatId) {
+    try {
+      const sent = await sendTelegramNotification({
+        botToken: channels.telegramBotToken,
+        chatId: channels.telegramChatId,
+        title: broadcastTitle,
+        message,
+      });
+      if (sent) {
+        await addNotificationLog(BROADCAST_USER_ID, leagueId, year, weekNumber, 'admin_broadcast', 'telegram');
+      }
+    } catch (e) {
+      logger.error({ err: e, leagueId }, 'Failed to send league broadcast Telegram notification');
+    }
+  }
+
+  if (channels?.discordWebhookUrl) {
+    try {
+      const sent = await sendDiscordNotification({ webhookUrl: channels.discordWebhookUrl, title: broadcastTitle, message });
+      if (sent) {
+        await addNotificationLog(BROADCAST_USER_ID, leagueId, year, weekNumber, 'admin_broadcast', 'discord');
+      }
+    } catch (e) {
+      logger.error({ err: e, leagueId }, 'Failed to send league broadcast Discord notification');
+    }
+  }
+
+  logger.info({ leagueId, year, weekNumber }, 'dispatchLeagueBroadcast complete');
 }

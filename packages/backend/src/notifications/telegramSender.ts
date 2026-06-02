@@ -1,29 +1,26 @@
 import logger from '../utils/logger.js';
-import { telegramEnabled, telegramBotToken, telegramChatId } from '../utils/envVars.js';
 
 interface SendTelegramParams {
+  botToken: string;
+  chatId: string;
   title: string;
   message: string;
 }
 
-const TELEGRAM_API_URL = telegramBotToken
-  ? `https://api.telegram.org/bot${telegramBotToken}/sendMessage`
-  : null;
-
 export async function sendTelegramNotification(params: SendTelegramParams): Promise<boolean> {
-  if (!telegramEnabled || !TELEGRAM_API_URL) {
-    logger.warn('Telegram notification skipped: TELEGRAM_BOT_TOKEN or TELEGRAM_CHAT_ID not configured');
+  if (!params.botToken || !params.chatId) {
+    logger.warn('Telegram notification skipped: botToken or chatId not configured');
     return false;
   }
 
-  const url = TELEGRAM_API_URL;
+  const url = `https://api.telegram.org/bot${params.botToken}/sendMessage`;
   const text = `*${params.title}*\n${params.message}`;
 
   try {
     const res = await fetch(url, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ chat_id: telegramChatId, text, parse_mode: 'Markdown' }),
+      body: JSON.stringify({ chat_id: params.chatId, text, parse_mode: 'Markdown' }),
     });
 
     if (!res.ok) {
@@ -32,7 +29,7 @@ export async function sendTelegramNotification(params: SendTelegramParams): Prom
       return false;
     }
 
-    logger.info({ chatId: telegramChatId }, 'Telegram notification sent');
+    logger.info({ chatId: params.chatId }, 'Telegram notification sent');
     return true;
   } catch (e) {
     logger.error({ err: e }, 'sendTelegramNotification failed');

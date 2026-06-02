@@ -1,5 +1,5 @@
 import type { InferResponseType } from 'hono/client';
-import type { LeagueData, LeagueMemberData, LeagueRole } from '@shared/types/cfb-pickem-api.js';
+import type { LeagueData, LeagueMemberData, LeagueRole, LeagueChannelConfig } from '@shared/types/cfb-pickem-api.js';
 import { client } from '../lib/api';
 
 type LeaguesRPC = InferResponseType<typeof client.api.leagues.$get, 200>;
@@ -158,6 +158,58 @@ export interface CreateLeagueResponse {
   success: boolean;
   data?: LeagueData & { inviteCode: string };
   error?: string;
+}
+
+export interface LeagueChannelResponse {
+  success: boolean;
+  data?: LeagueChannelConfig;
+  error?: string;
+}
+
+export async function getLeagueChannels(leagueId: number): Promise<LeagueChannelResponse> {
+  try {
+    const res = await client.api.leagues[':leagueId'].channels.$get({ param: { leagueId: String(leagueId) } });
+    if (!res.ok) return { success: false, error: await extractError(res) };
+    const data = await res.json();
+    return { success: true, data: data as LeagueChannelConfig };
+  } catch {
+    return { success: false, error: 'Request failed' };
+  }
+}
+
+export async function updateLeagueChannels(leagueId: number, config: Partial<LeagueChannelConfig>): Promise<LeagueChannelResponse> {
+  try {
+    const res = await client.api.leagues[':leagueId'].channels.$patch({
+      param: { leagueId: String(leagueId) },
+      json: config,
+    });
+    if (!res.ok) return { success: false, error: await extractError(res) };
+    const data = await res.json();
+    return { success: true, data: data as LeagueChannelConfig };
+  } catch {
+    return { success: false, error: 'Request failed' };
+  }
+}
+
+export interface LeagueBroadcastResponse {
+  success: boolean;
+  error?: string;
+}
+
+export async function sendLeagueBroadcast(
+  leagueId: number,
+  body: { subject: string; message: string; overrideEmailPreferences: boolean }
+): Promise<LeagueBroadcastResponse> {
+  try {
+    const res = await client.api.leagues[':leagueId'].broadcast.$post({
+      param: { leagueId: String(leagueId) },
+      json: body,
+    });
+    if (!res.ok) return { success: false, error: await extractError(res) };
+    return { success: true };
+  } catch {
+    return { success: false, error: 'Request failed' };
+  }
 }
 
 export async function createLeague(name: string): Promise<CreateLeagueResponse> {

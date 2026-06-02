@@ -1,21 +1,21 @@
 import logger from '../utils/logger.js';
-import { discordEnabled, discordWebhookUrl } from '../utils/envVars.js';
 
 interface SendDiscordParams {
+  webhookUrl: string;
   title: string;
   message: string;
 }
 
 export async function sendDiscordNotification(params: SendDiscordParams): Promise<boolean> {
-  if (!discordEnabled) {
-    logger.warn('Discord notification skipped: DISCORD_WEBHOOK_URL not configured');
+  if (!params.webhookUrl) {
+    logger.warn('Discord notification skipped: webhookUrl not configured');
     return false;
   }
 
   const content = `**${params.title}**\n${params.message}`;
 
   try {
-    const res = await fetch(discordWebhookUrl, {
+    const res = await fetch(params.webhookUrl, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ content }),

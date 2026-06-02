@@ -160,3 +160,19 @@ export const leagueGameParamValidator = zValidator('param', leagueGameParamSchem
 // leagueId as a required query param
 const leagueIdQuerySchema = z.object({ leagueId: z.coerce.number().int().positive() });
 export const leagueIdQueryValidator = zValidator('query', leagueIdQuerySchema);
+
+// Optional leagueId query param (for notifications/channels)
+const optionalLeagueIdQuerySchema = z.object({ leagueId: z.coerce.number().int().positive().optional() });
+export const optionalLeagueIdQueryValidator = zValidator('query', optionalLeagueIdQuerySchema);
+
+const leagueChannelBodySchema = z.object({
+  ntfyTopicUrl: z.string().max(500).nullable().optional(),
+  telegramBotToken: z.string().max(200).nullable().optional(),
+  telegramChatId: z.string().max(100).nullable().optional(),
+  telegramInviteUrl: z.string().max(500).nullable().optional(),
+  discordWebhookUrl: z.string().max(500).nullable().optional(),
+  discordInviteUrl: z.string().max(500).nullable().optional(),
+});
+export const leagueChannelBodyValidator = zValidator('json', leagueChannelBodySchema);
+
+export const leagueBroadcastBodyValidator = zValidator('json', adminBroadcastBodySchema);

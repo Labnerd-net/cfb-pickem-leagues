@@ -26,6 +26,7 @@ import { authRateLimit } from '../utils/rateLimiter.js';
 import { sendEmail } from '../notifications/emailSender.js';
 import { verificationEmailTemplate } from '../notifications/templates.js';
 import { verifyEmailQueryValidator, registerRequestValidator, loginRequestValidator } from '../utils/zValidate.js';
+import { waitUntil } from '../utils/waitUntil.js';
 import logger from '../utils/logger.js';
 
 type Variables = {
@@ -74,7 +75,7 @@ const auth = new Hono<{ Variables: Variables }>()
 
     // Send verification email — use waitUntil so the Worker stays alive after response
     const verificationToken = randomBytes(32).toString('hex');
-    c.executionCtx.waitUntil(
+    waitUntil(c, 
       setEmailVerificationToken(result[0].userId, verificationToken, new Date())
         .then(() => {
           const verifyUrl = `${clientURLs[0] ?? ''}/verify-email?token=${verificationToken}`;
@@ -154,7 +155,7 @@ const auth = new Hono<{ Variables: Variables }>()
     const verificationToken = randomBytes(32).toString('hex');
     await setEmailVerificationToken(payload.sub, verificationToken, new Date());
     const verifyUrl = `${clientURLs[0] ?? ''}/verify-email?token=${verificationToken}`;
-    c.executionCtx.waitUntil(
+    waitUntil(c, 
       sendEmail({ to: payload.email, ...verificationEmailTemplate({ verifyUrl }) })
         .catch(err => logger.error({ err }, 'Failed to resend verification email'))
     );

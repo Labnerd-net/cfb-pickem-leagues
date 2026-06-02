@@ -23,6 +23,7 @@ import {
   isWeekComplete,
 } from '../cron/cronLogic.js';
 import logger from '../utils/logger.js';
+import { waitUntil } from '../utils/waitUntil.js';
 
 type Variables = {
   jwtPayload: JwtData;
@@ -75,7 +76,7 @@ const adminLeagues = new Hono<{ Variables: Variables }>()
       if (completedCount > 0) {
         const refreshedGames = await getGamesForLeagueWeek(leagueId, year, weekNumber);
         if (isWeekComplete(refreshedGames)) {
-          c.executionCtx.waitUntil(
+          waitUntil(c, 
             dispatchGameComplete(leagueId, year, weekNumber)
               .catch(err => logger.error({ err, leagueId }, 'rankings_updated dispatch failed after mark complete'))
           );
@@ -155,7 +156,7 @@ const adminLeagues = new Hono<{ Variables: Variables }>()
 
       const leagueGames = await getGamesForLeagueWeek(leagueId, updated.year, updated.weekNumber);
       if (isWeekComplete(leagueGames)) {
-        c.executionCtx.waitUntil(
+        waitUntil(c, 
           dispatchGameComplete(leagueId, updated.year, updated.weekNumber)
             .catch(err => logger.error({ err, leagueId }, 'rankings_updated dispatch failed after score correction'))
         );
