@@ -7,8 +7,7 @@ import {
   getLeagueGamesForWeek,
   addGameToLeague,
   removeGameFromLeague,
-  markLeagueWeekComplete,
-  correctLeagueGameScore,
+  syncWeekResults,
 } from '../../../src/apis/adminRequests.js';
 
 describe('Admin API Requests', () => {
@@ -201,72 +200,37 @@ describe('Admin API Requests', () => {
 		});
 	});
 
-	describe('markLeagueWeekComplete', () => {
-		it('returns success with completed count on 200', async () => {
-			const result = await markLeagueWeekComplete(1, 2024, 1);
+	describe('syncWeekResults', () => {
+		it('returns success with summary on 200', async () => {
+			const result = await syncWeekResults(2024, 1);
 
 			expect(result.success).toBe(true);
-			expect(result.data?.completed).toBe(2);
+			expect(result.data?.gamesChecked).toBe(3);
+			expect(result.data?.gamesCompleted).toBe(2);
+			expect(result.data?.leaguesNotified).toBe(1);
 		});
 
-		it('returns failure on 422 (no games in pool)', async () => {
+		it('returns failure on 422 (no games from CFBD)', async () => {
 			server.use(
-				http.post('http://localhost:3000/api/admin/leagues/:leagueId/games/complete', () =>
-					HttpResponse.json({ error: 'No games in league pool for this week' }, { status: 422 }),
+				http.post('http://localhost:3000/api/admin/weeks/sync-results', () =>
+					HttpResponse.json({ error: 'No games returned from external API for this week' }, { status: 422 }),
 				),
 			);
 
-			const result = await markLeagueWeekComplete(1, 2024, 1);
+			const result = await syncWeekResults(2024, 1);
 
 			expect(result.success).toBe(false);
-			expect(result.error).toBe('No games in league pool for this week');
+			expect(result.error).toBe('No games returned from external API for this week');
 		});
 
 		it('returns failure on network error', async () => {
 			server.use(
-				http.post('http://localhost:3000/api/admin/leagues/:leagueId/games/complete', () =>
+				http.post('http://localhost:3000/api/admin/weeks/sync-results', () =>
 					HttpResponse.error(),
 				),
 			);
 
-			const result = await markLeagueWeekComplete(1, 2024, 1);
-
-			expect(result.success).toBe(false);
-			expect(result.error).toBe('Request failed');
-		});
-	});
-
-	describe('correctLeagueGameScore', () => {
-		it('returns success with updated game on 200', async () => {
-			const result = await correctLeagueGameScore(1, 1, 2024, 1, { homePoints: 24, awayPoints: 17 });
-
-			expect(result.success).toBe(true);
-			expect(result.data?.homePoints).toBe(24);
-			expect(result.data?.awayPoints).toBe(17);
-			expect(result.data?.winningTeam).toBe('home_team');
-		});
-
-		it('returns failure on 404 (game not found)', async () => {
-			server.use(
-				http.patch('http://localhost:3000/api/admin/leagues/:leagueId/games/:gameId/score', () =>
-					HttpResponse.json({ error: 'Game not found' }, { status: 404 }),
-				),
-			);
-
-			const result = await correctLeagueGameScore(1, 99, 2024, 1, { homePoints: 24, awayPoints: 17 });
-
-			expect(result.success).toBe(false);
-			expect(result.error).toBe('Game not found');
-		});
-
-		it('returns failure on network error', async () => {
-			server.use(
-				http.patch('http://localhost:3000/api/admin/leagues/:leagueId/games/:gameId/score', () =>
-					HttpResponse.error(),
-				),
-			);
-
-			const result = await correctLeagueGameScore(1, 1, 2024, 1, { homePoints: 24, awayPoints: 17 });
+			const result = await syncWeekResults(2024, 1);
 
 			expect(result.success).toBe(false);
 			expect(result.error).toBe('Request failed');

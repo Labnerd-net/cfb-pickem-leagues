@@ -195,8 +195,8 @@ export const handlers = [
 		});
 	}),
 
-	http.post(`${API_URL}/api/admin/leagues/:leagueId/games/complete`, () => {
-		return HttpResponse.json({ completed: 2 });
+	http.post(`${API_URL}/api/admin/weeks/sync-results`, () => {
+		return HttpResponse.json({ gamesChecked: 3, gamesCompleted: 2, gamesSkipped: 0, leaguesNotified: 1 });
 	}),
 
 	http.post(`${API_URL}/api/admin/leagues/:leagueId/games/:gameId`, () => {
@@ -205,22 +205,6 @@ export const handlers = [
 
 	http.delete(`${API_URL}/api/admin/leagues/:leagueId/games/:gameId`, () => {
 		return HttpResponse.json({ success: true });
-	}),
-
-	http.patch(`${API_URL}/api/admin/leagues/:leagueId/games/:gameId/score`, () => {
-		return HttpResponse.json({
-			game: {
-				gameId: 1,
-				homeTeam: 'Team A',
-				awayTeam: 'Team B',
-				homePoints: 24,
-				awayPoints: 17,
-				winningTeam: 'home_team',
-				completed: true,
-				weekNumber: 1,
-				seasonType: 'regular',
-			},
-		});
 	}),
 
 	// Leaderboard endpoints
