@@ -9,15 +9,13 @@ interface SendEmailParams {
   textBody: string;
 }
 
-const resend = notificationsEnabled ? new Resend(resendApiKey) : null;
-
 export async function sendEmail(params: SendEmailParams): Promise<boolean> {
   if (!notificationsEnabled || skipEmailSend) {
     logger.warn({ to: params.to, subject: params.subject }, 'Email send skipped (notifications disabled or SKIP_EMAIL_SEND=true)');
     return false;
   }
 
-  if (!resend) return false;
+  const resend = new Resend(resendApiKey);
 
   try {
     const { error } = await resend.emails.send({
