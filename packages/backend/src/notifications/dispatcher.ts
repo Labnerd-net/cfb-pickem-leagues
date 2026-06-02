@@ -161,7 +161,7 @@ function buildTemplate(
 ) {
   switch (notificationType) {
     case 'games_ready':
-      return gamesReadyTemplate({ year: params.year, weekNumber: params.weekNumber });
+      return gamesReadyTemplate({ year: params.year, weekNumber: params.weekNumber, leagueName: params.leagueName });
     case 'picks_reminder_1h':
       return picksReminderTemplate({
         year: params.year,

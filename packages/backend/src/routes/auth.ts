@@ -24,6 +24,7 @@ import { validatePassword } from '../utils/passwordValidation.js';
 import { validateEmail } from '../utils/emailValidation.js';
 import { authRateLimit } from '../utils/rateLimiter.js';
 import { sendEmail } from '../notifications/emailSender.js';
+import { verificationEmailTemplate } from '../notifications/templates.js';
 import { verifyEmailQueryValidator, registerRequestValidator, loginRequestValidator } from '../utils/zValidate.js';
 import logger from '../utils/logger.js';
 
@@ -77,12 +78,7 @@ const auth = new Hono<{ Variables: Variables }>()
       setEmailVerificationToken(result[0].userId, verificationToken, new Date())
         .then(() => {
           const verifyUrl = `${clientURLs[0] ?? ''}/verify-email?token=${verificationToken}`;
-          return sendEmail({
-            to: email,
-            subject: "Verify your CFB Pick'em email",
-            htmlBody: `<p>Click <a href="${verifyUrl}">here</a> to verify your email address.</p>`,
-            textBody: `Verify your email: ${verifyUrl}`,
-          });
+          return sendEmail({ to: email, ...verificationEmailTemplate({ verifyUrl }) });
         })
         .catch(err => {
           logger.error({ err, email }, 'Failed to send verification email');
@@ -159,12 +155,8 @@ const auth = new Hono<{ Variables: Variables }>()
     await setEmailVerificationToken(payload.sub, verificationToken, new Date());
     const verifyUrl = `${clientURLs[0] ?? ''}/verify-email?token=${verificationToken}`;
     c.executionCtx.waitUntil(
-      sendEmail({
-        to: payload.email,
-        subject: "Verify your CFB Pick'em email",
-        htmlBody: `<p>Click <a href="${verifyUrl}">here</a> to verify your email address.</p>`,
-        textBody: `Verify your email: ${verifyUrl}`,
-      }).catch(err => logger.error({ err }, 'Failed to resend verification email'))
+      sendEmail({ to: payload.email, ...verificationEmailTemplate({ verifyUrl }) })
+        .catch(err => logger.error({ err }, 'Failed to resend verification email'))
     );
     return c.json({ status: 'sent' });
   });
