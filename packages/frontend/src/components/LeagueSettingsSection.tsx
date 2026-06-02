@@ -64,6 +64,7 @@ export default function LeagueSettingsSection({
   const [error, setError] = useState<string | null>(null);
   const [mutationError, setMutationError] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
+  const [copiedLink, setCopiedLink] = useState(false);
   const [regenDialogOpen, setRegenDialogOpen] = useState(false);
   const [regening, setRegening] = useState(false);
   const [editingName, setEditingName] = useState(false);
@@ -147,6 +148,17 @@ export default function LeagueSettingsSection({
       await navigator.clipboard.writeText(inviteCode);
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
+    } catch {
+      // ignore clipboard errors
+    }
+  }
+
+  async function handleCopyInviteLink() {
+    if (!inviteCode) return;
+    try {
+      await navigator.clipboard.writeText(`${window.location.origin}/join/${inviteCode}`);
+      setCopiedLink(true);
+      setTimeout(() => setCopiedLink(false), 2000);
     } catch {
       // ignore clipboard errors
     }
@@ -263,6 +275,16 @@ export default function LeagueSettingsSection({
               <IconButton size="small" onClick={handleCopyInviteCode}>
                 <ContentCopyIcon fontSize="small" />
               </IconButton>
+            </Tooltip>
+            <Tooltip title={copiedLink ? 'Copied!' : 'Copy invite link'}>
+              <Button
+                size="small"
+                variant="outlined"
+                startIcon={<ContentCopyIcon fontSize="small" />}
+                onClick={handleCopyInviteLink}
+              >
+                {copiedLink ? 'Copied!' : 'Copy link'}
+              </Button>
             </Tooltip>
             <Button
               size="small"

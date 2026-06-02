@@ -21,6 +21,25 @@ async function extractError(res: { json(): Promise<unknown> }): Promise<string> 
   }
 }
 
+export interface GetLeagueByInviteCodeResponse {
+  success: boolean;
+  data?: { leagueId: number; leagueName: string };
+  error?: string;
+}
+
+export async function getLeagueByInviteCodePublic(inviteCode: string): Promise<GetLeagueByInviteCodeResponse> {
+  try {
+    const res = await client.api.leagues.invite[':inviteCode'].$get({
+      param: { inviteCode },
+    });
+    if (!res.ok) return { success: false, error: await extractError(res) };
+    const data = await res.json();
+    return { success: true, data };
+  } catch {
+    return { success: false, error: 'Request failed' };
+  }
+}
+
 export interface GetLeaguesResponse {
   success: boolean;
   data?: LeagueData[];

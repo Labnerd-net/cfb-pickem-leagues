@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useNavigate, Link as RouterLink } from 'react-router';
+import { useNavigate, useSearchParams, Link as RouterLink } from 'react-router';
 import { useForm, type SubmitHandler } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -33,6 +33,8 @@ const LoginForm: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [rememberMe, setRememberMe] = useState(false);
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const redirectTo = searchParams.get('redirect') ?? '/dashboard';
   const { login } = useAuth();
 
   const {
@@ -56,7 +58,7 @@ const LoginForm: React.FC = () => {
         if (rememberMe) {
           localStorage.setItem('rememberMe', 'true');
         }
-        navigate('/dashboard');
+        navigate(redirectTo, { replace: true });
       } catch {
         setError('Failed to load user profile');
       }
@@ -157,7 +159,7 @@ const LoginForm: React.FC = () => {
             Don't have an account?{' '}
             <Link
               component={RouterLink}
-              to="/register"
+              to={redirectTo !== '/dashboard' ? `/register?redirect=${encodeURIComponent(redirectTo)}` : '/register'}
               sx={{
                 color: 'primary.main',
                 fontWeight: 700,

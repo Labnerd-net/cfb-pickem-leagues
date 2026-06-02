@@ -102,6 +102,15 @@ const leaguesRoute = new Hono<{ Variables: Variables }>()
     });
   })
 
+  // Public: look up a league name by invite code — no auth required
+  .get('/invite/:inviteCode', apiRateLimit, async c => {
+    const inviteCode = c.req.param('inviteCode');
+    if (!inviteCode) throw new HTTPException(400, { message: 'Missing invite code' });
+    const league = await getLeagueByInviteCode(inviteCode);
+    if (!league) throw new HTTPException(404, { message: 'Invalid invite code' });
+    return c.json({ leagueId: league.leagueId, leagueName: league.name });
+  })
+
   // Get a single league (members see it; admins also get invite code)
   .get('/:leagueId', apiRateLimit, authMiddleware, leagueIdParamValidator, requireLeagueMembership(), async c => {
     const membership = c.get('leagueMembership');
