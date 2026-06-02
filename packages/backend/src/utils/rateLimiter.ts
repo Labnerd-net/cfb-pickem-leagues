@@ -87,24 +87,24 @@ export function rateLimit(config: RateLimitConfig, bindingKey?: string) {
 
 /**
  * Preset: Strict rate limit for authentication endpoints
- * 5 attempts per 15 minutes — enforced via AUTH_RATE_LIMITER binding in production.
+ * 5 attempts per 60 seconds — enforced via AUTH_RATE_LIMITER binding in production.
  */
 export const authRateLimit = rateLimit(
   {
-    windowMs: 15 * 60 * 1000,
+    windowMs: 60 * 1000,
     maxRequests: 5,
-    message: 'Too many authentication attempts. Please try again in 15 minutes.',
+    message: 'Too many authentication attempts. Please try again later.',
   },
   'AUTH_RATE_LIMITER',
 );
 
 /**
  * Preset: Moderate rate limit for general API endpoints
- * 100 requests per 15 minutes — enforced via API_RATE_LIMITER binding in production.
+ * 100 requests per 60 seconds — enforced via API_RATE_LIMITER binding in production.
  */
 export const apiRateLimit = rateLimit(
   {
-    windowMs: 15 * 60 * 1000,
+    windowMs: 60 * 1000,
     maxRequests: 100,
     message: 'Too many requests. Please try again later.',
   },
