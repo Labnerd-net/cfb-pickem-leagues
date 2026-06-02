@@ -51,6 +51,7 @@ export interface ProfileData {
   displayName: string;
   roles: Role[];
   emailVerified: boolean;
+  leagues?: { leagueId: number; name: string }[];
 }
 
 export interface UserData extends ProfileData {

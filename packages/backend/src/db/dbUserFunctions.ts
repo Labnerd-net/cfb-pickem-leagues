@@ -2,7 +2,7 @@ import { eq, and, ne, sql, count } from 'drizzle-orm';
 import { alias } from 'drizzle-orm/pg-core';
 import { users, games, deletedUsers } from './schema/users.js';
 import { adminGames } from './schema/admin.js';
-import { leagueMembers } from './schema/leagues.js';
+import { leagueMembers, leagues } from './schema/leagues.js';
 import { db } from './index.js';
 import logger from '../utils/logger.js';
 import type {
@@ -24,16 +24,35 @@ import type {
 export async function returnUsers(): Promise<ProfileData[]> {
   logger.debug('returnUsers');
   try {
-    const rows = await db
-      .select({
+    const [userRows, membershipRows] = await Promise.all([
+      db.select({
         userId: users.userId,
         email: users.email,
         displayName: users.displayName,
         roles: users.roles,
         emailVerified: users.emailVerified,
+      }).from(users),
+      db.select({
+        userId: leagueMembers.userId,
+        leagueId: leagues.leagueId,
+        name: leagues.name,
       })
-      .from(users);
-    return rows.map(r => ({ ...r, emailVerified: r.emailVerified ?? false }));
+        .from(leagueMembers)
+        .innerJoin(leagues, eq(leagueMembers.leagueId, leagues.leagueId)),
+    ]);
+
+    const leaguesByUser = new Map<number, { leagueId: number; name: string }[]>();
+    for (const m of membershipRows) {
+      const entry = leaguesByUser.get(m.userId) ?? [];
+      entry.push({ leagueId: m.leagueId, name: m.name });
+      leaguesByUser.set(m.userId, entry);
+    }
+
+    return userRows.map(r => ({
+      ...r,
+      emailVerified: r.emailVerified ?? false,
+      leagues: leaguesByUser.get(r.userId) ?? [],
+    }));
   } catch (e) {
     logger.error({ err: e }, 'returnUsers failed');
     throw e;

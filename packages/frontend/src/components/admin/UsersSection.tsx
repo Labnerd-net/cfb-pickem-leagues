@@ -159,6 +159,7 @@ export default function UsersSection() {
                   <TableCell>Display Name</TableCell>
                   <TableCell>Email</TableCell>
                   <TableCell>Roles</TableCell>
+                  <TableCell>Leagues</TableCell>
                   <TableCell />
                 </TableRow>
               </TableHead>
@@ -171,6 +172,11 @@ export default function UsersSection() {
                       <TableCell>{user.displayName}</TableCell>
                       <TableCell>{user.email}</TableCell>
                       <TableCell>{user.roles.join(', ')}</TableCell>
+                      <TableCell>
+                        {user.leagues?.length
+                          ? user.leagues.map(l => l.name).join(', ')
+                          : <Typography variant="body2" color="text.secondary" component="span">—</Typography>}
+                      </TableCell>
                       <TableCell align="right">
                         {!isCurrentUser && (
                           <>
