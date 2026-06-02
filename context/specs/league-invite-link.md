@@ -41,8 +41,8 @@ Allow league admins to share a direct invite URL (e.g. `/join/:inviteCode`) that
 
 ## Open Questions
 
-- Should the confirmation screen be shown inside the app shell (navbar visible) or as a standalone full-page layout? Full-page is simpler for unauthenticated users since the navbar requires auth context.
-- Should "Decline" navigate back in history, go to the home page, or do nothing?
+- ~~Should the confirmation screen use the app shell or standalone layout?~~ **Decided: standalone full-page layout.** Simpler for unauthenticated users; no navbar auth dependency.
+- ~~Should "Decline" navigate back in history, go home, or do nothing?~~ **Decided: navigate back in history.**
 
 ## Testing Guidelines
 
