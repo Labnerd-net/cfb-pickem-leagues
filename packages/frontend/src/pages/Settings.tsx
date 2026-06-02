@@ -172,7 +172,7 @@ export default function Settings() {
   const hasBroadcastChannels = channels && (channels.ntfy || channels.telegram || channels.discord);
 
   return (
-    <Box maxWidth={600} mx="auto" mt={4} px={2}>
+    <Box maxWidth={600} mx="auto" mt={4} px={2} pb={8}>
       <Typography variant="h4" gutterBottom>
         Settings
       </Typography>
