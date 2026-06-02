@@ -24,12 +24,21 @@
   ],
 
   "observability": {
+    "enabled": false,
+    "head_sampling_rate": 1,
     "logs": {
-      "enabled": false,
+      "enabled": true,
+      "head_sampling_rate": 1,
+      "persist": true,
       "invocation_logs": true
+    },
+    "traces": {
+      "enabled": false,
+      "persist": true,
+      "head_sampling_rate": 1
     }
   },
-
+  
   "vars": {
     // All other env vars are secrets — set via: wrangler secret put <KEY>
     // Required secrets: PROD_DB, JWT_SECRET, CFBD_API_KEY

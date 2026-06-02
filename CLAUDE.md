@@ -93,7 +93,7 @@ NODE_ENV=test pnpm migrate
 2. **DB Functions** (`src/db/dbAdminFunctions.ts`, `dbUserFunctions.ts`, `dbNotificationFunctions.ts`) — Drizzle queries. Two PostgreSQL schemas: `admin` (reference data: weeks/games) and `user` (accounts and picks).
 3. **API Adapters** (`src/api/`) — External data source (CFBD). `cfbd.ts` fetches games and lines; `index.ts` normalizes data into shared types.
 4. **Middleware** (`src/utils/middleware.ts`) — JWT auth middleware and `requireRole()` guard.
-5. **Notifications** (`src/notifications/`) — `dispatcher.ts` routes events to `emailSender.ts` (SMTP via nodemailer) and/or `ntfySender.ts` (NTFY push). `templates.ts` holds message content.
+5. **Notifications** (`src/notifications/`) — `dispatcher.ts` routes events to `emailSender.ts` (Resend API) and/or `ntfySender.ts` (NTFY push). `templates.ts` holds message content.
 
 ### Auth Flow
 JWT-based. Token is set as an **httpOnly cookie** by the backend (`auth_token`). The frontend Hono RPC client is initialized with `credentials: 'include'` so the cookie is sent automatically. `AuthProvider` determines auth state on mount by calling `GET /api/auth/me`. First registered user is auto-assigned admin role.
