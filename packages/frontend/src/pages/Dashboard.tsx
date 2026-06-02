@@ -9,9 +9,11 @@ import PeopleIcon from '@mui/icons-material/People';
 import BugReportIcon from '@mui/icons-material/BugReport';
 import NotificationsIcon from '@mui/icons-material/Notifications';
 import GroupsIcon from '@mui/icons-material/Groups';
+import SettingsIcon from '@mui/icons-material/Settings';
 import WelcomeBanner from '../components/dashboard/WelcomeBanner';
 import AdminSection from '../components/admin/AdminSection';
 import LeagueAdminSection from '../components/admin/LeagueAdminSection';
+import LeagueSettingsSection from '../components/LeagueSettingsSection';
 import UsersSection from '../components/admin/UsersSection';
 import NotificationLogSection from '../components/admin/NotificationLogSection';
 import UserSection from '../components/user/UserSection';
@@ -33,6 +35,7 @@ export default function Dashboard() {
   const isAdmin = user?.roles.includes('admin') ?? false;
   const isLeagueAdmin = activeLeague?.role === 'admin';
   const [currentTab, setCurrentTab] = useState(0);
+  const [leagueInviteCode, setLeagueInviteCode] = useState(activeLeague?.inviteCode ?? '');
 
   if (leagueLoading) {
     return (
@@ -49,7 +52,22 @@ export default function Dashboard() {
   const tabs: TabDescriptor[] = [
     { label: 'My Dashboard', icon: <SportsFootballIcon />, component: <UserSection /> },
     ...(isLeagueAdmin
-      ? [{ label: 'League Admin', icon: <GroupsIcon />, component: <LeagueAdminSection /> }]
+      ? [
+          { label: 'League Admin', icon: <GroupsIcon />, component: <LeagueAdminSection /> },
+          {
+            label: 'League Settings',
+            icon: <SettingsIcon />,
+            component: (
+              <LeagueSettingsSection
+                key={activeLeague.leagueId}
+                leagueId={activeLeague.leagueId}
+                leagueName={activeLeague.name}
+                inviteCode={leagueInviteCode || activeLeague.inviteCode}
+                onInviteCodeChange={setLeagueInviteCode}
+              />
+            ),
+          },
+        ]
       : []),
     ...(isAdmin
       ? [
