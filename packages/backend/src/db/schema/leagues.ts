@@ -42,3 +42,16 @@ export const leagueGames = pgTable(
   },
   table => [primaryKey({ columns: [table.leagueId, table.gameId] })]
 );
+
+export const leagueChannels = pgTable('league_channels', {
+  leagueId: integer('league_id')
+    .primaryKey()
+    .references(() => leagues.leagueId),
+  ntfyTopicUrl: text('ntfy_topic_url'),
+  telegramBotToken: text('telegram_bot_token'),
+  telegramChatId: text('telegram_chat_id'),
+  telegramInviteUrl: text('telegram_invite_url'),
+  discordWebhookUrl: text('discord_webhook_url'),
+  discordInviteUrl: text('discord_invite_url'),
+  updatedAt: timestamp('updated_at').defaultNow().notNull(),
+});

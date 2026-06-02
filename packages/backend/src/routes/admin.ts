@@ -17,11 +17,8 @@ import { zValidator } from '@hono/zod-validator';
 import { updateUserRolesValidator, weekIdentifierValidator, markGameCompleteValidator, yearQueryValidator, weekIdentifierQueryValidator, correctGameScoreParamValidator, correctGameScoreBodyValidator, adminBroadcastBodyValidator, resetPasswordParamValidator, resetPasswordBodyValidator } from '../utils/zValidate.js';
 import { dispatchAdminBroadcast, dispatchGameComplete } from '../notifications/dispatcher.js';
 import { getNow } from '../utils/clock.js';
-import { sendNtfyNotification } from '../notifications/ntfySender.js';
-import { sendTelegramNotification } from '../notifications/telegramSender.js';
-import { sendDiscordNotification } from '../notifications/discordSender.js';
-import { ntfyEnabled, telegramEnabled, discordEnabled } from '../utils/envVars.js';
 import logger from '../utils/logger.js';
+import { waitUntil } from '../utils/waitUntil.js';
 
 type Variables = {
   jwtPayload: JwtData;
@@ -202,7 +199,7 @@ const admin = new Hono<{ Variables: Variables }>()
       for (const { leagueId } of affectedLeagues) {
         const leagueGames = await getGamesForLeagueWeek(leagueId, updated.year, updated.weekNumber);
         if (isWeekComplete(leagueGames)) {
-          c.executionCtx.waitUntil(
+          waitUntil(c, 
             dispatchGameComplete(leagueId, updated.year, updated.weekNumber)
               .catch(err => logger.error({ err, leagueId }, 'rankings_updated dispatch failed after score correction'))
           );
@@ -235,22 +232,9 @@ const admin = new Hono<{ Variables: Variables }>()
     }
   )
   // Test broadcast notifications (admin only — does not log to notification_log)
+  // Broadcast channels are now per-league; this endpoint confirms the route is reachable.
   .post('/notifications/test', apiRateLimit, authMiddleware, requireRole('admin'), async c => {
-    const title = "CFB Pick'em test notification";
-    const message = 'This is a test broadcast from your CFB Pick\'em admin panel.';
-    const results: Record<string, boolean> = {};
-
-    if (ntfyEnabled) {
-      results.ntfy = await sendNtfyNotification({ title, message });
-    }
-    if (telegramEnabled) {
-      results.telegram = await sendTelegramNotification({ title, message });
-    }
-    if (discordEnabled) {
-      results.discord = await sendDiscordNotification({ title, message });
-    }
-
-    return c.json({ results });
+    return c.json({ results: {} });
   })
   // Export user list with all-time pick totals
   .get('/users/export', apiRateLimit, authMiddleware, requireRole('admin'), async c => {

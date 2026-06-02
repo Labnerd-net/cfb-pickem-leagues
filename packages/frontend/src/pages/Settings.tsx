@@ -96,7 +96,7 @@ export default function Settings() {
       try {
         const [settingsRes, channelsRes] = await Promise.all([
           getNotificationSettings(),
-          getBroadcastChannels(),
+          getBroadcastChannels(activeLeague?.leagueId),
         ]);
         if (settingsRes.success && settingsRes.data) setSettings(settingsRes.data);
         if (channelsRes.success && channelsRes.data) setChannels(channelsRes.data);
@@ -107,7 +107,7 @@ export default function Settings() {
       }
     }
     load();
-  }, []);
+  }, [activeLeague?.leagueId]);
 
   const handleResend = async () => {
     const res = await resendVerificationEmail();
@@ -434,7 +434,8 @@ export default function Settings() {
             Push Notifications
           </Typography>
           <Typography variant="body2" color="text.secondary" mb={2}>
-            Subscribe to receive notifications via these channels. All subscribed members receive
+            Subscribe to receive notifications via these channels for{' '}
+            <strong>{activeLeague?.name ?? 'your league'}</strong>. All subscribed members receive
             the same broadcast when games are posted, picks are due, or rankings are updated.
           </Typography>
           <Stack spacing={2}>

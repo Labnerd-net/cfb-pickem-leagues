@@ -10,7 +10,7 @@ import {
   returnGamesBulk,
   getGamesForLeagueWeek,
 } from '../db/dbAdminFunctions.js';
-import { getLeagueMembership } from '../db/dbLeagueFunctions.js';
+import { getLeagueMembership, getLeagueChannels } from '../db/dbLeagueFunctions.js';
 import {
   returnNotificationSettings,
   upsertNotificationPreference,
@@ -26,9 +26,6 @@ import type {
 import { authMiddleware } from '../utils/middleware.js';
 import {
   ignorePickDeadline,
-  ntfyEnabled, ntfyTopicUrl,
-  telegramEnabled, telegramInviteUrl,
-  discordEnabled, discordInviteUrl,
   jwtAlgorithm,
   getJwtExpirationSeconds,
   jwtSecret,
@@ -45,6 +42,7 @@ import {
   weekIdentifierQueryValidator,
   updateProfileValidator,
   leagueIdQueryValidator,
+  optionalLeagueIdQueryValidator,
 } from '../utils/zValidate.js';
 import { requireLeagueMembership } from '../utils/middleware.js';
 
@@ -224,12 +222,17 @@ const user = new Hono<{ Variables: Variables }>()
     await upsertNotificationPreference(payload.sub, notificationType, channel, enabled);
     return c.json({ status: 'updated' });
   })
-  // Return which broadcast channels are configured and their public join info
-  .get('/notifications/channels', apiRateLimit, authMiddleware, async c => {
+  // Return broadcast channels for a league (public join info only — no tokens/webhooks)
+  .get('/notifications/channels', apiRateLimit, authMiddleware, optionalLeagueIdQueryValidator, async c => {
+    const { leagueId } = c.req.valid('query');
+    if (!leagueId) {
+      return c.json({ ntfy: null, telegram: null, discord: null });
+    }
+    const config = await getLeagueChannels(leagueId);
     return c.json({
-      ntfy: ntfyEnabled ? { topicUrl: ntfyTopicUrl } : null,
-      telegram: telegramEnabled ? { inviteUrl: telegramInviteUrl || null } : null,
-      discord: discordEnabled ? { inviteUrl: discordInviteUrl || null } : null,
+      ntfy: config?.ntfyTopicUrl ? { topicUrl: config.ntfyTopicUrl } : null,
+      telegram: config?.telegramInviteUrl ? { inviteUrl: config.telegramInviteUrl } : null,
+      discord: config?.discordInviteUrl ? { inviteUrl: config.discordInviteUrl } : null,
     });
   });
 

@@ -71,6 +71,13 @@
       "when": 1780085672497,
       "tag": "0009_young_meltdown",
       "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "7",
+      "when": 1780418524775,
+      "tag": "0010_lean_next_avengers",
+      "breakpoints": true
     }
   ]
 }

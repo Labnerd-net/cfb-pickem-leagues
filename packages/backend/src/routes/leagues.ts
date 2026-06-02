@@ -10,6 +10,8 @@ import {
   memberParamValidator,
   updateMemberRoleValidator,
   updateLeagueNameValidator,
+  leagueChannelBodyValidator,
+  leagueBroadcastBodyValidator,
 } from '../utils/zValidate.js';
 import {
   createLeague,
@@ -25,7 +27,13 @@ import {
   removeMember,
   regenerateInviteCode,
   updateLeagueName,
+  getLeagueChannels,
+  upsertLeagueChannels,
 } from '../db/dbLeagueFunctions.js';
+import { dispatchLeagueBroadcast } from '../notifications/dispatcher.js';
+import { resolveWeekContext } from '../db/dbAdminFunctions.js';
+import { getNow } from '../utils/clock.js';
+import { waitUntil } from '../utils/waitUntil.js';
 
 type Variables = {
   jwtPayload: JwtData;
@@ -206,6 +214,65 @@ const leaguesRoute = new Hono<{ Variables: Variables }>()
       const membership = c.get('leagueMembership');
       const newCode = await regenerateInviteCode(membership.leagueId);
       return c.json({ inviteCode: newCode });
+    }
+  )
+
+  // Get league notification channel config (league admin only)
+  .get(
+    '/:leagueId/channels',
+    apiRateLimit,
+    authMiddleware,
+    leagueIdParamValidator,
+    requireLeagueMembership('admin'),
+    async c => {
+      const { leagueId } = c.req.valid('param');
+      const config = await getLeagueChannels(leagueId);
+      return c.json({
+        ntfyTopicUrl: config?.ntfyTopicUrl ?? null,
+        telegramBotToken: config?.telegramBotToken ?? null,
+        telegramChatId: config?.telegramChatId ?? null,
+        telegramInviteUrl: config?.telegramInviteUrl ?? null,
+        discordWebhookUrl: config?.discordWebhookUrl ?? null,
+        discordInviteUrl: config?.discordInviteUrl ?? null,
+      });
+    }
+  )
+
+  // Update league notification channel config (league admin only)
+  .patch(
+    '/:leagueId/channels',
+    apiRateLimit,
+    authMiddleware,
+    leagueIdParamValidator,
+    requireLeagueMembership('admin'),
+    leagueChannelBodyValidator,
+    async c => {
+      const { leagueId } = c.req.valid('param');
+      const body = c.req.valid('json');
+      const config = await upsertLeagueChannels(leagueId, body);
+      return c.json(config);
+    }
+  )
+
+  // Send a broadcast to league members (league admin only)
+  .post(
+    '/:leagueId/broadcast',
+    apiRateLimit,
+    authMiddleware,
+    leagueIdParamValidator,
+    requireLeagueMembership('admin'),
+    leagueBroadcastBodyValidator,
+    async c => {
+      const { leagueId } = c.req.valid('param');
+      const { subject, message, overrideEmailPreferences } = c.req.valid('json');
+      const league = await getLeagueById(leagueId);
+      if (!league) throw new HTTPException(404, { message: 'League not found' });
+      const { year, weekNumber } = await resolveWeekContext(getNow());
+      waitUntil(c, 
+        dispatchLeagueBroadcast(leagueId, league.name, subject, message, overrideEmailPreferences, year, weekNumber)
+          .catch(err => console.error('dispatchLeagueBroadcast failed', err))
+      );
+      return c.json({ success: true });
     }
   );
 

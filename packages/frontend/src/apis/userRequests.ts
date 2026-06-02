@@ -157,9 +157,11 @@ export interface BroadcastChannelsResponse {
   error?: string;
 }
 
-export async function getBroadcastChannels(): Promise<BroadcastChannelsResponse> {
+export async function getBroadcastChannels(leagueId?: number): Promise<BroadcastChannelsResponse> {
   try {
-    const res = await client.api.user.notifications.channels.$get();
+    const res = await client.api.user.notifications.channels.$get({
+      query: leagueId !== undefined ? { leagueId: String(leagueId) } : {},
+    });
     if (!res.ok) return { success: false, error: await extractError(res) };
     const data = await res.json();
     return { success: true, data };

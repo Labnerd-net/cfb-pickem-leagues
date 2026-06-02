@@ -1,10 +1,10 @@
 import { randomBytes } from 'crypto';
 import { eq, and, count } from 'drizzle-orm';
-import { leagues, leagueMembers, leagueGames } from './schema/leagues.js';
+import { leagues, leagueMembers, leagueGames, leagueChannels } from './schema/leagues.js';
 import { users } from './schema/users.js';
 import { db } from './index.js';
 import logger from '../utils/logger.js';
-import type { LeagueRole } from '@shared/types/cfb-pickem-api.js';
+import type { LeagueRole, LeagueChannelConfig } from '@shared/types/cfb-pickem-api.js';
 
 function generateInviteCode(): string {
   return randomBytes(4).toString('hex');
@@ -199,6 +199,82 @@ export async function getLeaguesForGame(gameId: number): Promise<{ leagueId: num
       .where(eq(leagueGames.gameId, gameId));
   } catch (err) {
     logger.error({ err }, 'getLeaguesForGame failed');
+    throw err;
+  }
+}
+
+export async function getLeagueMembersWithEmail(leagueId: number): Promise<{ userId: number; email: string; emailVerified: boolean }[]> {
+  try {
+    const rows = await db
+      .select({ userId: users.userId, email: users.email, emailVerified: users.emailVerified })
+      .from(leagueMembers)
+      .innerJoin(users, eq(leagueMembers.userId, users.userId))
+      .where(and(eq(leagueMembers.leagueId, leagueId), eq(users.emailVerified, true)));
+    return rows.filter(r => r.email !== null) as { userId: number; email: string; emailVerified: boolean }[];
+  } catch (err) {
+    logger.error({ err, leagueId }, 'getLeagueMembersWithEmail failed');
+    throw err;
+  }
+}
+
+export async function getLeagueChannels(leagueId: number): Promise<LeagueChannelConfig | undefined> {
+  try {
+    const [row] = await db
+      .select()
+      .from(leagueChannels)
+      .where(eq(leagueChannels.leagueId, leagueId));
+    if (!row) return undefined;
+    return {
+      ntfyTopicUrl: row.ntfyTopicUrl ?? null,
+      telegramBotToken: row.telegramBotToken ?? null,
+      telegramChatId: row.telegramChatId ?? null,
+      telegramInviteUrl: row.telegramInviteUrl ?? null,
+      discordWebhookUrl: row.discordWebhookUrl ?? null,
+      discordInviteUrl: row.discordInviteUrl ?? null,
+    };
+  } catch (err) {
+    logger.error({ err, leagueId }, 'getLeagueChannels failed');
+    throw err;
+  }
+}
+
+export async function upsertLeagueChannels(leagueId: number, config: Partial<LeagueChannelConfig>): Promise<LeagueChannelConfig> {
+  try {
+    const [row] = await db
+      .insert(leagueChannels)
+      .values({
+        leagueId,
+        ntfyTopicUrl: config.ntfyTopicUrl ?? null,
+        telegramBotToken: config.telegramBotToken ?? null,
+        telegramChatId: config.telegramChatId ?? null,
+        telegramInviteUrl: config.telegramInviteUrl ?? null,
+        discordWebhookUrl: config.discordWebhookUrl ?? null,
+        discordInviteUrl: config.discordInviteUrl ?? null,
+        updatedAt: new Date(),
+      })
+      .onConflictDoUpdate({
+        target: leagueChannels.leagueId,
+        set: {
+          ntfyTopicUrl: config.ntfyTopicUrl ?? null,
+          telegramBotToken: config.telegramBotToken ?? null,
+          telegramChatId: config.telegramChatId ?? null,
+          telegramInviteUrl: config.telegramInviteUrl ?? null,
+          discordWebhookUrl: config.discordWebhookUrl ?? null,
+          discordInviteUrl: config.discordInviteUrl ?? null,
+          updatedAt: new Date(),
+        },
+      })
+      .returning();
+    return {
+      ntfyTopicUrl: row.ntfyTopicUrl ?? null,
+      telegramBotToken: row.telegramBotToken ?? null,
+      telegramChatId: row.telegramChatId ?? null,
+      telegramInviteUrl: row.telegramInviteUrl ?? null,
+      discordWebhookUrl: row.discordWebhookUrl ?? null,
+      discordInviteUrl: row.discordInviteUrl ?? null,
+    };
+  } catch (err) {
+    logger.error({ err, leagueId }, 'upsertLeagueChannels failed');
     throw err;
   }
 }

@@ -8,10 +8,20 @@ import { seedTestData } from '../db-utils.js';
 vi.mock('../../src/notifications/dispatcher.js', () => ({
 	dispatchNotification: vi.fn().mockResolvedValue(undefined),
 	dispatchAdminBroadcast: vi.fn().mockResolvedValue(undefined),
+	dispatchLeagueBroadcast: vi.fn().mockResolvedValue(undefined),
+	dispatchGameComplete: vi.fn().mockResolvedValue(undefined),
 }));
+
+// Mock broadcast channel senders to verify they are NOT called for platform broadcast
+vi.mock('../../src/notifications/ntfySender.js', () => ({ sendNtfyNotification: vi.fn().mockResolvedValue(true) }));
+vi.mock('../../src/notifications/telegramSender.js', () => ({ sendTelegramNotification: vi.fn().mockResolvedValue(true) }));
+vi.mock('../../src/notifications/discordSender.js', () => ({ sendDiscordNotification: vi.fn().mockResolvedValue(true) }));
 
 import adminRoutes from '../../src/routes/admin.js';
 import { dispatchAdminBroadcast } from '../../src/notifications/dispatcher.js';
+import { sendNtfyNotification } from '../../src/notifications/ntfySender.js';
+import { sendTelegramNotification } from '../../src/notifications/telegramSender.js';
+import { sendDiscordNotification } from '../../src/notifications/discordSender.js';
 
 const TEST_JWT_SECRET = 'test-secret-key-do-not-use-in-production';
 
@@ -134,5 +144,18 @@ describe('POST /api/admin/notifications/broadcast', () => {
 		});
 		const [, , override] = (dispatchAdminBroadcast as ReturnType<typeof vi.fn>).mock.calls[0];
 		expect(override).toBe(true);
+	});
+
+	it('does not call ntfy/Telegram/Discord senders for platform broadcast', async () => {
+		vi.clearAllMocks();
+		const token = await makeToken(['admin', 'user'], 1);
+		await app.request('/api/admin/notifications/broadcast', {
+			method: 'POST',
+			headers: { Cookie: `auth_token=${token}`, 'Content-Type': 'application/json' },
+			body: JSON.stringify(validBody),
+		});
+		expect(sendNtfyNotification).not.toHaveBeenCalled();
+		expect(sendTelegramNotification).not.toHaveBeenCalled();
+		expect(sendDiscordNotification).not.toHaveBeenCalled();
 	});
 });

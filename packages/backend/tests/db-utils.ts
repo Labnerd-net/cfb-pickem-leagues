@@ -14,7 +14,7 @@ export { db as testDb };
 export async function cleanDatabase() {
 	await db.execute(sql`TRUNCATE TABLE "user"."notification_log", "user"."notification_preferences" CASCADE`);
 	await db.execute(sql`TRUNCATE TABLE "user"."games" CASCADE`);
-	await db.execute(sql`TRUNCATE TABLE league_games, league_members, leagues RESTART IDENTITY CASCADE`);
+	await db.execute(sql`TRUNCATE TABLE league_channels, league_games, league_members, leagues RESTART IDENTITY CASCADE`);
 	await db.execute(sql`TRUNCATE TABLE "user"."users" RESTART IDENTITY CASCADE`);
 	await db.execute(sql`TRUNCATE TABLE "user"."deleted_users" RESTART IDENTITY CASCADE`);
 	await db.execute(sql`TRUNCATE TABLE "admin"."games" RESTART IDENTITY CASCADE`);

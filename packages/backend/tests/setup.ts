@@ -155,6 +155,18 @@ vi.mock('../src/db/index.ts', async () => {
 			added_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,
 			PRIMARY KEY (league_id, game_id)
 		);
+
+		-- Public schema: per-league notification channel config
+		CREATE TABLE league_channels (
+			league_id INTEGER PRIMARY KEY REFERENCES leagues (league_id),
+			ntfy_topic_url TEXT,
+			telegram_bot_token TEXT,
+			telegram_chat_id TEXT,
+			telegram_invite_url TEXT,
+			discord_webhook_url TEXT,
+			discord_invite_url TEXT,
+			updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL
+		);
 	`);
 
 	// Export the custom column types

@@ -24,7 +24,7 @@ async function makeToken(userId: number, roles: string[]) {
 }
 
 async function cleanLeagues() {
-  await testDb.execute(sql`TRUNCATE TABLE league_games, league_members, leagues RESTART IDENTITY CASCADE`);
+  await testDb.execute(sql`TRUNCATE TABLE league_channels, league_games, league_members, leagues RESTART IDENTITY CASCADE`);
 }
 
 beforeEach(async () => {
