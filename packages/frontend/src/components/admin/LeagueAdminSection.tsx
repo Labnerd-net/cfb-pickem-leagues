@@ -147,7 +147,7 @@ export default function LeagueAdminSection() {
                   No games in global cache for week {weekHook.selectedWeek}.
                 </Typography>
               ) : (
-                <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+                <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: 'repeat(2, 1fr)', md: 'repeat(3, 1fr)' }, gap: 2 }}>
                   {games.map(game => (
                     <LeagueGameRow
                       key={game.gameId}
