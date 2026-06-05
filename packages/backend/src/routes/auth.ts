@@ -78,6 +78,7 @@ const auth = new Hono<{ Variables: Variables }>()
     waitUntil(c, 
       setEmailVerificationToken(result[0].userId, verificationToken, new Date())
         .then(() => {
+          // clientURLs[0] is the canonical frontend origin used in email links; list it first in CLIENT_URL
           const verifyUrl = `${clientURLs[0] ?? ''}/verify-email?token=${verificationToken}`;
           return sendEmail({ to: email, ...verificationEmailTemplate({ verifyUrl }) });
         })

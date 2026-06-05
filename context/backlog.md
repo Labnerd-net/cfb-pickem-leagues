@@ -24,14 +24,10 @@ _None identified._
 _None identified._
 
 ### Medium
-- **#31 [packages/backend/src/db/dbAdminFunctions.ts:253-298]**: `addGameToLeague` relies on catching a DB constraint violation to return a 409 rather than preventing the conflict. Two concurrent add-requests for the same game both pass the existence check, then one hits the PK constraint. Fix: use `INSERT ... ON CONFLICT DO NOTHING` on the add path and check rows affected on the remove path.
-- **#33 [packages/frontend/src/pages/Settings.tsx:57]**: Frontend password schema enforces `max(72)` but the backend enforces `max(128)`. A user who sets a 73–128 char password via direct API call cannot change it through the UI. Fix: align frontend to `max(128)`.
+_None identified._
 
 ### Low
-- **#34 [packages/backend/src/routes/leagues.ts:282]**: `dispatchLeagueBroadcast` failure is caught with `console.error` — the only `console.error` in production application code. Fix: replace with `logger.error({ err, leagueId }, 'dispatchLeagueBroadcast failed')`.
-- **#35 [packages/backend/src/db/dbLeagueFunctions.ts:158-167]**: `removeMember` silently returns success if the member was already removed (e.g., two admins act concurrently). Fix: check rows affected and return 404 if 0 rows were deleted.
-- **#36 [packages/backend/src/routes/admin.ts:78-93]**: `POST /admin/year/:year` propagates a raw DB constraint error as a 500 if the year already exists (duplicate PK). Fix: catch the constraint violation and return a 409.
-- **#37 [packages/backend/src/routes/auth.ts:81]**: Verification email URL hardcodes `clientURLs[0]`. If `CLIENT_URL` has multiple values and order changes, email links silently break. Low risk at current scale, but the environment docs should state that the first `CLIENT_URL` value is used for email links.
+_None identified._
 
 ---
 
@@ -84,8 +80,8 @@ _None identified._
 | Category | High | Medium | Low | Total |
 |----------|------|--------|-----|-------|
 | Security | 0 | 0 | 0 | 0 |
-| Bugs | 0 | 2 | 4 | 6 |
+| Bugs | 0 | 0 | 0 | 0 |
 | Performance | 0 | 3 | 2 | 5 |
 | Improvements & Refactors | 0 | 1 | 2 | 3 |
 | Feature Ideas | 0 | 2 | 1 | 3 |
-| **Total** | **0** | **8** | **9** | **17** |
+| **Total** | **0** | **6** | **5** | **11** |

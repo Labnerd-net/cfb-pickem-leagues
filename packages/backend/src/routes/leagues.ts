@@ -1,6 +1,7 @@
 import { Hono } from 'hono';
 import { HTTPException } from 'hono/http-exception';
 import type { JwtData } from '@shared/types/cfb-pickem-api.js';
+import logger from '../utils/logger.js';
 import { authMiddleware, requireRole, requireLeagueMembership } from '../utils/middleware.js';
 import { apiRateLimit } from '../utils/rateLimiter.js';
 import {
@@ -280,7 +281,7 @@ const leaguesRoute = new Hono<{ Variables: Variables }>()
       const { year, weekNumber } = await resolveWeekContext(getNow());
       waitUntil(c, 
         dispatchLeagueBroadcast(leagueId, league.name, subject, message, overrideEmailPreferences, year, weekNumber)
-          .catch(err => console.error('dispatchLeagueBroadcast failed', err))
+          .catch(err => logger.error({ err, leagueId }, 'dispatchLeagueBroadcast failed'))
       );
       return c.json({ success: true });
     }

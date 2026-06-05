@@ -54,7 +54,7 @@ const changePasswordSchema = z.object({
   newPassword: z
     .string()
     .min(8, 'Password must be at least 8 characters')
-    .max(72, 'Password must be 72 characters or fewer'),
+    .max(128, 'Password must be 128 characters or fewer'),
 });
 type ChangePasswordForm = z.infer<typeof changePasswordSchema>;
 
