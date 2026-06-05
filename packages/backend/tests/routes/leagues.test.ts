@@ -396,6 +396,23 @@ describe('DELETE /api/leagues/:leagueId/members/:userId', () => {
     });
     expect(res.status).toBe(409);
   });
+
+  it('returns 404 when target user is not a member of the league', async () => {
+    const adminToken = await makeToken(1, ['admin', 'user']);
+    const createRes = await app.request('/api/leagues', {
+      method: 'POST',
+      headers: { Cookie: `auth_token=${adminToken}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name: 'Non-member Test' }),
+    });
+    const { league } = await createRes.json();
+
+    // User 999 is not a member of this league
+    const res = await app.request(`/api/leagues/${league.leagueId}/members/999`, {
+      method: 'DELETE',
+      headers: { Cookie: `auth_token=${adminToken}` },
+    });
+    expect(res.status).toBe(404);
+  });
 });
 
 // ---------------------------------------------------------------------------

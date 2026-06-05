@@ -235,6 +235,30 @@ describe('POST /api/admin/year/:year', () => {
     const body = await res.json();
     expect(body.status).toBe('added all weeks');
   });
+
+  it('returns 409 when the year has already been loaded', async () => {
+    const weekPayload = [
+      { year: 2024, weekNumber: 1, seasonType: 'regular' as const, weekStart: new Date('2024-08-24'), weekEnd: new Date('2024-08-31') },
+    ];
+    vi.mocked(getWeekData).mockResolvedValue(weekPayload);
+
+    const token = await makeAdminToken();
+    // First load — should succeed (seed data already has week 1, but year 2025 is clean)
+    vi.mocked(getWeekData).mockResolvedValue([
+      { year: 2025, weekNumber: 1, seasonType: 'regular' as const, weekStart: new Date('2025-08-23'), weekEnd: new Date('2025-08-30') },
+    ]);
+    await app.request('/api/admin/year/2025', {
+      method: 'POST',
+      headers: { Cookie: `auth_token=${token}` },
+    });
+
+    // Second load of same year — should return 409
+    const res = await app.request('/api/admin/year/2025', {
+      method: 'POST',
+      headers: { Cookie: `auth_token=${token}` },
+    });
+    expect(res.status).toBe(409);
+  });
 });
 
 describe('POST /api/admin/weeks/sync-results', () => {

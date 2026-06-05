@@ -183,7 +183,8 @@ const leaguesRoute = new Hono<{ Variables: Variables }>()
       const { leagueId, userId } = c.req.valid('param');
 
       const targetMembership = await getLeagueMembership(leagueId, userId);
-      if (targetMembership?.role === 'admin') {
+      if (!targetMembership) throw new HTTPException(404, { message: 'Member not found' });
+      if (targetMembership.role === 'admin') {
         const adminCount = await getLeagueAdminCount(leagueId);
         if (adminCount <= 1) {
           throw new HTTPException(409, { message: 'Cannot remove the only admin of a league' });

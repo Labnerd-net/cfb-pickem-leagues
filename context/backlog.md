@@ -8,13 +8,10 @@
 ## Security
 
 ### High
-- **#26 [packages/backend/src/db/dbNotificationFunctions.ts]**: Email verification tokens never expire. `markEmailVerified` accepts any non-null token with no time check. A leaked token (e.g., server log, browser history, referrer header) can verify an email permanently. Fix: add `AND email_verification_sent_at > NOW() - INTERVAL '24 hours'` to the WHERE clause in Drizzle.
-- **#27 [packages/backend/src/routes/user.ts:226-237]**: `GET /api/user/notifications/channels` requires auth but does not check league membership for the provided `leagueId`. Any authenticated user can pass any `leagueId` and receive its `ntfyTopicUrl`, `telegramInviteUrl`, and `discordInviteUrl`. Fix: add `requireLeagueMembership()` middleware to this route.
-- **#28 [packages/backend/src/routes/auth.ts:138-144]**: `DELETE /api/auth/deleteUser` does not check if the user is the sole admin of any league before deleting. Self-deleting the last admin orphans the league permanently. Fix: before deletion, query league admin counts and return a 409 if the user is the sole admin of any league.
-- **#29 [packages/backend/src/utils/zValidate.ts:160-167]**: `leagueChannelBodySchema` applies no URL format validation to `ntfyTopicUrl`, `telegramInviteUrl`, `discordWebhookUrl`, or `discordInviteUrl`. The Discord webhook URL is used server-side — a league admin can point it to an internal hostname (SSRF). Fix: apply `z.string().url()` to all URL fields in the schema.
+_None identified._
 
 ### Medium
-- **#30 [packages/backend/src/routes/leagues.ts:106-112]**: The `GET /api/leagues/invite/:inviteCode` route is unauthenticated and uses a 4-byte (32-bit) invite code (~4 billion combinations). Sustained brute-force is practical and leaks league names. Fix: increase to at least 8 bytes (`randomBytes(8)`) for a 64-bit code space.
+_None identified._
 
 ### Low
 _None identified._
@@ -28,7 +25,6 @@ _None identified._
 
 ### Medium
 - **#31 [packages/backend/src/db/dbAdminFunctions.ts:253-298]**: `addGameToLeague` relies on catching a DB constraint violation to return a 409 rather than preventing the conflict. Two concurrent add-requests for the same game both pass the existence check, then one hits the PK constraint. Fix: use `INSERT ... ON CONFLICT DO NOTHING` on the add path and check rows affected on the remove path.
-- **#32 [packages/backend/src/routes/user.ts:155-210]**: `POST /api/user/picks` has no upper-bound check on the `userPicks.games` array. A large array passes Zod validation and runs per-game DB lookups for every element. Fix: add `.max(50)` to the Zod array schema.
 - **#33 [packages/frontend/src/pages/Settings.tsx:57]**: Frontend password schema enforces `max(72)` but the backend enforces `max(128)`. A user who sets a 73–128 char password via direct API call cannot change it through the UI. Fix: align frontend to `max(128)`.
 
 ### Low
@@ -87,9 +83,9 @@ _None identified._
 
 | Category | High | Medium | Low | Total |
 |----------|------|--------|-----|-------|
-| Security | 4 | 1 | 0 | 5 |
-| Bugs | 0 | 3 | 4 | 7 |
+| Security | 0 | 0 | 0 | 0 |
+| Bugs | 0 | 2 | 4 | 6 |
 | Performance | 0 | 3 | 2 | 5 |
 | Improvements & Refactors | 0 | 1 | 2 | 3 |
 | Feature Ideas | 0 | 2 | 1 | 3 |
-| **Total** | **4** | **10** | **9** | **23** |
+| **Total** | **0** | **8** | **9** | **17** |

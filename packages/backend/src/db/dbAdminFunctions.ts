@@ -260,14 +260,12 @@ export async function addGameToLeague(leagueId: number, gameId: number): Promise
       .limit(1);
     if (game.length === 0) throw Object.assign(new Error('Game not found'), { status: 404 });
 
-    const existing = await db
-      .select()
-      .from(leagueGames)
-      .where(and(eq(leagueGames.leagueId, leagueId), eq(leagueGames.gameId, gameId)))
-      .limit(1);
-    if (existing.length > 0) throw Object.assign(new Error('Game already in league pool'), { status: 409 });
-
-    await db.insert(leagueGames).values({ leagueId, gameId });
+    const inserted = await db
+      .insert(leagueGames)
+      .values({ leagueId, gameId })
+      .onConflictDoNothing()
+      .returning({ gameId: leagueGames.gameId });
+    if (inserted.length === 0) throw Object.assign(new Error('Game already in league pool'), { status: 409 });
   } catch (e) {
     logger.error({ err: e }, 'addGameToLeague failed');
     throw e;

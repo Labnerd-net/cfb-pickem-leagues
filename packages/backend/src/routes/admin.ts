@@ -87,6 +87,8 @@ const admin = new Hono<{ Variables: Variables }>()
       throw new HTTPException(502, { message: `External API error: ${msg}` });
     }
     if (weekData?.length) {
+      const existing = await dbAdminFunctions.returnWeeksByYear(yearNumber);
+      if (existing.length > 0) throw new HTTPException(409, { message: 'Year already loaded' });
       await Promise.all(weekData.map(week => dbAdminFunctions.addWeek(week)));
     }
     return c.json({ status: 'added all weeks' });
