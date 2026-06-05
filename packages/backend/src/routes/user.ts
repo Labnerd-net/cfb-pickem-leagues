@@ -116,20 +116,18 @@ const user = new Hono<{ Variables: Variables }>()
   // Get user game picks (league-scoped)
   .get('/picks', apiRateLimit, authMiddleware, weekIdentifierQueryValidator, leagueIdQueryValidator, requireLeagueMembership(), async c => {
     const payload = c.get('jwtPayload');
-    const userIdString = String(payload.sub);
     const year = Number(c.req.query('year'));
     const weekNumber = Number(c.req.query('weekNumber'));
     const leagueId = Number(c.req.query('leagueId'));
-    const picks = await dbUserFunctions.returnUserGames({ year, week: weekNumber }, userIdString, leagueId);
+    const picks = await dbUserFunctions.returnUserGames({ year, week: weekNumber }, payload.sub, leagueId);
     return c.json({ picks });
   })
   // Get per-week pick history for a year (league-scoped)
   .get('/history', apiRateLimit, authMiddleware, yearQueryValidator, leagueIdQueryValidator, requireLeagueMembership(), async c => {
     const payload = c.get('jwtPayload');
-    const userIdString = String(payload.sub);
     const year = Number(c.req.query('year'));
     const leagueId = Number(c.req.query('leagueId'));
-    const history = await dbUserFunctions.returnUserPickHistory(year, userIdString, leagueId);
+    const history = await dbUserFunctions.returnUserPickHistory(year, payload.sub, leagueId);
     return c.json({ history });
   })
   // List weeks in a year with picked games
@@ -154,7 +152,6 @@ const user = new Hono<{ Variables: Variables }>()
   // Set user game picks (league-scoped)
   .post('/picks', apiRateLimit, authMiddleware, allUserPickedRequestValidator, async c => {
     const payload = c.get('jwtPayload');
-    const userIdString = String(payload.sub);
     const userPicks: AllUserGamePicksRequest = c.req.valid('json');
     const { leagueId } = userPicks;
 
@@ -206,7 +203,7 @@ const user = new Hono<{ Variables: Variables }>()
       }
     }
 
-    await dbUserFunctions.addPickedGamesBatch(userPicks.games, userIdString, leagueId);
+    await dbUserFunctions.addPickedGamesBatch(userPicks.games, payload.sub, leagueId);
     return c.json({ status: 'updated picked games' });
   })
   // Get notification settings

@@ -3,8 +3,7 @@ import { Hono } from 'hono';
 import { HTTPException } from 'hono/http-exception';
 import { sign } from 'hono/jwt';
 import { sql } from 'drizzle-orm';
-import { seedTestData, createTestGame, createTestUser, createTestWeek, testDb, createLeagueGame } from '../db-utils.js';
-import { addPickedGame } from '../../src/db/dbUserFunctions.js';
+import { seedTestData, createTestGame, createTestUser, createTestWeek, testDb, createLeagueGame, addPickedGame } from '../db-utils.js';
 import leaderboardRoutes from '../../src/routes/leaderboard.js';
 
 const TEST_JWT_SECRET = 'test-secret-key-do-not-use-in-production';
@@ -88,12 +87,12 @@ describe('GET /api/leaderboard', () => {
     const gameId2 = Number((game2 as { game_id: number }).game_id);
 
     // User 1 picks home_team for both
-    await addPickedGame({ game: gameId1, pick: 'home_team' }, '1');
-    await addPickedGame({ game: gameId2, pick: 'home_team' }, '1');
+    await addPickedGame({ game: gameId1, pick: 'home_team' }, 1);
+    await addPickedGame({ game: gameId2, pick: 'home_team' }, 1);
 
     // User 3 picks away_team for both
-    await addPickedGame({ game: gameId1, pick: 'away_team' }, String(user3Id));
-    await addPickedGame({ game: gameId2, pick: 'away_team' }, String(user3Id));
+    await addPickedGame({ game: gameId1, pick: 'away_team' }, user3Id);
+    await addPickedGame({ game: gameId2, pick: 'away_team' }, user3Id);
 
     // home_team wins both — user 1 gets 2 correct, user 3 gets 0
     await testDb.execute(sql`
@@ -129,7 +128,7 @@ describe('GET /api/leaderboard', () => {
     const game = await createTestGame(3, 2024, 'Oregon', 'Washington', false, new Date('2099-01-01'));
     const gameId = Number((game as { game_id: number }).game_id);
 
-    await addPickedGame({ game: gameId, pick: 'home_team' }, '1');
+    await addPickedGame({ game: gameId, pick: 'home_team' }, 1);
     // winning_team stays 'pending' by default
 
     const token = await makeToken();
@@ -152,8 +151,8 @@ describe('GET /api/leaderboard', () => {
     const gameId = Number((game as { game_id: number }).game_id);
 
     // Both pick home_team but away_team will win
-    await addPickedGame({ game: gameId, pick: 'home_team' }, '1');
-    await addPickedGame({ game: gameId, pick: 'home_team' }, '2');
+    await addPickedGame({ game: gameId, pick: 'home_team' }, 1);
+    await addPickedGame({ game: gameId, pick: 'home_team' }, 2);
 
     await testDb.execute(sql`
       UPDATE "admin"."games"
@@ -214,8 +213,8 @@ describe('GET /api/leaderboard/scores', () => {
     const gameId2 = Number((game2 as { game_id: number }).game_id);
 
     // User 1 picks home_team for both
-    await addPickedGame({ game: gameId1, pick: 'home_team' }, '1');
-    await addPickedGame({ game: gameId2, pick: 'home_team' }, '1');
+    await addPickedGame({ game: gameId1, pick: 'home_team' }, 1);
+    await addPickedGame({ game: gameId2, pick: 'home_team' }, 1);
 
     // home_team wins game1, away_team wins game2
     await testDb.execute(sql`

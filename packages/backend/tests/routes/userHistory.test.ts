@@ -3,8 +3,7 @@ import { Hono } from 'hono';
 import { HTTPException } from 'hono/http-exception';
 import { sign } from 'hono/jwt';
 import { sql } from 'drizzle-orm';
-import { seedTestData, createTestGame, testDb } from '../db-utils.js';
-import { addPickedGame } from '../../src/db/dbUserFunctions.js';
+import { seedTestData, createTestGame, testDb, addPickedGame } from '../db-utils.js';
 import userRoutes from '../../src/routes/user.js';
 
 const TEST_JWT_SECRET = 'test-secret-key-do-not-use-in-production';
@@ -68,8 +67,8 @@ describe('GET /api/user/history', () => {
     const gameId2 = Number((game2 as { game_id: number }).game_id);
 
     // User picks home_team for both
-    await addPickedGame({ game: gameId1, pick: 'home_team' }, '1');
-    await addPickedGame({ game: gameId2, pick: 'home_team' }, '1');
+    await addPickedGame({ game: gameId1, pick: 'home_team' }, 1);
+    await addPickedGame({ game: gameId2, pick: 'home_team' }, 1);
 
     // Set game1 winner to home_team (correct), game2 to away_team (incorrect)
     await testDb.execute(sql`
@@ -103,7 +102,7 @@ describe('GET /api/user/history', () => {
     const game = await createTestGame(2, 2024, 'LSU', 'Texas', false, new Date('2099-01-01'));
     const gameId = Number((game as { game_id: number }).game_id);
 
-    await addPickedGame({ game: gameId, pick: 'home_team' }, '1');
+    await addPickedGame({ game: gameId, pick: 'home_team' }, 1);
     // winning_team stays 'pending' (default)
 
     const token = await makeToken(1);

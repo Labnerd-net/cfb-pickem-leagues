@@ -217,49 +217,22 @@ export async function updateUserProfile(
 }
 
 // ------------------------------------------------------------------
-// Add Game Picks to user
-// ------------------------------------------------------------------
-export async function addPickedGame(pick: UserGamePicks, userId: string, leagueId = 1): Promise<void> {
-  logger.debug({ game: pick.game, userId, leagueId }, 'addPickedGame');
-  try {
-    const userIdNumber = Number(userId);
-    await db
-      .insert(games)
-      .values({
-        userId: userIdNumber,
-        gameId: pick.game,
-        leagueId,
-        teamChosen: pick.pick,
-      })
-      .onConflictDoUpdate({
-        target: [games.userId, games.gameId, games.leagueId],
-        set: {
-          teamChosen: pick.pick,
-        },
-      });
-  } catch (e) {
-    logger.error({ err: e }, 'addPickedGame failed');
-    throw e;
-  }
-}
-
 // ------------------------------------------------------------------
 // Add Game Picks to user (batch, transactional)
 // ------------------------------------------------------------------
 export async function addPickedGamesBatch(
   picks: UserGamePicks[],
-  userId: string,
+  userId: number,
   leagueId: number
 ): Promise<void> {
   logger.debug({ count: picks.length, userId, leagueId }, 'addPickedGamesBatch');
   try {
-    const userIdNumber = Number(userId);
     await db.transaction(async tx => {
       for (const pick of picks) {
         await tx
           .insert(games)
           .values({
-            userId: userIdNumber,
+            userId,
             gameId: pick.game,
             leagueId,
             teamChosen: pick.pick,
@@ -283,10 +256,9 @@ export async function addPickedGamesBatch(
 // ------------------------------------------------------------------
 export async function returnUserPickHistory(
   year: number,
-  userId: string,
+  userId: number,
   leagueId: number
 ): Promise<UserPickHistoryEntry[]> {
-  const userIdNumber = Number(userId);
   logger.debug({ year, userId, leagueId }, 'returnUserPickHistory');
   try {
     const rows = await db
@@ -300,7 +272,7 @@ export async function returnUserPickHistory(
       })
       .from(games)
       .innerJoin(adminGames, eq(games.gameId, adminGames.gameId))
-      .where(and(eq(adminGames.year, year), eq(games.userId, userIdNumber), eq(games.leagueId, leagueId), ne(games.teamChosen, 'voided')))
+      .where(and(eq(adminGames.year, year), eq(games.userId, userId), eq(games.leagueId, leagueId), ne(games.teamChosen, 'voided')))
       .groupBy(adminGames.year, adminGames.weekNumber)
       .orderBy(sql`${adminGames.weekNumber} DESC`);
     return rows.map(r => ({
@@ -447,10 +419,9 @@ export async function returnUserPickCount(
 // ------------------------------------------------------------------
 export async function returnUserGames(
   identifier: WeekIdentifier,
-  userId: string,
+  userId: number,
   leagueId: number
 ): Promise<UserDbGameData[]> {
-  const userIdNumber = Number(userId);
   logger.debug({ year: identifier.year, week: identifier.week, userId, leagueId }, 'returnUserGames');
   try {
     return await db
@@ -477,7 +448,7 @@ export async function returnUserGames(
         and(
           eq(adminGames.year, identifier.year),
           eq(adminGames.weekNumber, identifier.week),
-          eq(games.userId, userIdNumber),
+          eq(games.userId, userId),
           eq(games.leagueId, leagueId),
           ne(games.teamChosen, 'voided')
         )

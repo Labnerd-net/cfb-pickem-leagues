@@ -1,7 +1,8 @@
 import { sql } from 'drizzle-orm';
-import type { NotificationChannel, NotificationType, Role } from '@shared/types/cfb-pickem-api.js';
+import type { NotificationChannel, NotificationType, Role, UserGamePicks } from '@shared/types/cfb-pickem-api.js';
 import { hashPassword } from '../src/utils/password.js';
 import { db } from '../src/db/index.js';
+import { addPickedGamesBatch } from '../src/db/dbUserFunctions.js';
 
 // Re-export the mocked db instance for tests
 export { db as testDb };
@@ -166,6 +167,13 @@ export async function createTestNotificationPreference(
 		VALUES (${userId}, ${notificationType}, ${channel}, ${enabled})
 		ON CONFLICT (user_id, notification_type, channel) DO UPDATE SET enabled = ${enabled}
 	`);
+}
+
+/**
+ * Test helper: insert a single pick via addPickedGamesBatch
+ */
+export async function addPickedGame(pick: UserGamePicks, userId: number, leagueId = 1) {
+	await addPickedGamesBatch([pick], userId, leagueId);
 }
 
 /**

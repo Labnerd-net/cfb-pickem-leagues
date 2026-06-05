@@ -1,12 +1,11 @@
 import { describe, it, expect, beforeAll, afterEach } from 'vitest';
 import { sql } from 'drizzle-orm';
-import { seedTestData, createTestWeek, createTestGame, cleanDatabase } from '../../db-utils.js';
+import { seedTestData, createTestWeek, createTestGame, cleanDatabase, addPickedGame } from '../../db-utils.js';
 import {
 	returnUsers,
 	returnUserByEmail,
 	returnUserById,
 	returnTotalUserCount,
-	addPickedGame,
 	addPickedGamesBatch,
 	returnUserGames,
 	returnLeaderboard,
@@ -106,51 +105,6 @@ describe('User Database Functions', () => {
 		});
 	});
 
-	describe('addPickedGame', () => {
-		afterEach(async () => {
-			await cleanDatabase();
-			await seedTestData();
-		});
-
-		it('should insert only userId, gameId, teamChosen into user.games', async () => {
-			await createTestWeek(1, 2024, 'regular');
-			const game = await createTestGame(1, 2024, 'Team A', 'Team B', false);
-			const gameId = (game as { game_id: number }).game_id;
-
-			await addPickedGame({ game: gameId, pick: 'home_team' }, '1');
-
-			const rows = await db.execute(
-				sql`SELECT user_id, game_id, team_chosen FROM "user"."games" WHERE user_id = 1 AND game_id = ${gameId}`
-			);
-			expect(rows.rows.length).toBe(1);
-			expect(rows.rows[0]).toMatchObject({
-				user_id: 1,
-				game_id: gameId,
-				team_chosen: 'home_team',
-			});
-		});
-
-		it('should update teamChosen when pick is re-submitted for same game', async () => {
-			await createTestWeek(1, 2024, 'regular');
-			const game = await createTestGame(1, 2024, 'Team A', 'Team B', false);
-			const gameId = (game as { game_id: number }).game_id;
-
-			await addPickedGame({ game: gameId, pick: 'home_team' }, '1');
-			await addPickedGame({ game: gameId, pick: 'away_team' }, '1');
-
-			const rows = await db.execute(
-				sql`SELECT team_chosen FROM "user"."games" WHERE user_id = 1 AND game_id = ${gameId}`
-			);
-			expect(rows.rows.length).toBe(1);
-			expect(rows.rows[0]).toMatchObject({ team_chosen: 'away_team' });
-		});
-
-		it('should throw when game does not exist', async () => {
-			// FK constraint violation from DB — caller is responsible for pre-validating game existence
-			await expect(addPickedGame({ game: 99999, pick: 'home_team' }, '1')).rejects.toThrow();
-		});
-	});
-
 	describe('addPickedGamesBatch', () => {
 		afterEach(async () => {
 			await cleanDatabase();
@@ -169,7 +123,7 @@ describe('User Database Functions', () => {
 					{ game: gameId1, pick: 'home_team' },
 					{ game: gameId2, pick: 'away_team' },
 				],
-				'1',
+				1,
 				1
 			);
 
@@ -193,7 +147,7 @@ describe('User Database Functions', () => {
 						{ game: gameId1, pick: 'home_team' },
 						{ game: nonExistentGameId, pick: 'away_team' },
 					],
-					'1',
+					1,
 					1
 				)
 			).rejects.toThrow();
@@ -216,9 +170,9 @@ describe('User Database Functions', () => {
 			const game = await createTestGame(1, 2024, 'Team A', 'Team B', false);
 			const gameId = (game as { game_id: number }).game_id;
 
-			await addPickedGame({ game: gameId, pick: 'home_team' }, '1');
+			await addPickedGame({ game: gameId, pick: 'home_team' }, 1);
 
-			const picks = await returnUserGames({ year: 2024, week: 1 }, '1', 1);
+			const picks = await returnUserGames({ year: 2024, week: 1 }, 1, 1);
 
 			expect(picks.length).toBe(1);
 			expect(picks[0]).toMatchObject({
@@ -239,7 +193,7 @@ describe('User Database Functions', () => {
 			const game = await createTestGame(1, 2024, 'Team A', 'Team B', false);
 			const gameId = (game as { game_id: number }).game_id;
 
-			await addPickedGame({ game: gameId, pick: 'home_team' }, '1');
+			await addPickedGame({ game: gameId, pick: 'home_team' }, 1);
 
 			// Update scores in admin.games after pick was stored
 			await db.execute(sql`
@@ -248,7 +202,7 @@ describe('User Database Functions', () => {
 				WHERE game_id = ${gameId}
 			`);
 
-			const picks = await returnUserGames({ year: 2024, week: 1 }, '1', 1);
+			const picks = await returnUserGames({ year: 2024, week: 1 }, 1, 1);
 
 			expect(picks.length).toBe(1);
 			expect(picks[0]).toMatchObject({
@@ -260,7 +214,7 @@ describe('User Database Functions', () => {
 		});
 
 		it('should return empty array when no picks exist for the week', async () => {
-			const picks = await returnUserGames({ year: 2024, week: 1 }, '1', 1);
+			const picks = await returnUserGames({ year: 2024, week: 1 }, 1, 1);
 
 			expect(Array.isArray(picks)).toBe(true);
 			expect(picks.length).toBe(0);
@@ -287,9 +241,9 @@ describe('User Database Functions', () => {
 			await db.execute(sql`UPDATE "admin"."games" SET winning_team = 'away_team' WHERE game_id = ${id2}`);
 
 			// User 1: correct on g1, incorrect on g2, pending on g3
-			await addPickedGame({ game: id1, pick: 'home_team' }, '1');
-			await addPickedGame({ game: id2, pick: 'home_team' }, '1');
-			await addPickedGame({ game: id3, pick: 'home_team' }, '1');
+			await addPickedGame({ game: id1, pick: 'home_team' }, 1);
+			await addPickedGame({ game: id2, pick: 'home_team' }, 1);
+			await addPickedGame({ game: id3, pick: 'home_team' }, 1);
 
 			const entries = await returnLeaderboard(2024, 1);
 			const user1 = entries.find(e => e.userId === 1)!;
@@ -311,8 +265,8 @@ describe('User Database Functions', () => {
 			await db.execute(sql`UPDATE "admin"."games" SET winning_team = 'home_team' WHERE game_id = ${id2}`);
 
 			// User 1: 1 correct out of 2 total (50%)
-			await addPickedGame({ game: id1, pick: 'home_team' }, '1');
-			await addPickedGame({ game: id2, pick: 'away_team' }, '1');
+			await addPickedGame({ game: id1, pick: 'home_team' }, 1);
+			await addPickedGame({ game: id2, pick: 'away_team' }, 1);
 
 			const entries = await returnLeaderboard(2024, 1);
 			const user1 = entries.find(e => e.userId === 1)!;
@@ -342,10 +296,10 @@ describe('User Database Functions', () => {
 			await db.execute(sql`UPDATE "admin"."games" SET winning_team = 'home_team' WHERE game_id = ${id2}`);
 
 			// User 1: 2 correct; User 2: 1 correct — user 1 should rank first
-			await addPickedGame({ game: id1, pick: 'home_team' }, '1');
-			await addPickedGame({ game: id2, pick: 'home_team' }, '1');
-			await addPickedGame({ game: id1, pick: 'home_team' }, '2');
-			await addPickedGame({ game: id2, pick: 'away_team' }, '2');
+			await addPickedGame({ game: id1, pick: 'home_team' }, 1);
+			await addPickedGame({ game: id2, pick: 'home_team' }, 1);
+			await addPickedGame({ game: id1, pick: 'home_team' }, 2);
+			await addPickedGame({ game: id2, pick: 'away_team' }, 2);
 
 			const entries = await returnLeaderboard(2024, 1);
 
@@ -377,8 +331,8 @@ describe('User Database Functions', () => {
 			await db.execute(sql`UPDATE "admin"."games" SET winning_team = 'home_team' WHERE game_id = ${id2025}`);
 
 			// User 1 picks correctly in both years
-			await addPickedGame({ game: id2024, pick: 'home_team' }, '1');
-			await addPickedGame({ game: id2025, pick: 'home_team' }, '1');
+			await addPickedGame({ game: id2024, pick: 'home_team' }, 1);
+			await addPickedGame({ game: id2025, pick: 'home_team' }, 1);
 
 			const entries2024 = await returnLeaderboard(2024, 1);
 			const user1in2024 = entries2024.find(e => e.userId === 1)!;
@@ -418,7 +372,7 @@ describe('User Database Functions', () => {
 			await db.execute(sql`UPDATE "admin"."games" SET winning_team = 'home_team' WHERE game_id = ${id1}`);
 
 			// User 1 has one real correct pick and one voided pick on a completed game
-			await addPickedGame({ game: id1, pick: 'home_team' }, '1');
+			await addPickedGame({ game: id1, pick: 'home_team' }, 1);
 			await db.execute(sql`
 				INSERT INTO "user"."games" (user_id, game_id, league_id, team_chosen)
 				VALUES (1, ${id2}, 1, 'voided')
@@ -446,13 +400,13 @@ describe('User Database Functions', () => {
 			const id1 = (g1 as { game_id: number }).game_id;
 			const id2 = (g2 as { game_id: number }).game_id;
 
-			await addPickedGame({ game: id1, pick: 'home_team' }, '1');
+			await addPickedGame({ game: id1, pick: 'home_team' }, 1);
 			await db.execute(sql`
 				INSERT INTO "user"."games" (user_id, game_id, league_id, team_chosen)
 				VALUES (1, ${id2}, 1, 'voided')
 			`);
 
-			const picks = await returnUserGames({ year: 2024, week: 1 }, '1', 1);
+			const picks = await returnUserGames({ year: 2024, week: 1 }, 1, 1);
 
 			expect(picks.length).toBe(1);
 			expect(picks[0].gameId).toBe(id1);
@@ -466,7 +420,7 @@ describe('User Database Functions', () => {
 			const id1 = (g1 as { game_id: number }).game_id;
 			const id2 = (g2 as { game_id: number }).game_id;
 
-			await addPickedGame({ game: id1, pick: 'home_team' }, '1');
+			await addPickedGame({ game: id1, pick: 'home_team' }, 1);
 			await db.execute(sql`
 				INSERT INTO "user"."games" (user_id, game_id, league_id, team_chosen)
 				VALUES (1, ${id2}, 1, 'voided')
@@ -489,7 +443,7 @@ describe('User Database Functions', () => {
 			await db.execute(sql`UPDATE "admin"."games" SET winning_team = 'home_team' WHERE game_id = ${id2}`);
 
 			// User 1: one correct pick and one voided pick on a completed game
-			await addPickedGame({ game: id1, pick: 'home_team' }, '1');
+			await addPickedGame({ game: id1, pick: 'home_team' }, 1);
 			await db.execute(sql`
 				INSERT INTO "user"."games" (user_id, game_id, league_id, team_chosen)
 				VALUES (1, ${id2}, 1, 'voided')
@@ -515,13 +469,13 @@ describe('User Database Functions', () => {
 			await db.execute(sql`UPDATE "admin"."games" SET winning_team = 'home_team' WHERE game_id = ${id2}`);
 
 			// User 1: one correct pick and one voided pick on a completed game
-			await addPickedGame({ game: id1, pick: 'home_team' }, '1');
+			await addPickedGame({ game: id1, pick: 'home_team' }, 1);
 			await db.execute(sql`
 				INSERT INTO "user"."games" (user_id, game_id, league_id, team_chosen)
 				VALUES (1, ${id2}, 1, 'voided')
 			`);
 
-			const history = await returnUserPickHistory(2024, '1', 1);
+			const history = await returnUserPickHistory(2024, 1, 1);
 			expect(history.length).toBe(1);
 			const week1 = history[0];
 
@@ -559,8 +513,8 @@ describe('User Database Functions', () => {
 			await db.execute(sql`UPDATE "admin"."games" SET winning_team = 'away_team' WHERE game_id = ${id2}`);
 
 			// User 1: correct on g1, incorrect on g2
-			await addPickedGame({ game: id1, pick: 'home_team' }, '1');
-			await addPickedGame({ game: id2, pick: 'home_team' }, '1');
+			await addPickedGame({ game: id1, pick: 'home_team' }, 1);
+			await addPickedGame({ game: id2, pick: 'home_team' }, 1);
 
 			const totals = await returnUserPickTotals();
 			const user1 = totals.find(t => t.userId === 1)!;
@@ -579,7 +533,7 @@ describe('User Database Functions', () => {
 			const g1 = await createTestGame(1, 2024, 'Home A', 'Away A', false);
 			const id1 = (g1 as { game_id: number }).game_id;
 
-			await addPickedGame({ game: id1, pick: 'home_team' }, '1');
+			await addPickedGame({ game: id1, pick: 'home_team' }, 1);
 			// Mark the pick as voided
 			await db.execute(sql`UPDATE "user"."games" SET team_chosen = 'voided' WHERE user_id = 1 AND game_id = ${id1}`);
 

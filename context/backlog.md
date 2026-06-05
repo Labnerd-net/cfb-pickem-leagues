@@ -53,8 +53,7 @@ _None identified._
 _None identified._
 
 ### Low
-- **#43 [packages/backend/src/db/dbUserFunctions.ts]**: `addPickedGame` (single-pick variant) appears unused — all pick submission goes through `addPickedGamesBatch`. Verify and remove if confirmed dead code.
-- **#44 [packages/backend/src/db/dbUserFunctions.ts]**: `userId` is typed as `string` in pick-related DB functions (`addPickedGame`, `addPickedGamesBatch`, `returnUserGames`, `returnUserPickHistory`) but as `number` everywhere else in the same file. Fix: standardize on `number` and convert at the route layer.
+_None identified._
 
 ---
 
@@ -68,7 +67,7 @@ _None identified._
 - **#24 [packages/backend/src/cron/cronTick.ts, packages/backend/src/notifications/]**: No admin-configurable "picks open" reminder exists. The end-of-week standings digest fires automatically via `rankings_updated`. The missing piece is a weekly reminder at a configurable day/time: (1) if games are curated, send the picks-open reminder to all users; (2) if no games exist yet, send an admin-only notification to prompt curation — `games_ready` only fires after curation, so a forgetful admin gets no nudge. Would require a `scheduled_notifications` DB table or stored cron schedule; reuses existing `dispatcher.ts` and `templates.ts`.
 
 ### Low
-- **#25 [packages/frontend/src/apis/authRequests.ts:63]**: `DELETE /api/auth/deleteUser` route and `deleteUser()` frontend API function both exist, but no UI surfaces them. Add an "Account Management" section in Settings that calls `deleteUser()` with a confirmation dialog.
+_None identified._
 
 ---
 
@@ -79,6 +78,6 @@ _None identified._
 | Security | 0 | 0 | 0 | 0 |
 | Bugs | 0 | 0 | 0 | 0 |
 | Performance | 0 | 0 | 0 | 0 |
-| Improvements & Refactors | 0 | 0 | 2 | 2 |
-| Feature Ideas | 0 | 2 | 1 | 3 |
-| **Total** | **0** | **2** | **3** | **5** |
+| Improvements & Refactors | 0 | 0 | 0 | 0 |
+| Feature Ideas | 0 | 2 | 0 | 2 |
+| **Total** | **0** | **2** | **0** | **2** |
