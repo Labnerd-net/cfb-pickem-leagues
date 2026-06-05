@@ -57,23 +57,25 @@ export async function dispatchNotification(params: DispatchParams): Promise<void
   try {
     const users = await returnEmailOptedInUsers(notificationType, leagueId);
     const alreadySentUserIds = await returnSentNotificationUserIds(leagueId, year, weekNumber, notificationType, 'email');
-    for (const user of users) {
-      try {
-        if (!user.emailVerified || !user.email) continue;
-        if (alreadySentUserIds.has(user.userId)) continue;
-        const sent = await sendEmail({
-          to: user.email,
-          subject: template.subject,
-          htmlBody: template.htmlBody,
-          textBody: template.textBody,
-        });
-        if (sent) {
-          await addNotificationLog(user.userId, leagueId, year, weekNumber, notificationType, 'email');
-        }
-      } catch (e) {
-        logger.error({ err: e, userId: user.userId, notificationType }, 'Failed to send email notification to user');
-      }
-    }
+    await Promise.allSettled(
+      users
+        .filter(u => u.emailVerified && u.email && !alreadySentUserIds.has(u.userId))
+        .map(async user => {
+          try {
+            const sent = await sendEmail({
+              to: user.email,
+              subject: template.subject,
+              htmlBody: template.htmlBody,
+              textBody: template.textBody,
+            });
+            if (sent) {
+              await addNotificationLog(user.userId, leagueId, year, weekNumber, notificationType, 'email');
+            }
+          } catch (e) {
+            logger.error({ err: e, userId: user.userId, notificationType }, 'Failed to send email notification to user');
+          }
+        })
+    );
   } catch (e) {
     logger.error({ err: e, notificationType }, 'Failed to fetch opted-in users for email');
   }
@@ -212,20 +214,23 @@ export async function dispatchAdminBroadcast(
       emailUsers = await returnEmailOptedInUsers('admin_broadcast', SITE_WIDE_LEAGUE_ID);
     }
 
-    for (const user of emailUsers) {
-      try {
-        if (!user.emailVerified || !user.email) continue;
-        const sent = await sendEmail({
-          to: user.email,
-          ...adminBroadcastTemplate({ subject, message }),
-        });
-        if (sent) {
-          await addNotificationLog(user.userId, SITE_WIDE_LEAGUE_ID, year, weekNumber, 'admin_broadcast', 'email');
-        }
-      } catch (e) {
-        logger.error({ err: e, userId: user.userId }, 'Failed to send admin broadcast email to user');
-      }
-    }
+    await Promise.allSettled(
+      emailUsers
+        .filter(u => u.emailVerified && u.email)
+        .map(async user => {
+          try {
+            const sent = await sendEmail({
+              to: user.email,
+              ...adminBroadcastTemplate({ subject, message }),
+            });
+            if (sent) {
+              await addNotificationLog(user.userId, SITE_WIDE_LEAGUE_ID, year, weekNumber, 'admin_broadcast', 'email');
+            }
+          } catch (e) {
+            logger.error({ err: e, userId: user.userId }, 'Failed to send admin broadcast email to user');
+          }
+        })
+    );
   } catch (e) {
     logger.error({ err: e }, 'Failed to fetch users for admin broadcast email');
   }
@@ -257,20 +262,23 @@ export async function dispatchLeagueBroadcast(
       : await returnEmailOptedInUsers('admin_broadcast', leagueId);
 
     const leagueBroadcastSubject = `[${leagueName}] ${subject}`;
-    for (const user of emailUsers) {
-      try {
-        if (!user.emailVerified || !user.email) continue;
-        const sent = await sendEmail({
-          to: user.email,
-          ...adminBroadcastTemplate({ subject: leagueBroadcastSubject, message }),
-        });
-        if (sent) {
-          await addNotificationLog(user.userId, leagueId, year, weekNumber, 'admin_broadcast', 'email');
-        }
-      } catch (e) {
-        logger.error({ err: e, userId: user.userId }, 'Failed to send league broadcast email to user');
-      }
-    }
+    await Promise.allSettled(
+      emailUsers
+        .filter(u => u.emailVerified && u.email)
+        .map(async user => {
+          try {
+            const sent = await sendEmail({
+              to: user.email,
+              ...adminBroadcastTemplate({ subject: leagueBroadcastSubject, message }),
+            });
+            if (sent) {
+              await addNotificationLog(user.userId, leagueId, year, weekNumber, 'admin_broadcast', 'email');
+            }
+          } catch (e) {
+            logger.error({ err: e, userId: user.userId }, 'Failed to send league broadcast email to user');
+          }
+        })
+    );
   } catch (e) {
     logger.error({ err: e, leagueId }, 'Failed to fetch league members for broadcast email');
   }

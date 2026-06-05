@@ -56,6 +56,7 @@ export const requireLeagueMembership = (requiredRole?: 'admin') => {
     }
 
     c.set('leagueMembership', membership);
+    c.set('league', league);
     await next();
   };
 };

@@ -87,17 +87,21 @@ export async function runCronTick(): Promise<void> {
   }
 
   // 5. Per-league loop — completion check and reminder checks
-  for (const league of activeLeagues) {
-    const leagueWeekKey = `${league.leagueId}-${week.year}-${week.weekNumber}`;
+  const leagueGameResults = await Promise.allSettled(
+    activeLeagues.map(league => getGamesForLeagueWeek(league.leagueId, week.year, week.weekNumber))
+  );
 
-    let leagueGames;
-    try {
-      leagueGames = await getGamesForLeagueWeek(league.leagueId, week.year, week.weekNumber);
-    } catch (e) {
-      logger.error({ err: e, leagueId: league.leagueId, weekKey }, 'Failed to fetch league games');
+  for (let i = 0; i < activeLeagues.length; i++) {
+    const league = activeLeagues[i];
+    const leagueWeekKey = `${league.leagueId}-${week.year}-${week.weekNumber}`;
+    const gameResult = leagueGameResults[i];
+
+    if (gameResult.status === 'rejected') {
+      logger.error({ err: gameResult.reason, leagueId: league.leagueId, weekKey }, 'Failed to fetch league games');
       continue;
     }
 
+    const leagueGames = gameResult.value;
     if (leagueGames.length === 0) continue;
 
     // Completion check — only after a fresh score refresh

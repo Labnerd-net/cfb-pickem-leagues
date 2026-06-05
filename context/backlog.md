@@ -37,13 +37,10 @@ _None identified._
 _None identified._
 
 ### Medium
-- **#8 [packages/backend/src/notifications/dispatcher.ts:54-77]**: Emails are sent sequentially in a `for` loop. At small user counts this is fine, but slow SMTP holds the event loop open for all sends. Fix (when needed): convert to `Promise.allSettled` with per-user catch blocks.
-- **#38 [packages/backend/src/routes/admin.ts:199-249]**: `sync-results` and `correct-score` run a sequential `for...of` loop with a DB query per league, blocking the response before `waitUntil` is called. Fix: replace with `Promise.all(activeLeagues.map(...))` for the per-league fetches.
-- **#39 [packages/backend/src/cron/cronTick.ts:90-101]**: `getGamesForLeagueWeek` is called sequentially per league in the cron loop. Fix: use `Promise.all` to parallelize all per-league DB fetches.
+_None identified._
 
 ### Low
-- **#40 [packages/backend/src/routes/leagues.ts:114-129]**: `GET /:leagueId` fetches the league twice — once inside `requireLeagueMembership()` and once in the handler via `getLeagueById`. Fix: store the league row in Hono context inside `requireLeagueMembership` and read it in the handler.
-- **#41 [packages/backend/src/notifications/emailSender.ts:18]**: A new `Resend` instance is created on every `sendEmail` call. Fix: initialize the `Resend` client once at module scope and reuse it.
+_None identified._
 
 ---
 
@@ -81,7 +78,7 @@ _None identified._
 |----------|------|--------|-----|-------|
 | Security | 0 | 0 | 0 | 0 |
 | Bugs | 0 | 0 | 0 | 0 |
-| Performance | 0 | 3 | 2 | 5 |
+| Performance | 0 | 0 | 0 | 0 |
 | Improvements & Refactors | 0 | 1 | 2 | 3 |
 | Feature Ideas | 0 | 2 | 1 | 3 |
-| **Total** | **0** | **6** | **5** | **11** |
+| **Total** | **0** | **1** | **3** | **6** |

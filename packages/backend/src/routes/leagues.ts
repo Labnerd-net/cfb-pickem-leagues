@@ -17,7 +17,6 @@ import {
 import {
   createLeague,
   getLeaguesForUser,
-  getLeagueById,
   getLeagueByInviteCode,
   getLeagueMembership,
   joinLeague,
@@ -39,6 +38,7 @@ import { waitUntil } from '../utils/waitUntil.js';
 type Variables = {
   jwtPayload: JwtData;
   leagueMembership: { leagueId: number; userId: number; role: string; joinedAt: Date };
+  league: { leagueId: number; name: string; inviteCode: string; createdAt: Date };
 };
 
 const leaguesRoute = new Hono<{ Variables: Variables }>()
@@ -115,7 +115,7 @@ const leaguesRoute = new Hono<{ Variables: Variables }>()
   // Get a single league (members see it; admins also get invite code)
   .get('/:leagueId', apiRateLimit, authMiddleware, leagueIdParamValidator, requireLeagueMembership(), async c => {
     const membership = c.get('leagueMembership');
-    const league = await getLeagueById(membership.leagueId);
+    const league = c.get('league');
     const memberCount = await getLeagueMemberCount(membership.leagueId);
     return c.json({
       league: {
@@ -274,14 +274,12 @@ const leaguesRoute = new Hono<{ Variables: Variables }>()
     requireLeagueMembership('admin'),
     leagueBroadcastBodyValidator,
     async c => {
-      const { leagueId } = c.req.valid('param');
+      const league = c.get('league');
       const { subject, message, overrideEmailPreferences } = c.req.valid('json');
-      const league = await getLeagueById(leagueId);
-      if (!league) throw new HTTPException(404, { message: 'League not found' });
       const { year, weekNumber } = await resolveWeekContext(getNow());
-      waitUntil(c, 
-        dispatchLeagueBroadcast(leagueId, league.name, subject, message, overrideEmailPreferences, year, weekNumber)
-          .catch(err => logger.error({ err, leagueId }, 'dispatchLeagueBroadcast failed'))
+      waitUntil(c,
+        dispatchLeagueBroadcast(league.leagueId, league.name, subject, message, overrideEmailPreferences, year, weekNumber)
+          .catch(err => logger.error({ err, leagueId: league.leagueId }, 'dispatchLeagueBroadcast failed'))
       );
       return c.json({ success: true });
     }

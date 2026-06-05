@@ -199,17 +199,20 @@ const admin = new Hono<{ Variables: Variables }>()
       );
 
       const activeLeagues = await getActiveLeaguesForWeek(year, weekNumber);
-      let leaguesNotified = 0;
-      for (const { leagueId } of activeLeagues) {
-        const leagueGames = await getGamesForLeagueWeek(leagueId, year, weekNumber);
-        if (isWeekComplete(leagueGames)) {
-          leaguesNotified++;
-          waitUntil(c,
-            dispatchGameComplete(leagueId, year, weekNumber)
-              .catch(err => logger.error({ err, leagueId }, 'rankings_updated dispatch failed after sync'))
-          );
-        }
-      }
+      const notifyResults = await Promise.all(
+        activeLeagues.map(async ({ leagueId }) => {
+          const leagueGames = await getGamesForLeagueWeek(leagueId, year, weekNumber);
+          if (isWeekComplete(leagueGames)) {
+            waitUntil(c,
+              dispatchGameComplete(leagueId, year, weekNumber)
+                .catch(err => logger.error({ err, leagueId }, 'rankings_updated dispatch failed after sync'))
+            );
+            return true;
+          }
+          return false;
+        })
+      );
+      const leaguesNotified = notifyResults.filter(Boolean).length;
 
       return c.json({ gamesChecked: gameData.length, gamesCompleted, gamesSkipped, leaguesNotified });
     }
@@ -241,15 +244,17 @@ const admin = new Hono<{ Variables: Variables }>()
       if (!updated) throw new HTTPException(404, { message: 'Game not found' });
 
       const affectedLeagues = await getLeaguesForGame(gameId);
-      for (const { leagueId } of affectedLeagues) {
-        const leagueGames = await getGamesForLeagueWeek(leagueId, updated.year, updated.weekNumber);
-        if (isWeekComplete(leagueGames)) {
-          waitUntil(c, 
-            dispatchGameComplete(leagueId, updated.year, updated.weekNumber)
-              .catch(err => logger.error({ err, leagueId }, 'rankings_updated dispatch failed after score correction'))
-          );
-        }
-      }
+      await Promise.all(
+        affectedLeagues.map(async ({ leagueId }) => {
+          const leagueGames = await getGamesForLeagueWeek(leagueId, updated.year, updated.weekNumber);
+          if (isWeekComplete(leagueGames)) {
+            waitUntil(c,
+              dispatchGameComplete(leagueId, updated.year, updated.weekNumber)
+                .catch(err => logger.error({ err, leagueId }, 'rankings_updated dispatch failed after score correction'))
+            );
+          }
+        })
+      );
 
       return c.json({ game: updated });
     }
