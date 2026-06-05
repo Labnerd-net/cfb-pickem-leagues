@@ -50,7 +50,7 @@ _None identified._
 _None identified._
 
 ### Medium
-- **#42 [packages/frontend/src/components/LeagueSettingsSection.tsx]**: This component handles member list display, role mutations, invite code management, league rename, notification channel config (6 fields), and broadcast sending — 5+ distinct responsibilities with 13+ state variables. Fix: extract `LeagueChannelsForm.tsx`, `LeagueBroadcastForm.tsx`, and `LeagueMembersTable.tsx` as focused components.
+_None identified._
 
 ### Low
 - **#43 [packages/backend/src/db/dbUserFunctions.ts]**: `addPickedGame` (single-pick variant) appears unused — all pick submission goes through `addPickedGamesBatch`. Verify and remove if confirmed dead code.
@@ -79,6 +79,6 @@ _None identified._
 | Security | 0 | 0 | 0 | 0 |
 | Bugs | 0 | 0 | 0 | 0 |
 | Performance | 0 | 0 | 0 | 0 |
-| Improvements & Refactors | 0 | 1 | 2 | 3 |
+| Improvements & Refactors | 0 | 0 | 2 | 2 |
 | Feature Ideas | 0 | 2 | 1 | 3 |
-| **Total** | **0** | **1** | **3** | **6** |
+| **Total** | **0** | **2** | **3** | **5** |

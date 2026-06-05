@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router';
 import { useForm, type SubmitHandler } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -8,6 +9,11 @@ import {
   Checkbox,
   Chip,
   CircularProgress,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogContentText,
+  DialogTitle,
   FormControlLabel,
   Link,
   Stack,
@@ -22,7 +28,7 @@ import {
   updateNotificationPreference,
   updateUserProfile,
 } from '../apis/userRequests';
-import { resendVerificationEmail } from '../apis/authRequests';
+import { resendVerificationEmail, deleteUser } from '../apis/authRequests';
 import { useAuth } from '../contexts/auth/AuthContext';
 import { useLeague } from '../contexts/LeagueContext';
 import JoinLeagueDialog from '../components/JoinLeagueDialog';
@@ -59,7 +65,8 @@ const changePasswordSchema = z.object({
 type ChangePasswordForm = z.infer<typeof changePasswordSchema>;
 
 export default function Settings() {
-  const { user, login } = useAuth();
+  const { user, login, logout } = useAuth();
+  const navigate = useNavigate();
   const { leagues, activeLeague, setActiveLeague, refetchLeagues } = useLeague();
   const [joinDialogOpen, setJoinDialogOpen] = useState(false);
   const [createLeagueOpen, setCreateLeagueOpen] = useState(false);
@@ -70,6 +77,9 @@ export default function Settings() {
   const [resendStatus, setResendStatus] = useState<'idle' | 'sent' | 'error'>('idle');
   const [displayNameSuccess, setDisplayNameSuccess] = useState(false);
   const [passwordSuccess, setPasswordSuccess] = useState(false);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
+  const [deleting, setDeleting] = useState(false);
 
   const displayNameForm = useForm<DisplayNameForm>({
     resolver: zodResolver(displayNameSchema),
@@ -150,6 +160,19 @@ export default function Settings() {
       passwordForm.reset();
     } else {
       passwordForm.setError('root', { message: res.error ?? 'Update failed' });
+    }
+  };
+
+  const handleDeleteAccount = async () => {
+    setDeleting(true);
+    setDeleteError(null);
+    const res = await deleteUser();
+    if (res.success) {
+      await logout();
+      navigate('/');
+    } else {
+      setDeleteError(res.error ?? 'Failed to delete account');
+      setDeleting(false);
     }
   };
 
@@ -339,6 +362,41 @@ export default function Settings() {
           </>
         )}
       </Stack>
+
+      <Box mt={2}>
+        <Button
+          variant="outlined"
+          color="error"
+          size="small"
+          onClick={() => setDeleteDialogOpen(true)}
+        >
+          Delete Account
+        </Button>
+        {deleteError && (
+          <Typography color="error" variant="caption" mt={0.5} display="block">
+            {deleteError}
+          </Typography>
+        )}
+      </Box>
+
+      <Dialog open={deleteDialogOpen} onClose={() => !deleting && setDeleteDialogOpen(false)}>
+        <DialogTitle>Delete Account?</DialogTitle>
+        <DialogContent>
+          <DialogContentText>
+            This will permanently delete your account and all your picks. This action cannot be undone.
+            If you are the sole admin of any league, you must promote another member or delete the league first.
+          </DialogContentText>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setDeleteDialogOpen(false)} disabled={deleting}>
+            Cancel
+          </Button>
+          <Button color="error" variant="contained" onClick={handleDeleteAccount} disabled={deleting}
+            startIcon={deleting ? <CircularProgress size={16} /> : undefined}>
+            {deleting ? 'Deleting...' : 'Delete Account'}
+          </Button>
+        </DialogActions>
+      </Dialog>
 
       {/* Email notification preferences */}
       <Typography variant="h6" mt={4} mb={1}>
