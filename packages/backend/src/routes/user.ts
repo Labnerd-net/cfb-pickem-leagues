@@ -222,12 +222,15 @@ const user = new Hono<{ Variables: Variables }>()
     await upsertNotificationPreference(payload.sub, notificationType, channel, enabled);
     return c.json({ status: 'updated' });
   })
-  // Return broadcast channels for a league (public join info only — no tokens/webhooks)
+  // Return broadcast channels for a league (members only — no tokens/webhooks)
   .get('/notifications/channels', apiRateLimit, authMiddleware, optionalLeagueIdQueryValidator, async c => {
     const { leagueId } = c.req.valid('query');
     if (!leagueId) {
       return c.json({ ntfy: null, telegram: null, discord: null });
     }
+    const payload = c.get('jwtPayload');
+    const membership = await getLeagueMembership(leagueId, payload.sub);
+    if (!membership) throw new HTTPException(403, { message: 'Forbidden' });
     const config = await getLeagueChannels(leagueId);
     return c.json({
       ntfy: config?.ntfyTopicUrl ? { topicUrl: config.ntfyTopicUrl } : null,

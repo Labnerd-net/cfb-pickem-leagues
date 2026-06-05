@@ -49,7 +49,7 @@ const allUserPickedRequestSchema: z.ZodType<AllUserGamePicksRequest> = z.object(
   year: yearSchema,
   week: weekSchema,
   leagueId: z.number().int().positive(),
-  games: userPickedGameSchema.array(),
+  games: userPickedGameSchema.array().max(50),
 });
 
 const registerRequestSchema = z.object({
@@ -158,12 +158,12 @@ const optionalLeagueIdQuerySchema = z.object({ leagueId: z.coerce.number().int()
 export const optionalLeagueIdQueryValidator = zValidator('query', optionalLeagueIdQuerySchema);
 
 const leagueChannelBodySchema = z.object({
-  ntfyTopicUrl: z.string().max(500).nullable().optional(),
+  ntfyTopicUrl: z.url().max(500).nullable().optional(),
   telegramBotToken: z.string().max(200).nullable().optional(),
   telegramChatId: z.string().max(100).nullable().optional(),
-  telegramInviteUrl: z.string().max(500).nullable().optional(),
-  discordWebhookUrl: z.string().max(500).nullable().optional(),
-  discordInviteUrl: z.string().max(500).nullable().optional(),
+  telegramInviteUrl: z.url().max(500).nullable().optional(),
+  discordWebhookUrl: z.url().max(500).nullable().optional(),
+  discordInviteUrl: z.url().max(500).nullable().optional(),
 });
 export const leagueChannelBodyValidator = zValidator('json', leagueChannelBodySchema);
 

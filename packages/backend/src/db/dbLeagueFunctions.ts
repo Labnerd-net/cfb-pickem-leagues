@@ -7,7 +7,7 @@ import logger from '../utils/logger.js';
 import type { LeagueRole, LeagueChannelConfig } from '@shared/types/cfb-pickem-api.js';
 
 function generateInviteCode(): string {
-  return randomBytes(4).toString('hex');
+  return randomBytes(8).toString('hex');
 }
 
 export async function createLeague(name: string, createdBy: number) {
