@@ -1,4 +1,4 @@
-import { and, desc, eq, isNotNull, isNull, or, sql } from 'drizzle-orm';
+import { and, desc, eq, gte, isNotNull, isNull, or, sql } from 'drizzle-orm';
 import { users, notificationPreferences, notificationLog } from './schema/users.js';
 import { leagueMembers, leagues, leagueGames } from './schema/leagues.js';
 import { adminGames } from './schema/admin.js';
@@ -358,7 +358,11 @@ export async function markEmailVerified(token: string): Promise<{ userId: number
     const rows = await db
       .update(users)
       .set({ emailVerified: true, emailVerificationToken: null, emailVerificationSentAt: null })
-      .where(and(eq(users.emailVerificationToken, token), isNotNull(users.emailVerificationToken)))
+      .where(and(
+        eq(users.emailVerificationToken, token),
+        isNotNull(users.emailVerificationToken),
+        gte(users.emailVerificationSentAt, new Date(Date.now() - 24 * 60 * 60 * 1000))
+      ))
       .returning({ userId: users.userId });
     return rows.length > 0 ? rows[0] : null;
   } catch (e) {

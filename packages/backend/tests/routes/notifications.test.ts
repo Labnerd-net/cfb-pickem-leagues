@@ -145,6 +145,14 @@ describe('Notification routes', () => {
 			const res = await app.request('/api/auth/verify-email');
 			expect(res.status).toBe(400);
 		});
+
+		it('returns 400 for an expired token (sent > 24h ago)', async () => {
+			const token = 'expired-token-route-test';
+			const expiredAt = new Date(Date.now() - 25 * 60 * 60 * 1000);
+			await setEmailVerificationToken(1, token, expiredAt);
+			const res = await app.request(`/api/auth/verify-email?token=${token}`);
+			expect(res.status).toBe(400);
+		});
 	});
 
 	describe('POST /api/auth/resend-verification', () => {

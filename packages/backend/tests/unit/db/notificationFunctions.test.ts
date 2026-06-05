@@ -210,6 +210,14 @@ describe('Notification Database Functions', () => {
 			const rows = await db.execute(sql`SELECT email_verification_token FROM "user".users WHERE user_id = 1`);
 			expect(rows.rows[0]?.email_verification_token).toBeNull();
 		});
+
+		it('should return null for an expired token (sent > 24h ago)', async () => {
+			const token = 'test-token-expired';
+			const expiredAt = new Date(Date.now() - 25 * 60 * 60 * 1000);
+			await setEmailVerificationToken(1, token, expiredAt);
+			const result = await markEmailVerified(token);
+			expect(result).toBeNull();
+		});
 	});
 
 	describe('returnNotificationLogs', () => {

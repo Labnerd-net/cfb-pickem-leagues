@@ -5,7 +5,7 @@ import { setCookie, deleteCookie } from 'hono/cookie';
 import { hashPassword, verifyPassword } from '../utils/password.js';
 import { randomBytes } from 'crypto';
 import * as dbUserFunctions from '../db/dbUserFunctions.js';
-import { createLeague } from '../db/dbLeagueFunctions.js';
+import { createLeague, getLeaguesForUser, getLeagueAdminCount } from '../db/dbLeagueFunctions.js';
 import {
   setEmailVerificationToken,
   markEmailVerified,
@@ -139,6 +139,17 @@ const auth = new Hono<{ Variables: Variables }>()
     const payload = c.get('jwtPayload');
     const user = await dbUserFunctions.returnUserById(payload.sub);
     if (!user || user.length === 0) throw new HTTPException(404, { message: 'User not found' });
+    const userLeagues = await getLeaguesForUser(payload.sub);
+    const adminLeagues = userLeagues.filter(l => l.role === 'admin');
+    if (adminLeagues.length > 0) {
+      const adminCounts = await Promise.all(adminLeagues.map(l => getLeagueAdminCount(l.leagueId)));
+      const soleAdminLeague = adminLeagues.find((_, i) => adminCounts[i] === 1);
+      if (soleAdminLeague) {
+        throw new HTTPException(409, {
+          message: `You are the sole admin of "${soleAdminLeague.name}". Promote another member or delete the league before deleting your account.`,
+        });
+      }
+    }
     await dbUserFunctions.deleteUserWithAudit(user[0]);
     return c.json({ status: 'deleted' });
   })

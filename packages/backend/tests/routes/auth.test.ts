@@ -229,3 +229,40 @@ describe('POST /api/auth/register — admin bootstrap', () => {
 		expect(roles).not.toContain('admin');
 	});
 });
+
+describe('DELETE /api/auth/deleteUser', () => {
+	beforeAll(async () => {
+		await seedTestData();
+	});
+
+	afterEach(async () => {
+		clearRateLimitStore();
+	});
+
+	it('returns 401 when unauthenticated', async () => {
+		const res = await app.request('/api/auth/deleteUser', { method: 'DELETE' });
+		expect(res.status).toBe(401);
+	});
+
+	it('returns 409 when user is the sole admin of a league', async () => {
+		// User 1 is the sole admin of league 1 in seed data
+		const token = await makeToken();
+		const res = await app.request('/api/auth/deleteUser', {
+			method: 'DELETE',
+			headers: { Cookie: `auth_token=${token}` },
+		});
+		expect(res.status).toBe(409);
+	});
+
+	it('returns 200 when user is not an admin of any league', async () => {
+		// User 2 is a member (not admin) of league 1
+		const token = await makeToken({ sub: 2, email: 'user@test.com', roles: ['user'] });
+		const res = await app.request('/api/auth/deleteUser', {
+			method: 'DELETE',
+			headers: { Cookie: `auth_token=${token}` },
+		});
+		expect(res.status).toBe(200);
+		const body = await res.json() as { status: string };
+		expect(body.status).toBe('deleted');
+	});
+});
