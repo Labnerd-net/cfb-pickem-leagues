@@ -67,7 +67,7 @@ _None identified._
 - **#24 [packages/backend/src/cron/cronTick.ts, packages/backend/src/notifications/]**: No admin-configurable "picks open" reminder exists. The end-of-week standings digest fires automatically via `rankings_updated`. The missing piece is a weekly reminder at a configurable day/time: (1) if games are curated, send the picks-open reminder to all users; (2) if no games exist yet, send an admin-only notification to prompt curation — `games_ready` only fires after curation, so a forgetful admin gets no nudge. Would require a `scheduled_notifications` DB table or stored cron schedule; reuses existing `dispatcher.ts` and `templates.ts`.
 
 ### Low
-_None identified._
+- **#25 [packages/frontend/src/components/navbar/Navbar.tsx]** — DONE: Logged-in users had no visible way back to `/dashboard` besides clicking the logo. Added an explicit "Dashboard" nav button; logo click behavior unchanged (still routes to `/dashboard` when logged in, `/` otherwise).
 
 ---
 
@@ -79,5 +79,5 @@ _None identified._
 | Bugs | 0 | 0 | 0 | 0 |
 | Performance | 0 | 0 | 0 | 0 |
 | Improvements & Refactors | 0 | 0 | 0 | 0 |
-| Feature Ideas | 0 | 2 | 0 | 2 |
-| **Total** | **0** | **2** | **0** | **2** |
+| Feature Ideas | 0 | 2 | 1 | 3 |
+| **Total** | **0** | **2** | **1** | **3** |
