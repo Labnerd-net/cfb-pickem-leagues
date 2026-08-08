@@ -18,7 +18,7 @@ export default function Navbar() {
   };
 
   const handleHomeClick = () => {
-    navigate(user ? '/dashboard' : '/');
+    navigate('/');
   };
 
   return (
@@ -83,6 +83,26 @@ export default function Navbar() {
 
         {/* Spacer */}
         <Box sx={{ flexGrow: 1 }} />
+
+        {/* Dashboard Link */}
+        {user && (
+          <Button
+            onClick={() => navigate('/dashboard')}
+            sx={{
+              mr: 2,
+              fontFamily: '"Work Sans", sans-serif',
+              fontWeight: 700,
+              textTransform: 'uppercase',
+              letterSpacing: '0.05em',
+              color: 'text.secondary',
+              '&:hover': {
+                color: 'text.primary',
+              },
+            }}
+          >
+            Dashboard
+          </Button>
+        )}
 
         {/* League Switcher */}
         {user && (
