@@ -18,7 +18,7 @@ export default function Navbar() {
   };
 
   const handleHomeClick = () => {
-    navigate('/');
+    navigate(user ? '/dashboard' : '/');
   };
 
   return (
