@@ -33,7 +33,11 @@ export async function returnWeek(week: number): Promise<AdminWeekData[]> {
 export async function returnWeeksByYear(year: number): Promise<AdminWeekData[]> {
   logger.debug({ year }, 'returnWeeksByYear');
   try {
-    return await db.select().from(adminWeeks).where(eq(adminWeeks.year, year));
+    return await db
+      .select()
+      .from(adminWeeks)
+      .where(eq(adminWeeks.year, year))
+      .orderBy(asc(adminWeeks.weekNumber));
   } catch (e) {
     logger.error({ err: e }, 'returnWeeksByYear failed');
     throw e;

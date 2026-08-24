@@ -241,11 +241,13 @@ export default function LeaderboardSection() {
                 onChange={e => setWeekNumber(Number(e.target.value))}
                 disabled={weekLoading || weeks.length === 0}
               >
-                {weeks.map(w => (
-                  <MenuItem key={w.weekNumber} value={w.weekNumber}>
-                    Week {w.weekNumber}
-                  </MenuItem>
-                ))}
+                {[...weeks]
+                  .sort((a, b) => a.weekNumber - b.weekNumber)
+                  .map(w => (
+                    <MenuItem key={w.weekNumber} value={w.weekNumber}>
+                      Week {w.weekNumber}
+                    </MenuItem>
+                  ))}
               </Select>
             </FormControl>
           </Box>
