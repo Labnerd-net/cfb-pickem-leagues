@@ -142,7 +142,7 @@ const admin = new Hono<{ Variables: Variables }>()
           message: 'No games returned from external API for this week',
         });
       }
-      await Promise.all(gameData.map(game => dbAdminFunctions.upsertGameForWeek(game)));
+      await dbAdminFunctions.upsertGamesForWeek(gameData);
       return c.json({ status: `imported ${gameData.length} games` });
     }
   )
@@ -185,18 +185,12 @@ const admin = new Hono<{ Variables: Variables }>()
 
       const correctedIds = await dbAdminFunctions.getCorrectedCfbdGameIds(year, weekNumber);
 
-      let gamesCompleted = 0;
-      let gamesSkipped = 0;
-      await Promise.all(
-        gameData.map(async game => {
-          if (game.cfbdGameId !== null && correctedIds.has(game.cfbdGameId)) {
-            gamesSkipped++;
-            return;
-          }
-          await dbAdminFunctions.upsertGameForWeek(game);
-          if (game.completed) gamesCompleted++;
-        })
+      const gamesToUpsert = gameData.filter(
+        game => game.cfbdGameId === null || !correctedIds.has(game.cfbdGameId)
       );
+      const gamesSkipped = gameData.length - gamesToUpsert.length;
+      await dbAdminFunctions.upsertGamesForWeek(gamesToUpsert);
+      const gamesCompleted = gamesToUpsert.filter(game => game.completed).length;
 
       const activeLeagues = await getActiveLeaguesForWeek(year, weekNumber);
       const notifyResults = await Promise.all(
