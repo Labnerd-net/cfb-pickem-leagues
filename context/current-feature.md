@@ -8,24 +8,6 @@ None
 
 None
 
-## In Progress
-
-**Fix: game import intermittent "An unexpected error occurred"**
-
-Bug: `POST /api/admin/week` (packages/backend/src/routes/admin.ts) imports a full FBS
-week (~60-70 games) by firing `Promise.all(gameData.map(game => upsertGameForWeek(game)))`
-— one independent HTTP request per game against Neon's HTTP driver (no pooling). Under
-that much fan-out, one request intermittently fails with a plain `Error` (not
-`HTTPException`), which the global `onError` handler in `src/index.ts` turns into a
-generic 500 "An unexpected error occurred". `Promise.all` doesn't cancel the other
-in-flight upserts, so they finish anyway — which is why refreshing/switching tabs shows
-the games imported despite the error.
-
-Fix: replace the per-game `upsertGameForWeek` fan-out with a single bulk
-`INSERT ... VALUES (...) ON CONFLICT DO UPDATE` statement in
-`dbAdminFunctions.ts` (one HTTP round trip instead of ~70), called once from
-the `/week` route.
-
 ## History
 
 <!-- Keep this updated. Earliest to latest -->
@@ -74,3 +56,4 @@ the `/week` route.
 - **Workstream E Performance** (backlog #8, #38, #39, #40, #41): Hoisted `new Resend()` to module scope in `emailSender.ts` — one instance per isolate instead of one per call. Converted all three email `for` loops in `dispatcher.ts` (`dispatchNotification`, `dispatchAdminBroadcast`, `dispatchLeagueBroadcast`) to `Promise.allSettled` — sends now run in parallel per notification event. Replaced sequential `for...of` league loops in `sync-results` and `correct-score` route handlers with `Promise.all` for parallel per-league DB fetches. Parallelized `getGamesForLeagueWeek` calls in `cronTick.ts` using `Promise.allSettled` + index-based result pairing. Stored the league row fetched by `requireLeagueMembership` in Hono context (`c.set('league', league)`) so the `GET /:leagueId` and `POST /:leagueId/broadcast` handlers no longer call `getLeagueById` again.
 - **Workstream F Frontend** (backlog #25, #42): Added "Delete Account" button to Settings page Account section — opens a confirmation dialog, calls `DELETE /api/auth/deleteUser`, then logs out and navigates to `/`. Error surfaced inline if backend returns 409 (sole admin guard). Extracted `LeagueMembersTable.tsx`, `LeagueChannelsForm.tsx`, and `LeagueBroadcastForm.tsx` from `LeagueSettingsSection.tsx` — each owns its own state and data fetching; the parent now only handles name editing, invite code management, and the regen dialog.
 - **Workstream G Code Quality** (backlog #43, #44): Removed dead `addPickedGame` single-pick function (all production pick submission goes through `addPickedGamesBatch`). Changed `userId` parameter type from `string` to `number` in `addPickedGamesBatch`, `returnUserGames`, and `returnUserPickHistory` — removed the internal `Number(userId)` conversions and the `String(payload.sub)` conversions at the route call sites in `user.ts`. Added `addPickedGame` test helper to `db-utils.ts` wrapping `addPickedGamesBatch`; updated all test files to use numeric userId and the new helper.
+- **Fix Game Import Intermittent 500 Error**: `POST /api/admin/week` imported a full FBS week (~60-70 games) via `Promise.all(gameData.map(game => upsertGameForWeek(game)))` — one independent HTTPS request per game against Neon's serverless HTTP driver (no pooling). Under that fan-out one request would intermittently fail with a plain `Error`, hitting the generic 500 "An unexpected error occurred" handler; `Promise.all` didn't cancel the other in-flight upserts, so the games ended up imported anyway despite the error shown. Replaced `upsertGameForWeek` with `upsertGamesForWeek`, a single multi-row `INSERT ... ON CONFLICT DO UPDATE` (one HTTP round trip instead of ~70). Applied the same fix to the score-refresh route and the score-refresh cron tick, which had the identical fan-out pattern. Also corrected `CLAUDE.md`'s Environment Variables section — it documented `DB_USER`/`DB_PASSWORD`/etc as the app's DB config, but the app runtime (`db/index.ts`) only reads `DEV_DB`/`PROD_DB` Neon connection strings; those `DB_*` vars are only used by `drizzle-kit`'s local-postgres fallback. Removed unused `DB_SSL` var from the docs.
