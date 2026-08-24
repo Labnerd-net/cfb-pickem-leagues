@@ -90,7 +90,7 @@ NODE_ENV=test pnpm migrate
 
 ### Backend Layers
 1. **Routes** (`src/routes/`) — Hono route handlers. `auth.ts` is public; `user.ts` and `leaderboard.ts` require auth; `admin.ts` requires admin role.
-2. **DB Functions** (`src/db/dbAdminFunctions.ts`, `dbUserFunctions.ts`, `dbNotificationFunctions.ts`) — Drizzle queries. Two PostgreSQL schemas: `admin` (reference data: weeks/games) and `user` (accounts and picks).
+2. **DB Functions** (`src/db/dbAdminFunctions.ts`, `dbUserFunctions.ts`, `dbNotificationFunctions.ts`) — Drizzle queries. Two PostgreSQL schemas: `admin` (reference data: weeks/games) and `user` (accounts and picks). `src/db/index.ts` connects via Neon's serverless **HTTP** driver (`@neondatabase/serverless` + `drizzle-orm/neon-http`), not a pooled connection — each query is an independent HTTPS request with no built-in concurrency limit. Avoid `Promise.all` fan-out over many rows (e.g. per-game upserts); prefer a single multi-row statement instead.
 3. **API Adapters** (`src/api/`) — External data source (CFBD). `cfbd.ts` fetches games and lines; `index.ts` normalizes data into shared types.
 4. **Middleware** (`src/utils/middleware.ts`) — JWT auth middleware and `requireRole()` guard.
 5. **Notifications** (`src/notifications/`) — `dispatcher.ts` routes events to `emailSender.ts` (Resend API) and/or `ntfySender.ts` (NTFY push). `templates.ts` holds message content.
@@ -129,11 +129,18 @@ All frontend API functions in `src/apis/` (`authRequests.ts`, `userRequests.ts`,
 
 ## Environment Variables
 
-Backend expects these (defaults work for local dev with Docker):
+Backend expects these:
 ```
-# Database
+# Database — app runtime (packages/backend/src/db/index.ts) uses Neon's serverless
+# HTTP driver (@neondatabase/serverless + drizzle-orm/neon-http) and reads ONLY these:
+DEV_DB=                       # Neon connection string, used when NODE_ENV != production
+PROD_DB=                      # Neon connection string, used when NODE_ENV = production
+
+# drizzle-kit CLI only (generate/migrate/studio — packages/backend/drizzle.config.ts):
+# falls back to these DB_* vars to build a local postgres:// URL when DEV_DB/PROD_DB
+# are unset, e.g. against `docker compose -f docker/docker-compose-pg.yml up -d`.
+# The app runtime does NOT read these — only drizzle-kit does.
 DB_USER=postgres  DB_PASSWORD=postgres  DB_HOST=localhost  DB_PORT=5432  DB_NAME=cfb-pickem
-DB_SSL=true                   # set in production for SSL connections
 
 # Server
 SERVER_PORT=3000
