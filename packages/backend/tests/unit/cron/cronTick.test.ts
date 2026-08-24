@@ -5,7 +5,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 const mockReturnCurrentWeek = vi.hoisted(() => vi.fn());
 const mockReturnGamesForWeek = vi.hoisted(() => vi.fn());
 const mockGetGamesForLeagueWeek = vi.hoisted(() => vi.fn());
-const mockUpsertGameForWeek = vi.hoisted(() => vi.fn().mockResolvedValue(undefined));
+const mockUpsertGamesForWeek = vi.hoisted(() => vi.fn().mockResolvedValue(undefined));
 const mockDispatchNotification = vi.hoisted(() => vi.fn().mockResolvedValue(undefined));
 const mockGetGameData = vi.hoisted(() => vi.fn().mockResolvedValue([]));
 const mockGetNow = vi.hoisted(() => vi.fn());
@@ -21,7 +21,7 @@ vi.mock('../../../src/db/dbAdminFunctions.js', () => ({
 	returnCurrentWeek: mockReturnCurrentWeek,
 	returnGamesForWeek: mockReturnGamesForWeek,
 	getGamesForLeagueWeek: mockGetGamesForLeagueWeek,
-	upsertGameForWeek: mockUpsertGameForWeek,
+	upsertGamesForWeek: mockUpsertGamesForWeek,
 }));
 
 vi.mock('../../../src/db/dbNotificationFunctions.js', () => ({

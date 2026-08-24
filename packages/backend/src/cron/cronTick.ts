@@ -1,4 +1,4 @@
-import { returnCurrentWeek, returnGamesForWeek, upsertGameForWeek } from '../db/dbAdminFunctions.js';
+import { returnCurrentWeek, returnGamesForWeek, upsertGamesForWeek } from '../db/dbAdminFunctions.js';
 import { getActiveLeaguesForWeek } from '../db/dbNotificationFunctions.js';
 import { getGamesForLeagueWeek } from '../db/dbAdminFunctions.js';
 import { dispatchNotification } from '../notifications/dispatcher.js';
@@ -77,7 +77,7 @@ export async function runCronTick(): Promise<void> {
     try {
       const gameData = await getGameData({ year: week.year, week: week.weekNumber, seasonType: week.seasonType });
       if (gameData?.length) {
-        await Promise.all(gameData.map(g => upsertGameForWeek(g)));
+        await upsertGamesForWeek(gameData);
       }
       lastRefreshAt = getNow();
       didRefresh = true;

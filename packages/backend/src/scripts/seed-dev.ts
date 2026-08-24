@@ -1,5 +1,5 @@
 import 'dotenv/config';
-import { upsertGameForWeek, returnGamesForWeek, addGameToLeague } from '../db/dbAdminFunctions.js';
+import { upsertGamesForWeek, returnGamesForWeek, addGameToLeague } from '../db/dbAdminFunctions.js';
 import { leagues } from '../db/schema/leagues.js';
 import { eq } from 'drizzle-orm';
 import { db } from '../db/index.js';
@@ -92,9 +92,7 @@ async function main() {
   }
 
   console.log('seed-dev: upserting games…');
-  for (const g of GAMES) {
-    await upsertGameForWeek(g);
-  }
+  await upsertGamesForWeek(GAMES);
   console.log(`  ${GAMES.length} games upserted`);
 
   console.log('seed-dev: adding all games to Default League pool…');

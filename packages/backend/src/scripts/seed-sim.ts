@@ -1,5 +1,5 @@
 import 'dotenv/config';
-import { upsertGameForWeek, returnGamesForWeek, addGameToLeague } from '../db/dbAdminFunctions.js';
+import { upsertGamesForWeek, returnGamesForWeek, addGameToLeague } from '../db/dbAdminFunctions.js';
 import { db } from '../db/index.js';
 import { adminWeeks } from '../db/schema/admin.js';
 import { leagues } from '../db/schema/leagues.js';
@@ -142,9 +142,7 @@ async function main() {
   }
 
   console.log('seed-sim: upserting games…');
-  for (const g of GAMES) {
-    await upsertGameForWeek(g);
-  }
+  await upsertGamesForWeek(GAMES);
   console.log(`  ${GAMES.length} games upserted`);
 
   console.log('seed-sim: adding all games to Default League pool…');

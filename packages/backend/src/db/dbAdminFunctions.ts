@@ -1,4 +1,4 @@
-import { eq, and, inArray, lte, gte, gt, max, asc, sql } from 'drizzle-orm';
+import { eq, and, inArray, lte, gte, gt, max, asc, sql, getTableColumns } from 'drizzle-orm';
 import { adminWeeks, adminGames, scoreCorrections } from './schema/admin.js';
 import { games as userGames } from './schema/users.js';
 import { leagueGames } from './schema/leagues.js';
@@ -97,22 +97,22 @@ export async function addWeek(week: AdminWeekData): Promise<void> {
 }
 
 // ------------------------------------------------------------------
-// Upsert single game for a week (safe to re-import; preserves gameId on conflict)
+// Upsert games for a week in a single statement (safe to re-import; preserves gameId on conflict)
 // ------------------------------------------------------------------
-export async function upsertGameForWeek(game: AdminGameData): Promise<void> {
-  logger.debug({ year: game.year, week: game.weekNumber }, 'upsertGameForWeek');
+export async function upsertGamesForWeek(games: AdminGameData[]): Promise<void> {
+  if (!games.length) return;
+  logger.debug({ year: games[0].year, week: games[0].weekNumber, count: games.length }, 'upsertGamesForWeek');
   try {
-    let winningTeam: Team = 'pending';
-    if (game.completed && game.homePoints !== null && game.awayPoints !== null) {
-      if (game.homePoints > game.awayPoints) {
-        winningTeam = 'home_team';
-      } else if (game.awayPoints > game.homePoints) {
-        winningTeam = 'away_team';
+    const values = games.map(game => {
+      let winningTeam: Team = 'pending';
+      if (game.completed && game.homePoints !== null && game.awayPoints !== null) {
+        if (game.homePoints > game.awayPoints) {
+          winningTeam = 'home_team';
+        } else if (game.awayPoints > game.homePoints) {
+          winningTeam = 'away_team';
+        }
       }
-    }
-    await db
-      .insert(adminGames)
-      .values({
+      return {
         cfbdGameId: game.cfbdGameId,
         weekNumber: game.weekNumber,
         year: game.year,
@@ -125,21 +125,29 @@ export async function upsertGameForWeek(game: AdminGameData): Promise<void> {
         winningTeam,
         startTime: game.startTime,
         spread: game.spread,
-      })
+      };
+    });
+
+    const cols = getTableColumns(adminGames);
+    const excluded = (column: keyof typeof cols) => sql.raw(`excluded.${cols[column].name}`);
+
+    await db
+      .insert(adminGames)
+      .values(values)
       .onConflictDoUpdate({
         target: [adminGames.year, adminGames.weekNumber, adminGames.homeTeam, adminGames.awayTeam],
         set: {
-          seasonType: game.seasonType,
-          completed: game.completed,
-          homePoints: game.completed ? game.homePoints : null,
-          awayPoints: game.completed ? game.awayPoints : null,
-          winningTeam,
-          startTime: game.startTime,
-          spread: game.spread,
+          seasonType: excluded('seasonType'),
+          completed: excluded('completed'),
+          homePoints: excluded('homePoints'),
+          awayPoints: excluded('awayPoints'),
+          winningTeam: excluded('winningTeam'),
+          startTime: excluded('startTime'),
+          spread: excluded('spread'),
         },
       });
   } catch (e) {
-    logger.error({ err: e }, 'upsertGameForWeek failed');
+    logger.error({ err: e }, 'upsertGamesForWeek failed');
     throw e;
   }
 }

@@ -8,6 +8,24 @@ None
 
 None
 
+## In Progress
+
+**Fix: game import intermittent "An unexpected error occurred"**
+
+Bug: `POST /api/admin/week` (packages/backend/src/routes/admin.ts) imports a full FBS
+week (~60-70 games) by firing `Promise.all(gameData.map(game => upsertGameForWeek(game)))`
+— one independent HTTP request per game against Neon's HTTP driver (no pooling). Under
+that much fan-out, one request intermittently fails with a plain `Error` (not
+`HTTPException`), which the global `onError` handler in `src/index.ts` turns into a
+generic 500 "An unexpected error occurred". `Promise.all` doesn't cancel the other
+in-flight upserts, so they finish anyway — which is why refreshing/switching tabs shows
+the games imported despite the error.
+
+Fix: replace the per-game `upsertGameForWeek` fan-out with a single bulk
+`INSERT ... VALUES (...) ON CONFLICT DO UPDATE` statement in
+`dbAdminFunctions.ts` (one HTTP round trip instead of ~70), called once from
+the `/week` route.
+
 ## History
 
 <!-- Keep this updated. Earliest to latest -->
