@@ -29,6 +29,9 @@ Thumbs.db
 # TypeScript incremental build
 *.tsbuildinfo
 
+# Wrangler local cache
+.wrangler/
+
 # Vite / Rollup cache
 .vite/
 

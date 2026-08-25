@@ -10,6 +10,7 @@
     "start:prod": "pnpm migrate:prod && node dist/backend/src/server.js",
     "dev:worker": "wrangler dev --config ../../wrangler.jsonc",
     "deploy:worker": "wrangler deploy --config ../../wrangler.jsonc",
+    "deploy:worker:dev": "wrangler deploy --config ../../wrangler.jsonc --env dev",
     "lint": "eslint . --ext .js,.ts",
     "lint:fix": "eslint . --ext .js,.ts --fix",
     "format": "prettier --write ./src",
