@@ -6,6 +6,20 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 College Football Pick'em game — a full-stack app where users predict college football game outcomes. Admins curate which games are available each week from external data sources, and users make picks against those games.
 
+## Feature Branch Testing
+
+The site is live in production with real users. Before merging a feature/fix branch to `main`, deploy it to the Cloudflare **dev environment** and verify it there — don't rely on local testing alone for anything touching the backend or a page real users hit.
+
+```bash
+pnpm build                                    # build first — the dev deploy serves this dist output
+pnpm --filter cfb-pickem-api deploy:worker:dev  # deploys to cfb-pickem-leagues-dev.<subdomain>.workers.dev
+```
+
+- The dev Worker runs with `NODE_ENV=development`, so it reads the `DEV_DB` secret (Neon `dev` branch in the `CFB-picker` project) instead of `PROD_DB` — safe to test against.
+- Only one branch can be tested at a time — deploying overwrites whatever was previously on the dev Worker.
+- Cron is disabled on the dev Worker (no scheduled game imports); trigger anything cron-driven manually if you need to test it.
+- Secrets for the dev env are set via `wrangler secret put <KEY> --env dev` (see `wrangler.jsonc` for the required list) and only need to be set once, not per-deploy.
+
 ## Commands
 
 ### Development
