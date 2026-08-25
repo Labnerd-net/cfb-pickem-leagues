@@ -8,19 +8,10 @@ None
 
 None
 
-## In Progress
-
-**Dev Cloudflare Environment**: Added a named Wrangler environment (`env.dev` in `wrangler.jsonc`) that deploys a second Worker (`cfb-pickem-leagues-dev`, auto-suffixed by Cloudflare) at its own `*.workers.dev` URL, with `NODE_ENV=development` so the backend reads `DEV_DB` instead of `PROD_DB`. Deploy via `pnpm --filter cfb-pickem-api deploy:worker:dev`. Cron is disabled for this environment (empty `crons` array) to avoid unattended game imports against the dev DB. Rate limiter bindings are intentionally omitted — falls back to in-memory limiting, fine for a single dev worker.
-
-Remaining manual setup (one-time, outside this repo — do locally):
-1. Create a Neon dev branch/database and get its connection string.
-2. `wrangler secret put DEV_DB --env dev`, `wrangler secret put JWT_SECRET --env dev` (use a different value than prod), `wrangler secret put CFBD_API_KEY --env dev` (can reuse prod key).
-3. Point `packages/backend/.env`'s `DEV_DB` at the same Neon dev database and run `NODE_ENV=development pnpm migrate` to apply schema.
-4. Deploy: `pnpm --filter cfb-pickem-api deploy:worker:dev`.
-
 ## History
 
 <!-- Keep this updated. Earliest to latest -->
+- **Dev Cloudflare Environment** (branch: `claude/feature/dev-cloudflare-environment`): Added a named Wrangler environment (`env.dev` in `wrangler.jsonc`) deploying a second Worker (`cfb-pickem-leagues-dev`) at its own `*.workers.dev` URL, `NODE_ENV=development` so it reads `DEV_DB` (reused the existing Neon `dev` branch in the `CFB-picker` project, already fully migrated). Cron disabled for this env; rate limiter bindings omitted (falls back to in-memory). Deploy via `pnpm --filter cfb-pickem-api deploy:worker:dev`. Also fixed `db/index.ts` to lazily initialize the Neon client on first use instead of at module import — eager init failed `wrangler deploy`'s startup validation (error 10021) since it read `process.env` before secrets were guaranteed populated; same latent fragility existed in prod's code path.
 - **Auth and Input Validation Security Fixes** (backlog #1, #4, #5, #6): Added `game.picked` enforcement on `POST /user/picks`; applied `zValidator` to `POST /auth/register` and `POST /auth/login`; raised password min to 8 chars and enforced max 72 (bcrypt truncation limit); fixed middleware ordering on 6 routes so `authMiddleware` runs before validators; updated frontend registration schema to match.
 - **Picks Transaction Rollback and Weeks Unique Constraint** (backlog #9, #12): Wrapped `POST /user/picks` inserts in `db.transaction()` via new `addPickedGamesBatch` — partial pick commits on mid-batch failure are no longer possible. Confirmed backlog [12] false positive: `admin.weeks(year, week_number)` primary key already enforces uniqueness.
 - **Cron Week Reset, Settings Error Handling, Email Transporter Singleton** (backlog #10, #11, #17): Added `lastWeekKey` tracking to `cronTick.ts` so `hardCapStart` and `lastRefreshAt` reset when the active week changes. Wrapped Settings `useEffect` in `try/finally` with `loadError` state to prevent infinite spinner on network failure. Moved `nodemailer.createTransport` to module scope in `emailSender.ts` as a conditional singleton.
