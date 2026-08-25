@@ -174,12 +174,24 @@ vi.mock('../src/db/index.ts', async () => {
 
 	// PGlite's drizzle driver doesn't implement `.batch()` (that's neon-http-specific,
 	// since Neon's HTTP driver has no persistent connection for interactive transactions).
-	// Polyfill it by awaiting each query sequentially — sufficient for exercising
-	// delete-cascade ordering in tests.
-	(db as unknown as { batch: (queries: unknown[]) => Promise<unknown[]> }).batch = async queries => {
-		const results = [];
-		for (const q of queries) results.push(await q);
-		return results;
+	// Polyfilled by compiling each query to raw SQL and running it directly against the
+	// PGlite client inside a manual BEGIN/COMMIT/ROLLBACK — NOT via db.transaction(), which
+	// self-deadlocks here: queries built off `db` try to reacquire the same connection lock
+	// db.transaction() already holds for the duration of its callback.
+	(db as unknown as { batch: (queries: { toSQL(): { sql: string; params: unknown[] } }[]) => Promise<unknown[]> }).batch = async queries => {
+		await client.query('BEGIN');
+		try {
+			const results = [];
+			for (const q of queries) {
+				const { sql, params } = q.toSQL();
+				results.push(await client.query(sql, params));
+			}
+			await client.query('COMMIT');
+			return results;
+		} catch (err) {
+			await client.query('ROLLBACK');
+			throw err;
+		}
 	};
 
 	return {

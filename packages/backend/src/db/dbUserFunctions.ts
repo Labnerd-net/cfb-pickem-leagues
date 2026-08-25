@@ -174,21 +174,23 @@ export async function addUser(user: UserData) {
 }
 
 // ------------------------------------------------------------------
-// Delete user and write audit record atomically
+// Delete user and write audit record atomically.
+// Uses db.batch() — the neon-http driver does not support interactive
+// db.transaction().
 // ------------------------------------------------------------------
 export async function deleteUserWithAudit(user: UserDbData): Promise<void> {
   logger.debug({ userId: user.userId }, 'deleteUserWithAudit');
   try {
-    await db.transaction(async tx => {
-      await tx.insert(deletedUsers).values({
+    await db.batch([
+      db.insert(deletedUsers).values({
         userId: user.userId,
         email: user.email,
         displayName: user.displayName,
         roles: user.roles,
         createdAt: user.createdAt,
-      });
-      await tx.delete(users).where(eq(users.userId, user.userId));
-    });
+      }),
+      db.delete(users).where(eq(users.userId, user.userId)),
+    ]);
   } catch (e) {
     logger.error({ err: e }, 'deleteUserWithAudit failed');
     throw e;
@@ -217,8 +219,9 @@ export async function updateUserProfile(
 }
 
 // ------------------------------------------------------------------
-// ------------------------------------------------------------------
-// Add Game Picks to user (batch, transactional)
+// Add Game Picks to user (batch, atomic).
+// Uses db.batch() — the neon-http driver does not support interactive
+// db.transaction().
 // ------------------------------------------------------------------
 export async function addPickedGamesBatch(
   picks: UserGamePicks[],
@@ -226,25 +229,25 @@ export async function addPickedGamesBatch(
   leagueId: number
 ): Promise<void> {
   logger.debug({ count: picks.length, userId, leagueId }, 'addPickedGamesBatch');
+  if (picks.length === 0) return;
   try {
-    await db.transaction(async tx => {
-      for (const pick of picks) {
-        await tx
-          .insert(games)
-          .values({
-            userId,
-            gameId: pick.game,
-            leagueId,
+    const queries = picks.map(pick =>
+      db
+        .insert(games)
+        .values({
+          userId,
+          gameId: pick.game,
+          leagueId,
+          teamChosen: pick.pick,
+        })
+        .onConflictDoUpdate({
+          target: [games.userId, games.gameId, games.leagueId],
+          set: {
             teamChosen: pick.pick,
-          })
-          .onConflictDoUpdate({
-            target: [games.userId, games.gameId, games.leagueId],
-            set: {
-              teamChosen: pick.pick,
-            },
-          });
-      }
-    });
+          },
+        })
+    );
+    await db.batch(queries as [typeof queries[number], ...typeof queries]);
   } catch (e) {
     logger.error({ err: e }, 'addPickedGamesBatch failed');
     throw e;
