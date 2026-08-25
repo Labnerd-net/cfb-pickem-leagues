@@ -18,7 +18,7 @@ import {
 } from '@mui/material';
 import ContentCopyIcon from '@mui/icons-material/ContentCopy';
 import EditIcon from '@mui/icons-material/Edit';
-import { regenerateInviteCode, updateLeagueName } from '../apis/leagueRequests';
+import { regenerateInviteCode, updateLeagueName, deleteLeague } from '../apis/leagueRequests';
 import { useAuth } from '../contexts/auth/AuthContext';
 import { useLeague } from '../contexts/LeagueContext';
 import LeagueMembersTable from './LeagueMembersTable';
@@ -31,6 +31,7 @@ interface LeagueSettingsSectionProps {
   inviteCode?: string;
   onInviteCodeChange: (newCode: string) => void;
   onNameChange?: (newName: string) => void;
+  onDeleted?: () => void;
 }
 
 export default function LeagueSettingsSection({
@@ -39,6 +40,7 @@ export default function LeagueSettingsSection({
   inviteCode,
   onInviteCodeChange,
   onNameChange,
+  onDeleted,
 }: LeagueSettingsSectionProps) {
   const { user } = useAuth();
   const { refetchLeagues } = useLeague();
@@ -52,6 +54,8 @@ export default function LeagueSettingsSection({
   const [editingName, setEditingName] = useState(false);
   const [nameValue, setNameValue] = useState(leagueName);
   const [savingName, setSavingName] = useState(false);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [deleting, setDeleting] = useState(false);
 
   async function handleCopyInviteCode() {
     if (!inviteCode) return;
@@ -100,6 +104,18 @@ export default function LeagueSettingsSection({
       await refetchLeagues();
     } else {
       setMutationError(result.error ?? 'Failed to regenerate invite code');
+    }
+  }
+
+  async function handleDeleteLeague() {
+    setDeleting(true);
+    const result = await deleteLeague(leagueId);
+    setDeleting(false);
+    setDeleteDialogOpen(false);
+    if (result.success) {
+      onDeleted?.();
+    } else {
+      setMutationError(result.error ?? 'Failed to delete league');
     }
   }
 
@@ -195,6 +211,20 @@ export default function LeagueSettingsSection({
 
       <LeagueBroadcastForm leagueId={leagueId} />
 
+      <Divider sx={{ my: 3 }} />
+
+      <Typography variant="subtitle2" color="error" mb={1}>
+        Danger Zone
+      </Typography>
+      <Button
+        variant="outlined"
+        color="error"
+        size="small"
+        onClick={() => setDeleteDialogOpen(true)}
+      >
+        Delete League
+      </Button>
+
       <Dialog open={regenDialogOpen} onClose={() => !regening && setRegenDialogOpen(false)}>
         <DialogTitle>Regenerate Invite Code?</DialogTitle>
         <DialogContent>
@@ -215,6 +245,30 @@ export default function LeagueSettingsSection({
             onClick={handleRegenerate}
           >
             {regening ? 'Regenerating...' : 'Regenerate'}
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      <Dialog open={deleteDialogOpen} onClose={() => !deleting && setDeleteDialogOpen(false)}>
+        <DialogTitle>Delete League?</DialogTitle>
+        <DialogContent>
+          <DialogContentText>
+            This will permanently delete "{leagueName}", including all members, games, and picks
+            in this league. This action cannot be undone.
+          </DialogContentText>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setDeleteDialogOpen(false)} disabled={deleting}>
+            Cancel
+          </Button>
+          <Button
+            color="error"
+            variant="contained"
+            disabled={deleting}
+            startIcon={deleting ? <CircularProgress size={16} /> : undefined}
+            onClick={handleDeleteLeague}
+          >
+            {deleting ? 'Deleting...' : 'Delete League'}
           </Button>
         </DialogActions>
       </Dialog>

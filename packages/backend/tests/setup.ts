@@ -172,6 +172,16 @@ vi.mock('../src/db/index.ts', async () => {
 	// Export the custom column types
 	const customType = (await import('drizzle-orm/pg-core')).customType;
 
+	// PGlite's drizzle driver doesn't implement `.batch()` (that's neon-http-specific,
+	// since Neon's HTTP driver has no persistent connection for interactive transactions).
+	// Polyfill it by awaiting each query sequentially — sufficient for exercising
+	// delete-cascade ordering in tests.
+	(db as unknown as { batch: (queries: unknown[]) => Promise<unknown[]> }).batch = async queries => {
+		const results = [];
+		for (const q of queries) results.push(await q);
+		return results;
+	};
+
 	return {
 		db,
 		columnSeason: customType({

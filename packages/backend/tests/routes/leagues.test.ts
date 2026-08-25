@@ -3,7 +3,7 @@ import { Hono } from 'hono';
 import { HTTPException } from 'hono/http-exception';
 import { sign } from 'hono/jwt';
 import { sql } from 'drizzle-orm';
-import { seedTestData, testDb } from '../db-utils.js';
+import { seedTestData, testDb, createTestGame, createLeagueGame, createTestPick } from '../db-utils.js';
 import leaguesRoute from '../../src/routes/leagues.js';
 
 const TEST_JWT_SECRET = 'test-secret-key-do-not-use-in-production';
@@ -408,6 +408,77 @@ describe('DELETE /api/leagues/:leagueId/members/:userId', () => {
 
     // User 999 is not a member of this league
     const res = await app.request(`/api/leagues/${league.leagueId}/members/999`, {
+      method: 'DELETE',
+      headers: { Cookie: `auth_token=${adminToken}` },
+    });
+    expect(res.status).toBe(404);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// DELETE /api/leagues/:leagueId — delete a league
+// ---------------------------------------------------------------------------
+describe('DELETE /api/leagues/:leagueId', () => {
+  it('deletes a league and cascades through games, picks, and members', async () => {
+    const adminToken = await makeToken(1, ['admin', 'user']);
+    const createRes = await app.request('/api/leagues', {
+      method: 'POST',
+      headers: { Cookie: `auth_token=${adminToken}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name: 'Delete Me' }),
+    });
+    const { league } = await createRes.json();
+
+    const userToken = await makeToken(2, ['user']);
+    await app.request('/api/leagues/join', {
+      method: 'POST',
+      headers: { Cookie: `auth_token=${userToken}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ inviteCode: league.inviteCode }),
+    });
+
+    const game = await createTestGame(1, 2024, 'Home', 'Away');
+    await createLeagueGame(league.leagueId, game.game_id as number);
+    await createTestPick(1, game.game_id as number, league.leagueId);
+
+    const res = await app.request(`/api/leagues/${league.leagueId}`, {
+      method: 'DELETE',
+      headers: { Cookie: `auth_token=${adminToken}` },
+    });
+    expect(res.status).toBe(200);
+    const body = await res.json();
+    expect(body.success).toBe(true);
+
+    const getRes = await app.request(`/api/leagues/${league.leagueId}`, {
+      headers: { Cookie: `auth_token=${adminToken}` },
+    });
+    expect(getRes.status).toBe(404);
+  });
+
+  it('returns 403 for non-admin members', async () => {
+    const adminToken = await makeToken(1, ['admin', 'user']);
+    const createRes = await app.request('/api/leagues', {
+      method: 'POST',
+      headers: { Cookie: `auth_token=${adminToken}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name: 'Guard Delete' }),
+    });
+    const { league } = await createRes.json();
+
+    const userToken = await makeToken(2, ['user']);
+    await app.request('/api/leagues/join', {
+      method: 'POST',
+      headers: { Cookie: `auth_token=${userToken}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ inviteCode: league.inviteCode }),
+    });
+
+    const res = await app.request(`/api/leagues/${league.leagueId}`, {
+      method: 'DELETE',
+      headers: { Cookie: `auth_token=${userToken}` },
+    });
+    expect(res.status).toBe(403);
+  });
+
+  it('returns 404 for unknown leagueId', async () => {
+    const adminToken = await makeToken(1, ['admin', 'user']);
+    const res = await app.request('/api/leagues/9999', {
       method: 'DELETE',
       headers: { Cookie: `auth_token=${adminToken}` },
     });
