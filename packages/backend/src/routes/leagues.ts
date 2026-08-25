@@ -27,6 +27,7 @@ import {
   removeMember,
   regenerateInviteCode,
   updateLeagueName,
+  deleteLeague,
   getLeagueChannels,
   upsertLeagueChannels,
 } from '../db/dbLeagueFunctions.js';
@@ -211,6 +212,20 @@ const leaguesRoute = new Hono<{ Variables: Variables }>()
       const updated = await updateLeagueName(leagueId, name);
       if (!updated) throw new HTTPException(404, { message: 'League not found' });
       return c.json({ name });
+    }
+  )
+
+  // Delete a league — cascades through picks, members, games, and channels (league admin only)
+  .delete(
+    '/:leagueId',
+    apiRateLimit,
+    authMiddleware,
+    leagueIdParamValidator,
+    requireLeagueMembership('admin'),
+    async c => {
+      const { leagueId } = c.req.valid('param');
+      await deleteLeague(leagueId);
+      return c.json({ success: true });
     }
   )
 

@@ -64,6 +64,7 @@ export default function Dashboard() {
                 leagueName={activeLeague.name}
                 inviteCode={leagueInviteCode || activeLeague.inviteCode}
                 onInviteCodeChange={setLeagueInviteCode}
+                onDeleted={() => { setCurrentTab(0); refetchLeagues(); }}
               />
             ),
           },

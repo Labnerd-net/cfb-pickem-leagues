@@ -1,7 +1,7 @@
 import { randomBytes } from 'crypto';
 import { eq, and, count } from 'drizzle-orm';
 import { leagues, leagueMembers, leagueGames, leagueChannels } from './schema/leagues.js';
-import { users } from './schema/users.js';
+import { users, games as userGames, notificationLog } from './schema/users.js';
 import { db } from './index.js';
 import logger from '../utils/logger.js';
 import type { LeagueRole, LeagueChannelConfig } from '@shared/types/cfb-pickem-api.js';
@@ -172,6 +172,29 @@ export async function updateLeagueName(leagueId: number, name: string): Promise<
     return (result.rowCount ?? 0) > 0;
   } catch (err) {
     logger.error({ err }, 'updateLeagueName failed');
+    throw err;
+  }
+}
+
+// ------------------------------------------------------------------
+// Delete a league and everything scoped to it: picks (user.games has
+// onDelete: 'restrict' on leagueId, so these must go first), league_games,
+// notification_log entries, league_channels, league_members, then the
+// league row itself. Uses db.batch() for atomicity — the neon-http driver
+// does not support interactive db.transaction().
+// ------------------------------------------------------------------
+export async function deleteLeague(leagueId: number): Promise<void> {
+  try {
+    await db.batch([
+      db.delete(userGames).where(eq(userGames.leagueId, leagueId)),
+      db.delete(leagueGames).where(eq(leagueGames.leagueId, leagueId)),
+      db.delete(notificationLog).where(eq(notificationLog.leagueId, leagueId)),
+      db.delete(leagueChannels).where(eq(leagueChannels.leagueId, leagueId)),
+      db.delete(leagueMembers).where(eq(leagueMembers.leagueId, leagueId)),
+      db.delete(leagues).where(eq(leagues.leagueId, leagueId)),
+    ]);
+  } catch (err) {
+    logger.error({ err, leagueId }, 'deleteLeague failed');
     throw err;
   }
 }
