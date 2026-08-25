@@ -11,6 +11,16 @@ interface WeekSelectorProps {
   loading?: boolean;
 }
 
+// weekStart/weekEnd are plain 'YYYY-MM-DD' dates with no time component; parse as UTC
+// so the displayed date doesn't shift a day in timezones behind UTC.
+function formatWeekDate(dateStr: string): string {
+  return new Date(`${dateStr}T00:00:00Z`).toLocaleDateString(undefined, {
+    month: 'short',
+    day: 'numeric',
+    timeZone: 'UTC',
+  });
+}
+
 export default function WeekSelector({
   selectedYear,
   onYearChange,
@@ -60,7 +70,8 @@ export default function WeekSelector({
               .sort((a, b) => a.weekNumber - b.weekNumber)
               .map(week => (
                 <MenuItem key={week.weekNumber} value={week.weekNumber}>
-                  Week {week.weekNumber}
+                  Week {week.weekNumber} ({formatWeekDate(week.weekStart)} –{' '}
+                  {formatWeekDate(week.weekEnd)})
                 </MenuItem>
               ))}
           </Select>
