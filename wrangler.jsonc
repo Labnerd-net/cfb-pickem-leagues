@@ -57,5 +57,29 @@
     //                   TELEGRAM_BOT_TOKEN, TELEGRAM_CHAT_ID, TELEGRAM_INVITE_URL,
     //                   DISCORD_WEBHOOK_URL, DISCORD_INVITE_URL, CLIENT_URL
     "NODE_ENV": "production"
+  },
+
+  // Dev environment — deploy with: wrangler deploy --env dev
+  // Worker name becomes "cfb-pickem-leagues-dev" (Cloudflare appends the env name),
+  // giving a stable URL at cfb-pickem-leagues-dev.<subdomain>.workers.dev
+  //
+  // `vars` and secrets are NOT inherited from the top-level config and must be set here.
+  // Required secrets (see: wrangler secret put <KEY> --env dev):
+  //   DEV_DB          — Neon dev branch/database connection string
+  //   JWT_SECRET       — use a different value than prod so dev tokens can't be replayed against prod
+  //   CFBD_API_KEY     — can reuse the prod key
+  // Rate limiter bindings are intentionally omitted here — the app falls back to an
+  // in-memory limiter when the binding is absent, which is fine for a single dev worker.
+  // Cron is disabled here (empty crons array) so scheduled game imports don't run
+  // against the dev DB unattended.
+  "env": {
+    "dev": {
+      "vars": {
+        "NODE_ENV": "development"
+      },
+      "triggers": {
+        "crons": []
+      }
+    }
   }
 }

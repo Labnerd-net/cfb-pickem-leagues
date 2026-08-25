@@ -8,6 +8,16 @@ None
 
 None
 
+## In Progress
+
+**Dev Cloudflare Environment**: Added a named Wrangler environment (`env.dev` in `wrangler.jsonc`) that deploys a second Worker (`cfb-pickem-leagues-dev`, auto-suffixed by Cloudflare) at its own `*.workers.dev` URL, with `NODE_ENV=development` so the backend reads `DEV_DB` instead of `PROD_DB`. Deploy via `pnpm --filter cfb-pickem-api deploy:worker:dev`. Cron is disabled for this environment (empty `crons` array) to avoid unattended game imports against the dev DB. Rate limiter bindings are intentionally omitted — falls back to in-memory limiting, fine for a single dev worker.
+
+Remaining manual setup (one-time, outside this repo — do locally):
+1. Create a Neon dev branch/database and get its connection string.
+2. `wrangler secret put DEV_DB --env dev`, `wrangler secret put JWT_SECRET --env dev` (use a different value than prod), `wrangler secret put CFBD_API_KEY --env dev` (can reuse prod key).
+3. Point `packages/backend/.env`'s `DEV_DB` at the same Neon dev database and run `NODE_ENV=development pnpm migrate` to apply schema.
+4. Deploy: `pnpm --filter cfb-pickem-api deploy:worker:dev`.
+
 ## History
 
 <!-- Keep this updated. Earliest to latest -->
