@@ -15,6 +15,16 @@
     "crons": ["*/15 * * * *"]
   },
 
+  // Used by cronTick.ts to short-circuit the scheduled handler when there's no active
+  // week, so the 15-min cron doesn't keep waking the Neon compute 24/7 in the off-season.
+  // Not bound in env.dev — dev's cron is disabled anyway (see below).
+  "kv_namespaces": [
+    {
+      "binding": "CRON_CACHE",
+      "id": "01fc5e4643544c02b9bb918cfb113f05"
+    }
+  ],
+
   "ratelimits": [
     {
       "name": "AUTH_RATE_LIMITER",

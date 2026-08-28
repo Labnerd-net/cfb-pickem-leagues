@@ -9,6 +9,7 @@ interface Env {
   AUTH_RATE_LIMITER: RateLimit;
   API_RATE_LIMITER: RateLimit;
   ASSETS: Fetcher;
+  CRON_CACHE?: KVNamespace;
   [key: string]: unknown;
 }
 
@@ -25,6 +26,6 @@ export default {
   async scheduled(_event: ScheduledEvent, env: Env, _ctx: ExecutionContext) {
     reinitializeSecrets(env as Record<string, string | undefined>);
     syncDbEnv(env as Record<string, string | undefined>);
-    await runCronTick().catch(err => pinoLogger.error(err, 'cron tick failed'));
+    await runCronTick(env.CRON_CACHE).catch(err => pinoLogger.error(err, 'cron tick failed'));
   },
 };

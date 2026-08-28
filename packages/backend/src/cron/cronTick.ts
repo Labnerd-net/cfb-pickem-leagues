@@ -30,13 +30,29 @@ let scoresCompletedForLeague = new Set<string>(); // key: "leagueId-year-weekNum
 let reminder24hSentForLeague = new Set<string>();  // key: "leagueId-year-weekNumber"
 let reminder1hSentForLeague = new Set<string>();   // key: "leagueId-year-weekNumber"
 
-export async function runCronTick(): Promise<void> {
+// KV cache key/TTL for the "no active week" short-circuit below. Week rollover isn't
+// minute-sensitive, so a coarse TTL is fine — see context/current-feature.md for why
+// this exists (avoids waking the Neon compute every 15 min in the off-season).
+const NO_ACTIVE_WEEK_CACHE_KEY = 'cron:no-active-week';
+const NO_ACTIVE_WEEK_CACHE_TTL_SECONDS = 60 * 60;
+
+export async function runCronTick(cronCacheKv?: KVNamespace): Promise<void> {
   const now = getNow();
   logger.debug('runCronTick');
+
+  if (cronCacheKv && (await cronCacheKv.get(NO_ACTIVE_WEEK_CACHE_KEY))) {
+    logger.debug('No active week (cached), skipping cron tick');
+    return;
+  }
 
   // 1. Find the current week
   const week = await returnCurrentWeek(now);
   if (!week) {
+    if (cronCacheKv) {
+      await cronCacheKv.put(NO_ACTIVE_WEEK_CACHE_KEY, '1', {
+        expirationTtl: NO_ACTIVE_WEEK_CACHE_TTL_SECONDS,
+      });
+    }
     logger.debug('No current week found, skipping cron tick');
     return;
   }
