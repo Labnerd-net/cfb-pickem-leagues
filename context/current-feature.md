@@ -8,6 +8,14 @@ None
 
 None
 
+## In Progress
+
+**Cron Idle DB Wake Fix**: The prod Cron Trigger (`*/15 * * * *`, `wrangler.jsonc`) fires `runCronTick()` every 15 minutes, 24/7, all year. Every tick unconditionally calls `returnCurrentWeek()` (a DB query) before it can determine there's no active week to act on. Each query resets Neon's ~5-minute autosuspend timer, so 96 ticks/day × 5 min ≈ 8h/day (~33%) of compute stays awake even in the off-season with zero users — matches the measured 36% active-time anomaly on the `cfbpickem` Neon project compared to two other Neon-backed sites with normal idle behavior.
+
+Fix: cache a "no active week" negative result in a new Cloudflare KV namespace with a ~1h TTL. `runCronTick()` checks the cache first and short-circuits before touching Neon; only writes the cache when `returnCurrentWeek()` returns null. During an active season week, behavior is unchanged (KV check is skipped once a week exists, full 15-min granularity for score refresh/reminders preserved). Local Node dev (`server.ts`) has no KV binding available and keeps hitting the DB every tick as before — acceptable since it isn't running 24/7.
+
+Tradeoff accepted: up to ~1h lag between a new week landing in the DB and the cron noticing it, since week rollover isn't minute-sensitive.
+
 ## History
 
 <!-- Keep this updated. Earliest to latest -->

@@ -254,6 +254,62 @@ describe('runCronTick — early exits', () => {
 	});
 });
 
+describe('runCronTick — no-active-week KV cache', () => {
+	beforeEach(() => {
+		vi.clearAllMocks();
+	});
+
+	function makeKv() {
+		return {
+			get: vi.fn(),
+			put: vi.fn().mockResolvedValue(undefined),
+		};
+	}
+
+	it('short-circuits before hitting the DB when the cache key is present', async () => {
+		mockGetNow.mockReturnValue(now);
+		const kv = makeKv();
+		kv.get.mockResolvedValue('1');
+
+		await runCronTick(kv as never);
+
+		expect(kv.get).toHaveBeenCalledWith('cron:no-active-week');
+		expect(mockReturnCurrentWeek).not.toHaveBeenCalled();
+	});
+
+	it('writes the cache key with a TTL when returnCurrentWeek returns null', async () => {
+		mockGetNow.mockReturnValue(now);
+		const kv = makeKv();
+		kv.get.mockResolvedValue(null);
+		mockReturnCurrentWeek.mockResolvedValue(null);
+
+		await runCronTick(kv as never);
+
+		expect(kv.put).toHaveBeenCalledWith('cron:no-active-week', '1', { expirationTtl: 60 * 60 });
+	});
+
+	it('does not write the cache key when an active week is found', async () => {
+		mockGetNow.mockReturnValue(now);
+		const kv = makeKv();
+		kv.get.mockResolvedValue(null);
+		mockReturnCurrentWeek.mockResolvedValue(makeWeek(2024, 1));
+		mockGetActiveLeaguesForWeek.mockResolvedValue([]);
+
+		await runCronTick(kv as never);
+
+		expect(kv.put).not.toHaveBeenCalled();
+	});
+
+	it('hits the DB as before when no KV is passed (local Node dev)', async () => {
+		mockGetNow.mockReturnValue(now);
+		mockReturnCurrentWeek.mockResolvedValue(null);
+
+		await runCronTick();
+
+		expect(mockReturnCurrentWeek).toHaveBeenCalled();
+	});
+});
+
 describe('runCronTick — per-league dispatch', () => {
 	beforeEach(() => {
 		vi.clearAllMocks();
