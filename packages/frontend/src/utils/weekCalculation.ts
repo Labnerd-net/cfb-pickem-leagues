@@ -35,10 +35,13 @@ export function getMostRecentCompletedWeek(weeks: AdminWeekData[]): CurrentWeek 
     : { year: getCurrentSeason(now), week: 1 };
 }
 
-export function isResultsMode(games: { completed: boolean; startTime: Date | string | null }[]): boolean {
-  return games.some(
-    g => g.completed || (g.startTime !== null && getNow() >= new Date(g.startTime as string)),
-  );
+/**
+ * Whether a single game should render as a read-only result (kicked off or completed)
+ * rather than an editable pick. Evaluated per-game — a week is a mix of both once its
+ * games start spreading across multiple days/weekends, so no week-wide toggle exists.
+ */
+export function isGameInResultsMode(game: { completed: boolean; startTime: Date | string | null }): boolean {
+  return game.completed || (game.startTime !== null && getNow() >= new Date(game.startTime as string));
 }
 
 export function getCurrentWeek(weeks: AdminWeekData[]): CurrentWeek {

@@ -396,6 +396,53 @@ describe('WeekGameSection (mode switching)', () => {
 });
 
 // ---------------------------------------------------------------------------
+// Mixed week (some games started, some still open)
+// ---------------------------------------------------------------------------
+
+describe('WeekGameSection (mixed week)', () => {
+	it('shows a result row for a started game and a pickable card for an upcoming game in the same week', async () => {
+		const startedGame = makeGame({ gameId: 1, completed: false, winningTeam: 'pending', homePoints: null, awayPoints: null, startTime: pastDate(1) });
+		const upcomingGame = makeGame({ gameId: 2, homeTeam: 'Later Home', awayTeam: 'Later Away', completed: false, winningTeam: 'pending', homePoints: null, awayPoints: null, startTime: futureDate(3) });
+
+		mockGetPickedGames.mockResolvedValue({ success: true, data: [startedGame, upcomingGame] });
+		mockGetUserPicks.mockResolvedValue({ success: true, data: [] });
+
+		renderWithProviders(<WeekGameSection />);
+
+		await waitFor(() => {
+			expect(screen.getByText('Away Team @ Home Team')).toBeInTheDocument();
+			expect(screen.getByText('No Pick')).toBeInTheDocument();
+			expect(screen.getByRole('radio', { name: 'Later Away' })).toBeInTheDocument();
+			expect(screen.getByRole('radio', { name: 'Later Home' })).toBeInTheDocument();
+		});
+	});
+
+	it('allows submitting a pick for the still-open game while another game in the week has already started', async () => {
+		const startedGame = makeGame({ gameId: 1, completed: false, winningTeam: 'pending', homePoints: null, awayPoints: null, startTime: pastDate(1) });
+		const upcomingGame = makeGame({ gameId: 2, homeTeam: 'Later Home', awayTeam: 'Later Away', completed: false, winningTeam: 'pending', homePoints: null, awayPoints: null, startTime: futureDate(3) });
+
+		mockGetPickedGames.mockResolvedValue({ success: true, data: [startedGame, upcomingGame] });
+		mockGetUserPicks.mockResolvedValue({ success: true, data: [] });
+		mockPostUserPicks.mockResolvedValue({ success: true, data: { status: 'ok' } });
+
+		const user = userEvent.setup();
+		renderWithProviders(<WeekGameSection />);
+
+		await waitFor(() => expect(screen.getByRole('radio', { name: 'Later Away' })).toBeInTheDocument());
+
+		await user.click(screen.getByRole('radio', { name: 'Later Away' }));
+		await user.click(screen.getByRole('button', { name: /submit all picks/i }));
+
+		await waitFor(() => {
+			expect(mockPostUserPicks).toHaveBeenCalledWith(
+				expect.objectContaining({ games: [{ game: 2, pick: 'away_team' }] }),
+			);
+			expect(screen.getByText('Picks saved successfully!')).toBeInTheDocument();
+		});
+	});
+});
+
+// ---------------------------------------------------------------------------
 // Lock warning dialog
 // ---------------------------------------------------------------------------
 

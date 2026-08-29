@@ -16,6 +16,7 @@ export default function WeekGameSection() {
     availableYears,
     weeks,
     games,
+    pickableGames,
     now,
     userPicks,
     savedPickIds,
@@ -24,8 +25,7 @@ export default function WeekGameSection() {
     initializing,
     error,
     snackbar,
-    resultsMode,
-    resultRows,
+    finishedRows,
     handlePickChange,
     handleSubmit,
     handleSnackbarClose,
@@ -43,7 +43,7 @@ export default function WeekGameSection() {
 
   // Evaluate warning trigger on each clock tick
   useEffect(() => {
-    if (ignoreDeadline || resultsMode || warningDismissed || warningOpen || games.length === 0) return;
+    if (ignoreDeadline || warningDismissed || warningOpen || games.length === 0) return;
 
     const earliestUnlocked = games
       .filter(g => g.startTime !== null && now < new Date(g.startTime))
@@ -58,7 +58,7 @@ export default function WeekGameSection() {
     if (hasUnsaved) {
       setWarningOpen(true);
     }
-  }, [now, games, userPicks, savedPickIds, resultsMode, warningDismissed, warningOpen, ignoreDeadline]);
+  }, [now, games, userPicks, savedPickIds, warningDismissed, warningOpen, ignoreDeadline]);
 
   // Compute props for the warning dialog
   const unsavedCount = [...userPicks.keys()].filter(id => !savedPickIds.has(id)).length;
@@ -132,20 +132,40 @@ export default function WeekGameSection() {
         </Box>
       )}
 
-      {!loading && !error && games.length > 0 && resultsMode && (
-        <WeekResultsView resultRows={resultRows} />
+      {!loading && !error && games.length > 0 && finishedRows.length > 0 && (
+        <Box sx={{ mb: pickableGames.length > 0 ? 3 : 0 }}>
+          {pickableGames.length > 0 && (
+            <Typography
+              variant="subtitle2"
+              sx={{ fontFamily: '"Work Sans", sans-serif', color: 'text.secondary', mb: 1 }}
+            >
+              Already Started
+            </Typography>
+          )}
+          <WeekResultsView resultRows={finishedRows} />
+        </Box>
       )}
 
-      {!loading && !error && games.length > 0 && !resultsMode && (
-        <UserPicksGamesList
-          games={games}
-          picks={userPicks}
-          savedPicks={savedPickIds}
-          now={now}
-          onPickChange={handlePickChange}
-          onSubmit={handleSubmit}
-          loading={submitting}
-        />
+      {!loading && !error && games.length > 0 && pickableGames.length > 0 && (
+        <Box>
+          {finishedRows.length > 0 && (
+            <Typography
+              variant="subtitle2"
+              sx={{ fontFamily: '"Work Sans", sans-serif', color: 'text.secondary', mb: 1 }}
+            >
+              Still Open
+            </Typography>
+          )}
+          <UserPicksGamesList
+            games={pickableGames}
+            picks={userPicks}
+            savedPicks={savedPickIds}
+            now={now}
+            onPickChange={handlePickChange}
+            onSubmit={handleSubmit}
+            loading={submitting}
+          />
+        </Box>
       )}
 
       <LockWarningDialog

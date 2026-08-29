@@ -1,6 +1,6 @@
 import type { AdminWeekData } from '@shared/types/cfb-pickem-api';
 import type { AdminGameWire } from '../../apis/userRequests';
-import { isResultsMode } from '../../utils/weekCalculation';
+import { isGameInResultsMode } from '../../utils/weekCalculation';
 import type { WeekResultRow } from './WeekResultsGameRow';
 import { useWeekNavigation } from './useWeekNavigation';
 import { usePickSubmit, type SnackbarState } from './usePickSubmit';
@@ -16,6 +16,7 @@ interface UseWeekGamesReturn {
   availableYears: number[];
   weeks: AdminWeekData[];
   games: AdminGameWire[];
+  pickableGames: AdminGameWire[];
   now: Date;
   userPicks: Map<number, 'home_team' | 'away_team'>;
   savedPickIds: Set<number>;
@@ -24,8 +25,7 @@ interface UseWeekGamesReturn {
   initializing: boolean;
   error: string | null;
   snackbar: SnackbarState;
-  resultsMode: boolean;
-  resultRows: WeekResultRow[];
+  finishedRows: WeekResultRow[];
   handlePickChange: (gameId: number, pick: 'home_team' | 'away_team') => void;
   handleSubmit: () => Promise<void>;
   handleSnackbarClose: () => void;
@@ -40,9 +40,10 @@ export function useWeekGames(): UseWeekGamesReturn {
     games: nav.games,
   });
 
-  const resultsMode = isResultsMode(nav.games);
+  const finishedGames = nav.games.filter(isGameInResultsMode);
+  const pickableGames = nav.games.filter(game => !isGameInResultsMode(game));
 
-  const resultRows: WeekResultRow[] = nav.games.map(game => ({
+  const finishedRows: WeekResultRow[] = finishedGames.map(game => ({
     gameId: game.gameId,
     homeTeam: game.homeTeam,
     awayTeam: game.awayTeam,
@@ -61,6 +62,7 @@ export function useWeekGames(): UseWeekGamesReturn {
     availableYears: nav.availableYears,
     weeks: nav.weeks,
     games: nav.games,
+    pickableGames,
     now,
     loading: nav.loading,
     initializing: nav.initializing,
@@ -69,8 +71,7 @@ export function useWeekGames(): UseWeekGamesReturn {
     savedPickIds: picks.savedPickIds,
     submitting: picks.submitting,
     snackbar: picks.snackbar,
-    resultsMode,
-    resultRows,
+    finishedRows,
     handlePickChange: picks.handlePickChange,
     handleSubmit: picks.handleSubmit,
     handleSnackbarClose: picks.handleSnackbarClose,
