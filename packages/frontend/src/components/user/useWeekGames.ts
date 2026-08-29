@@ -37,6 +37,7 @@ export function useWeekGames(): UseWeekGamesReturn {
   const picks = usePickSubmit({
     selectedYear: nav.selectedYear,
     selectedWeek: nav.selectedWeek,
+    games: nav.games,
   });
 
   const resultsMode = isResultsMode(nav.games);

@@ -1,7 +1,9 @@
 import { useState, useEffect } from 'react';
-import { getUserPicks, postUserPicks } from '../../apis/userRequests';
+import { getUserPicks, postUserPicks, type AdminGameWire } from '../../apis/userRequests';
 import { useLeague } from '../../contexts/LeagueContext';
 import { logger } from '../../utils/logger';
+
+const ignoreDeadline = import.meta.env.VITE_IGNORE_PICK_DEADLINE === 'true';
 
 export interface SnackbarState {
   open: boolean;
@@ -12,6 +14,7 @@ export interface SnackbarState {
 interface UsePickSubmitParams {
   selectedYear: number;
   selectedWeek: number;
+  games: AdminGameWire[];
 }
 
 export interface UsePickSubmitReturn {
@@ -24,7 +27,7 @@ export interface UsePickSubmitReturn {
   handleSnackbarClose: () => void;
 }
 
-export function usePickSubmit({ selectedYear, selectedWeek }: UsePickSubmitParams): UsePickSubmitReturn {
+export function usePickSubmit({ selectedYear, selectedWeek, games }: UsePickSubmitParams): UsePickSubmitReturn {
   const { activeLeague } = useLeague();
   const leagueId = activeLeague?.leagueId ?? 1;
   const [userPicks, setUserPicks] = useState<Map<number, 'home_team' | 'away_team'>>(new Map());
@@ -92,13 +95,29 @@ export function usePickSubmit({ selectedYear, selectedWeek }: UsePickSubmitParam
       return;
     }
 
+    // Exclude games that have already kicked off — they're already saved and
+    // including them would cause the backend to reject the entire batch,
+    // blocking submission of picks for other still-open games in the week.
+    const lockedGameIds = new Set(
+      ignoreDeadline
+        ? []
+        : games.filter(g => g.startTime !== null && new Date() >= new Date(g.startTime)).map(g => g.gameId)
+    );
+    const picksArray = Array.from(userPicks.entries())
+      .filter(([gameId]) => !lockedGameIds.has(gameId))
+      .map(([gameId, pick]) => ({ game: gameId, pick }));
+
+    if (picksArray.length === 0) {
+      setSnackbar({
+        open: true,
+        message: 'All selected games have already started and can no longer be changed',
+        severity: 'error',
+      });
+      return;
+    }
+
     try {
       setSubmitting(true);
-
-      const picksArray = Array.from(userPicks.entries()).map(([gameId, pick]) => ({
-        game: gameId,
-        pick,
-      }));
 
       const result = await postUserPicks({
         year: selectedYear,
