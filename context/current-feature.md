@@ -8,6 +8,10 @@ None
 
 None
 
+## In Progress
+
+**Fix League Admin Weeks Forbidden**: League admins (`activeLeague.role === 'admin'`, but not site-wide platform admin) saw a "Forbidden" error and "No weeks loaded" on the League Admin tab. Cause: `LeagueAdminSection.tsx` reused `useWeekManagement`, which called `GET /api/admin/weeks` (`requireRole('admin')` — site admin only). Fixed by adding an `access: 'siteAdmin' | 'member'` param to `useWeekManagement`; `'member'` mode (used by `LeagueAdminSection`) reads weeks via the existing `GET /api/user/weeks` endpoint (any authenticated user), treating its "no weeks for year" 404 as an empty list rather than an error. `WeekSelector`'s `weeks` prop type widened from `AdminDbWeekDataWire` to shared `AdminWeekData` (identical fields) so it accepts results from either source. No backend changes. Build passes; pending dev-Worker verification.
+
 ## History
 
 <!-- Keep this updated. Earliest to latest -->

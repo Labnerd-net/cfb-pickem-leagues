@@ -33,7 +33,7 @@ export default function LeagueAdminSection() {
   const isPlatformAdmin = user?.roles.includes('admin') ?? false;
   const { activeLeague } = useLeague();
   const leagueId = activeLeague?.leagueId ?? 0;
-  const weekHook = useWeekManagement();
+  const weekHook = useWeekManagement(undefined, 'member');
 
   const [games, setGames] = useState<LeagueGameWire[]>([]);
   const [gamesLoading, setGamesLoading] = useState(false);
