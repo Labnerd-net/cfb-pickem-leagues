@@ -1,4 +1,4 @@
-import { eq, and, inArray, lte, gte, gt, max, asc, sql, getTableColumns } from 'drizzle-orm';
+import { eq, and, inArray, lte, gte, gt, max, asc, sql, getTableColumns, isNotNull } from 'drizzle-orm';
 import { adminWeeks, adminGames, scoreCorrections } from './schema/admin.js';
 import { games as userGames } from './schema/users.js';
 import { leagueGames } from './schema/leagues.js';
@@ -341,6 +341,61 @@ export async function returnCurrentWeek(today: Date): Promise<AdminWeekData | nu
     return rows.length > 0 ? rows[0] : null;
   } catch (e) {
     logger.error({ err: e }, 'returnCurrentWeek failed');
+    throw e;
+  }
+}
+
+// ------------------------------------------------------------------
+// Return the week whose games are actively in-window right now, based on
+// real kickoff times rather than the admin-set weekStart/weekEnd calendar
+// range. Window is [firstKickoff - 25h, lastKickoff + 12h] — matches the
+// existing 24h-reminder lookback and score-refresh hard-cap in cronLogic.ts.
+// ------------------------------------------------------------------
+export type ActiveWeek = { year: number; weekNumber: number; seasonType: SeasonType };
+
+export async function returnActiveWeek(now: Date): Promise<ActiveWeek | null> {
+  logger.debug({ now: now.toISOString() }, 'returnActiveWeek');
+  try {
+    const rows = await db
+      .select({
+        year: adminGames.year,
+        weekNumber: adminGames.weekNumber,
+        seasonType: adminGames.seasonType,
+        firstKickoff: sql<Date>`min(${adminGames.startTime})`,
+        lastKickoff: sql<Date>`max(${adminGames.startTime})`,
+      })
+      .from(adminGames)
+      .where(isNotNull(adminGames.startTime))
+      .groupBy(adminGames.year, adminGames.weekNumber, adminGames.seasonType)
+      .having(
+        sql`min(${adminGames.startTime}) - interval '25 hours' <= ${now} and max(${adminGames.startTime}) + interval '12 hours' >= ${now}`
+      )
+      .limit(1);
+    if (rows.length === 0) return null;
+    const { year, weekNumber, seasonType } = rows[0];
+    return { year, weekNumber, seasonType };
+  } catch (e) {
+    logger.error({ err: e }, 'returnActiveWeek failed');
+    throw e;
+  }
+}
+
+// ------------------------------------------------------------------
+// Return the earliest game start time strictly after `now`, or null if
+// there are none. Used only to size the cron negative-cache TTL.
+// ------------------------------------------------------------------
+export async function returnNextKickoffAfter(now: Date): Promise<Date | null> {
+  logger.debug({ now: now.toISOString() }, 'returnNextKickoffAfter');
+  try {
+    const rows = await db
+      .select({ startTime: adminGames.startTime })
+      .from(adminGames)
+      .where(and(isNotNull(adminGames.startTime), gt(adminGames.startTime, now)))
+      .orderBy(asc(adminGames.startTime))
+      .limit(1);
+    return rows[0]?.startTime ?? null;
+  } catch (e) {
+    logger.error({ err: e }, 'returnNextKickoffAfter failed');
     throw e;
   }
 }

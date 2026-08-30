@@ -2,7 +2,8 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 
 // All mocks must be declared before imports of the module under test.
 // vi.hoisted variables are accessible inside vi.mock() factories.
-const mockReturnCurrentWeek = vi.hoisted(() => vi.fn());
+const mockReturnActiveWeek = vi.hoisted(() => vi.fn());
+const mockReturnNextKickoffAfter = vi.hoisted(() => vi.fn().mockResolvedValue(null));
 const mockReturnGamesForWeek = vi.hoisted(() => vi.fn());
 const mockGetGamesForLeagueWeek = vi.hoisted(() => vi.fn());
 const mockUpsertGamesForWeek = vi.hoisted(() => vi.fn().mockResolvedValue(undefined));
@@ -18,7 +19,8 @@ const mockGetLastKickoff = vi.hoisted(() => vi.fn().mockReturnValue(null));
 const mockGetActiveLeaguesForWeek = vi.hoisted(() => vi.fn());
 
 vi.mock('../../../src/db/dbAdminFunctions.js', () => ({
-	returnCurrentWeek: mockReturnCurrentWeek,
+	returnActiveWeek: mockReturnActiveWeek,
+	returnNextKickoffAfter: mockReturnNextKickoffAfter,
 	returnGamesForWeek: mockReturnGamesForWeek,
 	getGamesForLeagueWeek: mockGetGamesForLeagueWeek,
 	upsertGamesForWeek: mockUpsertGamesForWeek,
@@ -97,7 +99,7 @@ describe('runCronTick — first tick (null initial state)', () => {
 
 	it('calls shouldRefreshScores with null hardCapStart and lastRefreshAt on first tick', async () => {
 		mockGetNow.mockReturnValue(now);
-		mockReturnCurrentWeek.mockResolvedValue(makeWeek(2024, 1));
+		mockReturnActiveWeek.mockResolvedValue(makeWeek(2024, 1));
 		mockGetActiveLeaguesForWeek.mockResolvedValue([DEFAULT_LEAGUE]);
 		mockReturnGamesForWeek.mockResolvedValue([makeGame()]);
 		mockGetGamesForLeagueWeek.mockResolvedValue([makeGame()]);
@@ -135,7 +137,7 @@ describe('runCronTick — week state reset', () => {
 			.mockReturnValueOnce(nowTick1) // lastRefreshAt = getNow() inside refresh block
 			.mockReturnValue(nowTick2);
 
-		mockReturnCurrentWeek.mockResolvedValue(makeWeek(2024, 1));
+		mockReturnActiveWeek.mockResolvedValue(makeWeek(2024, 1));
 		mockGetLastKickoff.mockReturnValue(lastKickoff);
 		mockShouldRefreshScores
 			.mockReturnValueOnce(true)
@@ -158,7 +160,7 @@ describe('runCronTick — week state reset', () => {
 			.mockReturnValueOnce(nowTick1)
 			.mockReturnValue(nowTick2);
 
-		mockReturnCurrentWeek
+		mockReturnActiveWeek
 			.mockResolvedValueOnce(makeWeek(2024, 1))
 			.mockResolvedValue(makeWeek(2024, 2));
 
@@ -183,7 +185,7 @@ describe('runCronTick — week state reset', () => {
 		mockShouldSendPicksReminder.mockReturnValue(true);
 		mockShouldRefreshScores.mockReturnValue(false);
 
-		mockReturnCurrentWeek
+		mockReturnActiveWeek
 			.mockResolvedValueOnce(makeWeek(2024, 1))
 			.mockResolvedValue(makeWeek(2024, 2));
 
@@ -222,9 +224,9 @@ describe('runCronTick — early exits', () => {
 		vi.clearAllMocks();
 	});
 
-	it('returns early when returnCurrentWeek returns null', async () => {
+	it('returns early when returnActiveWeek returns null', async () => {
 		mockGetNow.mockReturnValue(now);
-		mockReturnCurrentWeek.mockResolvedValue(null);
+		mockReturnActiveWeek.mockResolvedValue(null);
 
 		await runCronTick();
 
@@ -233,7 +235,7 @@ describe('runCronTick — early exits', () => {
 
 	it('returns early when there are no active leagues', async () => {
 		mockGetNow.mockReturnValue(now);
-		mockReturnCurrentWeek.mockResolvedValue(makeWeek(2024, 1));
+		mockReturnActiveWeek.mockResolvedValue(makeWeek(2024, 1));
 		mockGetActiveLeaguesForWeek.mockResolvedValue([]);
 
 		await runCronTick();
@@ -244,7 +246,7 @@ describe('runCronTick — early exits', () => {
 
 	it('returns early when global games list is empty', async () => {
 		mockGetNow.mockReturnValue(now);
-		mockReturnCurrentWeek.mockResolvedValue(makeWeek(2024, 1));
+		mockReturnActiveWeek.mockResolvedValue(makeWeek(2024, 1));
 		mockGetActiveLeaguesForWeek.mockResolvedValue([DEFAULT_LEAGUE]);
 		mockReturnGamesForWeek.mockResolvedValue([]);
 
@@ -254,9 +256,10 @@ describe('runCronTick — early exits', () => {
 	});
 });
 
-describe('runCronTick — no-active-week KV cache', () => {
+describe('runCronTick — next-check KV cache', () => {
 	beforeEach(() => {
 		vi.clearAllMocks();
+		mockReturnNextKickoffAfter.mockResolvedValue(null);
 	});
 
 	function makeKv() {
@@ -266,33 +269,83 @@ describe('runCronTick — no-active-week KV cache', () => {
 		};
 	}
 
-	it('short-circuits before hitting the DB when the cache key is present', async () => {
+	it('short-circuits before hitting the DB when now is before the cached next-check time', async () => {
 		mockGetNow.mockReturnValue(now);
 		const kv = makeKv();
-		kv.get.mockResolvedValue('1');
+		kv.get.mockResolvedValue(String(now.getTime() + 60_000)); // 1 min in the future
 
 		await runCronTick(kv as never);
 
-		expect(kv.get).toHaveBeenCalledWith('cron:no-active-week');
-		expect(mockReturnCurrentWeek).not.toHaveBeenCalled();
+		expect(kv.get).toHaveBeenCalledWith('cron:next-check-at');
+		expect(mockReturnActiveWeek).not.toHaveBeenCalled();
 	});
 
-	it('writes the cache key with a TTL when returnCurrentWeek returns null', async () => {
+	it('hits the DB when now is at or past the cached next-check time', async () => {
+		mockGetNow.mockReturnValue(now);
+		const kv = makeKv();
+		kv.get.mockResolvedValue(String(now.getTime() - 1)); // already past
+		mockReturnActiveWeek.mockResolvedValue(null);
+
+		await runCronTick(kv as never);
+
+		expect(mockReturnActiveWeek).toHaveBeenCalled();
+	});
+
+	it('caches next-check time 25h before the next known kickoff, clamped to [60s, 3600s]', async () => {
 		mockGetNow.mockReturnValue(now);
 		const kv = makeKv();
 		kv.get.mockResolvedValue(null);
-		mockReturnCurrentWeek.mockResolvedValue(null);
+		mockReturnActiveWeek.mockResolvedValue(null);
+		// next kickoff is 25h + 30min away -> next-check is 30min (1800s) from now
+		mockReturnNextKickoffAfter.mockResolvedValue(
+			new Date(now.getTime() + 25 * 60 * 60 * 1000 + 30 * 60 * 1000)
+		);
 
 		await runCronTick(kv as never);
 
-		expect(kv.put).toHaveBeenCalledWith('cron:no-active-week', '1', { expirationTtl: 60 * 60 });
+		expect(kv.put).toHaveBeenCalledWith('cron:next-check-at', String(now.getTime() + 1800 * 1000), {
+			expirationTtl: 1800,
+		});
+	});
+
+	it('clamps the TTL to the 60s floor when the next kickoff is imminent', async () => {
+		mockGetNow.mockReturnValue(now);
+		const kv = makeKv();
+		kv.get.mockResolvedValue(null);
+		mockReturnActiveWeek.mockResolvedValue(null);
+		// next kickoff is only 25h + 10s away -> next-check is 10s from now, clamped up to 60s
+		mockReturnNextKickoffAfter.mockResolvedValue(
+			new Date(now.getTime() + 25 * 60 * 60 * 1000 + 10 * 1000)
+		);
+
+		await runCronTick(kv as never);
+
+		expect(kv.put).toHaveBeenCalledWith(
+			'cron:next-check-at',
+			expect.any(String),
+			{ expirationTtl: 60 }
+		);
+	});
+
+	it('caches a 1h next-check when there is no known future kickoff at all', async () => {
+		mockGetNow.mockReturnValue(now);
+		const kv = makeKv();
+		kv.get.mockResolvedValue(null);
+		mockReturnActiveWeek.mockResolvedValue(null);
+		mockReturnNextKickoffAfter.mockResolvedValue(null);
+
+		await runCronTick(kv as never);
+
+		expect(kv.put).toHaveBeenCalledWith('cron:next-check-at', String(now.getTime() + 3600 * 1000), {
+			expirationTtl: 3600,
+		});
 	});
 
 	it('does not write the cache key when an active week is found', async () => {
 		mockGetNow.mockReturnValue(now);
 		const kv = makeKv();
 		kv.get.mockResolvedValue(null);
-		mockReturnCurrentWeek.mockResolvedValue(makeWeek(2024, 1));
+		mockReturnActiveWeek.mockResolvedValue(makeWeek(2024, 1));
 		mockGetActiveLeaguesForWeek.mockResolvedValue([]);
 
 		await runCronTick(kv as never);
@@ -302,11 +355,11 @@ describe('runCronTick — no-active-week KV cache', () => {
 
 	it('hits the DB as before when no KV is passed (local Node dev)', async () => {
 		mockGetNow.mockReturnValue(now);
-		mockReturnCurrentWeek.mockResolvedValue(null);
+		mockReturnActiveWeek.mockResolvedValue(null);
 
 		await runCronTick();
 
-		expect(mockReturnCurrentWeek).toHaveBeenCalled();
+		expect(mockReturnActiveWeek).toHaveBeenCalled();
 	});
 });
 
@@ -327,7 +380,7 @@ describe('runCronTick — per-league dispatch', () => {
 			{ leagueId: 1, name: 'League One' },
 			{ leagueId: 2, name: 'League Two' },
 		];
-		mockReturnCurrentWeek.mockResolvedValue(makeWeek(2024, 1));
+		mockReturnActiveWeek.mockResolvedValue(makeWeek(2024, 1));
 		mockGetActiveLeaguesForWeek.mockResolvedValue(leagues);
 		mockReturnGamesForWeek.mockResolvedValue([makeGame()]);
 		mockGetGamesForLeagueWeek.mockResolvedValue([makeGame()]);
@@ -345,7 +398,7 @@ describe('runCronTick — per-league dispatch', () => {
 	});
 
 	it('dispatches rankings_updated per-league when week is complete after refresh', async () => {
-		mockReturnCurrentWeek.mockResolvedValue(makeWeek(2024, 1));
+		mockReturnActiveWeek.mockResolvedValue(makeWeek(2024, 1));
 		mockGetActiveLeaguesForWeek.mockResolvedValue([DEFAULT_LEAGUE]);
 		mockReturnGamesForWeek.mockResolvedValue([makeGame()]);
 		mockGetGamesForLeagueWeek.mockResolvedValue([makeGame()]);
@@ -365,7 +418,7 @@ describe('runCronTick — per-league dispatch', () => {
 
 	it('does not dispatch rankings_updated twice for the same league+week', async () => {
 		// Use week 2 so the key '1-2024-2' is fresh — week 1 key was set by a prior test
-		mockReturnCurrentWeek.mockResolvedValue(makeWeek(2024, 2));
+		mockReturnActiveWeek.mockResolvedValue(makeWeek(2024, 2));
 		mockGetActiveLeaguesForWeek.mockResolvedValue([DEFAULT_LEAGUE]);
 		mockReturnGamesForWeek.mockResolvedValue([makeGame()]);
 		mockGetGamesForLeagueWeek.mockResolvedValue([makeGame()]);
@@ -391,7 +444,7 @@ describe('runCronTick — per-league dispatch', () => {
 
 	it('does not dispatch 24h reminder twice for the same league+week', async () => {
 		const firstKickoff = new Date('2024-09-07T20:00:00Z');
-		mockReturnCurrentWeek.mockResolvedValue(makeWeek(2024, 1));
+		mockReturnActiveWeek.mockResolvedValue(makeWeek(2024, 1));
 		mockGetActiveLeaguesForWeek.mockResolvedValue([DEFAULT_LEAGUE]);
 		mockReturnGamesForWeek.mockResolvedValue([makeGame()]);
 		mockGetGamesForLeagueWeek.mockResolvedValue([makeGame()]);
@@ -415,7 +468,7 @@ describe('runCronTick — per-league dispatch', () => {
 	it('does not dispatch 1h reminder twice for the same league+week', async () => {
 		const firstKickoff = new Date('2024-09-07T20:00:00Z');
 		// Use week 3 — fresh key not used by any prior test in this describe block
-		mockReturnCurrentWeek.mockResolvedValue(makeWeek(2024, 3));
+		mockReturnActiveWeek.mockResolvedValue(makeWeek(2024, 3));
 		mockGetActiveLeaguesForWeek.mockResolvedValue([DEFAULT_LEAGUE]);
 		mockReturnGamesForWeek.mockResolvedValue([makeGame()]);
 		mockGetGamesForLeagueWeek.mockResolvedValue([makeGame()]);
