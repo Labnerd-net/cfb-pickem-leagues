@@ -11,6 +11,8 @@ import {
 	correctGameScore,
 	getGamesForLeagueWeek,
 	addGameToLeague,
+	returnActiveWeek,
+	returnNextKickoffAfter,
 } from '../../../src/db/dbAdminFunctions.js';
 import type { WeekIdentifier } from '@shared/types/cfb-pickem-api.js';
 
@@ -183,6 +185,80 @@ describe('Admin Database Functions', () => {
 			await expect(
 				enrichWeekIdentifier({ year: 2026, week: 99 })
 			).rejects.toThrow('Week 99 of year 2026 not found');
+		});
+	});
+
+	describe('returnActiveWeek', () => {
+		it('returns the week when now is within [firstKickoff - 25h, lastKickoff + 12h]', async () => {
+			await createTestWeek(3, 2024, 'regular');
+			const firstKickoff = new Date('2024-09-14T17:00:00Z');
+			const lastKickoff = new Date('2024-09-15T00:00:00Z');
+			await createTestGame(3, 2024, 'Team A', 'Team B', false, firstKickoff);
+			await createTestGame(3, 2024, 'Team C', 'Team D', false, lastKickoff);
+
+			// 10 hours after lastKickoff — within the 12h hard cap
+			const now = new Date(lastKickoff.getTime() + 10 * 60 * 60 * 1000);
+			const active = await returnActiveWeek(now);
+
+			expect(active).not.toBeNull();
+			expect(active!.year).toBe(2024);
+			expect(active!.weekNumber).toBe(3);
+		});
+
+		it('returns null once now is past lastKickoff + 12h', async () => {
+			await createTestWeek(3, 2024, 'regular');
+			const lastKickoff = new Date('2024-09-15T00:00:00Z');
+			await createTestGame(3, 2024, 'Team A', 'Team B', false, lastKickoff);
+
+			const now = new Date(lastKickoff.getTime() + 13 * 60 * 60 * 1000);
+			const active = await returnActiveWeek(now);
+
+			expect(active).toBeNull();
+		});
+
+		it('returns the week when now is within the pre-game 25h reminder window, even outside weekStart/weekEnd', async () => {
+			await createTestWeek(4, 2024, 'regular');
+			const firstKickoff = new Date('2024-09-21T17:00:00Z');
+			await createTestGame(4, 2024, 'Team A', 'Team B', false, firstKickoff);
+
+			// 24h before kickoff, well before createTestWeek's fixed weekStart ('2024-08-24')
+			const now = new Date(firstKickoff.getTime() - 24 * 60 * 60 * 1000);
+			const active = await returnActiveWeek(now);
+
+			expect(active).not.toBeNull();
+			expect(active!.weekNumber).toBe(4);
+		});
+
+		it('returns null when no games have a startTime', async () => {
+			await createTestWeek(5, 2024, 'regular');
+			await createTestGame(5, 2024, 'Team A', 'Team B', false, null);
+
+			const active = await returnActiveWeek(new Date('2024-09-21T17:00:00Z'));
+
+			expect(active).toBeNull();
+		});
+	});
+
+	describe('returnNextKickoffAfter', () => {
+		it('returns the earliest startTime strictly after now', async () => {
+			await createTestWeek(6, 2024, 'regular');
+			const earlier = new Date('2024-09-28T17:00:00Z');
+			const later = new Date('2024-09-28T20:00:00Z');
+			await createTestGame(6, 2024, 'Team A', 'Team B', false, earlier);
+			await createTestGame(6, 2024, 'Team C', 'Team D', false, later);
+
+			const next = await returnNextKickoffAfter(new Date('2024-09-28T00:00:00Z'));
+
+			expect(next).toEqual(earlier);
+		});
+
+		it('returns null when there are no future games', async () => {
+			await createTestWeek(6, 2024, 'regular');
+			await createTestGame(6, 2024, 'Team A', 'Team B', false, new Date('2024-09-28T17:00:00Z'));
+
+			const next = await returnNextKickoffAfter(new Date('2025-01-01T00:00:00Z'));
+
+			expect(next).toBeNull();
 		});
 	});
 

@@ -1,4 +1,9 @@
-import { returnCurrentWeek, returnGamesForWeek, upsertGamesForWeek } from '../db/dbAdminFunctions.js';
+import {
+  returnActiveWeek,
+  returnNextKickoffAfter,
+  returnGamesForWeek,
+  upsertGamesForWeek,
+} from '../db/dbAdminFunctions.js';
 import { getActiveLeaguesForWeek } from '../db/dbNotificationFunctions.js';
 import { getGamesForLeagueWeek } from '../db/dbAdminFunctions.js';
 import { dispatchNotification } from '../notifications/dispatcher.js';
@@ -30,30 +35,44 @@ let scoresCompletedForLeague = new Set<string>(); // key: "leagueId-year-weekNum
 let reminder24hSentForLeague = new Set<string>();  // key: "leagueId-year-weekNumber"
 let reminder1hSentForLeague = new Set<string>();   // key: "leagueId-year-weekNumber"
 
-// KV cache key/TTL for the "no active week" short-circuit below. Week rollover isn't
-// minute-sensitive, so a coarse TTL is fine — see context/current-feature.md for why
-// this exists (avoids waking the Neon compute every 15 min in the off-season).
-const NO_ACTIVE_WEEK_CACHE_KEY = 'cron:no-active-week';
-const NO_ACTIVE_WEEK_CACHE_TTL_SECONDS = 60 * 60;
+// KV cache key/bounds for the "nothing to check yet" short-circuit below. Rather than a
+// flat TTL, we cache the timestamp of the next moment worth checking (25h before the next
+// known kickoff), so we resume exactly when a real window opens instead of on a blind timer
+// that can straddle it. Still clamped to an hour max so off-season DB-wake protection
+// (see context/current-feature.md history) is no worse than before.
+const NEXT_CHECK_CACHE_KEY = 'cron:next-check-at';
+const NEXT_CHECK_MIN_TTL_SECONDS = 60; // KV's expirationTtl minimum
+const NEXT_CHECK_MAX_TTL_SECONDS = 60 * 60;
 
 export async function runCronTick(cronCacheKv?: KVNamespace): Promise<void> {
   const now = getNow();
   logger.debug('runCronTick');
 
-  if (cronCacheKv && (await cronCacheKv.get(NO_ACTIVE_WEEK_CACHE_KEY))) {
-    logger.debug('No active week (cached), skipping cron tick');
-    return;
+  if (cronCacheKv) {
+    const cached = await cronCacheKv.get(NEXT_CHECK_CACHE_KEY);
+    if (cached && now.getTime() < Number(cached)) {
+      logger.debug('No active/upcoming week window yet (cached), skipping cron tick');
+      return;
+    }
   }
 
-  // 1. Find the current week
-  const week = await returnCurrentWeek(now);
+  // 1. Find the week whose games are actively in-window right now
+  const week = await returnActiveWeek(now);
   if (!week) {
     if (cronCacheKv) {
-      await cronCacheKv.put(NO_ACTIVE_WEEK_CACHE_KEY, '1', {
-        expirationTtl: NO_ACTIVE_WEEK_CACHE_TTL_SECONDS,
+      const nextKickoff = await returnNextKickoffAfter(now);
+      const nextCheckAt = nextKickoff
+        ? nextKickoff.getTime() - 25 * 60 * 60 * 1000
+        : now.getTime() + NEXT_CHECK_MAX_TTL_SECONDS * 1000;
+      const ttlSeconds = Math.min(
+        NEXT_CHECK_MAX_TTL_SECONDS,
+        Math.max(NEXT_CHECK_MIN_TTL_SECONDS, Math.ceil((nextCheckAt - now.getTime()) / 1000))
+      );
+      await cronCacheKv.put(NEXT_CHECK_CACHE_KEY, String(now.getTime() + ttlSeconds * 1000), {
+        expirationTtl: ttlSeconds,
       });
     }
-    logger.debug('No current week found, skipping cron tick');
+    logger.debug('No active week found, skipping cron tick');
     return;
   }
 
