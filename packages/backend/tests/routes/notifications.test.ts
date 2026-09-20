@@ -136,6 +136,13 @@ describe('Notification routes', () => {
 			expect(body.status).toBe('verified');
 		});
 
+		it('returns 400 for an expired token (sent > 24h ago)', async () => {
+			const token = 'expired-token-route-test';
+			await setEmailVerificationToken(1, token, new Date(Date.now() - 25 * 60 * 60 * 1000));
+			const res = await app.request(`/api/auth/verify-email?token=${token}`);
+			expect(res.status).toBe(400);
+		});
+
 		it('returns 400 with invalid token', async () => {
 			const res = await app.request('/api/auth/verify-email?token=bad-token');
 			expect(res.status).toBe(400);
