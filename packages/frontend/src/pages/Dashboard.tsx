@@ -100,11 +100,15 @@ export default function Dashboard() {
                 value={safeTab}
                 onChange={handleTabChange}
                 aria-label="dashboard tabs"
+                variant="scrollable"
+                scrollButtons="auto"
+                allowScrollButtonsMobile
                 sx={{
                   '& .MuiTab-root': {
                     fontFamily: '"Bebas Neue", sans-serif',
-                    fontSize: '1.1rem',
+                    fontSize: { xs: '1rem', sm: '1.1rem' },
                     letterSpacing: '0.5px',
+                    px: { xs: 1.5, sm: 2 },
                   },
                 }}
               >

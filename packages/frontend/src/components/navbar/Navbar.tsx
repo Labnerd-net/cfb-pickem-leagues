@@ -1,6 +1,7 @@
 import { AppBar, Toolbar, Typography, Button, Box, IconButton, alpha, useTheme } from '@mui/material';
 import SportsFootballIcon from '@mui/icons-material/SportsFootball';
 import SettingsIcon from '@mui/icons-material/Settings';
+import LogoutIcon from '@mui/icons-material/Logout';
 import { useNavigate } from 'react-router';
 import ThemeToggle from '../theme/ThemeToggle';
 import { useAuth } from '../../contexts/auth/AuthContext';
@@ -31,7 +32,7 @@ export default function Navbar() {
         boxShadow: `0 4px 12px ${alpha('#000', 0.2)}`,
       }}
     >
-      <Toolbar sx={{ py: 1 }}>
+      <Toolbar sx={{ py: 1, px: { xs: 1.5, sm: 3 }, gap: { xs: 0.5, sm: 0 } }}>
         {/* Logo & Title */}
         <Box
           onClick={handleHomeClick}
@@ -50,12 +51,13 @@ export default function Navbar() {
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              width: 44,
-              height: 44,
+              width: { xs: 36, sm: 44 },
+              height: { xs: 36, sm: 44 },
+              flexShrink: 0,
               borderRadius: '50%',
               background: `linear-gradient(135deg, ${theme.palette.primary.main} 0%, ${theme.palette.primary.dark} 100%)`,
               border: `2px solid ${theme.palette.secondary.main}`,
-              mr: 2,
+              mr: { xs: 0, sm: 2 },
             }}
           >
             <SportsFootballIcon
@@ -90,6 +92,7 @@ export default function Navbar() {
             onClick={() => navigate('/dashboard')}
             sx={{
               mr: 2,
+              display: { xs: 'none', sm: 'inline-flex' },
               fontFamily: '"Work Sans", sans-serif',
               fontWeight: 700,
               textTransform: 'uppercase',
@@ -106,7 +109,7 @@ export default function Navbar() {
 
         {/* League Switcher */}
         {user && (
-          <Box sx={{ mr: 2 }}>
+          <Box sx={{ mr: { xs: 0, sm: 2 }, minWidth: 0, flexShrink: 1 }}>
             <LeagueSwitcher />
           </Box>
         )}
@@ -131,7 +134,7 @@ export default function Navbar() {
         {user && (
           <IconButton
             onClick={() => navigate('/settings')}
-            sx={{ ml: 1, color: 'text.secondary' }}
+            sx={{ ml: { xs: 0, sm: 1 }, color: 'text.secondary' }}
             aria-label="Settings"
           >
             <SettingsIcon />
@@ -146,6 +149,7 @@ export default function Navbar() {
           <Button
             onClick={handleLogout}
             sx={{
+              display: { xs: 'none', sm: 'inline-flex' },
               ml: 2,
               fontFamily: '"Work Sans", sans-serif',
               fontWeight: 700,
@@ -165,6 +169,15 @@ export default function Navbar() {
           >
             Logout
           </Button>
+        )}
+        {user && (
+          <IconButton
+            onClick={handleLogout}
+            sx={{ display: { xs: 'inline-flex', sm: 'none' }, color: 'secondary.main' }}
+            aria-label="Logout"
+          >
+            <LogoutIcon />
+          </IconButton>
         )}
       </Toolbar>
     </AppBar>

@@ -7,6 +7,7 @@ import {
   Table,
   TableHead,
   TableBody,
+  TableContainer,
   TableRow,
   TableCell,
   Typography,
@@ -153,6 +154,7 @@ export default function UsersSection() {
               No users found
             </Typography>
           ) : (
+            <TableContainer>
             <Table>
               <TableHead>
                 <TableRow>
@@ -212,6 +214,7 @@ export default function UsersSection() {
                 })}
               </TableBody>
             </Table>
+            </TableContainer>
           )}
         </>
       )}

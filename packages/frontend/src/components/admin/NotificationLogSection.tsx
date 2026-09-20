@@ -11,6 +11,7 @@ import {
   Table,
   TableBody,
   TableCell,
+  TableContainer,
   TableHead,
   TableRow,
   Typography,
@@ -156,6 +157,7 @@ export default function NotificationLogSection() {
           No notifications have been sent yet.
         </Typography>
       ) : (
+        <TableContainer>
         <Table size="small">
           <TableHead>
             <TableRow>
@@ -186,6 +188,7 @@ export default function NotificationLogSection() {
             ))}
           </TableBody>
         </Table>
+        </TableContainer>
       )}
     </DashboardCard>
   );
