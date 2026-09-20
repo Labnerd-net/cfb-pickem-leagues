@@ -99,7 +99,7 @@ vi.mock('../src/db/index.ts', async () => {
 			league_id SERIAL PRIMARY KEY,
 			name TEXT NOT NULL,
 			invite_code TEXT NOT NULL UNIQUE,
-			created_by INTEGER NOT NULL REFERENCES "user".users (user_id),
+			created_by INTEGER REFERENCES "user".users (user_id) ON DELETE SET NULL,
 			created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL
 		);
 

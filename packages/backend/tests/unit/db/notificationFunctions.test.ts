@@ -198,6 +198,20 @@ describe('Notification Database Functions', () => {
 			expect(rows.rows[0]?.email_verified).toBe(true);
 		});
 
+		it('should return null for an expired token (sent > 24h ago)', async () => {
+			const token = 'test-token-expired';
+			await setEmailVerificationToken(1, token, new Date(Date.now() - 25 * 60 * 60 * 1000));
+			const result = await markEmailVerified(token);
+			expect(result).toBeNull();
+		});
+
+		it('should accept a token sent just under 24h ago', async () => {
+			const token = 'test-token-almost-expired';
+			await setEmailVerificationToken(1, token, new Date(Date.now() - 23 * 60 * 60 * 1000));
+			const result = await markEmailVerified(token);
+			expect(result?.userId).toBe(1);
+		});
+
 		it('should return null for invalid token', async () => {
 			const result = await markEmailVerified('invalid-token-does-not-exist');
 			expect(result).toBeNull();

@@ -229,3 +229,89 @@ describe('POST /api/auth/register — admin bootstrap', () => {
 		expect(roles).not.toContain('admin');
 	});
 });
+
+describe('DELETE /api/auth/deleteUser', () => {
+	beforeAll(async () => {
+		await seedTestData();
+	});
+
+	afterEach(async () => {
+		clearRateLimitStore();
+	});
+
+	// Explicit IDs: seedTestData inserts user_ids 1 and 2 without advancing the serial sequence.
+	async function createUser(userId: number, email: string) {
+		await testDb.execute(sql`
+			INSERT INTO "user"."users" (user_id, email, display_name, password_hash, roles)
+			VALUES (${userId}, ${email}, ${email}, 'x', ARRAY['user']::text[])
+		`);
+		return userId;
+	}
+
+	async function createLeagueWithMembers(leagueId: number, createdBy: number, members: [number, string][]) {
+		await testDb.execute(sql`
+			INSERT INTO leagues (league_id, name, invite_code, created_by)
+			VALUES (${leagueId}, ${'League ' + leagueId}, ${'invite' + leagueId}, ${createdBy})
+		`);
+		for (const [userId, role] of members) {
+			await testDb.execute(sql`
+				INSERT INTO league_members (league_id, user_id, role) VALUES (${leagueId}, ${userId}, ${role})
+			`);
+		}
+	}
+
+	function deleteAs(userId: number) {
+		return makeToken({ sub: userId, roles: ['user'] }).then(token =>
+			app.request('/api/auth/deleteUser', { method: 'DELETE', headers: { Cookie: `auth_token=${token}` } }),
+		);
+	}
+
+	it('returns 401 when unauthenticated', async () => {
+		const res = await app.request('/api/auth/deleteUser', { method: 'DELETE' });
+		expect(res.status).toBe(401);
+	});
+
+	it('returns 409 when the user is the sole admin of a league, and deletes nothing', async () => {
+		const userId = await createUser(201, 'sole-admin@test.com');
+		await createLeagueWithMembers(101, userId, [[userId, 'admin']]);
+
+		const res = await deleteAs(userId);
+		expect(res.status).toBe(409);
+
+		const users = await testDb.execute(sql`SELECT 1 FROM "user".users WHERE user_id = ${userId}`);
+		expect(users.rows).toHaveLength(1);
+		const members = await testDb.execute(sql`SELECT 1 FROM league_members WHERE user_id = ${userId}`);
+		expect(members.rows).toHaveLength(1);
+	});
+
+	it('deletes a plain league member along with their membership', async () => {
+		const adminId = await createUser(202, 'league-admin-a@test.com');
+		const memberId = await createUser(203, 'plain-member@test.com');
+		await createLeagueWithMembers(102, adminId, [[adminId, 'admin'], [memberId, 'member']]);
+
+		const res = await deleteAs(memberId);
+		expect(res.status).toBe(200);
+
+		const users = await testDb.execute(sql`SELECT 1 FROM "user".users WHERE user_id = ${memberId}`);
+		expect(users.rows).toHaveLength(0);
+		const members = await testDb.execute(sql`SELECT 1 FROM league_members WHERE user_id = ${memberId}`);
+		expect(members.rows).toHaveLength(0);
+		const audit = await testDb.execute(sql`SELECT 1 FROM "user".deleted_users WHERE user_id = ${memberId}`);
+		expect(audit.rows).toHaveLength(1);
+	});
+
+	it('deletes a league creator who is not the sole admin, keeping the league with created_by cleared', async () => {
+		const creatorId = await createUser(204, 'creator@test.com');
+		const otherAdminId = await createUser(205, 'other-admin@test.com');
+		await createLeagueWithMembers(103, creatorId, [[creatorId, 'admin'], [otherAdminId, 'admin']]);
+
+		const res = await deleteAs(creatorId);
+		expect(res.status).toBe(200);
+
+		const league = await testDb.execute(sql`SELECT created_by FROM leagues WHERE league_id = 103`);
+		expect(league.rows).toHaveLength(1);
+		expect(league.rows[0].created_by).toBeNull();
+		const members = await testDb.execute(sql`SELECT user_id FROM league_members WHERE league_id = 103`);
+		expect(members.rows.map(r => Number(r.user_id))).toEqual([otherAdminId]);
+	});
+});

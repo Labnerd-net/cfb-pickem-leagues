@@ -189,6 +189,7 @@ export async function deleteUserWithAudit(user: UserDbData): Promise<void> {
         roles: user.roles,
         createdAt: user.createdAt,
       }),
+      db.delete(leagueMembers).where(eq(leagueMembers.userId, user.userId)),
       db.delete(users).where(eq(users.userId, user.userId)),
     ]);
   } catch (e) {

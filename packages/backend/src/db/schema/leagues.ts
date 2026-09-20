@@ -8,9 +8,7 @@ export const leagues = pgTable('leagues', {
   leagueId: serial('league_id').primaryKey(),
   name: text('name').notNull(),
   inviteCode: text('invite_code').notNull().unique(),
-  createdBy: integer('created_by')
-    .notNull()
-    .references(() => users.userId),
+  createdBy: integer('created_by').references(() => users.userId, { onDelete: 'set null' }),
   createdAt: timestamp('created_at').defaultNow().notNull(),
 });
 
