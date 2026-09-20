@@ -21,6 +21,9 @@ export default function LeagueSwitcher() {
           border: `1px solid ${alpha(theme.palette.divider, 0.5)}`,
           borderRadius: 1,
           whiteSpace: 'nowrap',
+          overflow: 'hidden',
+          textOverflow: 'ellipsis',
+          maxWidth: { xs: 120, sm: 'none' },
         }}
       >
         {activeLeague.name}
@@ -34,7 +37,7 @@ export default function LeagueSwitcher() {
   }
 
   return (
-    <FormControl size="small" sx={{ minWidth: 140 }}>
+    <FormControl size="small" sx={{ minWidth: { xs: 0, sm: 140 }, maxWidth: { xs: 140, sm: 'none' } }}>
       <Select
         value={activeLeague.leagueId}
         onChange={handleChange}

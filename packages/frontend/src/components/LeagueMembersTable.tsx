@@ -9,6 +9,7 @@ import {
   Table,
   TableBody,
   TableCell,
+  TableContainer,
   TableHead,
   TableRow,
   Typography,
@@ -86,6 +87,7 @@ export default function LeagueMembersTable({ leagueId, currentUserId }: LeagueMe
       ) : error ? (
         <Alert severity="error">{error}</Alert>
       ) : (
+        <TableContainer>
         <Table size="small">
           <TableHead>
             <TableRow>
@@ -134,6 +136,7 @@ export default function LeagueMembersTable({ leagueId, currentUserId }: LeagueMe
             ))}
           </TableBody>
         </Table>
+        </TableContainer>
       )}
     </Box>
   );

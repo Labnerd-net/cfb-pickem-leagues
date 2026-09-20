@@ -24,7 +24,7 @@ export default function DashboardCard({
     <Paper
       elevation={3}
       sx={{
-        p: 4,
+        p: { xs: 2, sm: 4 },
         border: `3px solid ${alpha(color, 0.2)}`,
         borderRadius: 2,
         position: 'relative',
