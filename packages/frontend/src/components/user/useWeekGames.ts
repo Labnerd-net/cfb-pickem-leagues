@@ -45,6 +45,7 @@ export function useWeekGames(): UseWeekGamesReturn {
 
   const finishedRows: WeekResultRow[] = finishedGames.map(game => ({
     gameId: game.gameId,
+    cfbdGameId: game.cfbdGameId,
     homeTeam: game.homeTeam,
     awayTeam: game.awayTeam,
     homePoints: game.homePoints,

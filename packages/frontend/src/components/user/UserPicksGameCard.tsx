@@ -3,6 +3,7 @@ import type { AdminGameWire } from '../../apis/userRequests';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import LockIcon from '@mui/icons-material/Lock';
 import { formatCountdown, isRedThreshold } from '../../utils/countdownFormat';
+import EspnGameLink from './EspnGameLink';
 
 interface UserPicksGameCardProps {
   game: AdminGameWire;
@@ -99,6 +100,9 @@ export default function UserPicksGameCard({
             {countdownText}
           </Typography>
         )}
+        <Box>
+          <EspnGameLink cfbdGameId={game.cfbdGameId} />
+        </Box>
       </Box>
 
       {/* Right: pick controls + status */}

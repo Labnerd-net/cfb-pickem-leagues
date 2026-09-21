@@ -1,8 +1,10 @@
 import { Paper, Box, Typography, Chip } from '@mui/material';
 import type { Team } from '@shared/types/cfb-pickem-api';
+import EspnGameLink from './EspnGameLink';
 
 export interface WeekResultRow {
   gameId: number;
+  cfbdGameId: number | null;
   homeTeam: string;
   awayTeam: string;
   homePoints: number | null;
@@ -136,6 +138,8 @@ export default function WeekResultsGameRow({ row }: WeekResultsGameRowProps) {
             </Typography>
           )}
         </Box>
+
+        <EspnGameLink cfbdGameId={row.cfbdGameId} />
       </Box>
 
       <Box sx={{ flexShrink: 0 }}>
