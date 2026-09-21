@@ -9,7 +9,7 @@ import VerifyEmail from './pages/VerifyEmail';
 import JoinLeagueConfirm from './pages/JoinLeagueConfirm';
 import { ThemeProvider } from './contexts/theme/ThemeProvider';
 import { AuthProvider } from './contexts/auth/AuthProvider';
-import { LeagueProvider } from './contexts/LeagueContext';
+import { LeagueProvider } from './contexts/LeagueProvider';
 import Navbar from './components/navbar/Navbar';
 import PrivateRoute from './components/PrivateRoute';
 import ErrorBoundary from './components/ErrorBoundary';

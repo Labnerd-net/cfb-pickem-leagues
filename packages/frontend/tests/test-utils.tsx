@@ -1,7 +1,7 @@
 import { render, type RenderOptions } from '@testing-library/react';
 import { MemoryRouter } from 'react-router';
 import { AuthProvider } from '../src/contexts/auth/AuthProvider.js';
-import { LeagueProvider } from '../src/contexts/LeagueContext.js';
+import { LeagueProvider } from '../src/contexts/LeagueProvider.js';
 import type { ReactElement, ReactNode } from 'react';
 
 interface CustomRenderOptions extends Omit<RenderOptions, 'wrapper'> {
