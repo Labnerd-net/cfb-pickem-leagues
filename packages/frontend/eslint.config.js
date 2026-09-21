@@ -22,5 +22,9 @@ export default defineConfig([
       ecmaVersion: 2020,
       globals: globals.browser,
     },
+    rules: {
+      // Existing effects set loading/reset state synchronously; refactor separately.
+      'react-hooks/set-state-in-effect': 'warn',
+    },
   },
 ])

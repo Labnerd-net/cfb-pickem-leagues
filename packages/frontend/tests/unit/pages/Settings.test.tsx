@@ -1,8 +1,9 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, waitFor } from '@testing-library/react';
+import { MemoryRouter } from 'react-router';
 import Settings from '../../../src/pages/Settings.js';
 import { AuthContext } from '../../../src/contexts/auth/AuthContext.js';
-import { LeagueProvider } from '../../../src/contexts/LeagueContext.js';
+import { LeagueProvider } from '../../../src/contexts/LeagueProvider.js';
 import type { ProfileData } from '@shared/types/cfb-pickem-api.js';
 
 // Mock userRequests so we can control getNotificationSettings and getBroadcastChannels
@@ -43,7 +44,9 @@ function renderWithAuth(ui: React.ReactElement) {
 				logout: vi.fn(),
 			}}
 		>
-			<LeagueProvider>{ui}</LeagueProvider>
+			<MemoryRouter>
+				<LeagueProvider>{ui}</LeagueProvider>
+			</MemoryRouter>
 		</AuthContext.Provider>
 	);
 }
