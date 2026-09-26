@@ -6,9 +6,20 @@ import {
   deleteYear as deleteYearApi,
 } from '../../apis/adminRequests';
 import { getWeeksForYear as getWeeksForYearAsMember } from '../../apis/userRequests';
-import { getCurrentSeason } from '../../utils/weekCalculation';
+import { getCurrentSeason, getCurrentWeek } from '../../utils/weekCalculation';
 
 const NO_WEEKS_MESSAGE = 'No weeks available for this year';
+
+/**
+ * Current week (Monday rollover, so admins see the upcoming week early) when it falls in the loaded year;
+ * otherwise the year's first week, e.g. when viewing a past or future season.
+ */
+function getDefaultWeek(weeks: AdminWeekData[]): number {
+  const current = getCurrentWeek(weeks, 'monday');
+  if (weeks.some(w => w.year === current.year && w.weekNumber === current.week)) return current.week;
+  const first = [...weeks].sort((a, b) => a.weekNumber - b.weekNumber)[0];
+  return first?.weekNumber ?? 1;
+}
 
 interface ImportFeedback {
   severity: 'success' | 'error';
@@ -66,7 +77,7 @@ export function useWeekManagement(
           if (cancelled) return;
           if (result.success && result.data) {
             setWeeks(result.data.weeks);
-            setSelectedWeek(1);
+            setSelectedWeek(getDefaultWeek(result.data.weeks));
           } else if (result.error === NO_WEEKS_MESSAGE) {
             // No weeks loaded for this year yet — not an error, just an empty list.
           } else {
@@ -77,7 +88,7 @@ export function useWeekManagement(
           if (cancelled) return;
           if (result.success && result.data) {
             setWeeks(result.data);
-            setSelectedWeek(1);
+            setSelectedWeek(getDefaultWeek(result.data));
           } else {
             setWeekError(result.error ?? 'Failed to load weeks');
           }
@@ -108,7 +119,7 @@ export function useWeekManagement(
         const weeksResult = await getWeeksForYearAsSiteAdmin(selectedYear);
         if (weeksResult.success && weeksResult.data) {
           setWeeks(weeksResult.data);
-          if (weeksResult.data.length > 0) setSelectedWeek(weeksResult.data[0].weekNumber);
+          if (weeksResult.data.length > 0) setSelectedWeek(getDefaultWeek(weeksResult.data));
         }
         setImportFeedback({ severity: 'success', message: `Weeks loaded for ${selectedYear}` });
       } else {

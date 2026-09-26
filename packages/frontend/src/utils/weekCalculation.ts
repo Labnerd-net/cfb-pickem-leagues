@@ -45,16 +45,23 @@ export function isGameInResultsMode(game: { completed: boolean; startTime: Date 
 }
 
 /**
- * Local-midnight date the dashboard should switch to this week. The CFBD calendar starts most
- * weeks on Monday, which would hide the prior weekend's results on Monday morning — so weeks
- * starting Monday or Tuesday roll over on the following Wednesday instead. Weeks that start
- * Wednesday–Sunday (week 1, postseason) roll over on their start date.
+ * 'wednesday' (dashboard): the CFBD calendar starts most weeks on Monday, which would hide the
+ * prior weekend's results on Monday morning — so weeks starting Monday or Tuesday roll over on
+ * the following Wednesday instead.
+ * 'monday' (admin panels): roll over on weekStart itself (Monday for most weeks) so admins can
+ * curate the upcoming week's games early.
  */
-function getRolloverDate(week: AdminWeekData): Date {
+export type WeekRollover = 'wednesday' | 'monday';
+
+/**
+ * Local-midnight date to switch to this week. Weeks that start Wednesday–Sunday (week 1,
+ * postseason) always roll over on their start date.
+ */
+function getRolloverDate(week: AdminWeekData, rollover: WeekRollover): Date {
   const [y, m, d] = week.weekStart.slice(0, 10).split('-').map(Number);
   const start = new Date(y, m - 1, d);
   const day = start.getDay(); // 0 = Sunday
-  if (day === 1 || day === 2) start.setDate(start.getDate() + (3 - day));
+  if (rollover === 'wednesday' && (day === 1 || day === 2)) start.setDate(start.getDate() + (3 - day));
   return start;
 }
 
@@ -65,18 +72,18 @@ function getEndOfWeekEnd(week: AdminWeekData): Date {
   return new Date(y, m - 1, d, 23, 59, 59, 999);
 }
 
-export function getCurrentWeek(weeks: AdminWeekData[]): CurrentWeek {
+export function getCurrentWeek(weeks: AdminWeekData[], rollover: WeekRollover = 'wednesday'): CurrentWeek {
   const now = getNow();
 
   // Latest week whose rollover date has passed. It stays current until the next week rolls
   // over, so the Mon/Tue gap between a week's end and the next Wednesday keeps the prior week.
   const sorted = [...weeks].sort(
-    (a, b) => getRolloverDate(a).getTime() - getRolloverDate(b).getTime()
+    (a, b) => getRolloverDate(a, rollover).getTime() - getRolloverDate(b, rollover).getTime()
       || a.year - b.year || a.weekNumber - b.weekNumber
   );
   let idx = -1;
   for (let i = 0; i < sorted.length; i++) {
-    if (getRolloverDate(sorted[i]) <= now) idx = i;
+    if (getRolloverDate(sorted[i], rollover) <= now) idx = i;
   }
   const currentWeek = idx >= 0 ? sorted[idx] : undefined;
 
