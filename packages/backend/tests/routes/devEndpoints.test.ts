@@ -8,7 +8,6 @@ vi.mock('../../src/notifications/dispatcher.js', () => ({
   dispatchNotification: vi.fn().mockResolvedValue(undefined),
 }));
 
-import { dispatchNotification } from '../../src/notifications/dispatcher.js';
 import adminRoutes from '../../src/routes/admin.js';
 
 const TEST_JWT_SECRET = 'test-secret-key-do-not-use-in-production';
@@ -19,20 +18,6 @@ app.onError((err, c) => {
   if (err instanceof HTTPException) return c.json({ error: err.message }, err.status);
   return c.json({ error: 'An unexpected error occurred' }, 500);
 });
-
-async function makeAdminToken() {
-  return sign(
-    {
-      sub: 1,
-      email: 'admin@test.com',
-      displayName: 'Test Admin',
-      roles: ['admin', 'user'],
-      exp: Math.floor(Date.now() / 1000) + 3600,
-    },
-    TEST_JWT_SECRET,
-    'HS256'
-  );
-}
 
 describe('Pick deadline with DEV_CURRENT_TIME', () => {
   let origDevTime: string | undefined;
