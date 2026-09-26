@@ -99,12 +99,17 @@ function makeUserPick(overrides: Partial<UserPickWire> = {}): UserPickWire {
 
 const defaultWeek = makeWeek();
 
+// The hook fetches prev/current/next season; only the current season has weeks, like the real API.
+function mockWeeks(weeks: AdminWeekData[]) {
+	mockGetWeeksForYear.mockImplementation(async (year: number) => ({
+		success: true,
+		data: { weeks: year === currentYear ? weeks : [] },
+	}));
+}
+
 beforeEach(() => {
 	vi.clearAllMocks();
-	mockGetWeeksForYear.mockResolvedValue({
-		success: true,
-		data: { weeks: [defaultWeek] },
-	});
+	mockWeeks([defaultWeek]);
 	mockGetPickedGames.mockResolvedValue({ success: true, data: [] });
 	mockGetUserPicks.mockResolvedValue({ success: true, data: [] });
 	// Default: far-future `now` so the warning dialog does not appear in non-dialog tests
@@ -225,10 +230,7 @@ describe('WeekGameSection (results mode)', () => {
 
 	it('re-fetches when week selector changes', async () => {
 		const week2 = makeWeek({ weekNumber: 2, weekStart: pastDate(21), weekEnd: pastDate(14) });
-		mockGetWeeksForYear.mockResolvedValue({
-			success: true,
-			data: { weeks: [defaultWeek, week2] },
-		});
+		mockWeeks([defaultWeek, week2]);
 		mockGetPickedGames.mockResolvedValue({ success: true, data: [] });
 		mockGetUserPicks.mockResolvedValue({ success: true, data: [] });
 
@@ -345,10 +347,11 @@ describe('WeekGameSection (mode switching)', () => {
 	});
 
 	it('transitions from results mode to picks mode when switching to an open week', async () => {
-		const week1 = makeWeek({ weekNumber: 1 });
-		const week2 = makeWeek({ weekNumber: 2, weekStart: pastDate(3), weekEnd: pastDate(1) });
+		// week 1 is the current week (loads first); week 2 is upcoming
+		const week1 = makeWeek({ weekNumber: 1, weekStart: pastDate(6), weekEnd: futureDate(1) });
+		const week2 = makeWeek({ weekNumber: 2, weekStart: futureDate(2), weekEnd: futureDate(9) });
 
-		mockGetWeeksForYear.mockResolvedValue({ success: true, data: { weeks: [week1, week2] } });
+		mockWeeks([week1, week2]);
 		mockGetPickedGames
 			.mockResolvedValueOnce({ success: true, data: [completedGame] })
 			.mockResolvedValueOnce({ success: true, data: [openGame] });
@@ -370,10 +373,11 @@ describe('WeekGameSection (mode switching)', () => {
 	});
 
 	it('transitions from picks mode to results mode when switching to a completed week', async () => {
-		const week1 = makeWeek({ weekNumber: 1, weekStart: pastDate(3), weekEnd: futureDate(4) });
+		// week 1 is the current week (loads first); week 2 is completed
+		const week1 = makeWeek({ weekNumber: 1, weekStart: pastDate(6), weekEnd: futureDate(4) });
 		const week2 = makeWeek({ weekNumber: 2, weekStart: pastDate(14), weekEnd: pastDate(7) });
 
-		mockGetWeeksForYear.mockResolvedValue({ success: true, data: { weeks: [week1, week2] } });
+		mockWeeks([week1, week2]);
 		mockGetPickedGames
 			.mockResolvedValueOnce({ success: true, data: [openGame] })
 			.mockResolvedValueOnce({ success: true, data: [completedGame] });

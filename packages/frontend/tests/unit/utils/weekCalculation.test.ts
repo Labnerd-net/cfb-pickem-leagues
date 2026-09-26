@@ -1,4 +1,4 @@
-import { describe, it, expect, vi } from 'vitest';
+import { describe, it, expect, vi, afterEach } from 'vitest';
 
 // Mock import.meta.env before importing the module
 vi.stubGlobal('import', { meta: { env: { VITE_SEASON_ROLLOVER_MONTH: undefined } } });
@@ -147,5 +147,61 @@ describe('getCurrentWeek', () => {
     const result = getCurrentWeek([]);
     expect(result.week).toBe(1);
     expect(typeof result.year).toBe('number');
+  });
+});
+
+describe('getCurrentWeek Wednesday rollover (real 2026 calendar shape)', () => {
+  // Mirrors admin.weeks for 2026: week 1 Sat→Tue, week 2 Tue→Mon, then Mon→Mon weeks
+  const calendar: AdminDbWeekData[] = [
+    { year: 2026, weekNumber: 1, weekStart: '2026-08-29', weekEnd: '2026-09-08', seasonType: 'regular' },
+    { year: 2026, weekNumber: 2, weekStart: '2026-09-08', weekEnd: '2026-09-14', seasonType: 'regular' },
+    { year: 2026, weekNumber: 3, weekStart: '2026-09-14', weekEnd: '2026-09-21', seasonType: 'regular' },
+    { year: 2026, weekNumber: 4, weekStart: '2026-09-21', weekEnd: '2026-09-28', seasonType: 'regular' },
+    { year: 2026, weekNumber: 5, weekStart: '2026-09-28', weekEnd: '2026-10-05', seasonType: 'regular' },
+    { year: 2026, weekNumber: 16, weekStart: '2026-12-12', weekEnd: '2027-01-28', seasonType: 'postseason' },
+    { year: 2027, weekNumber: 1, weekStart: '2027-08-28', weekEnd: '2027-09-07', seasonType: 'regular' },
+  ] as AdminDbWeekData[];
+
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
+  const at = (y: number, m: number, d: number, h = 12) => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date(y, m - 1, d, h));
+    return getCurrentWeek(calendar);
+  };
+
+  it('keeps the prior week on Monday after the weekend', () => {
+    expect(at(2026, 9, 21)).toEqual({ year: 2026, week: 3 });
+  });
+
+  it('keeps the prior week on Tuesday', () => {
+    expect(at(2026, 9, 22, 23)).toEqual({ year: 2026, week: 3 });
+  });
+
+  it('rolls over to the next week at Wednesday midnight', () => {
+    expect(at(2026, 9, 23, 0)).toEqual({ year: 2026, week: 4 });
+  });
+
+  it('stays on the week through Saturday', () => {
+    expect(at(2026, 9, 26)).toEqual({ year: 2026, week: 4 });
+  });
+
+  it('rolls a Tuesday-start week over on Wednesday', () => {
+    expect(at(2026, 9, 8)).toEqual({ year: 2026, week: 1 });
+    expect(at(2026, 9, 9)).toEqual({ year: 2026, week: 2 });
+  });
+
+  it('shows week 1 before the season starts', () => {
+    expect(at(2026, 8, 20)).toEqual({ year: 2027, week: 1 });
+  });
+
+  it('switches a Saturday-start week (postseason) on its start date', () => {
+    expect(at(2026, 12, 12)).toEqual({ year: 2026, week: 16 });
+  });
+
+  it('falls back to next season week 1 once the season is over', () => {
+    expect(at(2027, 5, 1)).toEqual({ year: 2027, week: 1 });
   });
 });

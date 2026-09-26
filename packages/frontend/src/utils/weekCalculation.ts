@@ -44,17 +44,48 @@ export function isGameInResultsMode(game: { completed: boolean; startTime: Date 
   return game.completed || (game.startTime !== null && getNow() >= new Date(game.startTime as string));
 }
 
+/**
+ * Local-midnight date the dashboard should switch to this week. The CFBD calendar starts most
+ * weeks on Monday, which would hide the prior weekend's results on Monday morning — so weeks
+ * starting Monday or Tuesday roll over on the following Wednesday instead. Weeks that start
+ * Wednesday–Sunday (week 1, postseason) roll over on their start date.
+ */
+function getRolloverDate(week: AdminWeekData): Date {
+  const [y, m, d] = week.weekStart.slice(0, 10).split('-').map(Number);
+  const start = new Date(y, m - 1, d);
+  const day = start.getDay(); // 0 = Sunday
+  if (day === 1 || day === 2) start.setDate(start.getDate() + (3 - day));
+  return start;
+}
+
+const ROLLOVER_GRACE_DAYS = 2;
+
+function getEndOfWeekEnd(week: AdminWeekData): Date {
+  const [y, m, d] = week.weekEnd.slice(0, 10).split('-').map(Number);
+  return new Date(y, m - 1, d, 23, 59, 59, 999);
+}
+
 export function getCurrentWeek(weeks: AdminWeekData[]): CurrentWeek {
   const now = getNow();
 
-  // Find week where current date is between weekStart and weekEnd
-  const currentWeek = weeks.find(week => {
-    const start = new Date(week.weekStart);
-    const end = new Date(week.weekEnd);
-    return now >= start && now <= end;
-  });
+  // Latest week whose rollover date has passed. It stays current until the next week rolls
+  // over, so the Mon/Tue gap between a week's end and the next Wednesday keeps the prior week.
+  const sorted = [...weeks].sort(
+    (a, b) => getRolloverDate(a).getTime() - getRolloverDate(b).getTime()
+      || a.year - b.year || a.weekNumber - b.weekNumber
+  );
+  let idx = -1;
+  for (let i = 0; i < sorted.length; i++) {
+    if (getRolloverDate(sorted[i]) <= now) idx = i;
+  }
+  const currentWeek = idx >= 0 ? sorted[idx] : undefined;
 
-  if (currentWeek) {
+  // Grace covers the gap between a Monday weekEnd and the next Wednesday rollover. Beyond
+  // that, the week is stale (season over) and we fall through to the off-season default.
+  const graceEnd = currentWeek ? getEndOfWeekEnd(currentWeek) : null;
+  graceEnd?.setDate(graceEnd.getDate() + ROLLOVER_GRACE_DAYS);
+
+  if (currentWeek && graceEnd && now <= graceEnd) {
     return { year: currentWeek.year, week: currentWeek.weekNumber };
   }
 
