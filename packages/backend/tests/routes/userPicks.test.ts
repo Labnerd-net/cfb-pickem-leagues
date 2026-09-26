@@ -2,7 +2,7 @@ import { describe, it, expect, beforeAll } from 'vitest';
 import { Hono } from 'hono';
 import { HTTPException } from 'hono/http-exception';
 import { sign } from 'hono/jwt';
-import { seedTestData, createTestWeek, createTestGame, createLeagueGame } from '../db-utils.js';
+import { seedTestData, createTestWeek, createTestGame } from '../db-utils.js';
 import userRoutes from '../../src/routes/user.js';
 
 const TEST_JWT_SECRET = 'test-secret-key-do-not-use-in-production';

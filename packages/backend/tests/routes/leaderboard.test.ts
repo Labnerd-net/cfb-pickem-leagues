@@ -3,7 +3,7 @@ import { Hono } from 'hono';
 import { HTTPException } from 'hono/http-exception';
 import { sign } from 'hono/jwt';
 import { sql } from 'drizzle-orm';
-import { seedTestData, createTestGame, createTestUser, createTestWeek, testDb, createLeagueGame, addPickedGame } from '../db-utils.js';
+import { seedTestData, createTestGame, createTestUser, createTestWeek, testDb, addPickedGame } from '../db-utils.js';
 import leaderboardRoutes from '../../src/routes/leaderboard.js';
 
 const TEST_JWT_SECRET = 'test-secret-key-do-not-use-in-production';

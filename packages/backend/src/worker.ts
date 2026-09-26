@@ -23,7 +23,7 @@ export default {
     }
     return env.ASSETS.fetch(request);
   },
-  async scheduled(_event: ScheduledEvent, env: Env, _ctx: ExecutionContext) {
+  async scheduled(_event: ScheduledEvent, env: Env) {
     reinitializeSecrets(env as Record<string, string | undefined>);
     syncDbEnv(env as Record<string, string | undefined>);
     await runCronTick(env.CRON_CACHE).catch(err => pinoLogger.error(err, 'cron tick failed'));

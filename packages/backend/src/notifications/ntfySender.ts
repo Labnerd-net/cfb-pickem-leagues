@@ -41,7 +41,7 @@ export async function sendNtfyNotification(params: SendNtfyParams): Promise<bool
     'Content-Type': 'text/plain',
     // ntfy Title is an HTTP header; undici rejects values with chars > 255.
     // Replace common Unicode punctuation with ASCII equivalents.
-    Title: params.title.replace(/[–—]/g, '-').replace(/[^\x00-\xFF]/g, ''),
+    Title: params.title.replace(/[–—]/g, '-').replace(/[Ā-￿]/g, ''),
   };
   if (authHeader) {
     headers['Authorization'] = authHeader;
