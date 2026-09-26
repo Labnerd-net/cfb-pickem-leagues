@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import type { AdminWeekData } from '@shared/types/cfb-pickem-api';
 import { getPickedGames, getWeeksForYear, type AdminGameWire } from '../../apis/userRequests';
 import { useLeague } from '../../contexts/LeagueContext';
@@ -29,6 +29,9 @@ export function useWeekNavigation(): UseWeekNavigationReturn {
   const [loading, setLoading] = useState<boolean>(false);
   const [initializing, setInitializing] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
+  // Year whose weeks are already in state — init loads them itself, so the year-change
+  // effect must not refetch and reset selectedWeek to week 1 when initializing flips false.
+  const loadedYearRef = useRef<number>(0);
 
   // Initial load: fetch weeks for prev/current/next season, default to current week
   useEffect(() => {
@@ -64,6 +67,7 @@ export function useWeekNavigation(): UseWeekNavigationReturn {
         setAvailableYears(years);
 
         const current = getCurrentWeek(allWeeks);
+        loadedYearRef.current = current.year;
         setSelectedYear(current.year);
         setSelectedWeek(current.week);
         setWeeks(allWeeks.filter(w => w.year === current.year));
@@ -80,7 +84,8 @@ export function useWeekNavigation(): UseWeekNavigationReturn {
 
   // Load weeks when year changes (skip during init — init already fetches and sets weeks)
   useEffect(() => {
-    if (selectedYear === 0 || initializing) return;
+    if (selectedYear === 0 || initializing || selectedYear === loadedYearRef.current) return;
+    loadedYearRef.current = selectedYear;
 
     let cancelled = false;
 
