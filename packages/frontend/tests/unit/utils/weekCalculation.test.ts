@@ -205,3 +205,35 @@ describe('getCurrentWeek Wednesday rollover (real 2026 calendar shape)', () => {
     expect(at(2027, 5, 1)).toEqual({ year: 2027, week: 1 });
   });
 });
+
+describe('getCurrentWeek Monday rollover (admin panels)', () => {
+  const calendar: AdminDbWeekData[] = [
+    { year: 2026, weekNumber: 1, weekStart: '2026-08-29', weekEnd: '2026-09-08', seasonType: 'regular' },
+    { year: 2026, weekNumber: 2, weekStart: '2026-09-08', weekEnd: '2026-09-14', seasonType: 'regular' },
+    { year: 2026, weekNumber: 3, weekStart: '2026-09-14', weekEnd: '2026-09-21', seasonType: 'regular' },
+    { year: 2026, weekNumber: 4, weekStart: '2026-09-21', weekEnd: '2026-09-28', seasonType: 'regular' },
+  ] as AdminDbWeekData[];
+
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
+  const at = (y: number, m: number, d: number, h = 12) => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date(y, m - 1, d, h));
+    return getCurrentWeek(calendar, 'monday');
+  };
+
+  it('stays on the prior week through Sunday', () => {
+    expect(at(2026, 9, 20, 23)).toEqual({ year: 2026, week: 3 });
+  });
+
+  it('rolls over at Monday midnight', () => {
+    expect(at(2026, 9, 21, 0)).toEqual({ year: 2026, week: 4 });
+  });
+
+  it('rolls a Tuesday-start week over on its start date', () => {
+    expect(at(2026, 9, 7)).toEqual({ year: 2026, week: 1 });
+    expect(at(2026, 9, 8)).toEqual({ year: 2026, week: 2 });
+  });
+});
