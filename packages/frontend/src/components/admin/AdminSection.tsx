@@ -104,6 +104,7 @@ export default function AdminSection() {
                   <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 1, mb: 2 }}>
                     <Button
                       variant="outlined"
+                      color="inherit"
                       size="small"
                       onClick={gameHook.handleImportGames}
                       disabled={importing || loading || syncing}
@@ -113,7 +114,7 @@ export default function AdminSection() {
                     </Button>
                     <Button
                       variant="outlined"
-                      color="primary"
+                      color="inherit"
                       size="small"
                       disabled={importing || loading || syncing}
                       startIcon={syncing ? <CircularProgress size={16} /> : undefined}
