@@ -5,6 +5,7 @@ import { adminGames } from './schema/admin.js';
 import { leagueMembers, leagues } from './schema/leagues.js';
 import { db } from './index.js';
 import logger from '../utils/logger.js';
+import { rankLeaderboard } from '../utils/leaderboardRanking.js';
 import type {
   ProfileData,
   Role,
@@ -320,11 +321,8 @@ export async function returnLeaderboard(year: number, leagueId: number): Promise
       .innerJoin(leagueMembers, and(eq(leagueMembers.userId, users.userId), eq(leagueMembers.leagueId, leagueId)))
       .leftJoin(userGames, and(eq(users.userId, userGames.userId), eq(userGames.leagueId, leagueId)))
       .leftJoin(adminGames, and(eq(userGames.gameId, adminGames.gameId), eq(adminGames.year, year)))
-      .groupBy(users.userId, users.displayName)
-      .orderBy(
-        sql`COUNT(CASE WHEN ${adminGames.winningTeam} != 'pending' AND ${adminGames.winningTeam} = ${userGames.teamChosen} THEN 1 END) DESC`
-      );
-    return rows.map(r => {
+      .groupBy(users.userId, users.displayName);
+    const entries = rows.map(r => {
       const correct = Number(r.correct);
       const incorrect = Number(r.incorrect);
       const finished = correct + incorrect;
@@ -338,6 +336,7 @@ export async function returnLeaderboard(year: number, leagueId: number): Promise
         percentage: finished === 0 ? null : correct / finished,
       };
     });
+    return rankLeaderboard(entries);
   } catch (e) {
     logger.error({ err: e }, 'returnLeaderboard failed');
     throw e;

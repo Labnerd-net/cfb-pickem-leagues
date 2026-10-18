@@ -185,7 +185,7 @@ export default function LeaderboardSection() {
                   </TableRow>
                 </TableHead>
                 <TableBody>
-                  {entries.map((entry, index) => (
+                  {entries.map(entry => (
                     <TableRow
                       key={entry.userId}
                       sx={
@@ -194,7 +194,7 @@ export default function LeaderboardSection() {
                           : undefined
                       }
                     >
-                      <TableCell>{index + 1}</TableCell>
+                      <TableCell>{entry.rank ?? '—'}</TableCell>
                       <TableCell>{entry.displayName}</TableCell>
                       <TableCell>{entry.correct}</TableCell>
                       <TableCell>{entry.total}</TableCell>

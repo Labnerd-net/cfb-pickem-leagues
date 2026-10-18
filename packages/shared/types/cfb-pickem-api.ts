@@ -168,6 +168,8 @@ export interface LeaderboardEntry {
   incorrect: number;
   pending: number;
   percentage: number | null; // null when total === 0
+  rank: number | null; // null when not qualified (below minimum participation)
+  qualified: boolean;
 }
 
 export interface WeekScoresEntry {

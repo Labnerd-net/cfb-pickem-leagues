@@ -30,9 +30,9 @@ const mockGetWeeksForYear = vi.mocked(getWeeksForYear);
 const mockUseAuth = vi.mocked(useAuth);
 
 const mockEntries: LeaderboardEntry[] = [
-	{ userId: 1, displayName: 'Alice', total: 10, correct: 7, incorrect: 3, pending: 0, percentage: 0.7 },
-	{ userId: 2, displayName: 'Bob', total: 8, correct: 4, incorrect: 4, pending: 0, percentage: null },
-	{ userId: 3, displayName: 'Carol', total: 0, correct: 0, incorrect: 0, pending: 0, percentage: null },
+	{ userId: 1, displayName: 'Alice', total: 10, correct: 7, incorrect: 3, pending: 0, percentage: 0.7, rank: 1, qualified: true },
+	{ userId: 2, displayName: 'Bob', total: 8, correct: 4, incorrect: 4, pending: 0, percentage: null, rank: 2, qualified: true },
+	{ userId: 3, displayName: 'Carol', total: 0, correct: 0, incorrect: 0, pending: 0, percentage: null, rank: null, qualified: false },
 ];
 
 const mockWeekScores: WeekScoresEntry[] = [
@@ -71,7 +71,8 @@ describe('LeaderboardSection', () => {
 
 		expect(screen.getByText('1')).toBeInTheDocument();
 		expect(screen.getByText('2')).toBeInTheDocument();
-		expect(screen.getByText('3')).toBeInTheDocument();
+		// Carol is unqualified (rank: null), so she gets no rank number
+		expect(screen.queryByText('3')).not.toBeInTheDocument();
 	});
 
 	it('highlights the current user row', async () => {
@@ -86,11 +87,12 @@ describe('LeaderboardSection', () => {
 		expect(aliceRow).not.toBe(bobRow);
 	});
 
-	it('renders "—" for a user with percentage: null', async () => {
+	it('renders "—" for null percentage and null rank', async () => {
 		renderWithProviders(<LeaderboardSection />);
 
 		await waitFor(() => {
-			expect(screen.getAllByText('—')).toHaveLength(2);
+			// Bob: percentage; Carol: percentage + rank
+			expect(screen.getAllByText('—')).toHaveLength(3);
 		});
 	});
 
