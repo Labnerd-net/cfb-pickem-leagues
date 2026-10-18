@@ -179,6 +179,8 @@ export interface WeekScoresEntry {
   correct: number;
   incorrect: number;
   pending: number;
+  percentage: number | null; // correct / (correct + incorrect); null when nothing finished
+  rank: number | null; // null when no finished picks yet
 }
 
 export interface MarkGameCompleteRequest {

@@ -5,7 +5,7 @@ import { adminGames } from './schema/admin.js';
 import { leagueMembers, leagues } from './schema/leagues.js';
 import { db } from './index.js';
 import logger from '../utils/logger.js';
-import { rankLeaderboard } from '../utils/leaderboardRanking.js';
+import { rankLeaderboard, WEEKLY_MIN_PARTICIPATION_RATIO } from '../utils/leaderboardRanking.js';
 import type {
   ProfileData,
   Role,
@@ -373,14 +373,21 @@ export async function returnWeekScores(year: number, week: number, leagueId: num
       .innerJoin(users, eq(games.userId, users.userId))
       .where(and(ne(games.teamChosen, 'voided'), eq(games.leagueId, leagueId)))
       .groupBy(users.userId, users.displayName);
-    return rows.map(r => ({
-      userId: r.userId,
-      displayName: r.displayName,
-      total: Number(r.total),
-      correct: Number(r.correct),
-      incorrect: Number(r.incorrect),
-      pending: Number(r.pending),
-    }));
+    const entries = rows.map(r => {
+      const correct = Number(r.correct);
+      const incorrect = Number(r.incorrect);
+      const finished = correct + incorrect;
+      return {
+        userId: r.userId,
+        displayName: r.displayName,
+        total: Number(r.total),
+        correct,
+        incorrect,
+        pending: Number(r.pending),
+        percentage: finished === 0 ? null : correct / finished,
+      };
+    });
+    return rankLeaderboard(entries, WEEKLY_MIN_PARTICIPATION_RATIO);
   } catch (e) {
     logger.error({ err: e }, 'returnWeekScores failed');
     throw e;
