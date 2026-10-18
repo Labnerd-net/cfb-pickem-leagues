@@ -109,10 +109,7 @@ export default function LeaderboardSection() {
       if (cancelled) return;
 
       if (result.success && result.data) {
-        const sorted = [...result.data].sort((a, b) =>
-          b.correct !== a.correct ? b.correct - a.correct : a.incorrect - b.incorrect
-        );
-        setWeekEntries(sorted);
+        setWeekEntries(result.data);
       } else {
         setWeekError(result.error ?? 'Failed to load week scores');
       }
@@ -285,7 +282,7 @@ export default function LeaderboardSection() {
                   </TableRow>
                 </TableHead>
                 <TableBody>
-                  {weekEntries.map((entry, index) => (
+                  {weekEntries.map(entry => (
                     <TableRow
                       key={entry.userId}
                       sx={
@@ -294,14 +291,14 @@ export default function LeaderboardSection() {
                           : undefined
                       }
                     >
-                      <TableCell>{index + 1}</TableCell>
+                      <TableCell>{entry.rank ?? '—'}</TableCell>
                       <TableCell>{entry.displayName}</TableCell>
                       <TableCell>{entry.correct}</TableCell>
                       <TableCell>{entry.incorrect}</TableCell>
                       <TableCell>{entry.pending}</TableCell>
                       <TableCell>{entry.total}</TableCell>
                       <TableCell>
-                        {entry.total > 0 ? Math.round((entry.correct / entry.total) * 100) + '%' : '—'}
+                        {entry.percentage !== null ? Math.round(entry.percentage * 100) + '%' : '—'}
                       </TableCell>
                     </TableRow>
                   ))}

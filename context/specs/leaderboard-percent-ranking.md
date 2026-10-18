@@ -12,3 +12,9 @@ Season leaderboard ranks by pick percentage instead of correct count. Picks are 
 ## Acceptance
 - A 1-0 user does not outrank a 60-15 user.
 - Rank column reflects shared ranks.
+
+## Weekly leaderboard
+- Same ranking function (`rankLeaderboard`) with `WEEKLY_MIN_PARTICIPATION_RATIO = 0`: anyone with >= 1 finished pick is ranked; users with only pending picks get rank null.
+- Percentage = correct / (correct + incorrect); pending excluded (previously correct / total including pending).
+- Ranking moved server-side (`returnWeekScores`); the browser-side sort was removed.
+- Known tradeoff: mid-week, a 1-0 user can outrank a 9-3 user until more games finish.

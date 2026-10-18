@@ -36,8 +36,8 @@ const mockEntries: LeaderboardEntry[] = [
 ];
 
 const mockWeekScores: WeekScoresEntry[] = [
-	{ userId: 1, displayName: 'Alice', total: 5, correct: 4, incorrect: 1, pending: 0 },
-	{ userId: 2, displayName: 'Bob', total: 5, correct: 2, incorrect: 2, pending: 1 },
+	{ userId: 1, displayName: 'Alice', total: 5, correct: 4, incorrect: 1, pending: 0, percentage: 0.8, rank: 1 },
+	{ userId: 2, displayName: 'Bob', total: 5, correct: 2, incorrect: 2, pending: 1, percentage: 0.5, rank: 2 },
 ];
 
 const mockWeeks = [
@@ -209,7 +209,7 @@ describe('LeaderboardSection', () => {
 		});
 	});
 
-	it('derives percentage for week scores', async () => {
+	it('shows finished-pick percentage for week scores (pending excluded)', async () => {
 		const user = userEvent.setup();
 
 		renderWithProviders(<LeaderboardSection />);
@@ -217,8 +217,8 @@ describe('LeaderboardSection', () => {
 		await user.click(screen.getByRole('tab', { name: 'Week' }));
 
 		await waitFor(() => {
-			expect(screen.getByText('80%')).toBeInTheDocument(); // Alice: 4/5
-			expect(screen.getByText('40%')).toBeInTheDocument(); // Bob: 2/5
+			expect(screen.getByText('80%')).toBeInTheDocument(); // Alice: 4/(4+1)
+			expect(screen.getByText('50%')).toBeInTheDocument(); // Bob: 2/(2+2), 1 pending excluded
 		});
 	});
 });
