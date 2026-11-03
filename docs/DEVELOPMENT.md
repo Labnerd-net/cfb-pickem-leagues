@@ -1,5 +1,50 @@
 # Development Guide
 
+## Environment Setup
+
+### Prerequisites
+
+- [Node.js](https://nodejs.org/) v22+
+- [pnpm](https://pnpm.io/)
+- A [Neon](https://neon.tech) project (a dedicated dev branch is recommended)
+- A free [CFBD API key](https://collegefootballdata.com/)
+
+### Backend environment
+
+Copy `packages/backend/.env.example` to `packages/backend/.env` and fill in at least:
+
+```env
+DEV_DB=<neon connection string>     # used when NODE_ENV != production
+PROD_DB=<neon connection string>    # used when NODE_ENV = production
+CFBD_API_KEY=<your key>
+JWT_SECRET=<openssl rand -base64 32>
+CLIENT_URL=http://localhost:5173,http://localhost:4173
+SERVER_PORT=3000
+JWT_ALGORITHM=HS256
+JWT_EXPIRATION_DAYS=7
+
+# Optional — omit RESEND_API_KEY or NOTIFICATION_FROM_EMAIL to disable email
+RESEND_API_KEY=
+NOTIFICATION_FROM_EMAIL=noreply@yourdomain.com   # must be on your Resend-verified domain
+SKIP_EMAIL_SEND=true                             # log emails instead of sending (dev)
+```
+
+### Frontend environment
+
+Create `packages/frontend/.env`:
+
+```env
+VITE_API_URL=http://localhost:3000
+```
+
+The app runtime and `drizzle-kit` both read `DEV_DB` / `PROD_DB`.
+
+### Development without a Resend account
+
+Set `SKIP_EMAIL_SEND=true` to log emails instead of sending. Verification tokens are still written to the DB, so you can read them in Drizzle Studio (`pnpm studio`) to test the verify-email flow.
+
+---
+
 ## Scripts
 
 | Command | Description |
