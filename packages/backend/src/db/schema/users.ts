@@ -12,13 +12,9 @@ import {
   unique,
 } from 'drizzle-orm/pg-core';
 import { relations } from 'drizzle-orm';
-// import { relations } from 'drizzle-orm'; // for drizzle-kit generate
 import { columnRole, columnTeam } from '../index.js';
-// import { columnRole, columnTeam } from '../index'; // for drizzle-kit generate
 import { adminGames } from '../schema/admin.js';
-// import { adminGames } from '../schema/admin'; // for drizzle-kit generate
 import { leagues } from '../schema/leagues.js';
-// import { leagues } from '../schema/leagues'; // for drizzle-kit generate
 
 const userSchema = pgSchema('user');
 
