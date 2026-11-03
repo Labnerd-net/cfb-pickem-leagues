@@ -43,3 +43,6 @@ api-responses/
 # Claude Code
 .claude/settings.json
 .claude/settings.local.json
+
+# Security findings (may reveal vulnerabilities)
+context/backlog-security.md
