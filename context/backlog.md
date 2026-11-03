@@ -10,8 +10,6 @@
 ## Bugs
 
 ### High
-- **#15 [cron/cronTick.ts ~L113 vs routes/admin.ts L127-135, L169-173]**: Cron refresh calls `getGameData({year, week: weekNumber, seasonType})` without the `cfbdWeek` offset that the admin routes compute (`weekNumber - getMaxRegularWeek`). For postseason weeks CFBD returns an empty list, nothing is upserted, and `lastRefreshAt` is still set, so bowl results and `rankings_updated` never fire without a manual Sync Results. Fix: extract the postseason-offset logic into one helper used by `admin.ts` and `cronTick.ts`; log a warning on an empty result.
-- **#16 [cron/cronTick.ts L113-116, db/dbAdminFunctions.ts `upsertGamesForWeek` L102-153, routes/admin.ts `POST /admin/week` L145]**: Cron refresh and week re-import overwrite `completed`, scores, and `winningTeam` on conflict without honoring `getCorrectedCfbdGameIds`; only `sync-results` filters corrected games. A manually corrected score is silently replaced by CFBD's value on the next tick. Fix: apply the corrected-games filter inside `upsertGamesForWeek` so every caller gets it.
 - **#17 [cron/cronTick.ts L145-179, worker.ts L26-30]**: Notification dispatches are fire-and-forget inside the Workers `scheduled` handler (no `ctx.waitUntil`, `_ctx` was removed in the lint fix), and the in-memory sent-flags are set before the send. Invocation end can cancel pending sends, and the flags then block retries for that isolate; a missed 15-minute tick can mean a missed reminder window. Fix: await `Promise.allSettled` on the dispatches (or pass `ctx` and use `waitUntil`) and set the flags only after dispatch resolves.
 - **#18 [utils/zValidate.ts L52, user/usePickSubmit.ts L106-108]**: `POST /user/picks` caps `games` at 50 while the frontend resubmits every pick for the week and an FBS week is ~60-70 games. A league pooling a full week gets a 400 on every save. Fix: raise the cap to ~150 and/or send only changed picks (also reduces DB writes).
 - **#19 [routes/admin.ts L97-107, db/dbAdminFunctions.ts L499-520]**: "Reset Year" 500s when any league pool contains games from that year: `league_games.game_id` FKs to `admin.games` with `ON DELETE no action`, and `hasPicksForYear` only checks `user.games`. The games and weeks deletes are also separate, non-atomic statements. Fix: delete `league_games` for the year first, then games, then weeks in one `db.batch`, or add `ON DELETE CASCADE` via migration.
@@ -55,7 +53,6 @@ _None identified._
 ## Improvements & Refactors
 
 ### High
-- **#39 [.github/workflows/]**: Only the two Claude workflows exist; nothing runs lint, tsc, tests, or build on PRs, for a site with real users. Fix: add `ci.yml` (pnpm install `--frozen-lockfile`, `pnpm lint`, `tsc --noEmit` for backend and frontend, `pnpm test`, `pnpm build`). Tests use PGlite and MSW so no secrets are needed. Add a CI README badge once it passes.
 - **#40 [backend/src/utils/leaderboardRanking.ts]**: Core scoring logic with no direct tests. Add `tests/unit/utils/leaderboardRanking.test.ts` covering the 50% threshold, `minRatio=0` for weekly, shared ranks on ties (1, 1, 3), secondary sort by correct then name, all-pending users with rank `null`, empty input, and zero max finished count.
 
 ### Medium
@@ -74,7 +71,7 @@ _None identified._
 - **#51 [packages/backend/pnpm-lock.yaml, packages/frontend/pnpm-lock.yaml]**: Per-package lockfiles are tracked alongside the root lockfile; likely leftovers that can drift. Remove if unused.
 - **#52 [backend api-responses/ncaa-api/*, tests/bruno NCAA/SDV collections, src/types/ncaa-api.ts, root `axios` dependency, packages/shared/types/cfb-pickem-api.js]**: NCAA/SDV sources were removed but fixtures and collections remain tracked; verify and delete dead types, the root `axios` dependency, and the compiled `.js` artifact beside the shared `.ts`.
 - **#53 [TODO.md, context/backlog.md]**: TODO.md holds a stale password-minimum item (minimum is now 8). Refresh both.
-- **#54 [vitest.config.ts]**: Coverage reporting exists; add thresholds or report in CI once CI exists.
+- **#54 [vitest.config.ts]**: Coverage reporting exists; add thresholds or report it in the CI workflow.
 - **#55 [ESLint config]**: The "no `Promise.all` fan-out in `src/db`" rule is a review convention only. Enforce with `no-restricted-syntax`.
 - **#56 [Worker observability]**: No error aggregation. Enable Workers observability and log a per-run cron summary (games imported, notifications sent).
 - **#57 [cron/cronTick.ts (181 lines)]**: Extend the pure-function split used in `cronLogic.ts` to the remaining branching in `cronTick.ts`.
@@ -108,8 +105,8 @@ _None identified._
 
 | Category | High | Medium | Low | Total |
 |----------|------|--------|-----|-------|
-| Bugs | 5 | 4 | 11 | 20 |
+| Bugs | 3 | 4 | 11 | 18 |
 | Performance | 0 | 2 | 2 | 4 |
-| Improvements & Refactors | 2 | 9 | 10 | 21 |
+| Improvements & Refactors | 1 | 9 | 10 | 20 |
 | Feature Ideas | 0 | 3 | 7 | 10 |
-| **Total** | 7 | 18 | 30 | 55 |
+| **Total** | 4 | 18 | 30 | 52 |
