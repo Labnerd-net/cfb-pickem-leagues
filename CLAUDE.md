@@ -49,7 +49,7 @@ pnpm format               # Prettier format all packages
 
 ### Database
 ```bash
-docker compose -f docker/docker-compose-pg.yml up -d   # Start PostgreSQL
+# Requires DEV_DB (or PROD_DB with NODE_ENV=production) pointing at a Neon database
 cd packages/backend
 pnpm generate             # Generate Drizzle migrations
 pnpm migrate              # Run migrations
@@ -140,11 +140,7 @@ Backend expects these:
 DEV_DB=                       # Neon connection string, used when NODE_ENV != production
 PROD_DB=                      # Neon connection string, used when NODE_ENV = production
 
-# drizzle-kit CLI only (generate/migrate/studio — packages/backend/drizzle.config.ts):
-# falls back to these DB_* vars to build a local postgres:// URL when DEV_DB/PROD_DB
-# are unset, e.g. against `docker compose -f docker/docker-compose-pg.yml up -d`.
-# The app runtime does NOT read these — only drizzle-kit does.
-DB_USER=postgres  DB_PASSWORD=postgres  DB_HOST=localhost  DB_PORT=5432  DB_NAME=cfb-pickem
+# drizzle-kit (generate/migrate/studio) reads the same DEV_DB / PROD_DB.
 
 # Server
 SERVER_PORT=3000
