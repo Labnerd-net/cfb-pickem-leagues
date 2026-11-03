@@ -3,6 +3,7 @@ import {
   returnNextKickoffAfter,
   returnGamesForWeek,
   upsertGamesForWeek,
+  getCfbdWeek,
 } from '../db/dbAdminFunctions.js';
 import { getActiveLeaguesForWeek } from '../db/dbNotificationFunctions.js';
 import { getGamesForLeagueWeek } from '../db/dbAdminFunctions.js';
@@ -110,9 +111,17 @@ export async function runCronTick(cronCacheKv?: KVNamespace): Promise<void> {
   if (shouldRefreshScores({ now, lastKickoff, lastRefreshAt, hardCapStart })) {
     logger.info({ weekKey }, 'Refreshing scores');
     try {
-      const gameData = await getGameData({ year: week.year, week: week.weekNumber, seasonType: week.seasonType });
+      // Postseason weeks are stored offset by the regular season count; CFBD needs its own week number.
+      const cfbdWeek = await getCfbdWeek(week.year, week.weekNumber, week.seasonType);
+      const gameData = await getGameData(
+        { year: week.year, week: week.weekNumber, seasonType: week.seasonType },
+        undefined,
+        cfbdWeek
+      );
       if (gameData?.length) {
         await upsertGamesForWeek(gameData);
+      } else {
+        logger.warn({ weekKey, cfbdWeek }, 'Score refresh returned no games from CFBD');
       }
       lastRefreshAt = getNow();
       didRefresh = true;

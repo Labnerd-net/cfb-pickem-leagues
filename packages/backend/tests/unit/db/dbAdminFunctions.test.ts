@@ -13,8 +13,10 @@ import {
 	addGameToLeague,
 	returnActiveWeek,
 	returnNextKickoffAfter,
+	upsertGamesForWeek,
+	getCfbdWeek,
 } from '../../../src/db/dbAdminFunctions.js';
-import type { WeekIdentifier } from '@shared/types/cfb-pickem-api.js';
+import type { AdminGameData, WeekIdentifier } from '@shared/types/cfb-pickem-api.js';
 
 describe('Admin Database Functions', () => {
 	beforeAll(async () => {
@@ -297,6 +299,77 @@ describe('Admin Database Functions', () => {
 			const updated = await correctGameScore(id, 14, 14, 'pending', null, null, 1);
 
 			expect(updated!.winningTeam).toBe('pending');
+		});
+	});
+
+	describe('upsertGamesForWeek', () => {
+		function cfbdGame(overrides: Partial<AdminGameData>): AdminGameData {
+			return {
+				cfbdGameId: 5001,
+				weekNumber: 1,
+				year: 2024,
+				seasonType: 'regular',
+				completed: true,
+				homeTeam: 'Oregon',
+				awayTeam: 'Washington',
+				homePoints: 10,
+				awayPoints: 7,
+				winningTeam: 'home_team',
+				startTime: null,
+				spread: null,
+				...overrides,
+			};
+		}
+
+		it('writes games and returns them', async () => {
+			const written = await upsertGamesForWeek([cfbdGame({})]);
+
+			expect(written).toHaveLength(1);
+			const rows = await testDb.execute(sql`SELECT home_points, completed FROM "admin"."games" WHERE cfbd_game_id = 5001`);
+			expect(rows.rows[0].home_points).toBe(10);
+			expect(rows.rows[0].completed).toBe(true);
+		});
+
+		it('returns an empty array for empty input', async () => {
+			expect(await upsertGamesForWeek([])).toEqual([]);
+		});
+
+		it('does not overwrite a manually corrected game, but still writes the others', async () => {
+			// Existing corrected game (CFBD id 5001) and an uncorrected one (CFBD id 5002)
+			const corrected = await createTestGame(1, 2024, 'Oregon', 'Washington', false);
+			const correctedId = (corrected as { game_id: number }).game_id;
+			await testDb.execute(sql`UPDATE "admin"."games" SET cfbd_game_id = 5001 WHERE game_id = ${correctedId}`);
+			await correctGameScore(correctedId, 35, 28, 'home_team', null, null, 1);
+
+			const other = await createTestGame(1, 2024, 'Texas', 'Oklahoma', false);
+			const otherId = (other as { game_id: number }).game_id;
+			await testDb.execute(sql`UPDATE "admin"."games" SET cfbd_game_id = 5002 WHERE game_id = ${otherId}`);
+
+			const written = await upsertGamesForWeek([
+				cfbdGame({ cfbdGameId: 5001, homePoints: 10, awayPoints: 7 }),
+				cfbdGame({ cfbdGameId: 5002, homeTeam: 'Texas', awayTeam: 'Oklahoma', homePoints: 45, awayPoints: 14 }),
+			]);
+
+			expect(written.map(g => g.cfbdGameId)).toEqual([5002]);
+			const rows = await testDb.execute(sql`SELECT game_id, home_points, away_points FROM "admin"."games" WHERE game_id IN (${correctedId}, ${otherId}) ORDER BY game_id`);
+			const byId = Object.fromEntries(rows.rows.map(r => [r.game_id, r]));
+			expect(byId[correctedId].home_points).toBe(35); // correction preserved, not CFBD's 10
+			expect(byId[correctedId].away_points).toBe(28);
+			expect(byId[otherId].home_points).toBe(45);
+		});
+	});
+
+	describe('getCfbdWeek', () => {
+		it('returns undefined for regular-season weeks', async () => {
+			expect(await getCfbdWeek(2024, 1, 'regular')).toBeUndefined();
+		});
+
+		it('translates stored postseason weeks back to the CFBD week number', async () => {
+			// Seed data has regular weeks 1-2, so stored week 3 is CFBD postseason week 1
+			await createTestWeek(3, 2024, 'postseason');
+			await createTestWeek(4, 2024, 'postseason');
+			expect(await getCfbdWeek(2024, 3, 'postseason')).toBe(1);
+			expect(await getCfbdWeek(2024, 4, 'postseason')).toBe(2);
 		});
 	});
 });

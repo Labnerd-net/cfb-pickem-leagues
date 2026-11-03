@@ -6,7 +6,8 @@ const mockReturnActiveWeek = vi.hoisted(() => vi.fn());
 const mockReturnNextKickoffAfter = vi.hoisted(() => vi.fn().mockResolvedValue(null));
 const mockReturnGamesForWeek = vi.hoisted(() => vi.fn());
 const mockGetGamesForLeagueWeek = vi.hoisted(() => vi.fn());
-const mockUpsertGamesForWeek = vi.hoisted(() => vi.fn().mockResolvedValue(undefined));
+const mockUpsertGamesForWeek = vi.hoisted(() => vi.fn().mockResolvedValue([]));
+const mockGetCfbdWeek = vi.hoisted(() => vi.fn().mockResolvedValue(undefined));
 const mockDispatchNotification = vi.hoisted(() => vi.fn().mockResolvedValue(undefined));
 const mockGetGameData = vi.hoisted(() => vi.fn().mockResolvedValue([]));
 const mockGetNow = vi.hoisted(() => vi.fn());
@@ -24,6 +25,7 @@ vi.mock('../../../src/db/dbAdminFunctions.js', () => ({
 	returnGamesForWeek: mockReturnGamesForWeek,
 	getGamesForLeagueWeek: mockGetGamesForLeagueWeek,
 	upsertGamesForWeek: mockUpsertGamesForWeek,
+	getCfbdWeek: mockGetCfbdWeek,
 }));
 
 vi.mock('../../../src/db/dbNotificationFunctions.js', () => ({
@@ -487,5 +489,48 @@ describe('runCronTick — per-league dispatch', () => {
 
 		expect(firstCount).toBe(1);
 		expect(secondCount).toBe(1);
+	});
+});
+
+describe('runCronTick — score refresh CFBD week', () => {
+	beforeEach(() => {
+		vi.clearAllMocks();
+		mockGetNow.mockReturnValue(now);
+		mockGetActiveLeaguesForWeek.mockResolvedValue([DEFAULT_LEAGUE]);
+		mockReturnGamesForWeek.mockResolvedValue([makeGame()]);
+		mockGetGamesForLeagueWeek.mockResolvedValue([makeGame()]);
+		mockGetFirstKickoff.mockReturnValue(null);
+		mockGetLastKickoff.mockReturnValue(null);
+		mockShouldRefreshScores.mockReturnValue(true);
+		mockGetCfbdWeek.mockResolvedValue(undefined);
+		mockGetGameData.mockResolvedValue([makeGame()]);
+	});
+
+	it('translates a postseason week to its CFBD week number for the API call', async () => {
+		// Stored week 16 = regular season count (15) + CFBD postseason week 1
+		mockReturnActiveWeek.mockResolvedValue({ year: 2030, weekNumber: 16, seasonType: 'postseason' as const });
+		mockGetCfbdWeek.mockResolvedValue(1);
+
+		await runCronTick();
+
+		expect(mockGetCfbdWeek).toHaveBeenCalledWith(2030, 16, 'postseason');
+		expect(mockGetGameData).toHaveBeenCalledWith(
+			{ year: 2030, week: 16, seasonType: 'postseason' },
+			undefined,
+			1
+		);
+		expect(mockUpsertGamesForWeek).toHaveBeenCalledTimes(1);
+	});
+
+	it('passes no CFBD week override for a regular-season week', async () => {
+		mockReturnActiveWeek.mockResolvedValue(makeWeek(2030, 4));
+
+		await runCronTick();
+
+		expect(mockGetGameData).toHaveBeenCalledWith(
+			{ year: 2030, week: 4, seasonType: 'regular' },
+			undefined,
+			undefined
+		);
 	});
 });
