@@ -1,5 +1,7 @@
 # CFB Pickem Leagues
 
+[![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
+
 A multi-league College Football Pick'em app. Friends join private leagues, pick the winner of each week's games before kickoff, and compete on live leaderboards. Scores sync automatically from [College Football Data](https://collegefootballdata.com/), and reminders and results go out by email, ntfy, Telegram, or Discord.
 
 **Live site: [cfbpickem.labnerd.net](https://cfbpickem.labnerd.net/)** · In production with real users, running on Cloudflare Workers and Neon Postgres.
