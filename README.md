@@ -67,7 +67,7 @@ Create `packages/frontend/.env`:
 VITE_API_URL=http://localhost:3000
 ```
 
-The app runtime only reads `DEV_DB` / `PROD_DB`. The `DB_*` variables in `.env.example` are used solely by `drizzle-kit` when no Neon string is set.
+The app runtime and `drizzle-kit` both read `DEV_DB` / `PROD_DB`.
 
 ### 3. Run database migrations
 
@@ -129,4 +129,4 @@ pnpm --filter cfb-pickem-api deploy:worker       # production
 pnpm --filter cfb-pickem-api deploy:worker:dev   # dev environment
 ```
 
-Secrets are set once per environment with `wrangler secret put <KEY>` (add `--env dev` for the dev Worker). See `wrangler.jsonc` for the required list and [docs/INFRASTRUCTURE_MIGRATION.md](./docs/INFRASTRUCTURE_MIGRATION.md) for background.
+Secrets are set once per environment with `wrangler secret put <KEY>` (add `--env dev` for the dev Worker). See `wrangler.jsonc` for the required list.
