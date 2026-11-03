@@ -97,12 +97,18 @@ export async function addWeek(week: AdminWeekData): Promise<void> {
 }
 
 // ------------------------------------------------------------------
-// Upsert games for a week in a single statement (safe to re-import; preserves gameId on conflict)
+// Upsert games for a week in a single statement (safe to re-import; preserves gameId on conflict).
+// Games that have a manual score correction are skipped so CFBD data never overwrites them.
+// Returns the games that were actually written (input minus corrected games).
 // ------------------------------------------------------------------
-export async function upsertGamesForWeek(games: AdminGameData[]): Promise<void> {
-  if (!games.length) return;
-  logger.debug({ year: games[0].year, week: games[0].weekNumber, count: games.length }, 'upsertGamesForWeek');
+export async function upsertGamesForWeek(allGames: AdminGameData[]): Promise<AdminGameData[]> {
+  if (!allGames.length) return [];
+  logger.debug({ year: allGames[0].year, week: allGames[0].weekNumber, count: allGames.length }, 'upsertGamesForWeek');
   try {
+    const correctedIds = await getCorrectedCfbdGameIds(allGames[0].year, allGames[0].weekNumber);
+    const games = allGames.filter(game => game.cfbdGameId === null || !correctedIds.has(game.cfbdGameId));
+    if (!games.length) return games;
+
     const values = games.map(game => {
       let winningTeam: Team = 'pending';
       if (game.completed && game.homePoints !== null && game.awayPoints !== null) {
@@ -146,6 +152,7 @@ export async function upsertGamesForWeek(games: AdminGameData[]): Promise<void> 
           spread: excluded('spread'),
         },
       });
+    return games;
   } catch (e) {
     logger.error({ err: e }, 'upsertGamesForWeek failed');
     throw e;
@@ -472,6 +479,20 @@ export async function getMaxRegularWeek(year: number): Promise<number> {
     .from(adminWeeks)
     .where(and(eq(adminWeeks.year, year), eq(adminWeeks.seasonType, 'regular')));
   return rows[0]?.maxWeek ?? 0;
+}
+
+// ------------------------------------------------------------------
+// CFBD week number to use for API calls. Postseason weeks are stored offset by the regular
+// season count, so translate back; regular-season weeks map 1:1 (returns undefined).
+// ------------------------------------------------------------------
+export async function getCfbdWeek(
+  year: number,
+  weekNumber: number,
+  seasonType: SeasonType
+): Promise<number | undefined> {
+  if (seasonType !== 'postseason') return undefined;
+  const regularCount = await getMaxRegularWeek(year);
+  return weekNumber - regularCount;
 }
 
 // ------------------------------------------------------------------

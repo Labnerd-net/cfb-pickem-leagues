@@ -124,11 +124,7 @@ const admin = new Hono<{ Variables: Variables }>()
 
       // Postseason weeks are stored offset by the regular season count.
       // Compute the original CFBD week number for the API call.
-      let cfbdWeek: number | undefined;
-      if (weekQuery.seasonType === 'postseason') {
-        const regularCount = await dbAdminFunctions.getMaxRegularWeek(weekQuery.year);
-        cfbdWeek = weekQuery.week - regularCount;
-      }
+      const cfbdWeek = await dbAdminFunctions.getCfbdWeek(weekQuery.year, weekQuery.week, weekQuery.seasonType);
 
       let gameData;
       try {
@@ -166,11 +162,7 @@ const admin = new Hono<{ Variables: Variables }>()
       const weekIdentifier = { year, week: weekNumber };
       const weekQuery = await dbAdminFunctions.enrichWeekIdentifier(weekIdentifier);
 
-      let cfbdWeek: number | undefined;
-      if (weekQuery.seasonType === 'postseason') {
-        const regularCount = await dbAdminFunctions.getMaxRegularWeek(weekQuery.year);
-        cfbdWeek = weekQuery.week - regularCount;
-      }
+      const cfbdWeek = await dbAdminFunctions.getCfbdWeek(weekQuery.year, weekQuery.week, weekQuery.seasonType);
 
       let gameData;
       try {
@@ -183,13 +175,9 @@ const admin = new Hono<{ Variables: Variables }>()
         throw new HTTPException(422, { message: 'No games returned from external API for this week' });
       }
 
-      const correctedIds = await dbAdminFunctions.getCorrectedCfbdGameIds(year, weekNumber);
-
-      const gamesToUpsert = gameData.filter(
-        game => game.cfbdGameId === null || !correctedIds.has(game.cfbdGameId)
-      );
+      // upsertGamesForWeek skips manually corrected games and returns the ones it wrote.
+      const gamesToUpsert = await dbAdminFunctions.upsertGamesForWeek(gameData);
       const gamesSkipped = gameData.length - gamesToUpsert.length;
-      await dbAdminFunctions.upsertGamesForWeek(gamesToUpsert);
       const gamesCompleted = gamesToUpsert.filter(game => game.completed).length;
 
       const activeLeagues = await getActiveLeaguesForWeek(year, weekNumber);
