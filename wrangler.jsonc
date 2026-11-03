@@ -63,9 +63,8 @@
   "vars": {
     // All other env vars are secrets — set via: wrangler secret put <KEY>
     // Required secrets: PROD_DB, JWT_SECRET, CFBD_API_KEY
-    // Optional secrets: RESEND_API_KEY, NOTIFICATION_FROM_EMAIL, NTFY_TOPIC_URL,
-    //                   TELEGRAM_BOT_TOKEN, TELEGRAM_CHAT_ID, TELEGRAM_INVITE_URL,
-    //                   DISCORD_WEBHOOK_URL, DISCORD_INVITE_URL, CLIENT_URL
+    // Optional secrets: RESEND_API_KEY, NOTIFICATION_FROM_EMAIL, CLIENT_URL
+    // (ntfy/Telegram/Discord are configured per league in the DB, not as secrets)
     "NODE_ENV": "production"
   },
 

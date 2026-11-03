@@ -8,9 +8,15 @@ The simulation uses 5 weeks of real historical CFB matchups (year=2025 in the DB
 
 ## One-Time Setup
 
-### 1. Open a terminal in the backend container
+### 1. Point a shell at the target database
 
-In Dokploy, navigate to the CFB Pickem project → Backend → Terminal.
+From `packages/backend`, build the backend and set the environment for the database you want to seed (`NODE_ENV=production` with `PROD_DB` set for production; otherwise `DEV_DB` is used):
+
+```bash
+pnpm build
+export NODE_ENV=production   # omit to target DEV_DB
+export PROD_DB=<neon connection string>
+```
 
 ### 2. Seed the simulation data
 

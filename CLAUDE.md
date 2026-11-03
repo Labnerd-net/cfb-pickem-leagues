@@ -78,18 +78,8 @@ pnpm test:ui              # Run tests with Vitest UI
 pnpm test:coverage        # Run tests with coverage report
 ```
 
-**Test Database Setup (one-time):**
-```bash
-# Create separate test database to avoid affecting dev data
-psql -U postgres -h localhost -c "CREATE DATABASE \"cfb-pickem-test\";"
-
-# Run migrations against test database
-cd packages/backend
-NODE_ENV=test pnpm migrate
-```
-
 **Test Structure:**
-- **Backend** (`packages/backend/tests/`): Unit tests for utilities, API converters, middleware; database function tests with real PostgreSQL; validation tests
+- **Backend** (`packages/backend/tests/`): Unit tests for utilities, API converters, middleware; database function tests against in-process PGlite (no external DB); validation tests
 - **Frontend** (`packages/frontend/tests/`): Form validation tests (Zod schemas); API request tests with MSW mocks
 - **Testing Framework**: Vitest for both packages
 - **Coverage Reports**: After running `pnpm test:coverage`, view HTML reports at `packages/backend/coverage/index.html` and `packages/frontend/coverage/index.html`
