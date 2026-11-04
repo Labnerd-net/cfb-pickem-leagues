@@ -22,6 +22,7 @@ const envSchema = z
     RESEND_API_KEY: z.string().default(''),
     NOTIFICATION_FROM_EMAIL: z.string().default(''),
     SKIP_EMAIL_SEND: z.string().optional(),
+    DEMO_MODE: z.string().optional(),
   })
 
 export function validateEnv(env: NodeJS.ProcessEnv) {
@@ -82,6 +83,11 @@ export let notificationsEnabled = resendApiKey !== '' && notificationFromEmail !
 // Set to 'true' in dev to skip sending emails
 export const skipEmailSend = env.SKIP_EMAIL_SEND === 'true';
 
+// Set to 'true' only on the isolated demo deployment (separate Worker + Neon branch).
+// Gates demo-only behavior: the nightly reset, and (later) demo login and the demo guard.
+// Updated per Workers invocation by reinitializeSecrets().
+export let demoMode = env.DEMO_MODE === 'true';
+
 // Called at the top of each Workers fetch/scheduled handler to ensure secrets
 // (which aren't in process.env at module init time) are applied before any request logic runs.
 export function reinitializeSecrets(workerEnv: Record<string, string | undefined>): void {
@@ -95,4 +101,5 @@ export function reinitializeSecrets(workerEnv: Record<string, string | undefined
   resendApiKey = parsed.RESEND_API_KEY;
   notificationFromEmail = parsed.NOTIFICATION_FROM_EMAIL;
   notificationsEnabled = resendApiKey !== '' && notificationFromEmail !== '';
+  demoMode = parsed.DEMO_MODE === 'true';
 }

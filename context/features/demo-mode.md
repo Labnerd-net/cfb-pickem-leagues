@@ -26,7 +26,7 @@ Goal: a separate Worker and Neon branch that can be reset to a seeded state from
 
 1. **Neon and Wrangler.**
    - Create the Neon `demo` branch (in the `CFB-picker` project) and migrate it.
-   - Add `env.demo` to `wrangler.jsonc`: its own `vars` (`NODE_ENV=development`, `DEMO_MODE=true`, pinned `DEV_CURRENT_TIME`, `SKIP_EMAIL_SEND=true`), no `CRON_CACHE` KV binding, a custom domain route for `cfbpickem-demo.labnerd.net`, and `CLIENT_URL` set to that origin. Cron triggers are UTC-only, so add two triggers (05:00 and 06:00 UTC); the scheduled handler runs the reset only when the current America/Chicago hour is 0 and no reset has already run that Chicago date, so it fires exactly once per night through daylight saving changes. Record the last reset date in the database (or KV) for that check.
+   - Add `env.demo` to `wrangler.jsonc`: its own `vars` (`NODE_ENV=development`, `DEMO_MODE=true`, pinned `DEV_CURRENT_TIME`, `SKIP_EMAIL_SEND=true`), no `CRON_CACHE` KV binding, a custom domain route for `cfbpickem-demo.labnerd.net`, and `CLIENT_URL` set to that origin. Cron triggers are UTC-only, so add two triggers (05:00 and 06:00 UTC); the scheduled handler runs the reset only when the scheduled time falls in America/Chicago hour 0. Exactly one of the two triggers does so on every date (tested for every day of a year), so no stored marker is needed. Trade-off: a cron run delayed by more than an hour would skip that night's reset.
    - Real rate limit bindings for the demo (new namespace IDs), since `demo-login` needs a real limiter.
    - Secrets set with `wrangler secret put ... --env demo`: `DEV_DB` (pointing at the demo branch), a unique `JWT_SECRET`, and a placeholder `CFBD_API_KEY` (the env schema requires one; a dummy value means any leaked CFBD path fails). `PROD_DB` and `RESEND_API_KEY` are never set.
    - Add a `deploy:worker:demo` script next to the existing dev one.
@@ -38,7 +38,20 @@ Goal: a separate Worker and Neon branch that can be reset to a seeded state from
    - In `worker.ts`, the `scheduled` handler runs `resetDemo` instead of `runCronTick` when `DEMO_MODE` is on.
 5. **Tests.** Reset test using the existing PGlite setup: modify data, reset, assert seeded state; run twice. Test that reset refuses to run when `DEMO_MODE` is off.
 
-Exit criteria: deploy to the demo Worker, run the seed, confirm the data via Drizzle Studio, trigger the scheduled handler, confirm reset. `pnpm build` and tests pass.
+Exit criteria: deploy to the demo Worker, run the seed, confirm the data via Drizzle Studio, trigger the scheduled handler, confirm reset. `pnpm build` and tests pass. Also the deferred Phase 0 check: with the demo Worker live, confirm the pinned clock takes effect (for example, a pick for a week 4 game is accepted although its real kickoff is in 2024).
+
+### Phase 1 status
+
+Code complete and tested locally (428 backend tests, type-check, lint, build, and `wrangler deploy --env demo --dry-run` pass):
+- `DEMO_MODE` env flag (`utils/envVars.ts`), refreshed per invocation like the other Worker values.
+- `src/demo/seedData.ts`: validated, deterministic seed builder. Fails loudly on empty or malformed game data.
+- `src/demo/resetDemo.ts`: single `db.batch()` wipe-and-reseed with explicit IDs, then one statement to advance the serial sequences. Refuses unless `DEMO_MODE` is on.
+- `src/demo/scheduledReset.ts` and the `worker.ts` scheduled branch: the demo Worker runs only the reset, never the cron tick.
+- `src/scripts/seed-demo.ts` (`pnpm seed:demo`): local reset. Requires `DEMO_MODE=true` and `--wipe-host=<host of DEV_DB>` so a wrong `DEV_DB` cannot be erased by accident.
+- `src/scripts/export-demo-games.ts` (`pnpm export:demo-games`): one-off CFBD export into `src/demo/demoGameData.ts`, currently an empty placeholder.
+- `env.demo` in `wrangler.jsonc`, `deploy:worker:demo` script.
+
+Needs the owner (external accounts or secrets): run the export with a CFBD key; create and migrate the Neon `demo` branch; set the demo Worker secrets; deploy; seed; verify.
 
 ## Phase 2: Demo login, registration lockout, and guard
 
