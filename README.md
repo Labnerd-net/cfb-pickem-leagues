@@ -71,7 +71,7 @@ context/      # Feature specs, plans, and change history
 wrangler.jsonc  # Cloudflare Workers config (prod + dev environments)
 ```
 
-## Run Locally
+## Local Development
 
 Requires Node 22+, pnpm, a Neon database (a dev branch works well), and a free [CFBD API key](https://collegefootballdata.com/). Environment variable details are in [docs/DEVELOPMENT.md](./docs/DEVELOPMENT.md#environment-setup).
 
