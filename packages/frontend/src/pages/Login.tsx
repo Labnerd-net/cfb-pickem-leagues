@@ -19,6 +19,7 @@ import type { Credentials } from '@shared/types/cfb-pickem-api';
 import { loginUser, demoLogin } from '../apis/authRequests';
 import { IS_DEMO } from '../lib/demo';
 import DemoLogin from '../components/auth/DemoLogin';
+import DemoLink from '../components/DemoLink';
 import PasswordField from '../components/auth/PasswordField';
 import AuthFormCard from '../components/auth/AuthFormCard';
 import AuthHeader from '../components/auth/AuthHeader';
@@ -214,6 +215,9 @@ const LoginForm: React.FC = () => {
               Sign up
             </Link>
           </Typography>
+          <Box sx={{ mt: 2 }}>
+            <DemoLink align="center" />
+          </Box>
         </AuthFormCard>
       </Box>
     </Container>

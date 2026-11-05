@@ -8,6 +8,7 @@ vi.mock('../../../src/lib/demo.js', () => ({
 	get IS_DEMO() {
 		return demo.on;
 	},
+	DEMO_URL: 'https://cfbpickem-demo.labnerd.net/login',
 	DEMO_DISABLED_NOTE: 'Disabled in the demo.',
 }));
 
@@ -42,6 +43,7 @@ describe('Login page', () => {
 		renderLogin();
 		expect(screen.getByLabelText('Email')).toBeInTheDocument();
 		expect(screen.getByRole('link', { name: 'Sign up' })).toBeInTheDocument();
+		expect(screen.getByRole('link', { name: /try the live demo/i })).toBeInTheDocument();
 		expect(screen.queryByRole('button', { name: /sign in as a player/i })).not.toBeInTheDocument();
 	});
 
@@ -52,6 +54,7 @@ describe('Login page', () => {
 		expect(screen.getByRole('button', { name: /sign in as an admin/i })).toBeInTheDocument();
 		expect(screen.queryByLabelText('Email')).not.toBeInTheDocument();
 		expect(screen.queryByRole('link', { name: 'Sign up' })).not.toBeInTheDocument();
+		expect(screen.queryByRole('link', { name: /try the live demo/i })).not.toBeInTheDocument();
 	});
 
 	it('signs in as the chosen demo account', async () => {

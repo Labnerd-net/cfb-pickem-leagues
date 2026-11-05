@@ -2,6 +2,7 @@ import { Box, Container, Stack, Typography, Button, alpha, useTheme } from '@mui
 import SportsFootballIcon from '@mui/icons-material/SportsFootball';
 import { useNavigate } from 'react-router';
 import { IS_DEMO } from '../../lib/demo';
+import DemoLink from '../DemoLink';
 
 interface HeroSectionProps {
   isVisible: boolean;
@@ -182,6 +183,7 @@ export default function HeroSection({ isVisible }: HeroSectionProps) {
               Sign In
             </Button>
           </Stack>
+          <DemoLink />
         </Stack>
       </Container>
     </Box>
