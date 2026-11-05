@@ -11,7 +11,7 @@
     "dev:worker": "wrangler dev --config ../../wrangler.jsonc",
     "deploy:worker": "wrangler deploy --config ../../wrangler.jsonc",
     "deploy:worker:dev": "wrangler deploy --config ../../wrangler.jsonc --env dev",
-    "deploy:worker:demo": "wrangler deploy --config ../../wrangler.jsonc --env demo",
+    "deploy:worker:demo": "pnpm --filter cfb-pickem-ui build:demo && wrangler deploy --config ../../wrangler.jsonc --env demo",
     "lint": "eslint . --ext .js,.ts",
     "lint:fix": "eslint . --ext .js,.ts --fix",
     "format": "prettier --write ./src",

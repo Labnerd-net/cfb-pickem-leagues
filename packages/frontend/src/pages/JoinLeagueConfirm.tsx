@@ -4,6 +4,7 @@ import { Box, Button, CircularProgress, Typography, Paper, Stack, Alert } from '
 import GroupsIcon from '@mui/icons-material/Groups';
 import { useAuth } from '../contexts/auth/AuthContext';
 import { useLeague } from '../contexts/LeagueContext';
+import { IS_DEMO } from '../lib/demo';
 import { getLeagueByInviteCodePublic, joinLeague } from '../apis/leagueRequests';
 
 export default function JoinLeagueConfirm() {
@@ -117,14 +118,16 @@ export default function JoinLeagueConfirm() {
                 >
                   Log In
                 </Button>
-                <Button
-                  component={RouterLink}
-                  to={`/register?redirect=${encodeURIComponent(`/join/${inviteCode}`)}`}
-                  variant="outlined"
-                  fullWidth
-                >
-                  Create Account
-                </Button>
+                {!IS_DEMO && (
+                  <Button
+                    component={RouterLink}
+                    to={`/register?redirect=${encodeURIComponent(`/join/${inviteCode}`)}`}
+                    variant="outlined"
+                    fullWidth
+                  >
+                    Create Account
+                  </Button>
+                )}
               </Stack>
             ) : (
               <Stack spacing={1.5} width="100%">

@@ -1,6 +1,7 @@
 import { Box, Container, Stack, Typography, Button, alpha, useTheme } from '@mui/material';
 import SportsFootballIcon from '@mui/icons-material/SportsFootball';
 import { useNavigate } from 'react-router';
+import { IS_DEMO } from '../../lib/demo';
 
 interface HeroSectionProps {
   isVisible: boolean;
@@ -128,7 +129,7 @@ export default function HeroSection({ isVisible }: HeroSectionProps) {
             <Button
               variant="contained"
               size="large"
-              onClick={() => navigate('/register')}
+              onClick={() => navigate(IS_DEMO ? '/login' : '/register')}
               sx={{
                 fontFamily: '"Work Sans", sans-serif',
                 fontSize: '1.1rem',

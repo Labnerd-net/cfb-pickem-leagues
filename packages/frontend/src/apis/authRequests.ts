@@ -20,6 +20,19 @@ export async function loginUser(credentials: Credentials): Promise<AuthResponse>
   }
 }
 
+export async function demoLogin(account: 'user' | 'admin'): Promise<AuthResponse> {
+  try {
+    const res = await client.api.auth['demo-login'].$post({ json: { account } });
+    if (!res.ok) {
+      const body = (await res.json()) as unknown as { error?: string; message?: string };
+      return { success: false, error: body.error ?? body.message ?? 'Demo login failed' };
+    }
+    return { success: true };
+  } catch {
+    return { success: false, error: 'Request failed' };
+  }
+}
+
 export async function registerUser(data: RegistrationData): Promise<AuthResponse> {
   try {
     const res = await client.api.auth.register.$post({ json: data });

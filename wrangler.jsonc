@@ -116,6 +116,15 @@
         "SKIP_EMAIL_SEND": "true",
         "CLIENT_URL": "https://cfbpickem-demo.labnerd.net"
       },
+      // A separate demo bundle (VITE_DEMO_MODE on, clock pinned). The deploy script builds it
+      // first, and this keeps the normal dist from ever being served by the demo Worker
+      // or the demo bundle by the production Worker.
+      "assets": {
+        "directory": "packages/frontend/dist-demo",
+        "binding": "ASSETS",
+        "not_found_handling": "single-page-application",
+        "run_worker_first": ["/*", "!/assets/*"]
+      },
       "triggers": {
         "crons": ["0 5 * * *", "0 6 * * *"]
       },

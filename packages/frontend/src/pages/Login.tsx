@@ -16,7 +16,9 @@ import {
 } from '@mui/material';
 import SportsFootballIcon from '@mui/icons-material/SportsFootball';
 import type { Credentials } from '@shared/types/cfb-pickem-api';
-import { loginUser } from '../apis/authRequests';
+import { loginUser, demoLogin } from '../apis/authRequests';
+import { IS_DEMO } from '../lib/demo';
+import DemoLogin from '../components/auth/DemoLogin';
 import PasswordField from '../components/auth/PasswordField';
 import AuthFormCard from '../components/auth/AuthFormCard';
 import AuthHeader from '../components/auth/AuthHeader';
@@ -68,6 +70,45 @@ const LoginForm: React.FC = () => {
 
     setLoading(false);
   };
+
+  const onDemoLogin = async (account: 'user' | 'admin') => {
+    setLoading(true);
+    setError(null);
+    const result = await demoLogin(account);
+    if (result.success) {
+      try {
+        await login();
+        navigate(redirectTo, { replace: true });
+      } catch {
+        setError('Failed to load user profile');
+      }
+    } else {
+      setError(result.error || 'Demo login failed');
+    }
+    setLoading(false);
+  };
+
+  if (IS_DEMO) {
+    return (
+      <Container maxWidth="sm">
+        <Box sx={{ mt: 8, mb: 4 }}>
+          <AuthFormCard>
+            <AuthHeader
+              icon={<SportsFootballIcon sx={{ fontSize: 40, color: 'primary.main' }} />}
+              title="Try the Demo"
+              iconColor="primary"
+            />
+            {error && (
+              <Alert severity="error" sx={{ mb: 3 }}>
+                {error}
+              </Alert>
+            )}
+            <DemoLogin loading={loading} onSelect={onDemoLogin} />
+          </AuthFormCard>
+        </Box>
+      </Container>
+    );
+  }
 
   return (
     <Container maxWidth="sm">

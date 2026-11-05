@@ -20,6 +20,8 @@ import DashboardCard from '../dashboard/DashboardCard';
 import { getUsers, updateUserRoles, getAdminExport } from '../../apis/adminRequests';
 import { useAuth } from '../../contexts/auth/AuthContext';
 import { downloadCsv } from '../../lib/exportCsv';
+import { IS_DEMO } from '../../lib/demo';
+import DemoDisabledNote from '../DemoDisabledNote';
 import BroadcastDialog from './BroadcastDialog';
 import ResetPasswordDialog from './ResetPasswordDialog';
 
@@ -112,7 +114,7 @@ export default function UsersSection() {
               size="small"
               variant="outlined"
               startIcon={exporting ? <CircularProgress size={16} /> : <DownloadIcon />}
-              disabled={loading || exporting || users.length === 0}
+              disabled={loading || exporting || users.length === 0 || IS_DEMO}
               onClick={handleExport}
             >
               Export CSV
@@ -121,11 +123,13 @@ export default function UsersSection() {
               size="small"
               variant="outlined"
               startIcon={<SendIcon />}
+              disabled={IS_DEMO}
               onClick={() => setBroadcastOpen(true)}
             >
               Send Notification
             </Button>
           </Box>
+          <DemoDisabledNote text="Export, notifications, role changes, and password resets are disabled in the demo." />
           {exportError && (
             <Alert severity="error" sx={{ mb: 1 }}>
               {exportError}
@@ -186,7 +190,7 @@ export default function UsersSection() {
                               size="small"
                               variant="outlined"
                               color={isAdmin ? 'warning' : 'primary'}
-                              disabled={updatingId === user.userId}
+                              disabled={updatingId === user.userId || IS_DEMO}
                               onClick={() => handleRoleToggle(user)}
                               sx={{ mr: 1 }}
                             >
@@ -202,6 +206,7 @@ export default function UsersSection() {
                               size="small"
                               variant="outlined"
                               color="secondary"
+                              disabled={IS_DEMO}
                               onClick={() => { setResetSuccess(null); setResetTarget(user); }}
                             >
                               Reset Password
