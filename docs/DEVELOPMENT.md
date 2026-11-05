@@ -196,3 +196,57 @@ Removes all seeded weeks, games, and notification logs. User picks cascade-delet
 | localStorage `devCurrentTime` | Frontend (runtime) | Set via the Dev Tools tab; overrides `VITE_DEV_CURRENT_TIME`. Cleared by clicking "Real Time". |
 
 The backend clock resets to `DEV_CURRENT_TIME` (or real time) on every server restart, including `tsx watch` auto-reloads triggered by file saves.
+
+## Demo Environment
+
+A public, isolated demo: its own Worker (`cfb-pickem-leagues-demo`), its own Neon `demo` branch, pinned to 2024-09-18, with one-click login and a nightly reset. Config lives in the `demo` block of `wrangler.jsonc`. The design is in `context/specs/demo-mode.md`.
+
+### One-time setup
+
+1. **Create the Neon branch.** In the `CFB-picker` project, create a branch named `demo` as a **schema-only** copy. Do not copy data from `production`: it would carry real user emails and password hashes into a branch a public Worker connects to. Copy its connection string.
+2. **Generate the game data** (only needed again if the seeded weeks change):
+   ```bash
+   cd packages/backend
+   CFBD_API_KEY=<real key> pnpm export:demo-games   # writes src/demo/demoGameData.ts; commit it
+   ```
+   The deployed Worker bundles this file. The reset refuses to run while it is the empty placeholder.
+3. **Seed it.** Put the demo connection string in `packages/backend/.env.demo` (gitignored by `.env.*`). **Quote the value**, because Neon strings contain `&`, which the shell treats as "run in background" and silently leaves the variable empty:
+   ```
+   DEV_DB="postgres://...demo branch string..."
+   DEMO_MODE=true
+   JWT_SECRET=local-seed-only
+   CFBD_API_KEY=not-a-real-key
+   ```
+   `JWT_SECRET` and `CFBD_API_KEY` only need to pass env validation here. Then, in one shell:
+   ```bash
+   cd packages/backend
+   set -a; source .env.demo; set +a
+   echo "$DEV_DB" | sed -E 's#.*@([^/:?]+).*#\1#'   # must print the DEMO host, not your dev host
+   NODE_ENV=development pnpm seed:demo --wipe-host=<that host>
+   ```
+   Sourcing the file matters: `dotenv` does not override variables already set, so a plain `pnpm seed:demo` would read `DEV_DB` from `.env` (your real dev branch). The `--wipe-host` check is the safety net for that mistake.
+4. **Set the secrets** on the demo Worker:
+   ```bash
+   npx wrangler secret put DEV_DB --env demo          # the demo branch string
+   npx wrangler secret put JWT_SECRET --env demo      # openssl rand -base64 32; never reuse prod or dev
+   npx wrangler secret put CFBD_API_KEY --env demo    # any placeholder; the demo never calls CFBD
+   ```
+   Do not set `PROD_DB`, `RESEND_API_KEY`, or `NOTIFICATION_FROM_EMAIL`. With `DEMO_MODE` on, the Worker refuses to serve requests if `PROD_DB` is bound or `NODE_ENV=production`.
+
+### Deploy
+
+```bash
+pnpm --filter cfb-pickem-api deploy:worker:demo
+```
+
+This builds the demo frontend first (`build:demo` writes `packages/frontend/dist-demo` with `VITE_DEMO_MODE` on and the pinned clock) and the `demo` environment serves only that directory, so the normal bundle and the demo bundle cannot be swapped. The wrangler warning about `kv_namespaces` not being inherited is expected: the demo's scheduled job is the reset, which does not use the cron cache.
+
+### Reset on demand
+
+Re-run the seed command from step 3. The nightly reset runs the same code in the Worker. Both keep the two demo accounts at user IDs 1 and 2, so a visitor's session survives a reset.
+
+### Adding routes safely
+
+- `/api/admin/*` is deny-by-default in the demo (`src/utils/demoGuard.ts`). A new admin route is blocked until you add it to `DEMO_ADMIN_ALLOWED` or `DEMO_ADMIN_BLOCKED`, and a test fails if a registered admin route is in neither list.
+- Anything that sends messages, calls CFBD, or changes shared accounts must stay blocked.
+- Frontend controls that the guard blocks are disabled with a note (`IS_DEMO`, `DemoDisabledNote`).

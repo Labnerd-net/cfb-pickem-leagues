@@ -7,6 +7,8 @@ A multi-league College Football Pick'em app. Friends join private leagues, pick 
 
 **Live site: [cfbpickem.labnerd.net](https://cfbpickem.labnerd.net/)** · In production with real users, running on Cloudflare Workers and Neon Postgres.
 
+**Try it without signing up: [live demo](https://cfbpickem-demo.labnerd.net/login)** · One-click sign-in as a player or an admin, mid-way through the 2024 season. The data resets every night at midnight Central.
+
 <!-- TODO: add 2-3 screenshots or a short GIF (taken from the dev Worker, not prod, to avoid real user data)
 ![Weekly picks](docs/images/picks.png)
 ![Leaderboard](docs/images/leaderboard.png)
@@ -20,6 +22,17 @@ A multi-league College Football Pick'em app. Friends join private leagues, pick 
 - **Automated scoring.** A cron job refreshes scores during game windows. Admins can sync from CFBD manually and correct scores, with an audit trail.
 - **Notifications.** 24-hour and 1-hour pick reminders and a results-final message, per user (email) and per league (ntfy, Telegram, Discord).
 - **Admin tooling.** Game curation from CFBD, league and member management, user CSV export, and broadcast messages.
+
+## Demo
+
+The [demo](https://cfbpickem-demo.labnerd.net/login) is a separate Worker (`cfb-pickem-leagues-demo`) on its own Neon `demo` branch, so it can never reach production data. The clock is pinned to September 2024 and the database is seeded with a league, ten members, picks, and five weeks of real 2024 games.
+
+- **One-click sign-in** as a demo player or a demo admin. Registration is closed.
+- **Guarded admin.** Admin routes are deny-by-default: the demo admin can curate the game pool and correct scores, but cannot import from CFBD, change roles or passwords, export users, send messages, or edit notification channels.
+- **No outbound messages.** No email key is configured, sending is skipped, and channel settings are blocked.
+- **Nightly reset.** A cron trigger wipes and reseeds the database in one batch at midnight America/Chicago (two UTC triggers cover the daylight saving shift).
+
+Setup and operation are in [docs/DEVELOPMENT.md](./docs/DEVELOPMENT.md#demo-environment).
 
 ## Architecture
 
@@ -68,7 +81,7 @@ packages/
   shared/     # Shared TypeScript types
 docs/         # Development, notifications, and simulation guides
 context/      # Feature specs, plans, and change history
-wrangler.jsonc  # Cloudflare Workers config (prod + dev environments)
+wrangler.jsonc  # Cloudflare Workers config (prod, dev, and demo environments)
 ```
 
 ## Local Development
@@ -102,6 +115,7 @@ Production runs on Cloudflare Workers with a Neon `PROD_DB`. A separate `dev` Wo
 pnpm build
 pnpm --filter cfb-pickem-api deploy:worker       # production
 pnpm --filter cfb-pickem-api deploy:worker:dev   # dev environment
+pnpm --filter cfb-pickem-api deploy:worker:demo  # demo (builds the demo frontend first)
 ```
 
-Secrets are set once per environment with `wrangler secret put <KEY>` (add `--env dev` for the dev Worker). See `wrangler.jsonc` for the required list.
+Secrets are set once per environment with `wrangler secret put <KEY>` (add `--env dev` or `--env demo`). See `wrangler.jsonc` for the required list.
