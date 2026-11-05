@@ -1,5 +1,6 @@
 import { Box, Container, Typography, Button, alpha, useTheme } from '@mui/material';
 import { useNavigate } from 'react-router';
+import { IS_DEMO } from '../../lib/demo';
 
 export default function FinalCTA() {
   const navigate = useNavigate();
@@ -62,7 +63,7 @@ export default function FinalCTA() {
           <Button
             variant="contained"
             size="large"
-            onClick={() => navigate('/register')}
+            onClick={() => navigate(IS_DEMO ? '/login' : '/register')}
             sx={{
               fontFamily: '"Work Sans", sans-serif',
               fontSize: '1.3rem',

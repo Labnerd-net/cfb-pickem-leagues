@@ -13,6 +13,8 @@ import { LeagueProvider } from './contexts/LeagueProvider';
 import Navbar from './components/navbar/Navbar';
 import PrivateRoute from './components/PrivateRoute';
 import ErrorBoundary from './components/ErrorBoundary';
+import DemoBanner from './components/DemoBanner';
+import { IS_DEMO } from './lib/demo';
 
 function NavbarWrapper() {
   const location = useLocation();
@@ -28,6 +30,7 @@ function App() {
           <ErrorBoundary>
             <BrowserRouter>
               <Box sx={{ flexGrow: 1 }}>
+                <DemoBanner />
                 <NavbarWrapper />
 
                 {/* Main Content */}
@@ -35,7 +38,7 @@ function App() {
                   <Routes>
                     <Route index element={<Home />} />
                     <Route path="login" element={<LoginForm />} />
-                    <Route path="register" element={<RegistrationForm />} />
+                    {!IS_DEMO && <Route path="register" element={<RegistrationForm />} />}
                     <Route
                       path="dashboard"
                       element={

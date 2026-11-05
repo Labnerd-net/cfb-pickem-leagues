@@ -2,13 +2,13 @@
 
 ## Current Feature Spec File
 
-Title: League Member Business Ads
-Spec file: context/specs/league-member-ads.md
-Branch: claude/feature/league-member-ads
+Title: Demo Mode
+Spec file: context/specs/demo-mode.md
+Branch: claude/feature/demo-mode
 
 ## Current Feature Plan File
 
-None
+Plan file: context/features/demo-mode.md
 
 ## History
 

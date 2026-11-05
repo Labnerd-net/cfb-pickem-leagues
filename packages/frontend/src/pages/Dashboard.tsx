@@ -18,6 +18,7 @@ import UsersSection from '../components/admin/UsersSection';
 import NotificationLogSection from '../components/admin/NotificationLogSection';
 import UserSection from '../components/user/UserSection';
 import DevSection from '../components/admin/DevSection';
+import { IS_DEMO } from '../lib/demo';
 
 const IS_DEV = import.meta.env.DEV;
 
@@ -77,7 +78,7 @@ export default function Dashboard() {
           { label: 'Notification Log', icon: <NotificationsIcon />, component: <NotificationLogSection /> },
         ]
       : []),
-    ...(IS_DEV
+    ...(IS_DEV && !IS_DEMO
       ? [{ label: 'Dev Tools', icon: <BugReportIcon />, component: <DevSection />, devOnly: true, warnColor: true }]
       : []),
   ];

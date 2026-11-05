@@ -18,6 +18,7 @@ import {
   jwtSecret,
   jwtExpirationDays,
   isProduction,
+  demoMode,
 } from '../utils/envVars.js';
 import { authMiddleware } from '../utils/middleware.js';
 import { validatePassword } from '../utils/passwordValidation.js';
@@ -25,7 +26,9 @@ import { validateEmail } from '../utils/emailValidation.js';
 import { authRateLimit } from '../utils/rateLimiter.js';
 import { sendEmail } from '../notifications/emailSender.js';
 import { verificationEmailTemplate } from '../notifications/templates.js';
-import { verifyEmailQueryValidator, registerRequestValidator, loginRequestValidator } from '../utils/zValidate.js';
+import { verifyEmailQueryValidator, registerRequestValidator, loginRequestValidator, demoLoginValidator } from '../utils/zValidate.js';
+import { demoOnly } from '../utils/demoGuard.js';
+import { DEMO_ADMIN_EMAIL, DEMO_USER_EMAIL } from '../demo/seedData.js';
 import { waitUntil } from '../utils/waitUntil.js';
 import logger from '../utils/logger.js';
 
@@ -33,13 +36,15 @@ type Variables = {
   jwtPayload: JwtData;
 };
 
-const cookieOptions = {
+// A function, not a constant: demoMode is refreshed per Workers invocation. The demo runs with
+// NODE_ENV=development (for the pinned clock) but is served over HTTPS, so it gets Secure too.
+const getCookieOptions = () => ({
   httpOnly: true,
   sameSite: 'Strict' as const,
-  secure: isProduction,
+  secure: isProduction || demoMode,
   path: '/',
   maxAge: jwtExpirationDays * 24 * 60 * 60,
-};
+});
 
 const auth = new Hono<{ Variables: Variables }>()
   // Register a new user
@@ -96,7 +101,7 @@ const auth = new Hono<{ Variables: Variables }>()
       exp: getJwtExpirationSeconds(),
     };
     const token = await sign(payload, jwtSecret, jwtAlgorithm);
-    setCookie(c, 'auth_token', token, cookieOptions);
+    setCookie(c, 'auth_token', token, getCookieOptions());
     return c.json({});
   })
   // Log in an existing user
@@ -116,7 +121,26 @@ const auth = new Hono<{ Variables: Variables }>()
       exp: getJwtExpirationSeconds(),
     };
     const token = await sign(payload, jwtSecret, jwtAlgorithm);
-    setCookie(c, 'auth_token', token, cookieOptions);
+    setCookie(c, 'auth_token', token, getCookieOptions());
+    return c.json({});
+  })
+  // Demo only: one-click sign-in as one of the two seeded demo accounts. The body selects
+  // an enum, never a user ID, so no other account can be reached through this route.
+  .post('/demo-login', demoOnly, authRateLimit, demoLoginValidator, async c => {
+    const { account } = c.req.valid('json');
+    const email = account === 'admin' ? DEMO_ADMIN_EMAIL : DEMO_USER_EMAIL;
+    const user = await dbUserFunctions.returnUserByEmail(email);
+    if (!user || user.length === 0) throw new HTTPException(503, { message: 'Demo data is not seeded' });
+    const payload = {
+      sub: user[0].userId,
+      email: user[0].email,
+      displayName: user[0].displayName,
+      roles: user[0].roles,
+      emailVerified: user[0].emailVerified,
+      exp: getJwtExpirationSeconds(),
+    };
+    const token = await sign(payload, jwtSecret, jwtAlgorithm);
+    setCookie(c, 'auth_token', token, getCookieOptions());
     return c.json({});
   })
   // Log out — clears the auth cookie

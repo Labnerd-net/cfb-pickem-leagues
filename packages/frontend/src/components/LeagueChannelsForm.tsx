@@ -1,4 +1,6 @@
 import { useEffect, useState } from 'react';
+import { IS_DEMO } from '../lib/demo';
+import DemoDisabledNote from './DemoDisabledNote';
 import { Alert, Box, Button, CircularProgress, Stack, TextField, Typography } from '@mui/material';
 import type { LeagueChannelConfig } from '@shared/types/cfb-pickem-api.js';
 import { getLeagueChannels, updateLeagueChannels } from '../apis/leagueRequests';
@@ -61,9 +63,10 @@ export default function LeagueChannelsForm({ leagueId }: LeagueChannelsFormProps
           {success && <Alert severity="success">{success}</Alert>}
           {error && <Alert severity="error">{error}</Alert>}
           <Box>
-            <Button variant="contained" size="small" disabled={saving} startIcon={saving ? <CircularProgress size={16} /> : undefined} onClick={handleSave}>
+            <Button variant="contained" size="small" disabled={saving || IS_DEMO} startIcon={saving ? <CircularProgress size={16} /> : undefined} onClick={handleSave}>
               {saving ? 'Saving...' : 'Save Channels'}
             </Button>
+            <DemoDisabledNote text="Saving channel settings is disabled in the demo, because the demo never sends outside messages." />
           </Box>
         </Stack>
       )}

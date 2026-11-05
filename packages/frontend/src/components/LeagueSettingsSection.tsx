@@ -1,3 +1,5 @@
+import { IS_DEMO } from '../lib/demo';
+import DemoDisabledNote from './DemoDisabledNote';
 import { useState } from 'react';
 import {
   Alert,
@@ -220,10 +222,12 @@ export default function LeagueSettingsSection({
         variant="outlined"
         color="error"
         size="small"
+        disabled={IS_DEMO}
         onClick={() => setDeleteDialogOpen(true)}
       >
         Delete League
       </Button>
+      <DemoDisabledNote text="Deleting the league is disabled in the demo." />
 
       <Dialog open={regenDialogOpen} onClose={() => !regening && setRegenDialogOpen(false)}>
         <DialogTitle>Regenerate Invite Code?</DialogTitle>

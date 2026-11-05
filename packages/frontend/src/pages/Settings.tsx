@@ -33,6 +33,8 @@ import { useAuth } from '../contexts/auth/AuthContext';
 import { useLeague } from '../contexts/LeagueContext';
 import JoinLeagueDialog from '../components/JoinLeagueDialog';
 import CreateLeagueDialog from '../components/CreateLeagueDialog';
+import DemoDisabledNote from '../components/DemoDisabledNote';
+import { IS_DEMO } from '../lib/demo';
 
 const NOTIFICATION_TYPES: { value: Exclude<NotificationType, 'admin_broadcast'>; label: string }[] = [
   { value: 'games_ready', label: 'Games Ready' },
@@ -223,7 +225,7 @@ export default function Settings() {
             type="submit"
             variant="contained"
             size="small"
-            disabled={displayNameForm.formState.isSubmitting}
+            disabled={displayNameForm.formState.isSubmitting || IS_DEMO}
             sx={{ mt: '2px' }}
           >
             Save
@@ -267,7 +269,7 @@ export default function Settings() {
               type="submit"
               variant="contained"
               size="small"
-              disabled={passwordForm.formState.isSubmitting}
+              disabled={passwordForm.formState.isSubmitting || IS_DEMO}
             >
               Change Password
             </Button>
@@ -368,10 +370,12 @@ export default function Settings() {
           variant="outlined"
           color="error"
           size="small"
+          disabled={IS_DEMO}
           onClick={() => setDeleteDialogOpen(true)}
         >
           Delete Account
         </Button>
+        <DemoDisabledNote text="Profile, password, and account changes are disabled in the demo." />
         {deleteError && (
           <Typography color="error" variant="caption" mt={0.5} display="block">
             {deleteError}

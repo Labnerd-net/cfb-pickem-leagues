@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { validateEnv } from '../../../src/utils/envVars.js';
+import { validateEnv, assertDemoSafe } from '../../../src/utils/envVars.js';
 
 const minimalValid = {
   JWT_SECRET: 'supersecret',
@@ -45,5 +45,23 @@ describe('validateEnv', () => {
   it('coerces SERVER_PORT from string to number', () => {
     const result = validateEnv({ ...minimalValid, SERVER_PORT: '4000' } as NodeJS.ProcessEnv);
     expect(result.SERVER_PORT).toBe(4000);
+  });
+});
+
+describe('assertDemoSafe', () => {
+  it('does nothing when DEMO_MODE is off, even with PROD_DB and production', () => {
+    expect(() => assertDemoSafe({ NODE_ENV: 'production', PROD_DB: 'postgres://x' })).not.toThrow();
+  });
+
+  it('allows a normal demo configuration', () => {
+    expect(() => assertDemoSafe({ DEMO_MODE: 'true', NODE_ENV: 'development', DEV_DB: 'postgres://demo' })).not.toThrow();
+  });
+
+  it('refuses DEMO_MODE with NODE_ENV=production', () => {
+    expect(() => assertDemoSafe({ DEMO_MODE: 'true', NODE_ENV: 'production' })).toThrow('NODE_ENV=production');
+  });
+
+  it('refuses DEMO_MODE when PROD_DB is present', () => {
+    expect(() => assertDemoSafe({ DEMO_MODE: 'true', NODE_ENV: 'development', PROD_DB: 'postgres://prod' })).toThrow('PROD_DB');
   });
 });

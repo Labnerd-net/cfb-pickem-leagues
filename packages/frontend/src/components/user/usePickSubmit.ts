@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { getUserPicks, postUserPicks, type AdminGameWire } from '../../apis/userRequests';
 import { useLeague } from '../../contexts/LeagueContext';
 import { logger } from '../../utils/logger';
+import { getNow } from '../../utils/clock';
 
 const ignoreDeadline = import.meta.env.VITE_IGNORE_PICK_DEADLINE === 'true';
 
@@ -98,10 +99,11 @@ export function usePickSubmit({ selectedYear, selectedWeek, games }: UsePickSubm
     // Exclude games that have already kicked off — they're already saved and
     // including them would cause the backend to reject the entire batch,
     // blocking submission of picks for other still-open games in the week.
+    // Uses getNow() (not new Date()) so it agrees with the game cards when the clock is pinned.
     const lockedGameIds = new Set(
       ignoreDeadline
         ? []
-        : games.filter(g => g.startTime !== null && new Date() >= new Date(g.startTime)).map(g => g.gameId)
+        : games.filter(g => g.startTime !== null && getNow() >= new Date(g.startTime)).map(g => g.gameId)
     );
     const picksArray = Array.from(userPicks.entries())
       .filter(([gameId]) => !lockedGameIds.has(gameId))

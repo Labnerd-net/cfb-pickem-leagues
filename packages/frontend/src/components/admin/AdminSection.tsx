@@ -19,6 +19,8 @@ import WeekSelector from './WeekSelector';
 import { useWeekManagement } from './useWeekManagement';
 import { useGameManagement } from './useGameManagement';
 import { syncWeekResults } from '../../apis/adminRequests';
+import { IS_DEMO } from '../../lib/demo';
+import DemoDisabledNote from '../DemoDisabledNote';
 
 export default function AdminSection() {
   const weekHook = useWeekManagement();
@@ -88,11 +90,12 @@ export default function AdminSection() {
               <Button
                 variant="contained"
                 onClick={handleImportWeeks}
-                disabled={importing}
+                disabled={importing || IS_DEMO}
                 startIcon={importing ? <CircularProgress size={16} /> : undefined}
               >
                 {importing ? 'Loading Weeks...' : 'Load Weeks'}
               </Button>
+              <DemoDisabledNote text="Importing from the college football data service is disabled in the demo." />
             </Box>
           )}
 
@@ -101,13 +104,14 @@ export default function AdminSection() {
             <Box sx={{ mt: 4, pt: 4, borderTop: 2, borderColor: 'divider' }}>
               {gameHook.games.length > 0 ? (
                 <>
+                  <DemoDisabledNote text="Re-import, sync, and reset are disabled in the demo. You can still correct scores on individual games." />
                   <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 1, mb: 2 }}>
                     <Button
                       variant="outlined"
                       color="inherit"
                       size="small"
                       onClick={gameHook.handleImportGames}
-                      disabled={importing || loading || syncing}
+                      disabled={importing || loading || syncing || IS_DEMO}
                       startIcon={importing ? <CircularProgress size={16} /> : undefined}
                     >
                       {importing ? 'Re-importing...' : 'Re-import'}
@@ -116,7 +120,7 @@ export default function AdminSection() {
                       variant="outlined"
                       color="inherit"
                       size="small"
-                      disabled={importing || loading || syncing}
+                      disabled={importing || loading || syncing || IS_DEMO}
                       startIcon={syncing ? <CircularProgress size={16} /> : undefined}
                       onClick={async () => {
                         setSyncing(true);
@@ -141,7 +145,7 @@ export default function AdminSection() {
                       color="error"
                       size="small"
                       onClick={() => setResetDialogOpen(true)}
-                      disabled={importing || loading || resetting || syncing}
+                      disabled={importing || loading || resetting || syncing || IS_DEMO}
                     >
                       Reset Year
                     </Button>
@@ -169,11 +173,12 @@ export default function AdminSection() {
                     <Button
                       variant="contained"
                       onClick={gameHook.handleImportGames}
-                      disabled={importing}
+                      disabled={importing || IS_DEMO}
                       startIcon={importing ? <CircularProgress size={16} /> : undefined}
                     >
                       {importing ? 'Importing...' : 'Import Games'}
                     </Button>
+                    <DemoDisabledNote text="Importing from the college football data service is disabled in the demo." />
                   </Box>
                 )
               )}

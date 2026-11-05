@@ -1,4 +1,6 @@
 import { useState } from 'react';
+import { IS_DEMO } from '../lib/demo';
+import DemoDisabledNote from './DemoDisabledNote';
 import { Alert, Box, Button, Checkbox, CircularProgress, FormControlLabel, Stack, TextField, Typography } from '@mui/material';
 import { sendLeagueBroadcast } from '../apis/leagueRequests';
 
@@ -49,12 +51,13 @@ export default function LeagueBroadcastForm({ leagueId }: LeagueBroadcastFormPro
           <Button
             variant="contained"
             size="small"
-            disabled={sending || !subject.trim() || !message.trim()}
+            disabled={sending || !subject.trim() || !message.trim() || IS_DEMO}
             startIcon={sending ? <CircularProgress size={16} /> : undefined}
             onClick={handleSend}
           >
             {sending ? 'Sending...' : 'Send Message'}
           </Button>
+          <DemoDisabledNote text="Broadcasts are disabled in the demo, because the demo never sends outside messages." />
         </Box>
       </Stack>
     </Box>
