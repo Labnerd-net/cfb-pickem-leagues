@@ -10,6 +10,7 @@ import leaderboardRoutes from './routes/leaderboard.js';
 import leaguesRoute from './routes/leagues.js';
 import adminLeaguesRoute from './routes/adminLeagues.js';
 import { logger } from './utils/middleware.js';
+import { demoGuard } from './utils/demoGuard.js';
 import pinoLogger from './utils/logger.js';
 
 interface KVNamespace {
@@ -38,6 +39,8 @@ app.use(
 );
 app.use(prettyJSON());
 app.use(logger);
+// Inert unless DEMO_MODE is on. Registered before the routes so it runs ahead of every handler.
+app.use('/api/*', demoGuard);
 
 app.get('/', c => c.text('Welcome to the CFB Pickem!'));
 app.notFound(c => c.json({ message: 'Not Found' }, 404));

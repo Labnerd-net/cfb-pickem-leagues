@@ -84,13 +84,27 @@ export let notificationsEnabled = resendApiKey !== '' && notificationFromEmail !
 export const skipEmailSend = env.SKIP_EMAIL_SEND === 'true';
 
 // Set to 'true' only on the isolated demo deployment (separate Worker + Neon branch).
-// Gates demo-only behavior: the nightly reset, and (later) demo login and the demo guard.
+// Gates demo-only behavior: the nightly reset, demo login, registration lockout, and the demo guard.
 // Updated per Workers invocation by reinitializeSecrets().
 export let demoMode = env.DEMO_MODE === 'true';
+
+// The demo is publicly reachable, so it must never be able to touch production data.
+// Checked against the Worker's own bindings (not process.env, which a local .env can fill
+// with PROD_DB). Throws so every request and scheduled run fails closed.
+export function assertDemoSafe(workerEnv: Record<string, string | undefined>): void {
+  if (workerEnv.DEMO_MODE !== 'true') return;
+  if (workerEnv.NODE_ENV === 'production') {
+    throw new Error('FATAL: DEMO_MODE must not be enabled when NODE_ENV=production');
+  }
+  if (workerEnv.PROD_DB) {
+    throw new Error('FATAL: PROD_DB must not be set on a DEMO_MODE deployment');
+  }
+}
 
 // Called at the top of each Workers fetch/scheduled handler to ensure secrets
 // (which aren't in process.env at module init time) are applied before any request logic runs.
 export function reinitializeSecrets(workerEnv: Record<string, string | undefined>): void {
+  assertDemoSafe(workerEnv);
   const merged = { ...process.env, ...workerEnv };
   const parsed = validateEnv(merged as NodeJS.ProcessEnv);
 

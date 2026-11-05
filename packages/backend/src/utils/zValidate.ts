@@ -122,6 +122,7 @@ export const notificationPreferenceValidator = zValidator('json', notificationPr
 export const verifyEmailQueryValidator = zValidator('query', verifyEmailQuerySchema);
 export const registerRequestValidator = zValidator('json', registerRequestSchema);
 export const loginRequestValidator = zValidator('json', loginRequestSchema);
+export const demoLoginValidator = zValidator('json', z.object({ account: z.enum(['user', 'admin']) }));
 export const updateProfileValidator = zValidator('json', updateProfileSchema);
 export const adminBroadcastBodyValidator = zValidator('json', adminBroadcastBodySchema);
 
