@@ -14,8 +14,9 @@ export type CreatedLeagueWire = CreateLeagueRPC['league'];
 
 async function extractError(res: { json(): Promise<unknown> }): Promise<string> {
   try {
-    const body = (await res.json()) as { error?: string };
-    return body.error ?? 'Request failed';
+    // Zod validation failures return `error` as an object, not a string — never pass that to the UI.
+    const body = (await res.json()) as { error?: unknown };
+    return typeof body.error === 'string' ? body.error : 'Request failed';
   } catch {
     return 'Request failed';
   }
