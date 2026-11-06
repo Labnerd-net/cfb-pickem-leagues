@@ -49,7 +49,7 @@ const allUserPickedRequestSchema: z.ZodType<AllUserGamePicksRequest> = z.object(
   year: yearSchema,
   week: weekSchema,
   leagueId: z.number().int().positive(),
-  games: userPickedGameSchema.array().max(50),
+  games: userPickedGameSchema.array().max(200),
 });
 
 const registerRequestSchema = z.object({
