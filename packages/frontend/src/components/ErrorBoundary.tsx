@@ -6,13 +6,14 @@ interface Props {
 
 interface State {
   error: Error | null;
+  componentStack: string | null;
 }
 
 class ErrorBoundary extends Component<Props, State> {
-  state: State = { error: null };
+  state: State = { error: null, componentStack: null };
 
   static getDerivedStateFromError(error: Error): State {
-    return { error };
+    return { error, componentStack: null };
   }
 
   componentDidCatch(error: Error, info: ErrorInfo) {
@@ -20,6 +21,7 @@ class ErrorBoundary extends Component<Props, State> {
     // render crashes must always be visible in the browser console regardless
     // of the VITE_LOG_LEVEL setting (which defaults to 'off').
     console.error('Unhandled render error:', error, info.componentStack);
+    this.setState({ componentStack: info.componentStack ?? null });
   }
 
   render() {
@@ -42,22 +44,23 @@ class ErrorBoundary extends Component<Props, State> {
           <p style={{ color: '#666', margin: 0 }}>
             An unexpected error occurred. Try refreshing the page.
           </p>
-          {import.meta.env.DEV && (
+          <details style={{ maxWidth: '600px', width: '100%', textAlign: 'left', color: '#666' }}>
+            <summary style={{ cursor: 'pointer', textAlign: 'center' }}>Error details</summary>
             <pre
               style={{
                 background: '#f5f5f5',
                 padding: '12px',
                 borderRadius: '4px',
-                fontSize: '0.8rem',
-                textAlign: 'left',
-                maxWidth: '600px',
+                fontSize: '0.75rem',
                 overflow: 'auto',
                 color: '#c00',
+                whiteSpace: 'pre-wrap',
+                wordBreak: 'break-word',
               }}
             >
-              {this.state.error.message}
+              {`${this.state.error.name}: ${this.state.error.message}${this.state.componentStack ?? ''}`}
             </pre>
-          )}
+          </details>
           <button
             onClick={() => window.location.reload()}
             style={{

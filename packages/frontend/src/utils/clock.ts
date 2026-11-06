@@ -9,8 +9,16 @@
  * In production builds, neither override will normally be present and this
  * returns new Date() as normal.
  */
+function readLocalOverride(): string | null {
+  try {
+    return localStorage.getItem('devCurrentTime');
+  } catch {
+    return null; // storage blocked (e.g. Safari "Block All Cookies") — fall back to real time
+  }
+}
+
 export function getNow(): Date {
-  const localTime = localStorage.getItem('devCurrentTime');
+  const localTime = readLocalOverride();
   if (localTime) {
     const parsed = new Date(localTime);
     if (!isNaN(parsed.getTime())) return parsed;
@@ -25,7 +33,7 @@ export function getNow(): Date {
 
 /** ISO string that clock.ts will use, or null if running on real time. */
 export function getActiveSimTime(): string | null {
-  const local = localStorage.getItem('devCurrentTime');
+  const local = readLocalOverride();
   if (local) {
     const d = new Date(local);
     if (!isNaN(d.getTime())) return local;
